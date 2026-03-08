@@ -817,7 +817,7 @@ export default function Ships() {
         background: "#080818", border: "2px solid rgba(57,255,20,0.2)",
         borderRadius: 12, overflow: "hidden", userSelect: "none",
         animation: shakeScreen ? "screenShake 0.3s ease-in-out" : "none",
-        transform: `scale(${gameScale})`, transformOrigin: "top center",
+        transform: `scale(${gameScale})`, transformOrigin: "top left",
       }}>
         {/* Maze */}
         {mazeElements}

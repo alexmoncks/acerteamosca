@@ -853,7 +853,7 @@ export default function Pong() {
         background: "#0a0a1a",
         border: "2px solid rgba(0,240,255,0.2)",
         borderRadius: 12, overflow: "hidden", userSelect: "none",
-        transform: `scale(${gameScale})`, transformOrigin: "top center",
+        transform: `scale(${gameScale})`, transformOrigin: "top left",
       }}>
         {/* Grid bg */}
         <div style={{

@@ -929,7 +929,7 @@ export default function AcerteAMosca() {
           boxShadow: `0 0 ${20 + progress * 30}px ${rgbaStr(currentColor, 0.15)}`,
           transition: "border-color 1s, box-shadow 1s",
           userSelect: "none",
-          transform: `scale(${gameScale})`, transformOrigin: "top center",
+          transform: `scale(${gameScale})`, transformOrigin: "top left",
         }}
         onClick={handleClick}
       >
