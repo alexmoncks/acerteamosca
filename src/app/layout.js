@@ -8,6 +8,9 @@ const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
 export const metadata = {
   title: "Acerte a Mosca! - Jogos Online",
   description: "Mate o mosquito, ganhe premios! Jogos online gratuitos.",
+  icons: {
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩴</text></svg>",
+  },
 };
 
 export default function RootLayout({ children }) {
