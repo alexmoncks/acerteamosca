@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import AdBanner from "@/components/AdBanner";
+import RegisterModal from "@/components/RegisterModal";
+import useJogador from "@/hooks/useJogador";
 
 const CANVAS_W = 480;
 const CANVAS_H = 640;
@@ -495,46 +497,6 @@ function SplashScreen({ onStart }) {
 }
 
 // ---- Registration Modal ----
-function RegisterModal({ onRegister, loading }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [consent, setConsent] = useState(false);
-  const valid = name && email && consent && !loading;
-
-  return (
-    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
-      <div style={{ background: "#0a0a1a", border: "2px solid #00f0ff", borderRadius: 12, padding: 28, width: 340, boxShadow: "0 0 40px rgba(0,240,255,0.13)" }}>
-        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: "#00f0ff", textAlign: "center", marginBottom: 6, textShadow: "0 0 10px #00f0ff" }}>🪰 ACERTE A MOSCA</h2>
-        <p style={{ color: "#8892b0", fontSize: 12, textAlign: "center", marginBottom: 20, fontFamily: "'Fira Code', monospace" }}>Cadastre-se para concorrer aos premios!</p>
-
-        {[
-          { label: "NOME", value: name, set: setName, type: "text", ph: "Seu nome completo" },
-          { label: "EMAIL", value: email, set: setEmail, type: "email", ph: "seu@email.com" },
-          { label: "WHATSAPP", value: phone, set: setPhone, type: "tel", ph: "(00) 00000-0000" },
-        ].map(f => (
-          <div key={f.label} style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", color: "#39ff14", fontSize: 9, fontFamily: "'Press Start 2P', monospace", marginBottom: 5, letterSpacing: 1 }}>{f.label}</label>
-            <input type={f.type} value={f.value} onChange={e => f.set(e.target.value)} placeholder={f.ph}
-              style={{ width: "100%", padding: "10px 12px", background: "#111127", border: "1px solid #2a2a4a", borderRadius: 6, color: "#e0e0ff", fontSize: 14, fontFamily: "'Fira Code', monospace", outline: "none", boxSizing: "border-box" }}
-              onFocus={e => e.target.style.borderColor = "#00f0ff"} onBlur={e => e.target.style.borderColor = "#2a2a4a"} />
-          </div>
-        ))}
-
-        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, marginBottom: 18, cursor: "pointer" }}>
-          <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} style={{ marginTop: 3, accentColor: "#00f0ff" }} />
-          <span style={{ color: "#8892b0", fontSize: 10, fontFamily: "'Fira Code', monospace", lineHeight: 1.5 }}>Concordo com a coleta dos meus dados para participacao na promocao conforme a LGPD.</span>
-        </label>
-
-        <button onClick={() => valid && onRegister({ name, email, phone })} disabled={!valid}
-          style={{ width: "100%", padding: "12px 0", background: valid ? "linear-gradient(135deg, #00f0ff, #39ff14)" : "#2a2a4a", border: "none", borderRadius: 8, color: valid ? "#000" : "#555", fontFamily: "'Press Start 2P', monospace", fontSize: 11, cursor: valid ? "pointer" : "not-allowed", fontWeight: 900, letterSpacing: 1 }}>
-          {loading ? "REGISTRANDO..." : "🎮 JOGAR!"}
-        </button>
-        <p style={{ color: "#444", fontSize: 9, textAlign: "center", marginTop: 10, fontFamily: "'Fira Code', monospace" }}>🎧 Use fones para ouvir o mosquito em 3D!</p>
-      </div>
-    </div>
-  );
-}
 
 // ---- Game Over Screen ----
 function GameOverScreen({ score, hits, misses, bestCombo, onRestart }) {
@@ -580,8 +542,8 @@ function WinModal({ prize, onClose }) {
 
 // ---- MAIN GAME ----
 export default function AcerteAMosca() {
+  const { user, checkedCookie, registering, register } = useJogador("acerteamosca");
   const [screen, setScreen] = useState("splash");
-  const [user, setUser] = useState(null);
   const [score, setScore] = useState(0);
   const [hits, setHits] = useState(0);
   const [misses, setMisses] = useState(0);
@@ -589,8 +551,6 @@ export default function AcerteAMosca() {
   const [bestCombo, setBestCombo] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [progress, setProgress] = useState(0);
-  const [registering, setRegistering] = useState(false);
-  const [checkedCookie, setCheckedCookie] = useState(false);
 
   const [flyX, setFlyX] = useState(CANVAS_W / 2);
   const [flyY, setFlyY] = useState(CANVAS_H / 2);
@@ -620,19 +580,6 @@ export default function AcerteAMosca() {
   const currentColorStr = rgbStr(currentColor);
   const glowIntensity = 0.3 + progress * 0.7;
   const zScale = 1.3 - flyZ * 0.7;
-
-  // Check cookie on mount - skip registration if already registered
-  useEffect(() => {
-    fetch("/api/jogadores")
-      .then(res => res.json())
-      .then(data => {
-        if (data.jogador) {
-          setUser(data.jogador);
-        }
-        setCheckedCookie(true);
-      })
-      .catch(() => setCheckedCookie(true));
-  }, []);
 
   // ---- Audio ----
   const initAudio = useCallback(async () => {
@@ -867,30 +814,12 @@ export default function AcerteAMosca() {
   };
 
   const handleRegister = async (userData) => {
-    setRegistering(true);
-    try {
-      const res = await fetch("/api/jogadores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: userData.name,
-          email: userData.email,
-          whatsapp: userData.phone,
-          jogo: "acerteamosca",
-        }),
-      });
-      const data = await res.json();
-      if (data.jogador) {
-        setUser(data.jogador);
-        playCountRef.current++;
-        await initAudio();
-        resetGame();
-        setScreen("playing");
-      }
-    } catch (err) {
-      console.error("Erro ao registrar:", err);
-    } finally {
-      setRegistering(false);
+    const jogador = await register(userData);
+    if (jogador) {
+      playCountRef.current++;
+      await initAudio();
+      resetGame();
+      setScreen("playing");
     }
   };
 
@@ -1079,7 +1008,7 @@ export default function AcerteAMosca() {
         {scorePopups.map(p => <ScorePopup key={p.id} {...p} />)}
 
         {screen === "splash" && <SplashScreen onStart={handleSplashStart} />}
-        {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} />}
+        {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome="ACERTE A MOSCA" accentColor="#00f0ff" />}
         {screen === "gameover" && <GameOverScreen score={score} hits={hits} misses={misses} bestCombo={bestCombo} onRestart={restartGame} />}
         {screen === "winner" && <WinModal prize="🎉 Cupom de 20% de desconto na Loja XYZ!" onClose={restartGame} />}
       </div>

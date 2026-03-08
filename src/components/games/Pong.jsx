@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import AdBanner from "@/components/AdBanner";
+import RegisterModal from "@/components/RegisterModal";
+import useJogador from "@/hooks/useJogador";
 
 const CANVAS_W = 480;
 const CANVAS_H = 640;
@@ -292,8 +294,10 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
 
 // ---- MAIN GAME ----
 export default function Pong() {
-  const [screen, setScreen] = useState("menu"); // menu | lobby | playing | gameover
+  const { user, checkedCookie, registering, register } = useJogador("pong");
+  const [screen, setScreen] = useState("menu"); // menu | register | lobby | playing | gameover
   const [mode, setMode] = useState(null);
+  const pendingModeRef = useRef(null);
   const [p1x, setP1x] = useState(CANVAS_W / 2);
   const [p2x, setP2x] = useState(CANVAS_W / 2);
   const [ballX, setBallX] = useState(CANVAS_W / 2);
@@ -709,7 +713,7 @@ export default function Pong() {
   }, [resetLocalGame]);
 
   // ---- Mode selection ----
-  const handleSelectMode = useCallback(async (selectedMode, joinCode) => {
+  const startMode = useCallback(async (selectedMode, joinCode) => {
     setMode(selectedMode);
     await initAudio();
 
@@ -726,6 +730,24 @@ export default function Pong() {
       setScreen("playing");
     }
   }, [initAudio, resetLocalGame, connectWS]);
+
+  const handleSelectMode = useCallback(async (selectedMode, joinCode) => {
+    if (!user) {
+      pendingModeRef.current = { selectedMode, joinCode };
+      setScreen("register");
+      return;
+    }
+    startMode(selectedMode, joinCode);
+  }, [user, startMode]);
+
+  const handleRegister = useCallback(async (userData) => {
+    const jogador = await register(userData);
+    if (jogador && pendingModeRef.current) {
+      const { selectedMode, joinCode } = pendingModeRef.current;
+      pendingModeRef.current = null;
+      startMode(selectedMode, joinCode);
+    }
+  }, [register, startMode]);
 
   // ---- Restart ----
   const handleRestart = useCallback(() => {
@@ -971,6 +993,7 @@ export default function Pong() {
 
         {/* Screens */}
         {screen === "menu" && <PongMenu onSelect={handleSelectMode} />}
+        {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome="PONG" accentColor="#00f0ff" />}
         {screen === "lobby" && (
           <RemoteLobby sessionId={sessionId} status={lobbyStatus} onCancel={handleMenu} />
         )}

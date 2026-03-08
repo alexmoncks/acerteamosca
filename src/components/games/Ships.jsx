@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AdBanner from "@/components/AdBanner";
+import RegisterModal from "@/components/RegisterModal";
+import useJogador from "@/hooks/useJogador";
 
 const TILE = 40;
 const COLS = 12;
@@ -341,8 +343,10 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
 
 // ---- MAIN GAME ----
 export default function Ships() {
+  const { user, checkedCookie, registering, register } = useJogador("ships");
   const [screen, setScreen] = useState("menu");
   const [mode, setMode] = useState(null);
+  const pendingModeRef = useRef(null);
   const [maze, setMaze] = useState([]);
   const [ship1, setShip1] = useState({ ...SPAWN[0], alive: true });
   const [ship2, setShip2] = useState({ ...SPAWN[1], alive: true });
@@ -744,13 +748,31 @@ export default function Ships() {
     ws.onerror = () => { setLobbyStatus("error"); setTimeout(() => { setScreen("menu"); setLobbyStatus(null); }, 2000); };
   }, []);
 
-  const handleSelectMode = useCallback(async (sel, joinCode) => {
+  const startMode = useCallback(async (sel, joinCode) => {
     setMode(sel);
     await initAudio();
     if (sel === "remote-host") { setScreen("lobby"); setLobbyStatus("creating"); connectWS("create"); }
     else if (sel === "remote-join") { setScreen("lobby"); setLobbyStatus("joining"); connectWS("join", joinCode); }
     else { resetGame(); setScreen("playing"); }
   }, [initAudio, resetGame, connectWS]);
+
+  const handleSelectMode = useCallback(async (sel, joinCode) => {
+    if (!user) {
+      pendingModeRef.current = { sel, joinCode };
+      setScreen("register");
+      return;
+    }
+    startMode(sel, joinCode);
+  }, [user, startMode]);
+
+  const handleRegister = useCallback(async (userData) => {
+    const jogador = await register(userData);
+    if (jogador && pendingModeRef.current) {
+      const { sel, joinCode } = pendingModeRef.current;
+      pendingModeRef.current = null;
+      startMode(sel, joinCode);
+    }
+  }, [register, startMode]);
 
   const handleRestart = useCallback(() => {
     if (mode?.startsWith("remote")) {
@@ -877,6 +899,7 @@ export default function Ships() {
         </>}
 
         {screen === "menu" && <ShipsMenu onSelect={handleSelectMode} />}
+        {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome="SHIPS" accentColor="#39ff14" />}
         {screen === "lobby" && <ShipsLobby sessionId={sessionId} status={lobbyStatus} onCancel={handleMenu} />}
         {screen === "gameover" && <ShipsGameOver s1={s1} s2={s2} winner={winner} playerNum={playerNum} mode={mode} onRestart={handleRestart} onMenu={handleMenu} remoteReq={remoteReq} />}
       </div>
