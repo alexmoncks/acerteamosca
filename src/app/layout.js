@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <link
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap"
           rel="stylesheet"
@@ -42,7 +43,7 @@ export default function RootLayout({ children }) {
           />
         )}
         <Navbar />
-        <div style={{ paddingTop: 48 }}>{children}</div>
+        <div style={{ paddingTop: 36 }}>{children}</div>
       </body>
     </html>
   );

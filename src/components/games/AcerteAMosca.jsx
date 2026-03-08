@@ -757,11 +757,11 @@ export default function AcerteAMosca() {
     setTimeout(() => setScorePopups(s => s.filter(p => p.id !== id)), 900);
   };
 
-  const handleClick = (e) => {
+  const handleInteraction = (clientX, clientY, target) => {
     if (screen !== "playing") return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
+    const rect = target.getBoundingClientRect();
+    const cx = (clientX - rect.left) / gameScale;
+    const cy = (clientY - rect.top) / gameScale;
     const dx = cx - flyX;
     const dy = cy - flyY;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -928,10 +928,11 @@ export default function AcerteAMosca() {
           animation: shakeScreen ? "screenShake 0.2s ease-in-out" : "none",
           boxShadow: `0 0 ${20 + progress * 30}px ${rgbaStr(currentColor, 0.15)}`,
           transition: "border-color 1s, box-shadow 1s",
-          userSelect: "none",
+          userSelect: "none", WebkitUserSelect: "none", touchAction: "none",
           transform: `scale(${gameScale})`, transformOrigin: "top left",
         }}
-        onClick={handleClick}
+        onClick={(e) => handleInteraction(e.clientX, e.clientY, e.currentTarget)}
+        onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; handleInteraction(t.clientX, t.clientY, e.currentTarget); }}
       >
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${rgbaStr(currentColor, 0.02)} 1px, transparent 1px), linear-gradient(90deg, ${rgbaStr(currentColor, 0.02)} 1px, transparent 1px)`, backgroundSize: "40px 40px", animation: "gridMove 8s linear infinite", pointerEvents: "none" }} />
         <div style={{ position: "absolute", left: 0, width: "100%", height: 2, background: `linear-gradient(90deg, transparent, ${rgbaStr(currentColor, 0.06)}, transparent)`, animation: "scanline 4s linear infinite", pointerEvents: "none", zIndex: 60 }} />
