@@ -807,8 +807,8 @@ export default function Ships() {
       `}</style>
 
       {screen !== "menu" && screen !== "lobby" && <>
-        <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 8, letterSpacing: 3 }}>SHIPS</h1>
-        <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
+        <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h1>
+        <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 4, fontFamily: "'Press Start 2P', monospace" }}>
           {mode?.startsWith("cpu") ? `VS CPU (${mode.replace("cpu-", "").toUpperCase()})` : mode === "local" ? "LOCAL - 2 JOGADORES" : mode?.startsWith("remote") ? `ONLINE - ${sessionId}` : ""}
         </p>
       </>}

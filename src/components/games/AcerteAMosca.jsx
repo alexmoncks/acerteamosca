@@ -932,6 +932,7 @@ export default function AcerteAMosca() {
           transform: `scale(${gameScale})`, transformOrigin: "top left",
         }}
         onClick={(e) => { if (screen !== "playing" || e.detail === 0) return; handleInteraction(e.clientX, e.clientY, e.currentTarget); }}
+        onTouchStart={screen === "playing" ? (e) => { e.preventDefault(); } : undefined}
         onTouchEnd={screen === "playing" ? (e) => { e.preventDefault(); const t = e.changedTouches[0]; handleInteraction(t.clientX, t.clientY, e.currentTarget); } : undefined}
       >
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${rgbaStr(currentColor, 0.02)} 1px, transparent 1px), linear-gradient(90deg, ${rgbaStr(currentColor, 0.02)} 1px, transparent 1px)`, backgroundSize: "40px 40px", animation: "gridMove 8s linear infinite", pointerEvents: "none" }} />
