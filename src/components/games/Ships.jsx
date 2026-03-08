@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
+import { ShipsMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
 
 const TILE = 40;
@@ -911,6 +912,9 @@ export default function Ships() {
           </span>
           {mode === "local" && <span style={{ color: rgbaStr(P2_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>P2: Setas + Enter</span>}
         </div>
+      )}
+      {screen === "playing" && (
+        <ShipsMobileControls keysRef={keysRef} mode={mode} playerNum={playerNum} />
       )}
       <AdBanner slot="ships_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>

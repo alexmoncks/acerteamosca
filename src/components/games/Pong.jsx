@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
+import { PongMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
 
 const CANVAS_W = 480;
@@ -1028,6 +1029,9 @@ export default function Pong() {
             ←/→ mover &nbsp;|&nbsp; ↑ lancar
           </span>
         </div>
+      )}
+      {screen === "playing" && (
+        <PongMobileControls keysRef={keysRef} mode={mode} playerNum={playerNum} />
       )}
       <AdBanner slot="pong_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>
