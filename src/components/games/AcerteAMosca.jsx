@@ -917,7 +917,7 @@ export default function AcerteAMosca() {
         </p>
       </>}
 
-      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale }}>
+      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale, touchAction: "none" }}>
       <div
         style={{
           width: CANVAS_W, height: CANVAS_H, position: "relative",
@@ -931,8 +931,8 @@ export default function AcerteAMosca() {
           userSelect: "none", WebkitUserSelect: "none", touchAction: "none",
           transform: `scale(${gameScale})`, transformOrigin: "top left",
         }}
-        onClick={(e) => handleInteraction(e.clientX, e.clientY, e.currentTarget)}
-        onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; handleInteraction(t.clientX, t.clientY, e.currentTarget); }}
+        onClick={(e) => { if (e.detail === 0) return; handleInteraction(e.clientX, e.clientY, e.currentTarget); }}
+        onTouchEnd={(e) => { e.preventDefault(); const t = e.changedTouches[0]; handleInteraction(t.clientX, t.clientY, e.currentTarget); }}
       >
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${rgbaStr(currentColor, 0.02)} 1px, transparent 1px), linear-gradient(90deg, ${rgbaStr(currentColor, 0.02)} 1px, transparent 1px)`, backgroundSize: "40px 40px", animation: "gridMove 8s linear infinite", pointerEvents: "none" }} />
         <div style={{ position: "absolute", left: 0, width: "100%", height: 2, background: `linear-gradient(90deg, transparent, ${rgbaStr(currentColor, 0.06)}, transparent)`, animation: "scanline 4s linear infinite", pointerEvents: "none", zIndex: 60 }} />
