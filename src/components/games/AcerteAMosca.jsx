@@ -917,7 +917,7 @@ export default function AcerteAMosca() {
         </p>
       </>}
 
-      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale, touchAction: "none" }}>
+      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale, touchAction: screen === "playing" ? "none" : "auto" }}>
       <div
         style={{
           width: CANVAS_W, height: CANVAS_H, position: "relative",
@@ -928,11 +928,11 @@ export default function AcerteAMosca() {
           animation: shakeScreen ? "screenShake 0.2s ease-in-out" : "none",
           boxShadow: `0 0 ${20 + progress * 30}px ${rgbaStr(currentColor, 0.15)}`,
           transition: "border-color 1s, box-shadow 1s",
-          userSelect: "none", WebkitUserSelect: "none", touchAction: "none",
+          userSelect: "none", WebkitUserSelect: "none", touchAction: screen === "playing" ? "none" : "auto",
           transform: `scale(${gameScale})`, transformOrigin: "top left",
         }}
-        onClick={(e) => { if (e.detail === 0) return; handleInteraction(e.clientX, e.clientY, e.currentTarget); }}
-        onTouchEnd={(e) => { e.preventDefault(); const t = e.changedTouches[0]; handleInteraction(t.clientX, t.clientY, e.currentTarget); }}
+        onClick={(e) => { if (screen !== "playing" || e.detail === 0) return; handleInteraction(e.clientX, e.clientY, e.currentTarget); }}
+        onTouchEnd={screen === "playing" ? (e) => { e.preventDefault(); const t = e.changedTouches[0]; handleInteraction(t.clientX, t.clientY, e.currentTarget); } : undefined}
       >
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${rgbaStr(currentColor, 0.02)} 1px, transparent 1px), linear-gradient(90deg, ${rgbaStr(currentColor, 0.02)} 1px, transparent 1px)`, backgroundSize: "40px 40px", animation: "gridMove 8s linear infinite", pointerEvents: "none" }} />
         <div style={{ position: "absolute", left: 0, width: "100%", height: 2, background: `linear-gradient(90deg, transparent, ${rgbaStr(currentColor, 0.06)}, transparent)`, animation: "scanline 4s linear infinite", pointerEvents: "none", zIndex: 60 }} />
