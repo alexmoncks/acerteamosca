@@ -5,6 +5,7 @@ import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { PongMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
+import useGameScale from "@/hooks/useGameScale";
 
 const CANVAS_W = 480;
 const CANVAS_H = 640;
@@ -798,6 +799,8 @@ export default function Pong() {
     return serving === 0 ? "P1: Pressione S" : "P2: Pressione ↑";
   })();
 
+  const gameScale = useGameScale(CANVAS_W);
+
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") && playerNum === 2 ? "RIVAL" : "P1";
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") && playerNum === 1 ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";
 
@@ -806,6 +809,7 @@ export default function Pong() {
       minHeight: "100vh", background: "#050510",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12,
+      touchAction: "manipulation",
     }}>
       <style>{`
         @keyframes scoreFlash {
@@ -842,10 +846,14 @@ export default function Pong() {
 
       {/* Game container */}
       <div style={{
+        width: CANVAS_W * gameScale, height: CANVAS_H * gameScale,
+      }}>
+      <div style={{
         width: CANVAS_W, height: CANVAS_H, position: "relative",
         background: "#0a0a1a",
         border: "2px solid rgba(0,240,255,0.2)",
         borderRadius: 12, overflow: "hidden", userSelect: "none",
+        transform: `scale(${gameScale})`, transformOrigin: "top center",
       }}>
         {/* Grid bg */}
         <div style={{
@@ -1005,6 +1013,7 @@ export default function Pong() {
             remoteRestartReq={remoteRestartReq}
           />
         )}
+      </div>
       </div>
 
       {/* Controls hint */}

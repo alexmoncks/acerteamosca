@@ -5,6 +5,7 @@ import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { ShipsMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
+import useGameScale from "@/hooks/useGameScale";
 
 const TILE = 40;
 const COLS = 12;
@@ -790,11 +791,13 @@ export default function Ships() {
 
   useEffect(() => () => { audioRef.current?.stop(); clearInterval(loopRef.current); wsRef.current?.close(); }, []);
 
+  const gameScale = useGameScale(CANVAS_W);
+
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : "P1";
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
+    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12, touchAction: "manipulation" }}>
       <style>{`
         @keyframes explodePart { 0% { opacity:1; transform:translate(0,0) scale(1); } 100% { opacity:0; transform:translate(var(--ex),var(--ey)) scale(0); } }
         @keyframes screenShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,3px)} 50%{transform:translate(3px,-4px)} 75%{transform:translate(-3px,2px)} }
@@ -808,11 +811,13 @@ export default function Ships() {
         </p>
       </>}
 
+      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale }}>
       <div style={{
         width: CANVAS_W, height: CANVAS_H, position: "relative",
         background: "#080818", border: "2px solid rgba(57,255,20,0.2)",
         borderRadius: 12, overflow: "hidden", userSelect: "none",
         animation: shakeScreen ? "screenShake 0.3s ease-in-out" : "none",
+        transform: `scale(${gameScale})`, transformOrigin: "top center",
       }}>
         {/* Maze */}
         {mazeElements}
@@ -903,6 +908,7 @@ export default function Ships() {
         {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome="SHIPS" accentColor="#39ff14" />}
         {screen === "lobby" && <ShipsLobby sessionId={sessionId} status={lobbyStatus} onCancel={handleMenu} />}
         {screen === "gameover" && <ShipsGameOver s1={s1} s2={s2} winner={winner} playerNum={playerNum} mode={mode} onRestart={handleRestart} onMenu={handleMenu} remoteReq={remoteReq} />}
+      </div>
       </div>
 
       {screen === "playing" && (

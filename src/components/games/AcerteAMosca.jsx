@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
+import useGameScale from "@/hooks/useGameScale";
 
 const CANVAS_W = 480;
 const CANVAS_H = 640;
@@ -856,13 +857,14 @@ export default function AcerteAMosca() {
 
   useEffect(() => () => audioRef.current?.stop(), []);
 
+  const gameScale = useGameScale(CANVAS_W);
   const timerPct = (timeLeft / GAME_DURATION) * 100;
   const timerColor = timeLeft > 10 ? "#39ff14" : timeLeft > 5 ? "#ffe600" : "#ff2d95";
 
   if (!checkedCookie) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
+    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12, touchAction: "manipulation" }}>
       <style>{`
         @keyframes particleBurst {
           0% { opacity: 1; transform: translate(0,0) scale(1); }
@@ -915,6 +917,7 @@ export default function AcerteAMosca() {
         </p>
       </>}
 
+      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale }}>
       <div
         style={{
           width: CANVAS_W, height: CANVAS_H, position: "relative",
@@ -926,6 +929,7 @@ export default function AcerteAMosca() {
           boxShadow: `0 0 ${20 + progress * 30}px ${rgbaStr(currentColor, 0.15)}`,
           transition: "border-color 1s, box-shadow 1s",
           userSelect: "none",
+          transform: `scale(${gameScale})`, transformOrigin: "top center",
         }}
         onClick={handleClick}
       >
@@ -1012,8 +1016,9 @@ export default function AcerteAMosca() {
         {screen === "gameover" && <GameOverScreen score={score} hits={hits} misses={misses} bestCombo={bestCombo} onRestart={restartGame} />}
         {screen === "winner" && <WinModal prize="🎉 Cupom de 20% de desconto na Loja XYZ!" onClose={restartGame} />}
       </div>
+      </div>
 
-      {screen !== "splash" && <div style={{ width: CANVAS_W, borderRadius: "0 0 12px 12px", overflow: "hidden", marginTop: -2 }}>
+      {screen !== "splash" && <div style={{ width: CANVAS_W * gameScale, borderRadius: "0 0 12px 12px", overflow: "hidden", marginTop: -2 }}>
         <SponsorBanner sponsor="SUA MARCA AQUI" />
       </div>}
 
