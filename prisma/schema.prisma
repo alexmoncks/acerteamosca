@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Jogador {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  whatsapp  String?
+  criadoEm  DateTime @default(now())
+  jogoOrigem String  @default("acerteamosca") // jogo onde se cadastrou
+  scores    Score[]
+}
+
+model Score {
+  id         String   @id @default(cuid())
+  pontos     Int
+  acertos    Int
+  erros      Int
+  melhorCombo Int
+  precisao   Int      // porcentagem 0-100
+  jogo       String   @default("acerteamosca")
+  jogadorId  String
+  jogador    Jogador  @relation(fields: [jogadorId], references: [id])
+  criadoEm   DateTime @default(now())
+
+  @@index([jogadorId])
+  @@index([jogo, pontos])
+}

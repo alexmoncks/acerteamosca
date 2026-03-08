@@ -1,0 +1,26 @@
+{
+  "name": "acerteamosca",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "npx prisma db push",
+    "db:studio": "npx prisma studio",
+    "db:seed": "node prisma/seed.js",
+    "ws:pong": "node server/ws-pong.js",
+    "ws:ships": "node server/ws-ships.js",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.15.0",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.15.0"
+  }
+}
