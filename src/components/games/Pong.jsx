@@ -79,6 +79,8 @@ class PongAudio {
 function PongMenu({ onSelect }) {
   const [sub, setSub] = useState(null); // null | 'cpu' | 'online'
   const [joinId, setJoinId] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => { setIsMobile("ontouchstart" in window || navigator.maxTouchPoints > 0); }, []);
 
   const btn = (label, onClick, accent = "#00f0ff") => (
     <button onClick={onClick} style={{
@@ -115,7 +117,7 @@ function PongMenu({ onSelect }) {
       <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 12, position: "relative", zIndex: 1 }}>
         {!sub && <>
           {btn("🤖  VS COMPUTADOR", () => setSub("cpu"))}
-          {btn("👥  LOCAL (2 JOGADORES)", () => onSelect("local"), "#39ff14")}
+          {!isMobile && btn("👥  LOCAL (2 JOGADORES)", () => onSelect("local"), "#39ff14")}
           {btn("🌐  ONLINE", () => setSub("online"), "#b026ff")}
         </>}
 
@@ -809,7 +811,6 @@ export default function Pong() {
       minHeight: "100vh", background: "#050510",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12,
-      touchAction: "manipulation",
     }}>
       <style>{`
         @keyframes scoreFlash {

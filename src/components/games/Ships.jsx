@@ -244,6 +244,8 @@ function ShipSVG({ color, size }) {
 function ShipsMenu({ onSelect }) {
   const [sub, setSub] = useState(null);
   const [joinId, setJoinId] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => { setIsMobile("ontouchstart" in window || navigator.maxTouchPoints > 0); }, []);
 
   const btn = (label, onClick, accent = "#00f0ff") => (
     <button onClick={onClick} style={{
@@ -263,7 +265,7 @@ function ShipsMenu({ onSelect }) {
       <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 12, position: "relative", zIndex: 1 }}>
         {!sub && <>
           {btn("🤖  VS COMPUTADOR", () => setSub("cpu"))}
-          {btn("👥  LOCAL (2 JOGADORES)", () => onSelect("local"), "#39ff14")}
+          {!isMobile && btn("👥  LOCAL (2 JOGADORES)", () => onSelect("local"), "#39ff14")}
           {btn("🌐  ONLINE", () => setSub("online"), "#b026ff")}
         </>}
         {sub === "cpu" && <>
@@ -797,7 +799,7 @@ export default function Ships() {
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12, touchAction: "manipulation" }}>
+    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
       <style>{`
         @keyframes explodePart { 0% { opacity:1; transform:translate(0,0) scale(1); } 100% { opacity:0; transform:translate(var(--ex),var(--ey)) scale(0); } }
         @keyframes screenShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,3px)} 50%{transform:translate(3px,-4px)} 75%{transform:translate(-3px,2px)} }

@@ -1,14 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-function useMobile() {
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    setMobile("ontouchstart" in window || navigator.maxTouchPoints > 0);
-  }, []);
-  return mobile;
-}
+import useMobile from "@/hooks/useMobile";
 
 function Btn({ label, onPress, onRelease, color = "#00f0ff", size = 56, fontSize = 20, style }) {
   return (

@@ -864,7 +864,7 @@ export default function AcerteAMosca() {
   if (!checkedCookie) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12, touchAction: "manipulation" }}>
+    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
       <style>{`
         @keyframes particleBurst {
           0% { opacity: 1; transform: translate(0,0) scale(1); }
