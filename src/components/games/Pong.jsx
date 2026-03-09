@@ -160,14 +160,16 @@ function PongMenu({ onSelect }) {
         </>}
       </div>
 
-      <div style={{
-        position: "absolute", bottom: 20, padding: "0 30px",
-        textAlign: "center", lineHeight: 2,
-      }}>
-        <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>
-          P1: A/D + S lancar &nbsp;|&nbsp; P2: ←/→ + ↑ lancar
-        </p>
-      </div>
+      {!isMobile && (
+        <div style={{
+          position: "absolute", bottom: 20, padding: "0 30px",
+          textAlign: "center", lineHeight: 2,
+        }}>
+          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>
+            P1: A/D + S lancar &nbsp;|&nbsp; P2: ←/→ + ↑ lancar
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -319,6 +321,8 @@ export default function Pong() {
   const [playerNum, setPlayerNum] = useState(0); // 1 or 2
   const [remoteRestartReq, setRemoteRestartReq] = useState(false);
   const [disconnected, setDisconnected] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => { setIsMobile("ontouchstart" in window || navigator.maxTouchPoints > 0); }, []);
 
   // Refs
   const gameRef = useRef({
@@ -581,13 +585,14 @@ export default function Pong() {
   useEffect(() => {
     if (screen !== "playing" || !mode?.startsWith("remote")) return;
 
+    const isP1 = playerNum === 1;
     const interval = setInterval(() => {
       const keys = keysRef.current;
       const g = gameRef.current;
-      const myPaddle = playerNum === 1 ? "p1x" : "p2x";
+      const myPaddle = isP1 ? "p1x" : "p2x";
 
-      if (keys.has("ArrowLeft")) g[myPaddle] -= PADDLE_SPEED;
-      if (keys.has("ArrowRight")) g[myPaddle] += PADDLE_SPEED;
+      if (keys.has(isP1 ? "a" : "ArrowLeft") || (isP1 && keys.has("A"))) g[myPaddle] -= PADDLE_SPEED;
+      if (keys.has(isP1 ? "d" : "ArrowRight") || (isP1 && keys.has("D"))) g[myPaddle] += PADDLE_SPEED;
       g[myPaddle] = clamp(g[myPaddle], PADDLE_W / 2, CANVAS_W - PADDLE_W / 2);
 
       // Send paddle position
@@ -597,7 +602,7 @@ export default function Pong() {
       }
 
       // Launch
-      if (keys.has("ArrowUp")) {
+      if (keys.has(isP1 ? "s" : "ArrowUp") || (isP1 && keys.has("S"))) {
         if (ws && ws.readyState === 1) {
           ws.send(JSON.stringify({ t: "launch" }));
         }
@@ -792,9 +797,13 @@ export default function Pong() {
     if (launched || screen !== "playing") return null;
     if (mode?.startsWith("remote")) {
       const isMyServe = serving === (playerNum - 1);
-      return isMyServe ? "Pressione ↑ para lancar" : "Oponente saca...";
+      if (isMobile) return isMyServe ? "LANCE!" : "OPONENTE SACA...";
+      return isMyServe
+        ? (playerNum === 1 ? "Pressione S para lancar" : "Pressione ↑ para lancar")
+        : "Oponente saca...";
     }
     if (mode?.startsWith("cpu")) {
+      if (isMobile) return serving === 0 ? "LANCE!" : "";
       return serving === 0 ? "Pressione S para lancar" : "";
     }
     // local
@@ -1017,8 +1026,8 @@ export default function Pong() {
       </div>
       </div>
 
-      {/* Controls hint */}
-      {screen === "playing" && !mode?.startsWith("remote") && (
+      {/* Controls hint (desktop only) */}
+      {screen === "playing" && !isMobile && !mode?.startsWith("remote") && (
         <div style={{
           width: CANVAS_W, display: "flex", justifyContent: "space-between",
           marginTop: 10, padding: "0 4px",
@@ -1033,10 +1042,10 @@ export default function Pong() {
           )}
         </div>
       )}
-      {screen === "playing" && mode?.startsWith("remote") && (
+      {screen === "playing" && !isMobile && mode?.startsWith("remote") && (
         <div style={{ marginTop: 10 }}>
           <span style={{ color: "#4a5568", fontSize: 9, fontFamily: "'Fira Code', monospace" }}>
-            ←/→ mover &nbsp;|&nbsp; ↑ lancar
+            {playerNum === 1 ? "A/D mover | S lancar" : "←/→ mover | ↑ lancar"}
           </span>
         </div>
       )}

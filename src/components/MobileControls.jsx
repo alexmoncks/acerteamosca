@@ -31,9 +31,10 @@ export function PongMobileControls({ keysRef, mode, playerNum }) {
 
   // Determine which keys to simulate
   const isRemote = mode?.startsWith("remote");
-  const leftKey = isRemote ? "ArrowLeft" : "a";
-  const rightKey = isRemote ? "ArrowRight" : "d";
-  const serveKey = isRemote ? "ArrowUp" : "s";
+  const isP1 = !isRemote || playerNum === 1;
+  const leftKey = isP1 ? "a" : "ArrowLeft";
+  const rightKey = isP1 ? "d" : "ArrowRight";
+  const serveKey = isP1 ? "s" : "ArrowUp";
 
   const press = (k) => keysRef.current.add(k);
   const release = (k) => keysRef.current.delete(k);

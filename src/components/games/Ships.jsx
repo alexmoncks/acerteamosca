@@ -287,9 +287,11 @@ function ShipsMenu({ onSelect }) {
           {btn("← VOLTAR", () => setSub(null), "#555")}
         </>}
       </div>
-      <div style={{ position: "absolute", bottom: 20, textAlign: "center" }}>
-        <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>P1: WASD + Space &nbsp;|&nbsp; P2: Setas + Enter</p>
-      </div>
+      {!isMobile && (
+        <div style={{ position: "absolute", bottom: 20, textAlign: "center" }}>
+          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>P1: WASD + Space &nbsp;|&nbsp; P2: Setas + Enter</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -369,6 +371,8 @@ export default function Ships() {
   const [playerNum, setPlayerNum] = useState(0);
   const [remoteReq, setRemoteReq] = useState(false);
   const [disconnected, setDisconnected] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => { setIsMobile("ontouchstart" in window || navigator.maxTouchPoints > 0); }, []);
 
   const gameRef = useRef({
     s: [{ ...SPAWN[0], alive: true }, { ...SPAWN[1], alive: true }],
@@ -913,10 +917,10 @@ export default function Ships() {
       </div>
       </div>
 
-      {screen === "playing" && (
+      {screen === "playing" && !isMobile && (
         <div style={{ width: CANVAS_W, display: "flex", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>
           <span style={{ color: rgbaStr(P1_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>
-            {mode?.startsWith("remote") ? "←→↑↓ + Enter" : "P1: WASD + Space"}
+            {mode?.startsWith("remote") ? (playerNum === 1 ? "WASD + Space" : "←→↑↓ + Enter") : "P1: WASD + Space"}
           </span>
           {mode === "local" && <span style={{ color: rgbaStr(P2_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>P2: Setas + Enter</span>}
         </div>
