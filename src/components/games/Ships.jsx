@@ -676,13 +676,13 @@ export default function Ships() {
     let lastKeys = "";
     const interval = setInterval(() => {
       const keys = keysRef.current;
-      const isP1 = playerNum === 1;
+      // Both remote players use the same keys (each on their own device)
       const k = {
-        u: keys.has(isP1 ? "w" : "ArrowUp") || keys.has(isP1 ? "W" : "ArrowUp") ? 1 : 0,
-        d: keys.has(isP1 ? "s" : "ArrowDown") || keys.has(isP1 ? "S" : "ArrowDown") ? 1 : 0,
-        l: keys.has(isP1 ? "a" : "ArrowLeft") || keys.has(isP1 ? "A" : "ArrowLeft") ? 1 : 0,
-        r: keys.has(isP1 ? "d" : "ArrowRight") || keys.has(isP1 ? "D" : "ArrowRight") ? 1 : 0,
-        s: keys.has(isP1 ? " " : "Enter") || keys.has(isP1 ? "f" : "/") || keys.has(isP1 ? "F" : "/") ? 1 : 0,
+        u: keys.has("w") || keys.has("W") || keys.has("ArrowUp") ? 1 : 0,
+        d: keys.has("s") || keys.has("S") || keys.has("ArrowDown") ? 1 : 0,
+        l: keys.has("a") || keys.has("A") || keys.has("ArrowLeft") ? 1 : 0,
+        r: keys.has("d") || keys.has("D") || keys.has("ArrowRight") ? 1 : 0,
+        s: keys.has(" ") || keys.has("f") || keys.has("F") || keys.has("Enter") || keys.has("/") ? 1 : 0,
       };
       const ks = JSON.stringify(k);
       if (ks !== lastKeys) {
@@ -920,7 +920,7 @@ export default function Ships() {
       {screen === "playing" && !isMobile && (
         <div style={{ width: CANVAS_W, display: "flex", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>
           <span style={{ color: rgbaStr(P1_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>
-            {mode?.startsWith("remote") ? (playerNum === 1 ? "WASD + Space" : "←→↑↓ + Enter") : "P1: WASD + Space"}
+            {mode?.startsWith("remote") ? "WASD ou ←→↑↓ + Space/Enter" : "P1: WASD + Space"}
           </span>
           {mode === "local" && <span style={{ color: rgbaStr(P2_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>P2: Setas + Enter</span>}
         </div>

@@ -29,12 +29,12 @@ export function PongMobileControls({ keysRef, mode, playerNum }) {
   const mobile = useMobile();
   if (!mobile) return null;
 
-  // Determine which keys to simulate
+  // In remote mode both players use arrows (each on their own device)
+  // In local/cpu mode P1 uses a/d/s
   const isRemote = mode?.startsWith("remote");
-  const isP1 = !isRemote || playerNum === 1;
-  const leftKey = isP1 ? "a" : "ArrowLeft";
-  const rightKey = isP1 ? "d" : "ArrowRight";
-  const serveKey = isP1 ? "s" : "ArrowUp";
+  const leftKey = isRemote ? "ArrowLeft" : "a";
+  const rightKey = isRemote ? "ArrowRight" : "d";
+  const serveKey = isRemote ? "ArrowUp" : "s";
 
   const press = (k) => keysRef.current.add(k);
   const release = (k) => keysRef.current.delete(k);
@@ -188,13 +188,13 @@ export function ShipsMobileControls({ keysRef, mode, playerNum }) {
   const mobile = useMobile();
   if (!mobile) return null;
 
-  const isRemote = mode?.startsWith("remote");
-  const isP1 = !isRemote || playerNum === 1;
-  const fwdKey = isP1 ? "w" : "ArrowUp";
-  const backKey = isP1 ? "s" : "ArrowDown";
-  const leftKey = isP1 ? "a" : "ArrowLeft";
-  const rightKey = isP1 ? "d" : "ArrowRight";
-  const fireKey = isP1 ? " " : "Enter";
+  // Remote: both players use same keys (each on own device, server identifies by connection)
+  // Local/CPU: P1 uses WASD + Space
+  const fwdKey = "w";
+  const backKey = "s";
+  const leftKey = "a";
+  const rightKey = "d";
+  const fireKey = " ";
 
   const press = (k) => keysRef.current.add(k);
   const release = (k) => keysRef.current.delete(k);

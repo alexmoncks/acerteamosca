@@ -585,14 +585,13 @@ export default function Pong() {
   useEffect(() => {
     if (screen !== "playing" || !mode?.startsWith("remote")) return;
 
-    const isP1 = playerNum === 1;
     const interval = setInterval(() => {
       const keys = keysRef.current;
       const g = gameRef.current;
-      const myPaddle = isP1 ? "p1x" : "p2x";
+      const myPaddle = playerNum === 1 ? "p1x" : "p2x";
 
-      if (keys.has(isP1 ? "a" : "ArrowLeft") || (isP1 && keys.has("A"))) g[myPaddle] -= PADDLE_SPEED;
-      if (keys.has(isP1 ? "d" : "ArrowRight") || (isP1 && keys.has("D"))) g[myPaddle] += PADDLE_SPEED;
+      if (keys.has("ArrowLeft")) g[myPaddle] -= PADDLE_SPEED;
+      if (keys.has("ArrowRight")) g[myPaddle] += PADDLE_SPEED;
       g[myPaddle] = clamp(g[myPaddle], PADDLE_W / 2, CANVAS_W - PADDLE_W / 2);
 
       // Send paddle position
@@ -602,7 +601,7 @@ export default function Pong() {
       }
 
       // Launch
-      if (keys.has(isP1 ? "s" : "ArrowUp") || (isP1 && keys.has("S"))) {
+      if (keys.has("ArrowUp")) {
         if (ws && ws.readyState === 1) {
           ws.send(JSON.stringify({ t: "launch" }));
         }
@@ -798,9 +797,7 @@ export default function Pong() {
     if (mode?.startsWith("remote")) {
       const isMyServe = serving === (playerNum - 1);
       if (isMobile) return isMyServe ? "LANCE!" : "OPONENTE SACA...";
-      return isMyServe
-        ? (playerNum === 1 ? "Pressione S para lancar" : "Pressione ↑ para lancar")
-        : "Oponente saca...";
+      return isMyServe ? "Pressione ↑ para lancar" : "Oponente saca...";
     }
     if (mode?.startsWith("cpu")) {
       if (isMobile) return serving === 0 ? "LANCE!" : "";
@@ -1045,7 +1042,7 @@ export default function Pong() {
       {screen === "playing" && !isMobile && mode?.startsWith("remote") && (
         <div style={{ marginTop: 10 }}>
           <span style={{ color: "#4a5568", fontSize: 9, fontFamily: "'Fira Code', monospace" }}>
-            {playerNum === 1 ? "A/D mover | S lancar" : "←/→ mover | ↑ lancar"}
+            ←/→ mover &nbsp;|&nbsp; ↑ lancar
           </span>
         </div>
       )}
