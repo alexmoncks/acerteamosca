@@ -176,6 +176,16 @@ function PongMenu({ onSelect }) {
 
 // ---- Lobby (waiting for remote opponent) ----
 function RemoteLobby({ sessionId, status, onCancel }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = async () => {
+    if (!sessionId) return;
+    const url = `${window.location.origin}${window.location.pathname}?sala=${sessionId}`;
+    try { await navigator.clipboard.writeText(url); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div style={{
       position: "absolute", inset: 0, background: "rgba(5,5,16,0.95)",
@@ -192,9 +202,10 @@ function RemoteLobby({ sessionId, status, onCancel }) {
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff", marginBottom: 20, textShadow: "0 0 10px #b026ff" }}>
           AGUARDANDO OPONENTE
         </p>
-        <div style={{
-          background: "#111127", border: "2px solid #b026ff", borderRadius: 10,
-          padding: "16px 28px", marginBottom: 16,
+        <div onClick={handleCopyLink} style={{
+          background: "#111127", border: `2px solid ${copied ? "#39ff14" : "#b026ff"}`, borderRadius: 10,
+          padding: "16px 28px", marginBottom: 16, cursor: "pointer",
+          transition: "border-color 0.3s",
         }}>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 8 }}>CODIGO DA SALA</p>
           <p style={{
@@ -202,8 +213,8 @@ function RemoteLobby({ sessionId, status, onCancel }) {
             textShadow: "0 0 15px #b026ff", letterSpacing: 8,
           }}>{sessionId}</p>
         </div>
-        <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#666" }}>
-          Envie este codigo para seu oponente
+        <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: copied ? "#39ff14" : "#666", transition: "color 0.3s" }}>
+          {copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}
         </p>
       </>}
       {status === "joining" && <>
@@ -790,6 +801,19 @@ export default function Pong() {
     clearInterval(loopRef.current);
     if (wsRef.current) wsRef.current.close();
   }, []);
+
+  // ---- Auto-join from URL param (?sala=XXXX) ----
+  const autoJoinRef = useRef(false);
+  useEffect(() => {
+    if (!checkedCookie || autoJoinRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const sala = params.get("sala");
+    if (sala) {
+      autoJoinRef.current = true;
+      window.history.replaceState({}, "", window.location.pathname);
+      handleSelectMode("remote-join", sala);
+    }
+  }, [checkedCookie, handleSelectMode]);
 
   // ---- Serve hint text ----
   const serveHint = (() => {
