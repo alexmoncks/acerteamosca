@@ -31,12 +31,16 @@ export default function useJogador(jogoOrigem = "acerteamosca") {
         }),
       });
       const data = await res.json();
+      if (data.error) {
+        return { error: data.error };
+      }
       if (data.jogador) {
         setUser(data.jogador);
         return data.jogador;
       }
     } catch (err) {
       console.error("Erro ao registrar:", err);
+      return { error: "Erro de conexão. Tente novamente." };
     } finally {
       setRegistering(false);
     }
