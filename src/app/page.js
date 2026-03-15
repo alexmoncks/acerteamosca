@@ -26,6 +26,46 @@ const jogos = [
     cor: "#39ff14",
     destaque: false,
   },
+  {
+    slug: "wordle",
+    nome: "Wordle BR",
+    emoji: "🔤",
+    desc: "Adivinhe a palavra de 5 letras em 6 tentativas!",
+    cor: "#a3e635",
+    destaque: false,
+  },
+  {
+    slug: "memory",
+    nome: "Memory Game",
+    emoji: "🧠",
+    desc: "Encontre os pares e desafie amigos online!",
+    cor: "#34d399",
+    destaque: false,
+  },
+  {
+    slug: "2048",
+    nome: "2048",
+    emoji: "🔢",
+    desc: "Deslize os blocos e some ate chegar no 2048! Jogue online.",
+    cor: "#f59e0b",
+    destaque: false,
+  },
+  {
+    slug: "bubbleshooter",
+    nome: "Bubble Shooter",
+    emoji: "🫧",
+    desc: "Mire, atire e estoure bolhas da mesma cor!",
+    cor: "#e879f9",
+    destaque: false,
+  },
+  {
+    slug: "deepattack",
+    nome: "Deep Attack",
+    emoji: "🚀",
+    desc: "Pilote sua nave, destrua aliens e sobreviva no espaco!",
+    cor: "#22d3ee",
+    destaque: false,
+  },
 ];
 
 export default function Home() {
