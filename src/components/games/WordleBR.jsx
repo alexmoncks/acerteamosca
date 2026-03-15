@@ -659,7 +659,10 @@ export default function WordleBR() {
 
                     return (
                       <div key={colIdx}
-                        onClick={isCurrentRow && colIdx < currentGuess.length ? () => setSelectedCol(colIdx) : undefined}
+                        onClick={isCurrentRow && colIdx < currentGuess.length ? () => {
+                          setCurrentGuess(prev => prev.slice(0, colIdx) + prev.slice(colIdx + 1));
+                          audioRef.current?.backspace();
+                        } : undefined}
                         style={{
                         width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 24, fontWeight: "bold", color: "#fff",
