@@ -7,7 +7,7 @@ import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 
 const GAME_W = 400;
-const GAME_H = 530;
+const GAME_H = 550;
 
 let ANSWERS = [
   "GATOS","MUNDO","FESTA","PRAIA","LIVRO","CARRO","PLANO","VERDE","TIGRE","NUVEM",
