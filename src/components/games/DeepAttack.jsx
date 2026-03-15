@@ -31,6 +31,75 @@ const ENEMY_TYPES = {
   asteroid: { w: 28, h: 28, hp: Infinity, speed: 1.5, points: 0,   color: "#888888" },
 };
 
+// ── Audio engine ────────────────────────────────────────────────────────
+class DeepAttackAudio {
+  constructor() {
+    this.ctx = null;
+  }
+
+  async init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await this.ctx.resume();
+  }
+
+  _tone(freq, dur, vol = 0.15, type = "square") {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + dur);
+  }
+
+  shoot() {
+    this._tone(880, 0.08, 0.1, "square");
+    this._tone(660, 0.06, 0.05, "sawtooth");
+  }
+
+  hit() {
+    this._tone(200, 0.15, 0.15, "square");
+    this._tone(150, 0.2, 0.1, "sawtooth");
+  }
+
+  explosion() {
+    // Noise burst for explosions
+    if (!this.ctx) return;
+    const dur = 0.3;
+    const bufferSize = this.ctx.sampleRate * dur;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    source.connect(gain);
+    gain.connect(this.ctx.destination);
+    source.start();
+  }
+
+  powerUp() {
+    this._tone(523, 0.1, 0.12, "sine");
+    setTimeout(() => this._tone(659, 0.1, 0.12, "sine"), 80);
+    setTimeout(() => this._tone(784, 0.15, 0.12, "sine"), 160);
+  }
+
+  gameOver() {
+    this._tone(440, 0.2, 0.15, "square");
+    setTimeout(() => this._tone(349, 0.2, 0.15, "square"), 200);
+    setTimeout(() => this._tone(262, 0.4, 0.2, "square"), 400);
+  }
+}
+
 // ── Utility ────────────────────────────────────────────────────────────
 function aabb(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -355,6 +424,7 @@ export default function DeepAttack() {
   const canvasRef = useRef(null);
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);
+  const audioRef = useRef(null);
 
   // Game state refs (mutable for game loop)
   const gameRef = useRef(null);
@@ -419,8 +489,8 @@ export default function DeepAttack() {
     }
 
     const t = ENEMY_TYPES[type];
-    // Find corridor bounds at top of screen
-    const topSegIdx = Math.floor(g.corridorOffset / SEGMENT_HEIGHT);
+    // Top of screen = start segment + visible segments
+    const topSegIdx = Math.floor(g.corridorOffset / SEGMENT_HEIGHT) + Math.ceil(CANVAS_H / SEGMENT_HEIGHT);
     const seg = g.corridor[Math.min(topSegIdx, g.corridor.length - 1)];
     const minX = seg ? seg.leftWall + 5 : 20;
     const maxX = seg ? seg.rightWall - t.w - 5 : CANVAS_W - 20 - t.w;
@@ -446,7 +516,7 @@ export default function DeepAttack() {
   const spawnPowerUp = useCallback(() => {
     const g = gameRef.current;
     if (!g) return;
-    const topSegIdx = Math.floor(g.corridorOffset / SEGMENT_HEIGHT);
+    const topSegIdx = Math.floor(g.corridorOffset / SEGMENT_HEIGHT) + Math.ceil(CANVAS_H / SEGMENT_HEIGHT);
     const seg = g.corridor[Math.min(topSegIdx, g.corridor.length - 1)];
     const minX = seg ? seg.leftWall + 10 : 30;
     const maxX = seg ? seg.rightWall - 30 : CANVAS_W - 50;
@@ -499,8 +569,8 @@ export default function DeepAttack() {
     if (keys.has("ArrowLeft"))  g.playerX -= PLAYER_SPEED;
     if (keys.has("ArrowRight")) g.playerX += PLAYER_SPEED;
 
-    // Clamp player within corridor at player's Y position
-    const playerSegIdx = Math.floor((g.corridorOffset + g.playerY) / SEGMENT_HEIGHT);
+    // Player is at bottom of screen, corridor scrolls down, so player's corridor position is at the "beginning" of visible segments
+    const playerSegIdx = Math.floor(g.corridorOffset / SEGMENT_HEIGHT) + Math.floor((CANVAS_H - g.playerY) / SEGMENT_HEIGHT);
     const clampSeg = g.corridor[Math.min(Math.max(playerSegIdx, 0), g.corridor.length - 1)];
     if (clampSeg) {
       g.playerX = Math.max(clampSeg.leftWall + 2, Math.min(clampSeg.rightWall - PLAYER_W - 2, g.playerX));
@@ -518,6 +588,7 @@ export default function DeepAttack() {
         h: BULLET_H,
       });
       g.fireCooldown = FIRE_COOLDOWN;
+      audioRef.current?.shoot();
     }
 
     // ---- Update bullets ----
@@ -577,6 +648,14 @@ export default function DeepAttack() {
         e.x = e.baseX + Math.sin(elapsed * 0.08) * 40;
       }
 
+      // Clamp enemy within corridor
+      const enemySegIdx = Math.floor((g.corridorOffset + e.y) / SEGMENT_HEIGHT);
+      const eSeg = g.corridor[Math.min(Math.max(enemySegIdx, 0), g.corridor.length - 1)];
+      if (eSeg) {
+        const et = ENEMY_TYPES[e.type];
+        e.x = Math.max(eSeg.leftWall + 2, Math.min(eSeg.rightWall - et.w - 2, e.x));
+      }
+
       // Remove if off-screen bottom
       if (e.y > CANVAS_H + 50) {
         g.enemies.splice(i, 1);
@@ -622,12 +701,15 @@ export default function DeepAttack() {
               g.enemiesDestroyed++;
               spawnExplosion(e.x + et.w / 2, e.y + et.h / 2, et.color, 12);
               g.enemies.splice(ei, 1);
+              audioRef.current?.explosion();
             } else {
               spawnExplosion(e.x + et.w / 2, e.y + et.h / 2, et.color, 4);
+              audioRef.current?.hit();
             }
           } else {
             // Asteroid - bullet destroyed, asteroid unharmed
             spawnExplosion(b.x, b.y, "#aaaaaa", 3);
+            audioRef.current?.hit();
           }
           break;
         }
@@ -646,6 +728,7 @@ export default function DeepAttack() {
         // Game over by collision
         spawnExplosion(g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#22d3ee", 20);
         g.gameOver = true;
+        audioRef.current?.gameOver();
         endGame(g);
         return;
       }
@@ -657,6 +740,7 @@ export default function DeepAttack() {
         g.energy = Math.min(ENERGY_MAX, g.energy + 25);
         spawnExplosion(g.powerUps[i].x + 10, g.powerUps[i].y + 10, "#39ff14", 8);
         g.powerUps.splice(i, 1);
+        audioRef.current?.powerUp();
       }
     }
 
@@ -667,6 +751,7 @@ export default function DeepAttack() {
       if (shipLeft < clampSeg.leftWall || shipRight > clampSeg.rightWall) {
         spawnExplosion(g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff2d95", 20);
         g.gameOver = true;
+        audioRef.current?.gameOver();
         endGame(g);
         return;
       }
@@ -678,6 +763,7 @@ export default function DeepAttack() {
       g.energy = 0;
       g.gameOver = true;
       spawnExplosion(g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ffe600", 16);
+      audioRef.current?.gameOver();
       endGame(g);
       return;
     }
@@ -701,16 +787,17 @@ export default function DeepAttack() {
     // 2. Stars
     drawStars(ctx, g.stars, g.scrollSpeed);
 
-    // 3. Corridor walls
+    // 3. Corridor walls - higher segments at top, lower at bottom
     const startSeg = Math.floor(g.corridorOffset / SEGMENT_HEIGHT);
     const visibleSegs = Math.ceil(CANVAS_H / SEGMENT_HEIGHT) + 2;
-    // We need to draw corridor relative to current offset
-    ctx.save();
     const drawOffset = g.corridorOffset % SEGMENT_HEIGHT;
+
+    ctx.save();
     for (let i = 0; i < visibleSegs && (startSeg + i) < g.corridor.length - 1; i++) {
       const seg = g.corridor[startSeg + i];
       const nextSeg = g.corridor[startSeg + i + 1];
-      const y = i * SEGMENT_HEIGHT - drawOffset;
+      // Invert: highest segment index at y=0 (top), lowest at y=CANVAS_H (bottom)
+      const y = CANVAS_H - (i + 1) * SEGMENT_HEIGHT + drawOffset;
 
       // Left wall fill
       ctx.fillStyle = "rgba(255,45,149,0.15)";
@@ -858,9 +945,17 @@ export default function DeepAttack() {
   }, []);
 
   // ── Screen transitions ─────────────────────────────────────────────
+  const initAudio = async () => {
+    if (!audioRef.current) {
+      audioRef.current = new DeepAttackAudio();
+    }
+    await audioRef.current.init();
+  };
+
   const handleRegister = async (userData) => {
     const jogador = await register(userData);
     if (jogador) {
+      await initAudio();
       playCountRef.current++;
       initGame();
       setScreen("playing");
@@ -868,8 +963,9 @@ export default function DeepAttack() {
     }
   };
 
-  const handleMenuStart = () => {
+  const handleMenuStart = async () => {
     if (user) {
+      await initAudio();
       playCountRef.current++;
       initGame();
       setScreen("playing");
@@ -879,7 +975,8 @@ export default function DeepAttack() {
     }
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    await initAudio();
     playCountRef.current++;
     initGame();
     setScreen("playing");
