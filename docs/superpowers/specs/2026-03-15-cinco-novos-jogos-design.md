@@ -30,13 +30,24 @@ server/ws-<slug>.js                    -> (so Memory e 2048) servidor WebSocket
 
 Atualizar o array `jogos` em `src/app/page.js` com os 5 novos jogos:
 
-| Jogo            | slug           | emoji | cor       |
-|-----------------|----------------|-------|-----------|
-| 2048            | `2048`         | 🔢    | `#f59e0b` |
-| Bubble Shooter  | `bubbleshooter`| 🫧    | `#e879f9` |
-| Deep Attack     | `deepattack`   | 🚀    | `#22d3ee` |
-| Memory Game     | `memory`       | 🧠    | `#34d399` |
-| Wordle BR       | `wordle`       | 🔤    | `#a3e635` |
+| Jogo            | slug           | emoji | cor       | nome           | desc                                                       | destaque |
+|-----------------|----------------|-------|-----------|----------------|-------------------------------------------------------------|----------|
+| 2048            | `2048`         | 🔢    | `#f59e0b` | 2048           | Deslize os blocos e some ate chegar no 2048! Jogue online.  | false    |
+| Bubble Shooter  | `bubbleshooter`| 🫧    | `#e879f9` | Bubble Shooter | Mire, atire e estoure bolhas da mesma cor!                  | false    |
+| Deep Attack     | `deepattack`   | 🚀    | `#22d3ee` | Deep Attack    | Pilote sua nave, destrua aliens e sobreviva no espaco!      | false    |
+| Memory Game     | `memory`       | 🧠    | `#34d399` | Memory Game    | Encontre os pares e desafie amigos online!                  | false    |
+| Wordle BR       | `wordle`       | 🔤    | `#a3e635` | Wordle BR      | Adivinhe a palavra de 5 letras em 6 tentativas!             | false    |
+
+### SEO — Metadata por pagina
+
+Cada `page.js` deve exportar metadata especifica (em arquivo separado ou acima do componente client):
+
+```js
+export const metadata = {
+  title: "2048 - Acerte a Mosca! Jogos Online",
+  description: "Jogue 2048 online gratis! Deslize os blocos...",
+};
+```
 
 ### Ordem de construcao
 
@@ -55,7 +66,65 @@ Atualizar o array `jogos` em `src/app/page.js` com os 5 novos jogos:
   window.gtag?.("event", "game_start", { game_name: "<slug>" });
   window.gtag?.("event", "game_end", { game_name: "<slug>", score: <valor> });
   ```
-- `AdBanner` com slot especifico por jogo para tracking de receita por pagina
+- `AdBanner` com slot especifico por jogo:
+  - `wordle_bottom`, `memory_bottom`, `2048_bottom`, `bubbleshooter_bottom`, `deepattack_bottom`
+- Adicionar eventos gtag tambem aos 3 jogos existentes (AcerteAMosca, Pong, Ships) para consistencia
+- Timing dos eventos multiplayer: `game_start` dispara quando ambos jogadores estao conectados e a partida inicia; `game_end` dispara no cliente de cada jogador quando a partida termina
+
+### WebSocket — Novos Servidores
+
+Dois novos servidores WS seguindo o padrao existente (`ws-pong.js` porta 3002, `ws-ships.js` porta 3003):
+
+| Servidor          | Arquivo              | Porta | Env Var                       |
+|-------------------|----------------------|-------|-------------------------------|
+| Memory Multiplayer| `server/ws-memory.js`| 3004  | `NEXT_PUBLIC_WS_MEMORY_URL`   |
+| 2048 Multiplayer  | `server/ws-2048.js`  | 3005  | `NEXT_PUBLIC_WS_2048_URL`     |
+
+Adicionar ao `.env.example`:
+```
+NEXT_PUBLIC_WS_MEMORY_URL="ws://localhost:3004"
+NEXT_PUBLIC_WS_2048_URL="ws://localhost:3005"
+```
+
+Adicionar ao `package.json` scripts:
+```json
+"ws:memory": "node server/ws-memory.js",
+"ws:2048": "node server/ws-2048.js"
+```
+
+### Schema do Banco de Dados (Prisma)
+
+O model `Score` atual tem campos obrigatorios especificos do Acerte a Mosca (`acertos`, `erros`, `melhorCombo`, `precisao`). Para suportar os novos jogos:
+
+**Migracao:** tornar campos especificos opcionais e adicionar campo generico:
+
+```prisma
+model Score {
+  id          String   @id @default(cuid())
+  pontos      Int                              // campo universal de ranking
+  acertos     Int?                             // opcional (Acerte a Mosca)
+  erros       Int?                             // opcional (Acerte a Mosca)
+  melhorCombo Int?                             // opcional (Acerte a Mosca)
+  precisao    Int?                             // opcional (Acerte a Mosca)
+  metadata    Json?                            // dados especificos por jogo
+  jogo        String   @default("acerteamosca")
+  jogadorId   String
+  jogador     Jogador  @relation(fields: [jogadorId], references: [id])
+  criadoEm    DateTime @default(now())
+
+  @@index([jogadorId])
+  @@index([jogo, pontos])
+}
+```
+
+`metadata` armazena dados especificos por jogo:
+- Wordle: `{ tentativas: 4, palavra: "TIGRE" }`
+- Memory: `{ pares: 8, movimentos: 14, tempo: 45, dificuldade: "medio" }`
+- 2048: `{ maiorTile: 2048, modo: "solo" }`
+- Bubble Shooter: `{ nivel: 12, bolhasEstouradas: 89 }`
+- Deep Attack: `{ distancia: 4200, inimigosDestruidos: 35 }`
+
+A API `/api/scores/route.js` deve ser atualizada para aceitar os novos campos opcionais.
 
 ---
 
@@ -76,13 +145,33 @@ Aplicavel a todos os jogos (novos e existentes).
 - **Nome**: min 3 chars, sanitizar contra injection (strip tags, trim)
 - **Email**: validar formato server-side com regex
 - **WhatsApp**: validar formato `(XX) XXXXX-XXXX` se fornecido
-- **Nome duplicado**: rejeitar com erro "Nome ja cadastrado" (query `findFirst` por nome)
+- **Nome duplicado**: rejeitar com erro "Nome ja cadastrado" (query `findFirst` por nome, case-insensitive). Cenario de colisao: se usuario re-registra com email existente mas nome novo que ja pertence a outro, retornar erro "Nome ja cadastrado" sem atualizar o registro.
 - **Protecao contra injection**: Prisma parameterized queries (ja faz por padrao) + sanitizar inputs antes de salvar
+- **Respostas de erro**: retornar `{ error: "mensagem" }` com status 400 para todas as validacoes
+
+### Hook `useJogador`
+
+- Atualizar `register()` para propagar erros do servidor: checar `data.error` e retornar a mensagem
+- Retornar `{ error: "mensagem" }` quando o servidor rejeitar, para que o `RegisterModal` exiba inline
+
+### `RegisterModal`
+
+- Adicionar estado para erros do servidor (`serverError`)
+- Exibir erro retornado pelo `useJogador.register()` abaixo do botao ou no campo relevante
 
 ### Comportamento
 
 - Modal aparece uma unica vez — apos cadastro, cookie persiste (via `useJogador`)
 - Todos os 8 jogos usam o mesmo `RegisterModal` e `useJogador`
+
+### Controles Mobile
+
+Bubble Shooter e Deep Attack devem adicionar seus controles mobile em `MobileControls.jsx`, seguindo o padrao existente de `PongMobileControls` e `ShipsMobileControls`:
+
+- `BubbleShooterMobileControls`: 3 botoes [Esquerda] [Atirar] [Direita], usa `useMobile` para ocultar em desktop
+- `DeepAttackMobileControls`: 3 botoes [Esquerda] [Atirar] [Direita] + toggle auto-fire, usa `useMobile`
+
+Jogos DOM (Wordle, Memory, 2048) nao precisam de controles mobile customizados — interacao e por toque direto nos elementos.
 
 ---
 
@@ -93,10 +182,12 @@ Aplicavel a todos os jogos (novos e existentes).
 ### Gameplay
 
 - 6 tentativas para adivinhar palavra de 5 letras em PT-BR
-- Array de ~150 palavras hardcoded (maiusculas, sem acentos)
+- Duas listas de palavras hardcoded:
+  - **Lista de respostas**: ~150 palavras curadas (maiusculas, sem acentos) — usadas como palavras-alvo
+  - **Lista de guesses validos**: ~500+ palavras (inclui as de resposta) — qualquer tentativa do jogador deve estar nesta lista
 - Feedback de cores: verde (posicao certa), amarelo (letra existe, posicao errada), cinza (nao existe)
 - Tratamento correto de letras duplicadas (primeiro marca verdes, depois amarelos)
-- Validacao: so aceita palavras do banco
+- Validacao: so aceita palavras da lista de guesses validos (rejeitar com shake + toast)
 
 ### Visual
 
@@ -240,8 +331,8 @@ Aplicavel a todos os jogos (novos e existentes).
 - Gruda na posicao mais proxima do grid hexagonal ao encostar
 - Grupos de 3+ mesma cor eliminados
 - Bolhas sem conexao com o topo caem (pontos bonus)
-- Novas linhas descem a cada 5 disparos
-- Game over quando bolhas ultrapassam linha inferior
+- Novas linhas descem a cada 5 disparos: todas as bolhas existentes deslocam uma linha para baixo no grid hex, e uma nova linha e gerada no topo com bolhas aleatorias
+- Game over quando qualquer bolha ultrapassa a linha inferior (linha de limite visivel)
 
 ### Visual
 
@@ -266,10 +357,12 @@ Aplicavel a todos os jogos (novos e existentes).
 ### Tecnico
 
 - Canvas com `requestAnimationFrame` para game loop
-- Coordenadas hexagonais (offset coordinates) para grid
-- Colisao circular entre bolha disparada e bolhas do grid
-- BFS/flood-fill para detectar grupos e bolhas desconectadas
-- Reflexao de angulo para ricochete
+- Coordenadas hexagonais (odd-r offset coordinates): linhas impares deslocadas meia bolha para direita
+- Cada bolha tem raio fixo R; posicao no canvas calculada por: `x = col * 2R + (row % 2) * R`, `y = row * R * 1.73`
+- Snap-to-grid: ao colidir, calcular celula mais proxima livre comparando distancia do centro da bolha a cada celula vizinha vazia
+- Colisao circular: bolha disparada colide com bolha do grid quando distancia entre centros < 2R
+- BFS/flood-fill para detectar grupos de mesma cor (3+) e bolhas desconectadas do topo
+- Reflexao de angulo para ricochete: `novoAngulo = PI - angulo` ao tocar parede lateral
 - Angulo em `useRef` para atualizacao continua sem re-render
 - `onTouchStart`/`onTouchEnd` + `setInterval`/`clearInterval` para rotacao continua
 - `onKeyDown`/`onKeyUp` no window com mesma logica
@@ -323,5 +416,11 @@ Aplicavel a todos os jogos (novos e existentes).
 - Arrays de entidades: inimigos[], tiros[], powerups[], estrelas[]
 - Spawn system: timers baseados em distancia percorrida / dificuldade
 - Colisao retangular (AABB) entre nave/tiros e inimigos/paredes
-- Corredor gerado proceduralmente: array de segmentos com largura variavel
+- Corredor gerado proceduralmente:
+  - Array de segmentos, cada um com `leftWall` e `rightWall` (posicoes X)
+  - Largura minima: 60% do canvas (inicio), diminui ate 35% nos niveis mais dificeis
+  - Largura maxima: 90% do canvas
+  - Transicao suave entre segmentos (interpolacao linear entre larguras)
+  - Novos segmentos gerados conforme scroll avanca (buffer de ~2 telas a frente)
+  - Paredes renderizadas como retangulos com glow neon; colisao = game over
 - Parallax: 2-3 camadas de estrelas com velocidades diferentes
