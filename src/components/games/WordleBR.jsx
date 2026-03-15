@@ -271,10 +271,10 @@ export default function WordleBR() {
     if (currentGuess.length !== 5) return;
 
     const guess = currentGuess.toUpperCase();
-    if (!VALID_GUESSES.includes(guess)) {
+    if (!/^[A-Z]{5}$/.test(guess)) {
       setShakeRow(guesses.length);
       setTimeout(() => setShakeRow(-1), 600);
-      showToast("Palavra nao encontrada");
+      showToast("Digite 5 letras");
       audioRef.current?.error();
       return;
     }
