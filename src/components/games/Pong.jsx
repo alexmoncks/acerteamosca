@@ -406,6 +406,7 @@ export default function Pong() {
       const w = g.s1 >= WIN_SCORE ? 1 : 2;
       setWinner(w);
       audioRef.current?.winGame();
+      window.gtag?.("event", "game_end", { game_name: "pong", score: `${g.s1}-${g.s2}` });
       setTimeout(() => setScreen("gameover"), 600);
       return true;
     }
@@ -665,6 +666,7 @@ export default function Pong() {
           setLobbyStatus(null);
           setDisconnected(false);
           setRemoteRestartReq(false);
+          window.gtag?.("event", "game_start", { game_name: "pong" });
           break;
 
         case "gs": // game state
@@ -696,6 +698,7 @@ export default function Pong() {
           setS2(msg.s2);
           setWinner(msg.winner);
           audioRef.current?.winGame();
+          window.gtag?.("event", "game_end", { game_name: "pong", score: `${msg.s1}-${msg.s2}` });
           setTimeout(() => setScreen("gameover"), 400);
           break;
 
@@ -747,6 +750,7 @@ export default function Pong() {
     } else {
       resetLocalGame();
       setScreen("playing");
+      window.gtag?.("event", "game_start", { game_name: "pong" });
     }
   }, [initAudio, resetLocalGame, connectWS]);
 
@@ -778,6 +782,7 @@ export default function Pong() {
     } else {
       resetLocalGame();
       setScreen("playing");
+      window.gtag?.("event", "game_start", { game_name: "pong" });
     }
   }, [mode, resetLocalGame]);
 

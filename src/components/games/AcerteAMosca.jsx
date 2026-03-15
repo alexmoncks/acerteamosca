@@ -729,6 +729,7 @@ export default function AcerteAMosca() {
               jogo: "acerteamosca",
             }),
           }).catch(() => {});
+          window.gtag?.("event", "game_end", { game_name: "acerteamosca", score: gs.score });
           setScreen("gameover");
           return 0;
         }
@@ -821,6 +822,7 @@ export default function AcerteAMosca() {
       await initAudio();
       resetGame();
       setScreen("playing");
+      window.gtag?.("event", "game_start", { game_name: "acerteamosca" });
     }
   };
 
@@ -831,6 +833,7 @@ export default function AcerteAMosca() {
       initAudio().then(() => {
         resetGame();
         setScreen("playing");
+        window.gtag?.("event", "game_start", { game_name: "acerteamosca" });
       });
     } else {
       setScreen("register");
@@ -853,6 +856,7 @@ export default function AcerteAMosca() {
     playCountRef.current++;
     resetGame();
     setScreen("playing");
+    window.gtag?.("event", "game_start", { game_name: "acerteamosca" });
   };
 
   useEffect(() => () => audioRef.current?.stop(), []);

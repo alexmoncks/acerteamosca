@@ -652,6 +652,7 @@ export default function Ships() {
         if (g.sc[i] >= WIN_SCORE) {
           setWinner(i + 1);
           audioRef.current?.winGame();
+          window.gtag?.("event", "game_end", { game_name: "ships", score: 0 });
           setTimeout(() => setScreen("gameover"), 800);
           return;
         }
@@ -736,6 +737,7 @@ export default function Ships() {
           setRemoteReq(false);
           setRoundState("playing");
           setS1(0); setS2(0);
+          window.gtag?.("event", "game_start", { game_name: "ships" });
           break;
         case "g":
           setShip1({ x: msg.s[0][0], y: msg.s[0][1], a: msg.s[0][2], alive: !!msg.s[0][3] });
@@ -758,6 +760,7 @@ export default function Ships() {
           setS1(msg.c[0]); setS2(msg.c[1]);
           setWinner(msg.winner);
           audioRef.current?.winGame();
+          window.gtag?.("event", "game_end", { game_name: "ships", score: 0 });
           setTimeout(() => setScreen("gameover"), 400);
           break;
         case "maze":
@@ -777,7 +780,7 @@ export default function Ships() {
     await initAudio();
     if (sel === "remote-host") { setScreen("lobby"); setLobbyStatus("creating"); connectWS("create"); }
     else if (sel === "remote-join") { setScreen("lobby"); setLobbyStatus("joining"); connectWS("join", joinCode); }
-    else { resetGame(); setScreen("playing"); }
+    else { resetGame(); setScreen("playing"); window.gtag?.("event", "game_start", { game_name: "ships" }); }
   }, [initAudio, resetGame, connectWS]);
 
   const handleSelectMode = useCallback(async (sel, joinCode) => {
@@ -802,7 +805,7 @@ export default function Ships() {
     if (mode?.startsWith("remote")) {
       const ws = wsRef.current;
       if (ws?.readyState === 1) ws.send(JSON.stringify({ t: "restart" }));
-    } else { resetGame(); setScreen("playing"); }
+    } else { resetGame(); setScreen("playing"); window.gtag?.("event", "game_start", { game_name: "ships" }); }
   }, [mode, resetGame]);
 
   const handleMenu = useCallback(() => {
