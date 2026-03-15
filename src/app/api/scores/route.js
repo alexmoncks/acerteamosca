@@ -14,15 +14,23 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { pontos, acertos, erros, melhorCombo, precisao, jogo } = body;
+    const { pontos, acertos, erros, melhorCombo, precisao, jogo, metadata } = body;
+
+    if (typeof pontos !== "number") {
+      return NextResponse.json(
+        { error: "Pontos é obrigatório" },
+        { status: 400 }
+      );
+    }
 
     const score = await prisma.score.create({
       data: {
         pontos,
-        acertos,
-        erros,
-        melhorCombo,
-        precisao,
+        acertos: acertos ?? null,
+        erros: erros ?? null,
+        melhorCombo: melhorCombo ?? null,
+        precisao: precisao ?? null,
+        metadata: metadata ?? null,
         jogo: jogo || "acerteamosca",
         jogadorId,
       },
@@ -58,6 +66,7 @@ export async function GET(request) {
         acertos: s.acertos,
         precisao: s.precisao,
         melhorCombo: s.melhorCombo,
+        metadata: s.metadata,
         data: s.criadoEm,
       })),
     });
