@@ -13,6 +13,7 @@
     "ws:ships": "node server/ws-ships.js",
     "ws:memory": "node server/ws-memory.js",
     "ws:2048": "node server/ws-2048.js",
+    "ws:all": "node server/ws-unified.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
