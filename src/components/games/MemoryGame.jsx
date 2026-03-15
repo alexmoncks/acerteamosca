@@ -15,12 +15,12 @@ const ACCENT2 = "#764ba2";
 const NEON_GREEN = "#39ff14";
 const ONLINE_ACCENT = "#b026ff";
 
-const ALL_EMOJIS = ["\u{1F34E}", "\u{1F680}", "\u26BD", "\u{1F3B5}", "\u{1F31F}", "\u{1F3AF}", "\u{1F431}", "\u{1F308}", "\u{1F525}", "\u{1F48E}", "\u{1F3AA}", "\u{1F3C6}"];
+const ALL_EMOJIS = ["🍎", "🚀", "⚽", "🎵", "🌟", "🎯", "🐱", "🌈", "🔥", "💎", "🎪", "🏆"];
 
 const DIFFICULTIES = {
-  easy: { label: "F\u00e1cil", cols: 4, rows: 3, pairs: 6 },
-  medium: { label: "M\u00e9dio", cols: 4, rows: 4, pairs: 8 },
-  hard: { label: "Dif\u00edcil", cols: 6, rows: 4, pairs: 12 },
+  easy: { label: "Facil", cols: 4, rows: 3, pairs: 6 },
+  medium: { label: "Medio", cols: 4, rows: 4, pairs: 8 },
+  hard: { label: "Dificil", cols: 6, rows: 4, pairs: 12 },
 };
 
 // ---- Fisher-Yates Shuffle ----
@@ -141,7 +141,7 @@ function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
 
       {/* Animated card preview */}
       <div style={{ display: "flex", gap: 10, marginBottom: 36 }}>
-        {["\u{1F34E}", "\u{1F680}", "\u26BD", "\u{1F3B5}"].map((emoji, i) => (
+        {["🍎", "🚀", "⚽", "🎵"].map((emoji, i) => (
           <div
             key={i}
             style={{
@@ -831,7 +831,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, onRestart, onCha
           animation: "popIn 0.5s ease both",
         }}
       >
-        PARAB\u00c9NS!
+        PARABENS!
       </h2>
 
       {/* Stars */}
@@ -1055,10 +1055,10 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
     title = "EMPATE!";
     titleColor = "#ffe600";
   } else if (youWon) {
-    title = "VOC\u00ca VENCEU!";
+    title = "VOCE VENCEU!";
     titleColor = NEON_GREEN;
   } else {
-    title = "VOC\u00ca PERDEU";
+    title = "VOCE PERDEU";
     titleColor = "#ff2d95";
   }
 
@@ -1129,7 +1129,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
               color: playerNum === 0 ? NEON_GREEN : "#8892b0",
             }}
           >
-            {playerNum === 0 ? "VOC\u00ca" : "OPONENTE"}
+            {playerNum === 0 ? "VOCE" : "OPONENTE"}
           </span>
           <span
             style={{
@@ -1157,7 +1157,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
               color: playerNum === 1 ? NEON_GREEN : "#8892b0",
             }}
           >
-            {playerNum === 1 ? "VOC\u00ca" : "OPONENTE"}
+            {playerNum === 1 ? "VOCE" : "OPONENTE"}
           </span>
           <span
             style={{
