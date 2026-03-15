@@ -10,18 +10,63 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_MEMORY_URL || "ws://localhost:3004";
 
 const GAME_W = 500;
 const COLOR_BG = "#050510";
-const ACCENT = "#667eea";
-const ACCENT2 = "#764ba2";
+const ACCENT = "#34d399";
+const ACCENT2 = "#059669";
 const NEON_GREEN = "#39ff14";
 const ONLINE_ACCENT = "#b026ff";
+const TIMED_DURATION = 60;
 
-const ALL_EMOJIS = ["🍎", "🚀", "⚽", "🎵", "🌟", "🎯", "🐱", "🌈", "🔥", "💎", "🎪", "🏆"];
+const ALL_EMOJIS = ["\u{1F34E}", "\u{1F680}", "\u26BD", "\u{1F3B5}", "\u{1F31F}", "\u{1F3AF}", "\u{1F431}", "\u{1F308}", "\u{1F525}", "\u{1F48E}", "\u{1F3AA}", "\u{1F3C6}"];
 
 const DIFFICULTIES = {
   easy: { label: "Facil", cols: 4, rows: 3, pairs: 6 },
   medium: { label: "Medio", cols: 4, rows: 4, pairs: 8 },
   hard: { label: "Dificil", cols: 6, rows: 4, pairs: 12 },
 };
+
+// ---- Memory Audio Engine ----
+class MemoryAudio {
+  constructor() { this.ctx = null; }
+  async init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await this.ctx.resume();
+  }
+  _tone(freq, dur, vol = 0.12, type = "sine") {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + dur);
+  }
+  flip() {
+    this._tone(1200, 0.04, 0.08, "sine");
+  }
+  match() {
+    this._tone(523, 0.1, 0.12, "sine");
+    setTimeout(() => this._tone(659, 0.1, 0.12, "sine"), 80);
+    setTimeout(() => this._tone(784, 0.12, 0.14, "sine"), 160);
+  }
+  noMatch() {
+    this._tone(250, 0.12, 0.06, "triangle");
+  }
+  victory() {
+    this._tone(523, 0.15, 0.15, "sine");
+    setTimeout(() => this._tone(659, 0.15, 0.15, "sine"), 150);
+    setTimeout(() => this._tone(784, 0.15, 0.15, "sine"), 300);
+    setTimeout(() => {
+      this._tone(1047, 0.4, 0.15, "sine");
+      this._tone(1319, 0.4, 0.12, "sine");
+      this._tone(1568, 0.4, 0.10, "sine");
+    }, 450);
+  }
+}
 
 // ---- Fisher-Yates Shuffle ----
 function shuffle(arr) {
@@ -47,11 +92,13 @@ function generateDeck(difficulty) {
 }
 
 // ---- Score calculation ----
-function calculateScore(moves, time, totalPairs) {
+function calculateScore(moves, time, totalPairs, timedMode = false, timeRemaining = 0) {
   const perfectMoves = totalPairs;
   const moveRatio = perfectMoves / Math.max(moves, perfectMoves);
-  const timeBonus = Math.max(0, 1 - time / (totalPairs * 10));
-  return Math.round(moveRatio * 800 + timeBonus * 200);
+  const timeBonus = timedMode
+    ? timeRemaining * 10
+    : Math.max(0, 1 - time / (totalPairs * 10)) * 200;
+  return Math.round(moveRatio * 800 + timeBonus);
 }
 
 // ---- Format time MM:SS ----
@@ -99,7 +146,7 @@ function ConfettiParticle({ index }) {
 }
 
 // ---- Menu Screen ----
-function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
+function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStart, onOnline }) {
   return (
     <div
       style={{
@@ -141,7 +188,7 @@ function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
 
       {/* Animated card preview */}
       <div style={{ display: "flex", gap: 10, marginBottom: 36 }}>
-        {["🍎", "🚀", "⚽", "🎵"].map((emoji, i) => (
+        {["\u{1F34E}", "\u{1F680}", "\u26BD", "\u{1F3B5}"].map((emoji, i) => (
           <div
             key={i}
             style={{
@@ -156,7 +203,7 @@ function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
                 ? "#fff"
                 : `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`,
               boxShadow: i % 2 === 0
-                ? "0 0 15px rgba(102,126,234,0.3)"
+                ? `0 0 15px ${ACCENT}30`
                 : `0 0 15px ${ACCENT}40`,
               animation: `popIn 0.5s ${i * 0.12}s both`,
             }}
@@ -178,7 +225,7 @@ function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
       >
         DIFICULDADE
       </p>
-      <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         {Object.entries(DIFFICULTIES).map(([key, val]) => (
           <button
             key={key}
@@ -202,6 +249,28 @@ function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
         ))}
       </div>
 
+      {/* Timed challenge toggle */}
+      <button
+        onClick={() => setTimedMode((t) => !t)}
+        style={{
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: 8,
+          padding: "8px 18px",
+          background: timedMode
+            ? "linear-gradient(135deg, #ff6b6b, #ee5a24)"
+            : "transparent",
+          color: timedMode ? "#fff" : "#8892b0",
+          border: `2px solid ${timedMode ? "#ff6b6b" : "#2a2a4a"}`,
+          borderRadius: 8,
+          cursor: "pointer",
+          transition: "all 0.2s",
+          marginBottom: 12,
+          letterSpacing: 1,
+        }}
+      >
+        {"\u23F1"} DESAFIO 60s {timedMode ? "ON" : "OFF"}
+      </button>
+
       <p
         style={{
           fontFamily: "'Fira Code', monospace",
@@ -212,6 +281,7 @@ function MenuScreen({ difficulty, setDifficulty, onStart, onOnline }) {
       >
         {DIFFICULTIES[difficulty].cols}x{DIFFICULTIES[difficulty].rows} ={" "}
         {DIFFICULTIES[difficulty].pairs * 2} cartas ({DIFFICULTIES[difficulty].pairs} pares)
+        {timedMode ? " - 60s" : ""}
       </p>
 
       {/* Solo play button */}
@@ -638,7 +708,8 @@ function OnlinePlayingHeader({ onlineTurn, playerNum, onlineScores, matchedCount
 }
 
 // ---- Playing Header ----
-function PlayingHeader({ moves, timer, matchedCount, totalPairs, onBack }) {
+function PlayingHeader({ moves, timer, matchedCount, totalPairs, onBack, timedMode }) {
+  const isLowTime = timedMode && timer <= 10;
   return (
     <div
       style={{
@@ -674,7 +745,11 @@ function PlayingHeader({ moves, timer, matchedCount, totalPairs, onBack }) {
           color: "#ccd6f6",
         }}
       >
-        <span style={{ color: ACCENT }}>
+        <span style={{
+          color: isLowTime ? "#ff2d55" : (timedMode ? "#ff6b6b" : ACCENT),
+          animation: isLowTime ? "timerFlash 0.5s ease-in-out infinite" : "none",
+          fontWeight: isLowTime ? "bold" : "normal",
+        }}>
           {"\u23F1"} {formatTime(timer)}
         </span>
         <span>
@@ -732,7 +807,7 @@ function Card({ card, index, isFlipped, isMatched, onClick, cols, shakeId, match
             backfaceVisibility: "hidden",
             borderRadius: 10,
             background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`,
-            boxShadow: `0 2px 12px rgba(102,126,234,0.25)`,
+            boxShadow: `0 2px 12px ${ACCENT}25`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -788,9 +863,14 @@ function Card({ card, index, isFlipped, isMatched, onClick, cols, shakeId, match
 }
 
 // ---- Finished Screen (Solo) ----
-function FinishedScreen({ moves, timer, totalPairs, difficulty, onRestart, onChangeDifficulty }) {
-  const stars = getStars(moves, totalPairs);
-  const score = calculateScore(moves, timer, totalPairs);
+function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timedWin, matchedPairs, onRestart, onChangeDifficulty }) {
+  const won = timedMode ? timedWin : true;
+  const stars = won ? getStars(moves, totalPairs) : 0;
+  const timeRemaining = timedMode ? timer : 0;
+  const timeElapsed = timedMode ? (TIMED_DURATION - timer) : timer;
+  const score = won
+    ? calculateScore(moves, timeElapsed, totalPairs, timedMode, timeRemaining)
+    : 0;
 
   return (
     <div
@@ -807,54 +887,58 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, onRestart, onCha
       }}
     >
       {/* Confetti */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          overflow: "hidden",
-          pointerEvents: "none",
-        }}
-      >
-        {Array.from({ length: 40 }, (_, i) => (
-          <ConfettiParticle key={i} index={i} />
-        ))}
-      </div>
+      {won && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            overflow: "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          {Array.from({ length: 40 }, (_, i) => (
+            <ConfettiParticle key={i} index={i} />
+          ))}
+        </div>
+      )}
 
       <h2
         style={{
           fontFamily: "'Press Start 2P', monospace",
           fontSize: 18,
-          color: NEON_GREEN,
-          textShadow: `0 0 20px ${NEON_GREEN}80`,
+          color: won ? NEON_GREEN : "#ff2d55",
+          textShadow: `0 0 20px ${won ? NEON_GREEN : "#ff2d55"}80`,
           marginBottom: 24,
           textAlign: "center",
           animation: "popIn 0.5s ease both",
         }}
       >
-        PARABENS!
+        {won ? "PARABENS!" : "TEMPO ESGOTADO!"}
       </h2>
 
-      {/* Stars */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          marginBottom: 24,
-        }}
-      >
-        {[1, 2, 3].map((s) => (
-          <span
-            key={s}
-            style={{
-              fontSize: 36,
-              filter: s <= stars ? "none" : "grayscale(1) opacity(0.3)",
-              animation: s <= stars ? `popIn 0.4s ${s * 0.2}s both` : "none",
-            }}
-          >
-            {"\u2B50"}
-          </span>
-        ))}
-      </div>
+      {/* Stars (only when won) */}
+      {won && (
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginBottom: 24,
+          }}
+        >
+          {[1, 2, 3].map((s) => (
+            <span
+              key={s}
+              style={{
+                fontSize: 36,
+                filter: s <= stars ? "none" : "grayscale(1) opacity(0.3)",
+                animation: s <= stars ? `popIn 0.4s ${s * 0.2}s both` : "none",
+              }}
+            >
+              {"\u2B50"}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Stats */}
       <div
@@ -889,6 +973,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, onRestart, onCha
             }}
           >
             {DIFFICULTIES[difficulty].label}
+            {timedMode ? " (60s)" : ""}
           </span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 24 }}>
@@ -899,16 +984,18 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, onRestart, onCha
               color: "#8892b0",
             }}
           >
-            Tempo
+            {timedMode ? (won ? "Tempo restante" : "Tempo") : "Tempo"}
           </span>
           <span
             style={{
               fontFamily: "'Fira Code', monospace",
               fontSize: 11,
-              color: ACCENT,
+              color: won ? ACCENT : "#ff2d55",
             }}
           >
-            {formatTime(timer)}
+            {timedMode
+              ? (won ? formatTime(timer) : "00:00")
+              : formatTime(timer)}
           </span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 24 }}>
@@ -945,12 +1032,34 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, onRestart, onCha
             style={{
               fontFamily: "'Fira Code', monospace",
               fontSize: 11,
-              color: NEON_GREEN,
+              color: won ? NEON_GREEN : "#ccd6f6",
             }}
           >
-            {totalPairs}/{totalPairs}
+            {won ? `${totalPairs}/${totalPairs}` : `${matchedPairs}/${totalPairs}`}
           </span>
         </div>
+        {timedMode && won && (
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 24 }}>
+            <span
+              style={{
+                fontFamily: "'Fira Code', monospace",
+                fontSize: 11,
+                color: "#8892b0",
+              }}
+            >
+              Bonus tempo
+            </span>
+            <span
+              style={{
+                fontFamily: "'Fira Code', monospace",
+                fontSize: 11,
+                color: "#ff6b6b",
+              }}
+            >
+              +{timer * 10}
+            </span>
+          </div>
+        )}
         <div
           style={{
             borderTop: "1px solid #2a2a4a",
@@ -1249,9 +1358,12 @@ export default function MemoryGame() {
   const [showRegister, setShowRegister] = useState(false);
   const [shakeId, setShakeId] = useState(null);
   const [matchAnimEmoji, setMatchAnimEmoji] = useState(null);
+  const [timedMode, setTimedMode] = useState(false);
+  const [timedWin, setTimedWin] = useState(false);
 
   const timerRef = useRef(null);
   const gameStartedRef = useRef(false);
+  const audioRef = useRef(null);
 
   // ---- Online State ----
   const wsRef = useRef(null);
@@ -1276,15 +1388,38 @@ export default function MemoryGame() {
   // ---- Timer effect (solo only) ----
   useEffect(() => {
     if (screen === "playing") {
-      timerRef.current = setInterval(() => {
-        setTimer((t) => t + 1);
-      }, 1000);
+      if (timedMode) {
+        timerRef.current = setInterval(() => {
+          setTimer((t) => {
+            if (t <= 1) {
+              clearInterval(timerRef.current);
+              return 0;
+            }
+            return t - 1;
+          });
+        }, 1000);
+      } else {
+        timerRef.current = setInterval(() => {
+          setTimer((t) => t + 1);
+        }, 1000);
+      }
       return () => clearInterval(timerRef.current);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [screen]);
+  }, [screen, timedMode]);
+
+  // ---- Timed mode: check for time out ----
+  useEffect(() => {
+    if (screen !== "playing" || !timedMode) return;
+    if (timer <= 0 && gameStartedRef.current) {
+      clearInterval(timerRef.current);
+      setTimedWin(false);
+      setLocked(true);
+      setScreen("finished");
+    }
+  }, [timer, screen, timedMode]);
 
   // ---- Check win condition (solo only) ----
   useEffect(() => {
@@ -1292,7 +1427,16 @@ export default function MemoryGame() {
     if (matchedCount === totalPairs && matchedCount > 0) {
       const timeout = setTimeout(() => {
         clearInterval(timerRef.current);
-        const finalScore = calculateScore(moves, timer, totalPairs);
+
+        if (timedMode) {
+          setTimedWin(true);
+        }
+
+        audioRef.current?.victory();
+
+        const timeElapsed = timedMode ? (TIMED_DURATION - timer) : timer;
+        const timeRemaining = timedMode ? timer : 0;
+        const finalScore = calculateScore(moves, timeElapsed, totalPairs, timedMode, timeRemaining);
 
         fetch("/api/scores", {
           method: "POST",
@@ -1303,8 +1447,9 @@ export default function MemoryGame() {
             metadata: {
               pares: totalPairs,
               movimentos: moves,
-              tempo: timer,
+              tempo: timedMode ? (TIMED_DURATION - timer) : timer,
               dificuldade: difficulty,
+              timedMode,
             },
           }),
         }).catch(() => {});
@@ -1314,14 +1459,15 @@ export default function MemoryGame() {
           score: finalScore,
           difficulty,
           moves,
-          time: timer,
+          time: timedMode ? (TIMED_DURATION - timer) : timer,
+          timedMode,
         });
 
         setScreen("finished");
       }, 800);
       return () => clearTimeout(timeout);
     }
-  }, [matchedCount, totalPairs, screen, moves, timer, difficulty]);
+  }, [matchedCount, totalPairs, screen, moves, timer, difficulty, timedMode]);
 
   // ---- Close WS helper ----
   const closeWS = useCallback(() => {
@@ -1389,16 +1535,23 @@ export default function MemoryGame() {
           setOnlineResult(null);
           setScreen("online-playing");
           setLobbyStatus("idle");
+          // Init audio for online
+          if (!audioRef.current) {
+            audioRef.current = new MemoryAudio();
+          }
+          audioRef.current.init().catch(() => {});
           window.gtag?.("event", "game_start", { game_name: "memory", mode: "online" });
           break;
         }
 
         case "flipped":
           setFlipped((prev) => [...prev, msg.index]);
+          audioRef.current?.flip();
           break;
 
         case "match":
           setMatchAnimEmoji(null);
+          audioRef.current?.match();
           // Brief delay so both flipped cards are visible before marking matched
           setTimeout(() => {
             setOnlineMatchedIndices((prev) => [...prev, ...msg.indices]);
@@ -1411,6 +1564,7 @@ export default function MemoryGame() {
         case "nomatch":
           // Cards stay flipped briefly then flip back
           setLocked(true);
+          audioRef.current?.noMatch();
           setTimeout(() => {
             setFlipped([]);
             setLocked(false);
@@ -1424,6 +1578,9 @@ export default function MemoryGame() {
         case "gameover":
           setOnlineScores([...msg.scores]);
           setOnlineResult({ scores: msg.scores, winner: msg.winner });
+          if (msg.winner === playerNum) {
+            audioRef.current?.victory();
+          }
           setTimeout(() => {
             setScreen("online-finished");
           }, 600);
@@ -1466,13 +1623,19 @@ export default function MemoryGame() {
     setFlipped([]);
     setMatched([]);
     setMoves(0);
-    setTimer(0);
+    setTimer(timedMode ? TIMED_DURATION : 0);
     setLocked(false);
     setShakeId(null);
     setMatchAnimEmoji(null);
+    setTimedWin(false);
     gameStartedRef.current = false;
+    // Init audio
+    if (!audioRef.current) {
+      audioRef.current = new MemoryAudio();
+    }
+    audioRef.current.init().catch(() => {});
     setScreen("playing");
-  }, [difficulty]);
+  }, [difficulty, timedMode]);
 
   // ---- Handle start button (with registration check) ----
   const handleStartClick = useCallback(() => {
@@ -1547,9 +1710,12 @@ export default function MemoryGame() {
       if (flipped.includes(index)) return;
       if (matched.includes(card.emoji)) return;
 
+      // Play flip sound
+      audioRef.current?.flip();
+
       if (!gameStartedRef.current) {
         gameStartedRef.current = true;
-        window.gtag?.("event", "game_start", { game_name: "memory", difficulty });
+        window.gtag?.("event", "game_start", { game_name: "memory", difficulty, timedMode });
       }
 
       const newFlipped = [...flipped, index];
@@ -1565,6 +1731,8 @@ export default function MemoryGame() {
         const secondCard = cards[newFlipped[1]];
 
         if (firstCard.emoji === secondCard.emoji) {
+          // Match found
+          audioRef.current?.match();
           setMatchAnimEmoji(firstCard.emoji);
           setTimeout(() => {
             setMatched((prev) => [...prev, firstCard.emoji]);
@@ -1573,7 +1741,9 @@ export default function MemoryGame() {
             setMatchAnimEmoji(null);
           }, 600);
         } else {
+          // No match
           setTimeout(() => {
+            audioRef.current?.noMatch();
             setShakeId(firstCard.id);
             setTimeout(() => setShakeId(null), 500);
           }, 400);
@@ -1588,7 +1758,7 @@ export default function MemoryGame() {
         }
       }
     },
-    [locked, screen, cards, flipped, matched, difficulty]
+    [locked, screen, cards, flipped, matched, difficulty, timedMode]
   );
 
   // ---- Handle card click (online) ----
@@ -1673,6 +1843,7 @@ export default function MemoryGame() {
   const gridGap = cols === 6 ? 6 : 8;
   const gridWidth = cols * cardWidth + (cols - 1) * gridGap;
   const containerWidth = Math.max(GAME_W, gridWidth + 24);
+  const GAME_H = 620;
 
   return (
     <div
@@ -1682,7 +1853,7 @@ export default function MemoryGame() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
         padding: 12,
@@ -1716,6 +1887,10 @@ export default function MemoryGame() {
           0%, 100% { box-shadow: 0 0 10px rgba(176,38,255,0.2); }
           50% { box-shadow: 0 0 25px rgba(176,38,255,0.5); }
         }
+        @keyframes timerFlash {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
       `}</style>
 
       {/* Register Modal */}
@@ -1728,216 +1903,233 @@ export default function MemoryGame() {
         />
       )}
 
-      {/* Game container */}
-      <div
-        style={{
-          width: containerWidth,
-          maxWidth: GAME_W,
-          transform: `scale(${gameScale})`,
-          transformOrigin: "top center",
-          position: "relative",
-          minHeight: 500,
-        }}
-      >
-        {/* Menu Screen */}
-        {screen === "menu" && (
-          <MenuScreen
-            difficulty={difficulty}
-            setDifficulty={setDifficulty}
-            onStart={handleStartClick}
-            onOnline={handleOnlineClick}
-          />
-        )}
-
-        {/* Online Lobby */}
-        {screen === "online-lobby" && (
-          <OnlineLobby
-            roomId={roomId}
-            lobbyStatus={lobbyStatus}
-            difficulty={difficulty}
-            setDifficulty={setDifficulty}
-            onCreate={handleCreateRoom}
-            onJoin={handleJoinRoom}
-            onCancel={handleBackToMenu}
-          />
-        )}
-
-        {/* Solo Playing Screen */}
-        {screen === "playing" && (
-          <div
+      {/* Title H1 above game area */}
+      {screen !== "menu" && (
+        <>
+          <h1
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              animation: "fadeIn 0.3s ease",
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 22,
+              color: ACCENT,
+              textShadow: `0 0 20px ${ACCENT}80, 0 0 40px ${ACCENT}40`,
+              marginBottom: 8,
+              letterSpacing: 3,
+              textAlign: "center",
             }}
           >
-            <h1
+            MEMORY GAME
+          </h1>
+          <p
+            style={{
+              color: "#4a5568",
+              fontSize: 10,
+              marginBottom: 14,
+              fontFamily: "'Press Start 2P', monospace",
+            }}
+          >
+            {timedMode && screen === "playing" ? "\u23F1 DESAFIO POR TEMPO" : "ENCONTRE TODOS OS PARES"}
+          </p>
+        </>
+      )}
+
+      {/* Bordered container + scaling wrapper */}
+      <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
+        <div
+          style={{
+            width: GAME_W,
+            height: GAME_H,
+            position: "relative",
+            background: "#0a0a1a",
+            border: `2px solid ${ACCENT}33`,
+            borderRadius: 12,
+            overflow: "hidden",
+            boxShadow: `0 0 30px ${ACCENT}11`,
+            transform: `scale(${gameScale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          {/* Menu Screen */}
+          {screen === "menu" && (
+            <MenuScreen
+              difficulty={difficulty}
+              setDifficulty={setDifficulty}
+              timedMode={timedMode}
+              setTimedMode={setTimedMode}
+              onStart={handleStartClick}
+              onOnline={handleOnlineClick}
+            />
+          )}
+
+          {/* Online Lobby */}
+          {screen === "online-lobby" && (
+            <OnlineLobby
+              roomId={roomId}
+              lobbyStatus={lobbyStatus}
+              difficulty={difficulty}
+              setDifficulty={setDifficulty}
+              onCreate={handleCreateRoom}
+              onJoin={handleJoinRoom}
+              onCancel={handleBackToMenu}
+            />
+          )}
+
+          {/* Solo Playing Screen */}
+          {screen === "playing" && (
+            <div
               style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: 14,
-                color: ACCENT,
-                textShadow: `0 0 12px ${ACCENT}60`,
-                marginBottom: 12,
-                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                animation: "fadeIn 0.3s ease",
+                padding: "12px 0",
               }}
             >
-              MEMORY GAME
-            </h1>
+              <PlayingHeader
+                moves={moves}
+                timer={timer}
+                matchedCount={matchedCount}
+                totalPairs={totalPairs}
+                onBack={handleBackToMenu}
+                timedMode={timedMode}
+              />
 
-            <PlayingHeader
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${cols}, ${cardWidth}px)`,
+                  gap: gridGap,
+                  padding: 8,
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                {cards.map((card, index) => {
+                  const isFlipped = flipped.includes(index);
+                  const isMatched = matched.includes(card.emoji);
+                  return (
+                    <Card
+                      key={card.id}
+                      card={card}
+                      index={index}
+                      isFlipped={isFlipped}
+                      isMatched={isMatched}
+                      onClick={handleCardClick}
+                      cols={cols}
+                      shakeId={shakeId}
+                      matchAnimId={matchAnimEmoji}
+                    />
+                  );
+                })}
+              </div>
+
+              {user && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: 10,
+                    color: "#4a5568",
+                  }}
+                >
+                  {"\u{1F464}"} {user.nome}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Online Playing Screen */}
+          {screen === "online-playing" && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                animation: "fadeIn 0.3s ease",
+                padding: "12px 0",
+              }}
+            >
+              <OnlinePlayingHeader
+                onlineTurn={onlineTurn}
+                playerNum={playerNum}
+                onlineScores={onlineScores}
+                matchedCount={matchedCount}
+                totalPairs={totalPairs}
+                onBack={handleBackToMenu}
+              />
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${cols}, ${cardWidth}px)`,
+                  gap: gridGap,
+                  padding: 8,
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.02)",
+                  border: `1px solid ${onlineTurn === playerNum ? ONLINE_ACCENT + "20" : "rgba(255,255,255,0.05)"}`,
+                  transition: "border-color 0.3s",
+                }}
+              >
+                {cards.map((card, index) => {
+                  const isFlipped = flipped.includes(index);
+                  const isMatched = onlineMatchedIndices.includes(index);
+                  return (
+                    <Card
+                      key={card.id}
+                      card={card}
+                      index={index}
+                      isFlipped={isFlipped}
+                      isMatched={isMatched}
+                      onClick={handleOnlineCardClick}
+                      cols={cols}
+                      shakeId={shakeId}
+                      matchAnimId={matchAnimEmoji}
+                    />
+                  );
+                })}
+              </div>
+
+              {user && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: 10,
+                    color: "#4a5568",
+                  }}
+                >
+                  {"\u{1F464}"} {user.nome} (Jogador {playerNum + 1})
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Solo Finished Screen */}
+          {screen === "finished" && (
+            <FinishedScreen
               moves={moves}
               timer={timer}
-              matchedCount={matchedCount}
               totalPairs={totalPairs}
-              onBack={handleBackToMenu}
+              difficulty={difficulty}
+              timedMode={timedMode}
+              timedWin={timedWin}
+              matchedPairs={matchedCount}
+              onRestart={handleRestart}
+              onChangeDifficulty={handleChangeDifficulty}
             />
+          )}
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${cols}, ${cardWidth}px)`,
-                gap: gridGap,
-                padding: 8,
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.05)",
-              }}
-            >
-              {cards.map((card, index) => {
-                const isFlipped = flipped.includes(index);
-                const isMatched = matched.includes(card.emoji);
-                return (
-                  <Card
-                    key={card.id}
-                    card={card}
-                    index={index}
-                    isFlipped={isFlipped}
-                    isMatched={isMatched}
-                    onClick={handleCardClick}
-                    cols={cols}
-                    shakeId={shakeId}
-                    matchAnimId={matchAnimEmoji}
-                  />
-                );
-              })}
-            </div>
-
-            {user && (
-              <div
-                style={{
-                  marginTop: 12,
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: 10,
-                  color: "#4a5568",
-                }}
-              >
-                {"\u{1F464}"} {user.nome}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Online Playing Screen */}
-        {screen === "online-playing" && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              animation: "fadeIn 0.3s ease",
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: 14,
-                color: ONLINE_ACCENT,
-                textShadow: `0 0 12px ${ONLINE_ACCENT}60`,
-                marginBottom: 12,
-                textAlign: "center",
-              }}
-            >
-              MEMORY ONLINE
-            </h1>
-
-            <OnlinePlayingHeader
-              onlineTurn={onlineTurn}
+          {/* Online Finished Screen */}
+          {screen === "online-finished" && onlineResult && (
+            <OnlineFinishedScreen
+              onlineScores={onlineResult.scores}
+              winner={onlineResult.winner}
               playerNum={playerNum}
-              onlineScores={onlineScores}
-              matchedCount={matchedCount}
-              totalPairs={totalPairs}
-              onBack={handleBackToMenu}
+              onPlayAgain={handleOnlinePlayAgain}
+              onMenu={handleBackToMenu}
             />
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${cols}, ${cardWidth}px)`,
-                gap: gridGap,
-                padding: 8,
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.02)",
-                border: `1px solid ${onlineTurn === playerNum ? ONLINE_ACCENT + "20" : "rgba(255,255,255,0.05)"}`,
-                transition: "border-color 0.3s",
-              }}
-            >
-              {cards.map((card, index) => {
-                const isFlipped = flipped.includes(index);
-                const isMatched = onlineMatchedIndices.includes(index);
-                return (
-                  <Card
-                    key={card.id}
-                    card={card}
-                    index={index}
-                    isFlipped={isFlipped}
-                    isMatched={isMatched}
-                    onClick={handleOnlineCardClick}
-                    cols={cols}
-                    shakeId={shakeId}
-                    matchAnimId={matchAnimEmoji}
-                  />
-                );
-              })}
-            </div>
-
-            {user && (
-              <div
-                style={{
-                  marginTop: 12,
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: 10,
-                  color: "#4a5568",
-                }}
-              >
-                {"\u{1F464}"} {user.nome} (Jogador {playerNum + 1})
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Solo Finished Screen */}
-        {screen === "finished" && (
-          <FinishedScreen
-            moves={moves}
-            timer={timer}
-            totalPairs={totalPairs}
-            difficulty={difficulty}
-            onRestart={handleRestart}
-            onChangeDifficulty={handleChangeDifficulty}
-          />
-        )}
-
-        {/* Online Finished Screen */}
-        {screen === "online-finished" && onlineResult && (
-          <OnlineFinishedScreen
-            onlineScores={onlineResult.scores}
-            winner={onlineResult.winner}
-            playerNum={playerNum}
-            onPlayAgain={handleOnlinePlayAgain}
-            onMenu={handleBackToMenu}
-          />
-        )}
+          )}
+        </div>
       </div>
 
       {/* Ad Banner */}
