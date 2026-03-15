@@ -304,6 +304,7 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
             Oponente quer revanche!
           </p>
         )}
+        <AdBanner slot="pong_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
   );
@@ -862,6 +863,11 @@ export default function Pong() {
           100% { background-position: 40px 40px; }
         }
       `}</style>
+
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && (
+        <AdBanner slot="pong_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
+      )}
 
       {screen !== "menu" && screen !== "lobby" && (
         <>

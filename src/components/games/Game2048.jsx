@@ -1314,6 +1314,11 @@ export default function Game2048() {
         />
       )}
 
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && screen !== "online-playing" && (
+        <AdBanner slot="2048_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
+      )}
+
       {/* Game container */}
       <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
       <div
@@ -1559,6 +1564,7 @@ export default function Game2048() {
                   >
                     Jogar Novamente
                   </button>
+                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
 
@@ -1620,6 +1626,7 @@ export default function Game2048() {
                   >
                     Jogar Novamente
                   </button>
+                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
             </div>
@@ -1890,6 +1897,7 @@ export default function Game2048() {
                   >
                     Menu
                   </button>
+                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
             </div>

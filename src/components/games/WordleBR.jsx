@@ -553,6 +553,11 @@ export default function WordleBR() {
         </div>
       )}
 
+      {/* Top ad - hidden during active play */}
+      {gameStatus !== "playing" && (
+        <AdBanner slot="wordle_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
+      )}
+
       {/* Title above game area */}
       {hasStarted && (
         <h1 style={{
@@ -681,17 +686,20 @@ export default function WordleBR() {
 
           {/* Action buttons (shown when game is over) */}
           {gameStatus !== "playing" && (
-            <div style={{ display: "flex", gap: 10, marginBottom: 8, animation: "fadeIn 0.5s 0.3s both" }}>
-              <button onClick={handleShare} style={{
-                padding: "8px 18px", background: COLOR_CORRECT, color: "#fff", border: "none",
-                borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer",
-                fontFamily: "'Fira Code', monospace",
-              }}>COMPARTILHAR</button>
-              <button onClick={resetGame} style={{
-                padding: "8px 18px", background: "transparent", color: COLOR_CORRECT,
-                border: `2px solid ${COLOR_CORRECT}`, borderRadius: 6, fontSize: 13,
-                fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
-              }}>NOVA PALAVRA</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 8, animation: "fadeIn 0.5s 0.3s both" }}>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleShare} style={{
+                  padding: "8px 18px", background: COLOR_CORRECT, color: "#fff", border: "none",
+                  borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+                  fontFamily: "'Fira Code', monospace",
+                }}>COMPARTILHAR</button>
+                <button onClick={resetGame} style={{
+                  padding: "8px 18px", background: "transparent", color: COLOR_CORRECT,
+                  border: `2px solid ${COLOR_CORRECT}`, borderRadius: 6, fontSize: 13,
+                  fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
+                }}>NOVA PALAVRA</button>
+              </div>
+              <AdBanner slot="wordle_between" style={{ marginTop: 4, maxWidth: 300 }} />
             </div>
           )}
 

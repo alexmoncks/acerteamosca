@@ -1066,6 +1066,11 @@ export default function DeepAttack() {
         }
       `}</style>
 
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && (
+        <AdBanner slot="deepattack_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
+      )}
+
       {screen !== "menu" && (
         <>
           <h1
@@ -1294,6 +1299,7 @@ export default function DeepAttack() {
               >
                 JOGAR NOVAMENTE
               </button>
+              <AdBanner slot="deepattack_between" style={{ marginTop: 12, maxWidth: 300 }} />
             </div>
           )}
         </div>
