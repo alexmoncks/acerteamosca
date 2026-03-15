@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { setJogadorCookie, getJogadorCookie } from "@/lib/cookies";
 
+function sanitize(str) {
+  return str.replace(/<[^>]*>/g, "").trim();
+}
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function isValidPhone(phone) {
+  return /^\(\d{2}\) \d{5}-\d{4}$/.test(phone);
+}
+
 // GET - verifica se jogador já está logado via cookie
 export async function GET() {
   try {
@@ -30,37 +40,73 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { nome, email, whatsapp, jogo } = body;
 
-    if (!nome || !email) {
+    const nome = sanitize(body.nome || "");
+    const email = (body.email || "").trim().toLowerCase();
+    const whatsapp = body.whatsapp ? sanitize(body.whatsapp) : "";
+    const jogo = body.jogo || "acerteamosca";
+
+    // Validate nome
+    if (!nome || nome.length < 3) {
       return NextResponse.json(
-        { error: "Nome e email são obrigatórios" },
+        { error: "Nome deve ter pelo menos 3 caracteres" },
         { status: 400 }
       );
     }
 
-    // Verifica se já existe jogador com esse email
-    let jogador = await prisma.jogador.findUnique({
-      where: { email },
-    });
+    // Validate email format
+    if (!email || !isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Email inválido" },
+        { status: 400 }
+      );
+    }
 
-    if (jogador) {
-      // Atualiza nome/whatsapp se mudou
-      jogador = await prisma.jogador.update({
-        where: { email },
-        data: { nome, whatsapp: whatsapp || jogador.whatsapp },
-      });
-    } else {
-      // Cria novo jogador
-      jogador = await prisma.jogador.create({
-        data: {
-          nome,
-          email,
-          whatsapp: whatsapp || null,
-          jogoOrigem: jogo || "acerteamosca",
+    // Validate phone format if provided
+    if (whatsapp && !isValidPhone(whatsapp)) {
+      return NextResponse.json(
+        { error: "WhatsApp deve estar no formato (XX) XXXXX-XXXX" },
+        { status: 400 }
+      );
+    }
+
+    // Use transaction to prevent race conditions on name uniqueness
+    const jogador = await prisma.$transaction(async (tx) => {
+      // Check if another user (different email) already has this name (case-insensitive)
+      const existing = await tx.jogador.findFirst({
+        where: {
+          nome: { equals: nome, mode: "insensitive" },
+          NOT: { email },
         },
       });
-    }
+
+      if (existing) {
+        throw new Error("NOME_DUPLICADO");
+      }
+
+      // Find by email and update or create
+      let player = await tx.jogador.findUnique({
+        where: { email },
+      });
+
+      if (player) {
+        player = await tx.jogador.update({
+          where: { email },
+          data: { nome, whatsapp: whatsapp || player.whatsapp },
+        });
+      } else {
+        player = await tx.jogador.create({
+          data: {
+            nome,
+            email,
+            whatsapp: whatsapp || null,
+            jogoOrigem: jogo,
+          },
+        });
+      }
+
+      return player;
+    });
 
     // Seta cookie para não pedir registro novamente
     setJogadorCookie(jogador.id);
@@ -74,6 +120,12 @@ export async function POST(request) {
       },
     });
   } catch (err) {
+    if (err.message === "NOME_DUPLICADO") {
+      return NextResponse.json(
+        { error: "Este nome já está em uso. Escolha outro." },
+        { status: 400 }
+      );
+    }
     console.error("POST /api/jogadores error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
