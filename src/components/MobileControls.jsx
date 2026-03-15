@@ -220,3 +220,16 @@ export function ShipsMobileControls({ keysRef, mode, playerNum }) {
     </div>
   );
 }
+
+// Bubble Shooter: rotate left / fire / rotate right
+export function BubbleShooterMobileControls({ onRotateLeft, onRotateRight, onFire, onStopRotate }) {
+  const mobile = useMobile();
+  if (!mobile) return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20, marginTop: 16, padding: "0 12px" }}>
+      <Btn label="◀" color="#e879f9" size={64} onPress={onRotateLeft} onRelease={onStopRotate} />
+      <Btn label="FIRE" color="#ff2d95" size={72} fontSize={10} onPress={onFire} onRelease={() => {}} style={{ fontWeight: 900, letterSpacing: 1 }} />
+      <Btn label="▶" color="#e879f9" size={64} onPress={onRotateRight} onRelease={onStopRotate} />
+    </div>
+  );
+}
