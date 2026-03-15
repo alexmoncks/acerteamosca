@@ -233,3 +233,27 @@ export function BubbleShooterMobileControls({ onRotateLeft, onRotateRight, onFir
     </div>
   );
 }
+
+// Deep Attack: left / fire / right + auto-fire toggle
+export function DeepAttackMobileControls({ keysRef, onToggleAutoFire, autoFire }) {
+  const mobile = useMobile();
+  if (!mobile) return null;
+  const press = (k) => keysRef.current.add(k);
+  const release = (k) => keysRef.current.delete(k);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginTop: 16 }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20 }}>
+        <Btn label="◀" color="#22d3ee" size={64} onPress={() => press("ArrowLeft")} onRelease={() => release("ArrowLeft")} />
+        <Btn label="FIRE" color="#ff2d95" size={72} fontSize={10} onPress={() => press(" ")} onRelease={() => release(" ")} style={{ fontWeight: 900, letterSpacing: 1 }} />
+        <Btn label="▶" color="#22d3ee" size={64} onPress={() => press("ArrowRight")} onRelease={() => release("ArrowRight")} />
+      </div>
+      <button onClick={onToggleAutoFire} style={{
+        padding: "6px 16px", borderRadius: 6,
+        background: autoFire ? "#22d3ee33" : "#22d3ee11",
+        border: "1px solid " + (autoFire ? "#22d3ee" : "#22d3ee55"),
+        color: "#22d3ee", fontSize: 10,
+        fontFamily: "'Press Start 2P', monospace", cursor: "pointer",
+      }}>AUTO-FIRE: {autoFire ? "ON" : "OFF"}</button>
+    </div>
+  );
+}
