@@ -1273,7 +1273,7 @@ export default function Game2048() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
         padding: 12,
