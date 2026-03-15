@@ -18,16 +18,17 @@ model Jogador {
 }
 
 model Score {
-  id         String   @id @default(cuid())
-  pontos     Int
-  acertos    Int
-  erros      Int
-  melhorCombo Int
-  precisao   Int      // porcentagem 0-100
-  jogo       String   @default("acerteamosca")
-  jogadorId  String
-  jogador    Jogador  @relation(fields: [jogadorId], references: [id])
-  criadoEm   DateTime @default(now())
+  id          String   @id @default(cuid())
+  pontos      Int
+  acertos     Int?
+  erros       Int?
+  melhorCombo Int?
+  precisao    Int?
+  metadata    Json?
+  jogo        String   @default("acerteamosca")
+  jogadorId   String
+  jogador     Jogador  @relation(fields: [jogadorId], references: [id])
+  criadoEm    DateTime @default(now())
 
   @@index([jogadorId])
   @@index([jogo, pontos])
