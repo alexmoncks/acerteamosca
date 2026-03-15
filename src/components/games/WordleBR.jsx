@@ -7,8 +7,9 @@ import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 
 const GAME_W = 400;
+const GAME_H = 560;
 
-const ANSWERS = [
+let ANSWERS = [
   "GATOS","MUNDO","FESTA","PRAIA","LIVRO","CARRO","PLANO","VERDE","TIGRE","NUVEM",
   "PEDRA","FOLHA","PONTO","TERMO","MUSEU","CAMPO","PORTA","NOITE","FONTE","BRAVO",
   "RITMO","SINAL","BAIXO","NEGRO","CORPO","FRACO","GRADE","LENTO","METRO","NOSSO",
@@ -17,7 +18,7 @@ const ANSWERS = [
   "MEDIR","NARIZ","OPERA","PODER","RIGOR","SOLAR","TUMOR","USUAL","VIGOR","TRIGO",
   "BARCO","LEITE","CLARO","CAUSA","SETOR","GRUPO","CRISE","LIDER","FERRO","GRITO",
   "RISCO","PESCA","CHUVA","PULSO","MARCA","FIBRA","DRAMA","BOLSA","LUCRO","SURDO",
-  "POUCO","VOLTA","BUSCA","TRILHA","CALMO","BISPO","LARGO","FUNIL","DUPLO","CURTO",
+  "POUCO","VOLTA","BUSCA","CALMO","BISPO","LARGO","FUNIL","DUPLO","CURTO",
   "GOLPE","MILHO","TEMPO","NINHO","MORRO","VULTO","SURTO","JUSTO","COURO","FALSO",
   "PLUMA","GANHO","LOUCO","SURFA","TOURO","CABRA","FLUIR","BRISA","NERVO","MOLHO",
   "PAPEL","SUAVE","CHEFE","LOUSA","AMIGO","SIGNO","PLACA","VIDRO","CANTO","SENSO",
@@ -25,82 +26,111 @@ const ANSWERS = [
   "FELIZ","DIGNO","JUIZO","ALTAR","FUMAR","CESTA","GREVE","RUBOR","LIXAR","BALDE",
   "RELVA","FENDA","PUNHO","GRUTA","APITO","SAFRA","CUNHA","PAVIO","MALHA","TERNO",
 ];
+ANSWERS = ANSWERS.filter(w => w.length === 5);
 
-const VALID_GUESSES = [
+let VALID_GUESSES = [
   ...ANSWERS,
-  "ABADE","ABALO","ABATE","ABETO","ABISM","ABONO","ABRIL","ACASO","ACENO","ACIDO",
-  "ACIMA","ACOLA","ACRES","ADAPT","ADEUS","ADOBE","ADORE","AEREA","AFAGO","AFIOU",
+  // A
+  "ABADE","ABALO","ABATE","ABETO","ABONO","ABRIL","ACASO","ACENO","ACIDO",
+  "ACIMA","ACRES","ADEUS","ADOBE","ADORE","AEREA","AFAGO","AFIOU",
   "AGAPE","AGAVE","AGEIS","AGIRA","AGITO","AGORA","AGUDO","AINDA","AJUDA","ALADO",
-  "ALAGA","ALAMA","ALCAN","ALDEA","ALEGR","ALGAS","ALGUM","ALIAR","ALIEN","ALINE",
-  "ALMAS","ALMOX","ALOCA","ALTAR","ALTOS","ALUGA","AMADO","AMAIS","AMBAR","AMBOS",
-  "AMENO","AMIDO","AMPLO","ANDAR","ANELO","ANJOS","ANTES","ANZOL","AONDE","APEGO",
-  "ARENA","ARGOS","ARMAR","AROMA","ARTES","ASPAS","ASSAZ","ASSAR","ATEAR","ATLAS",
-  "ATRIZ","ATUAL","AUDIO","AULAS","AVIAO","AVISO","AZEDA","AZUIS","BABOU","BAGRE",
-  "BAILE","BAIRR","BALAS","BANCO","BANDA","BANHO","BARBA","BARRO","BASAL","BASTA",
-  "BEATA","BELGA","BICHO","BINGO","BLOCO","BOBOS","BODAS","BOLHA","BOMBA","BOTAS",
-  "BRACO","BREJO","BRIGA","BRUXA","BUFAR","BUNDA","BURRO","CABAL","CABOS","CACAU",
-  "CADIM","CALOR","CAMAS","CANJA","CAPAS","CAPIM","CARAS","CARGO","CARNE","CASAL",
-  "CASCA","CASCO","CASOS","CAVAR","CEGOS","CELMA","CENAS","CEPOS","CERCA","CERTO",
-  "CICLO","CIFRA","CINCO","CISNE","CIVIL","CLIMA","COBRA","COFRE","COISA","COLAR",
-  "COLMO","COLON","COMER","COMUM","CONCA","CONDU","CONTO","COPAS","CORAL","CORDA",
-  "CORES","COROA","COSTA","COTAS","COXAS","CRAVE","CRENA","CRUEL","DADOS","DAMAS",
-  "DAQUI","DEDOS","DEMOR","DESDE","DEVEM","DEVER","DIABO","DICAS","DITAR","DITOS",
-  "DIZER","DOCES","DOLOR","DOMAR","DONOS","DOTES","DUELO","DUNAS","DURAS","DUROU",
-  "DUVID","EBANO","EDUCA","ELEVA","ELFOS","EMARC","EMISS","ENDUR","ENFIM","ENTAO",
-  "ENTRE","ERRAR","ERVAS","ESCOL","ETNIA","EXATA","EXIGE","EXPOR","EXTRA","FABIO",
-  "FACIL","FACTO","FAIXA","FALHA","FALTA","FARDO","FATAL","FAUNA","FAVOR","FECHO",
-  "FEDER","FEITO","FENDA","FETAL","FIBRA","FICAR","FILHA","FILME","FINAL","FITAR",
-  "FIXAR","FLORA","FLUIR","FOBIA","FOCAR","FOGAO","FOLGA","FORCA","FORMA","FORNO",
-  "FORTE","FORUM","FOSSA","FRACA","FRASE","FREAR","FREIO","FRUTA","FUGAZ","FUMAR",
-  "FUNDO","FURIA","FUSAO","GAFES","GAIOA","GALHO","GARFO","GARRA","GASTA","GATOS",
-  "GEADA","GELAR","GEMER","GENES","GENRO","GENTE","GERAL","GESSO","GIRAR","GLOBO",
-  "GOELA","GOLES","GORDO","GOTAS","GOZAR","GRACA","GRAIS","GRAMA","GRANA","GRITO",
-  "GROSD","GUIAR","HABIL","HEROI","HIDRA","HINOS","HORTA","HOTEL","HUMOR","IDEAL",
-  "IDEIA","IDOLO","IGUAL","ILESO","ILHAS","IMPAR","IMPOR","INCRA","INDIO","INFRA",
-  "INVAD","IRMAS","IRRAO","ISCAR","ISOLA","ITENS","JATOS","JEITO","JOGOS","JOIAS",
-  "JORDO","JULHO","JUIZO","JUNTA","JURAR","LACRE","LAGOA","LAICA","LAJES","LANCA",
-  "LAPSO","LARAO","LASER","LAVAR","LEAOS","LEGUA","LEIGO","LEMAS","LEQUE","LESAO",
-  "LETAL","LEVAR","LIDAR","LIDER","LIGAR","LILAS","LIMAR","LIMBO","LINDO","LINHO",
-  "LIRAS","LISTA","LISOS","LOBAR","LOCAL","LONGE","LOTAR","LOTUS","LUGAR","LUNAR",
-  "LUTAR","LUXOS","MACAR","MACRO","MADRE","MAGIA","MAGOA","MAIOR","MAMAS","MANDO",
-  "MANGA","MANHA","MANTO","MAQUI","MARES","MASSA","MATAR","MATOS","MEDIA","MEIGA",
-  "MENTA","MESES","METAS","MICRO","MINAS","MINHA","MISTA","MIXAR","MODAL","MOEDA",
-  "MOITA","MOLAR","MOLDE","MONTE","MORAL","MORAR","MORDO","MORTA","MOTEL","MOTOR",
-  "MUDAR","MUITA","MULAS","MUNDO","MUROS","MUTUO","NADAR","NATAS","NAVAL","NEGAR",
-  "NERVO","NETOS","NEXOS","NINAR","NIVEL","NOIVO","NOMES","NORMA","NOTAR","NOVOS",
-  "NUTRE","OASIS","OBESO","OBITO","OBRAS","OBVIO","OCASO","OLHAR","ONDAS","OPACO",
-  "OPTAR","ORIXO","ORNAI","OUSAR","OUTRA","OUTRO","OUVIR","OZONE","PADRE","PAGAR",
-  "PAIOL","PAIXO","PARDO","PARES","PARTE","PASSO","PASTA","PATOS","PAUSA","PAVIO",
-  "PECAS","PEDIR","PEGAR","PEITO","PELAS","PELVE","PENAL","PERDA","PESAR","PIADA",
-  "PICAR","PILAR","PILHA","PINAR","PINTA","PIOTR","PISAR","PISTA","PLENA","PLUGS",
+  "ALAGA","ALGAS","ALGUM","ALIAR","ALMAS","ALTAR","ALTOS","ALUGA","AMADO",
+  "AMBAR","AMBOS","AMENO","AMIDO","AMPLO","ANDAR","ANJOS","ANTES","ANZOL","AONDE",
+  "APEGO","ARAME","AREIA","ARENA","ARMAR","AROMA","ARTES","ASPAS","ASSAR","ATEAR",
+  "ATLAS","ATRIZ","ATUAL","AUDIO","AULAS","AVIAO","AVISO","AZEDA","AZUIS","ACHAR",
+  "ARDER",
+  // B
+  "BAGRE","BAILE","BALAS","BANCO","BANDA","BANHA","BANHO","BARBA","BARRO","BASAL",
+  "BASTA","BEATA","BEIJO","BELGA","BESTA","BEBER","BICHO","BINGO","BLOCO","BOBOS",
+  "BODAS","BOLHA","BOMBA","BONDE","BOTAS","BRACO","BREJO","BRIGA","BRUXA","BUFAR",
+  "BUNDA","BURRO","BANIR",
+  // C
+  "CABAL","CABER","CABOS","CACAU","CALAR","CALHA","CALOR","CAMAS","CANJA","CAPAS",
+  "CAPIM","CARAS","CARGO","CARNE","CASAL","CASAR","CASCA","CASCO","CASOS","CAVAR",
+  "CEDER","CEGOS","CENAS","CERCA","CERTO","CICLO","CIFRA","CINCO","CISNE","CIVIL",
+  "CLIMA","COBRA","COFRE","COISA","COLAR","COLMO","COMER","COMUM","CONTO","COPAS",
+  "CORAL","CORAR","CORDA","CORES","COROA","COSTA","COTAS","COXAS","CRUEL","CRIAR",
+  "CURAR",
+  // D
+  "DADOS","DAMAS","DAQUI","DEDOS","DESDE","DEVEM","DEVER","DEUSA","DIABO","DICAS",
+  "DITAR","DITOS","DIZER","DOCES","DOMAR","DONOS","DOTES","DUELO","DUNAS","DURAS",
+  "DUROU","DORAR","DURAR",
+  // E
+  "ELFOS","ENFIM","ENTRE","ERRAR","ERVAS","ETNIA","EXATA","EXIGE","EXPOR","EXTRA",
+  // F
+  "FAIXA","FALHA","FALAR","FALTA","FARDO","FATAL","FAUNA","FAVOR","FECHO",
+  "FEITO","FENDA","FIBRA","FICAR","FILHA","FILME","FINAL","FITAR","FIXAR","FLORA",
+  "FLUIR","FOCAR","FOGAO","FOLGA","FORCA","FORMA","FORNO","FORTE","FOSSA","FRACA",
+  "FRASE","FREIO","FRUTA","FUMAR","FUNDO","FURAR",
+  // G
+  "GABAR","GAFES","GALHO","GARFO","GARRA","GATOS","GEADA","GELAR","GEMER","GENES",
+  "GENRO","GENTE","GERAL","GERAR","GESSO","GIRAR","GLOBO","GOELA","GOLES","GORDO",
+  "GOTAS","GOZAR","GRACA","GRAMA","GRANA","GRITO","GUIAR",
+  // H
+  "HAVER","HEROI","HIDRA","HINOS","HORTA","HOTEL","HUMOR",
+  // I
+  "IDEAL","IDEIA","IDOLO","IGUAL","ILESO","ILHAS","IMPAR","IMPOR","INDIO","ITENS",
+  // J
+  "JATOS","JEITO","JOGOS","JOGAR","JOIAS","JULHO","JUIZO","JUNTA","JURAR",
+  // L
+  "LACRE","LAGOA","LAJES","LAPSO","LASER","LATAS","LAVAR","LEGUA","LEIGO","LEMAS",
+  "LEQUE","LESAO","LETAL","LEVAR","LIDAR","LIDER","LIGAR","LILAS","LIMBO","LINDO",
+  "LINHO","LIRAS","LISTA","LOCAL","LONGE","LOTAR","LUGAR","LUNAR","LUTAR","LUXOS",
+  "LEGAR",
+  // M
+  "MACRO","MADRE","MAGIA","MAGOA","MAIOR","MANDO","MANGA","MANHA","MANTO",
+  "MARES","MASSA","MATAR","MATOS","MEDIA","MEIGA","MENTA","MESES","METAS","MICRO",
+  "MINAS","MINHA","MISTA","MODAL","MOEDA","MOITA","MOLDE","MONTE","MORAL","MORAR",
+  "MORTA","MOTEL","MOTOR","MUDAR","MUITA","MULAS","MUNDO","MUROS","MOVER",
+  // N
+  "NADAR","NATAS","NAVAL","NEGAR","NERVO","NETOS","NINAR","NIVEL","NOIVO","NOMES",
+  "NORMA","NOTAR","NOVOS",
+  // O
+  "OASIS","OBESO","OBITO","OBRAS","OBVIO","OCASO","OLHAR","ONDAS","OPACO","OPTAR",
+  "OUSAR","OUTRA","OUTRO","OUVIR","OBTER",
+  // P
+  "PADRE","PAGAR","PAIOL","PARDO","PARES","PARTE","PARAR","PASSO","PASTA","PATOS",
+  "PAUSA","PAVIO","PECAS","PECAR","PEDIR","PEGAR","PEITO","PELAS","PENAL","PERDA",
+  "PESAR","PIADA","PICAR","PILAR","PILHA","PINTA","PISAR","PISTA","PLENA","PODER",
   "POLAR","POLIR","POLPA","POMBA","PONTO","PORCA","POROS","POSSE","POSTE","POUCO",
-  "PRAZO","PRECE","PREGO","PRESA","PREZO","PRIMA","PRISE","PROLE","PROSA","PROTO",
-  "PRUDE","PUGNA","PULAR","PULGA","PUNIR","PUROS","QUAIS","QUASE","QUOTA","RAIVA",
-  "RAMOS","RARAS","RASTO","RATOS","RAZAO","READM","REAIS","RECUO","REDES","REFEM",
-  "REGRA","REJEI","RELAX","REMOR","RENDA","REPOR","RERUM","RESOL","RETER","REVER",
-  "RIGOR","RIMAS","RIVAL","ROCHA","RODAS","ROMBO","RONDA","ROUPO","ROTAS","RUBLO",
-  "RUFAR","RUGIR","RUINA","RUIVO","RUMOS","RURAL","SABIA","SACIA","SACOS","SAFAR",
-  "SAIAS","SAIDA","SALDO","SALMO","SALSA","SALTO","SALVA","SAMBA","SANAR","SANTA",
-  "SAPOS","SAQUE","SARNA","SECAR","SEDES","SEIVA","SELVA","SENAI","SENIL","SERRA",
-  "SERVO","SEXOS","SIGLA","SILVO","SINAL","SIRVA","SISMO","SITIO","SOBRE","SOBRA",
-  "SOCIAL","SOFRE","SOLAR","SOLDO","SOLTO","SONHO","SOPRA","SORGO","SORVO","SUBIR",
-  "SUCRE","SUCOS","SUJAR","SUMIR","SUPER","SURDA","TACOS","TALCO","TALAR","TANGO",
-  "TAPAS","TAQUIR","TARSO","TAXAS","TECLA","TEDIO","TEIAS","TEIMA","TEMAS","TEMER",
-  "TEMPO","TENDA","TENOR","TENSA","TENSO","TERNO","TERRA","TESTA","TINHA","TINTA",
-  "TIPOS","TIRAR","TITAN","TOCAR","TODOS","TOMAR","TONAL","TOQUE","TORCI","TORTO",
-  "TOTAL","TRAPO","TRAVE","TRENO","TREZE","TRIBO","TRONO","TROTE","TRUFA","TUBOS",
-  "TUMBA","TURBO","TURMA","TURNO","UIVAR","ULTRA","UNHAS","UNICO","UNIDO","UNTAR",
-  "URANO","URDIR","URGIR","URNAS","USADA","USINA","USUAL","VAGAR","VAGAS","VALER",
-  "VALOR","VARSA","VASOS","VAZIO","VEIAS","VELAR","VELHA","VELHO","VENHA","VERBA",
-  "VERBO","VERME","VERSO","VEZES","VIAXA","VIDEO","VIGOR","VILAS","VIMOS","VINDO",
+  "PRAZO","PRECE","PREGO","PRESA","PRIMA","PROLE","PROSA","PUGNA","PULAR","PULGA",
+  "PUNIR","PUROS","PUXAR",
+  // Q
+  "QUAIS","QUASE",
+  // R
+  "RAIVA","RAMOS","RARAS","RASTO","RATOS","RAZAO","REAIS","RECUO","REDES","REGER",
+  "REGRA","RELER","RENDA","REPOR","RETER","REVER","REZAR","RIGOR","RIMAS","RIVAL",
+  "ROCHA","RODAS","ROLAR","ROMBO","RONDA","ROTAS","RUFAR","RUGIR","RUINA","RUIVO",
+  "RUMOS","RURAL",
+  // S
+  "SABIA","SACOS","SAIAS","SAIDA","SALDO","SALMO","SALSA","SALTO","SALVA","SAMBA",
+  "SANAR","SANTA","SAPOS","SAQUE","SARAR","SARNA","SABER","SECAR","SEDES","SEIVA",
+  "SELVA","SEGAR","SENIL","SERRA","SERVO","SEXOS","SIGLA","SINAL","SISMO","SITIO",
+  "SOBRE","SOBRA","SOFRE","SOLAR","SOLDO","SOLTO","SONHO","SOPRA","SUBIR","SUCOS",
+  "SUGAR","SUJAR","SUMIR","SUPER",
+  // T
+  "TACOS","TALCO","TANGO","TAPAS","TAXAS","TECLA","TEDIO","TEIAS","TEIMA","TEMAS",
+  "TEMER","TEMPO","TENDA","TENOR","TENSA","TENSO","TERNO","TERRA","TESTA","TINHA",
+  "TINTA","TIPOS","TIRAR","TOMAR","TOCAR","TODOS","TONAL","TOQUE","TORTO","TOTAL",
+  "TRAPO","TRAIR","TRAVE","TREZE","TRIBO","TRONO","TROTE","TRUFA","TUBOS","TUMBA",
+  "TURBO","TURMA","TURNO",
+  // U
+  "UIVAR","ULTRA","UNHAS","UNICO","UNIDO","UNTAR","URDIR","URNAS","USADA","USINA",
+  "USUAL",
+  // V
+  "VAGAR","VAGAS","VALER","VALOR","VASOS","VAZIO","VEIAS","VELHA","VELHO","VENHA",
+  "VERBA","VERBO","VERME","VERSO","VEZES","VIDEO","VIGOR","VILAS","VIMOS","VINDO",
   "VINIL","VIRAR","VIRUS","VISAR","VISTA","VITAL","VIUVA","VIVER","VOCAL","VOLTA",
-  "VOTAR","VOTOS","VULGO","XAMPU","XEQUE","ZEROS","ZINCO","ZOMBA","ZONAS",
+  "VOTAR","VOTOS","VULGO","VAZAR",
+  // X-Z
+  "XAMPU","XEQUE","ZEROS","ZINCO","ZOMBA","ZONAS","ZELAR",
 ];
+VALID_GUESSES = VALID_GUESSES.filter(w => w.length === 5);
 
 const KEYBOARD_ROWS = [
   ["Q","W","E","R","T","Y","U","I","O","P"],
   ["A","S","D","F","G","H","J","K","L"],
-  ["ENTER","Z","X","C","V","B","N","M","⌫"],
+  ["\u232B","Z","X","C","V","B","N","M","ENTER"],
 ];
 
 const COLOR_CORRECT = "#6aaa64";
@@ -109,6 +139,38 @@ const COLOR_ABSENT = "#787c7e";
 const COLOR_EMPTY = "#3a3a3c";
 const COLOR_BORDER = "#565758";
 const COLOR_BG = "#050510";
+
+// ---- Audio Engine ----
+class WordleAudio {
+  constructor() { this.ctx = null; }
+  async init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await this.ctx.resume();
+  }
+  _tone(freq, dur, vol = 0.08, type = "sine") {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + dur);
+  }
+  keyPress() { this._tone(800, 0.04, 0.06, "sine"); }
+  backspace() { this._tone(400, 0.05, 0.05, "sine"); }
+  submit() { this._tone(600, 0.08, 0.08, "triangle"); }
+  correct() {
+    this._tone(523, 0.1, 0.1, "sine");
+    setTimeout(() => this._tone(659, 0.1, 0.1, "sine"), 80);
+    setTimeout(() => this._tone(784, 0.15, 0.12, "sine"), 160);
+  }
+  error() { this._tone(200, 0.15, 0.1, "square"); }
+}
 
 function pickWord() {
   return ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
@@ -165,6 +227,7 @@ export default function WordleBR() {
 
   const toastTimerRef = useRef(null);
   const firstGuessRef = useRef(false);
+  const audioRef = useRef(null);
 
   const showToast = useCallback((msg, duration = 1500) => {
     setToast(msg);
@@ -211,8 +274,11 @@ export default function WordleBR() {
       setShakeRow(guesses.length);
       setTimeout(() => setShakeRow(-1), 600);
       showToast("Palavra nao encontrada");
+      audioRef.current?.error();
       return;
     }
+
+    audioRef.current?.submit();
 
     if (!firstGuessRef.current) {
       firstGuessRef.current = true;
@@ -237,6 +303,7 @@ export default function WordleBR() {
         setGameStatus("won");
         const score = (7 - newGuesses.length) * 100;
         showToast("Parabens!", 3000);
+        audioRef.current?.correct();
         submitScore(score, newGuesses.length, answer);
         window.gtag?.("event", "game_end", { game_name: "wordle", score });
       } else if (newGuesses.length >= 6) {
@@ -254,12 +321,14 @@ export default function WordleBR() {
       handleSubmit();
       return;
     }
-    if (key === "BACKSPACE" || key === "⌫") {
+    if (key === "BACKSPACE" || key === "\u232B") {
       setCurrentGuess(prev => prev.slice(0, -1));
+      audioRef.current?.backspace();
       return;
     }
     if (/^[A-Z]$/.test(key) && currentGuess.length < 5) {
       setCurrentGuess(prev => prev + key);
+      audioRef.current?.keyPress();
     }
   }, [gameStatus, currentGuess, handleSubmit]);
 
@@ -300,7 +369,7 @@ export default function WordleBR() {
   }, []);
 
   const handleShare = useCallback(() => {
-    const emojiMap = { correct: "🟩", present: "🟨", absent: "⬛" };
+    const emojiMap = { correct: "\uD83D\uDFE9", present: "\uD83D\uDFE8", absent: "\u2B1B" };
     const grid = guesses.map(g => g.result.map(r => emojiMap[r]).join("")).join("\n");
     const text = `Wordle BR ${gameStatus === "won" ? guesses.length : "X"}/6\n\n${grid}`;
     navigator.clipboard.writeText(text).then(() => {
@@ -310,10 +379,14 @@ export default function WordleBR() {
     });
   }, [guesses, gameStatus, showToast]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!user) {
       setShowRegister(true);
     } else {
+      if (!audioRef.current) {
+        audioRef.current = new WordleAudio();
+      }
+      await audioRef.current.init();
       setHasStarted(true);
     }
   };
@@ -322,6 +395,10 @@ export default function WordleBR() {
     const jogador = await register(userData);
     if (jogador) {
       setShowRegister(false);
+      if (!audioRef.current) {
+        audioRef.current = new WordleAudio();
+      }
+      await audioRef.current.init();
       setHasStarted(true);
     }
   };
@@ -332,7 +409,7 @@ export default function WordleBR() {
   return (
     <div style={{
       minHeight: "100vh", background: COLOR_BG, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "flex-start", fontFamily: "'Fira Code', monospace",
+      alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace",
       overflow: "hidden", padding: 12,
     }}>
       <style>{`
@@ -458,26 +535,44 @@ export default function WordleBR() {
         </div>
       )}
 
-      {/* Game area */}
+      {/* Title above game area */}
       {hasStarted && (
-        <div style={{
-          width: GAME_W, maxWidth: "100%",
-          transform: `scale(${gameScale})`, transformOrigin: "top center",
-          display: "flex", flexDirection: "column", alignItems: "center",
+        <h1 style={{
+          fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: COLOR_CORRECT,
+          textShadow: `0 0 20px ${COLOR_CORRECT}, 0 0 40px ${COLOR_CORRECT}30`,
+          marginBottom: 8, letterSpacing: 3, textAlign: "center",
         }}>
-          {/* Header */}
+          WORDLE BR
+        </h1>
+      )}
+      {hasStarted && (
+        <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
+          DESCUBRA A PALAVRA DE 5 LETRAS
+        </p>
+      )}
+
+      {/* Game area in bordered container */}
+      {hasStarted && (
+        <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
+        <div style={{
+          width: GAME_W, height: GAME_H, position: "relative",
+          background: "#0a0a1a",
+          border: `2px solid ${COLOR_CORRECT}30`,
+          borderRadius: 12, overflow: "hidden",
+          boxShadow: `0 0 20px ${COLOR_CORRECT}15`,
+          transform: `scale(${gameScale})`, transformOrigin: "top left",
+          display: "flex", flexDirection: "column", alignItems: "center",
+          padding: "8px 0",
+        }}>
+          {/* Header row with ? button */}
           <div style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-            marginBottom: 8, padding: "8px 0", borderBottom: "1px solid #3a3a3c",
+            marginBottom: 4, padding: "4px 8px", borderBottom: "1px solid #3a3a3c",
           }}>
             <button onClick={() => setShowInstructions(true)} style={{
               background: "none", border: "none", color: "#aaa", fontSize: 22, cursor: "pointer",
               width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
             }} aria-label="Instrucoes">?</button>
-            <div style={{
-              fontFamily: "'Press Start 2P', cursive", fontSize: 16, color: "#fff",
-              letterSpacing: 2,
-            }}>WORDLE BR</div>
             <div style={{ width: 36 }} />
           </div>
 
@@ -492,7 +587,7 @@ export default function WordleBR() {
           )}
 
           {/* Grid */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 16, marginTop: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 12, marginTop: 4 }}>
             {Array.from({ length: 6 }).map((_, rowIdx) => {
               const isRevealing = revealingRow === rowIdx;
               const isShaking = shakeRow === rowIdx;
@@ -563,7 +658,7 @@ export default function WordleBR() {
 
           {/* Action buttons (shown when game is over) */}
           {gameStatus !== "playing" && (
-            <div style={{ display: "flex", gap: 10, marginBottom: 12, animation: "fadeIn 0.5s 0.3s both" }}>
+            <div style={{ display: "flex", gap: 10, marginBottom: 8, animation: "fadeIn 0.5s 0.3s both" }}>
               <button onClick={handleShare} style={{
                 padding: "8px 18px", background: COLOR_CORRECT, color: "#fff", border: "none",
                 borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer",
@@ -578,11 +673,11 @@ export default function WordleBR() {
           )}
 
           {/* Virtual Keyboard */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", padding: "0 4px" }}>
             {KEYBOARD_ROWS.map((row, rIdx) => (
               <div key={rIdx} style={{ display: "flex", justifyContent: "center", gap: 4 }}>
                 {row.map(key => {
-                  const isWide = key === "ENTER" || key === "⌫";
+                  const isWide = key === "ENTER" || key === "\u232B";
                   const kc = keyColors[key];
                   let keyBg = "#818384";
                   if (kc === "correct") keyBg = COLOR_CORRECT;
@@ -612,12 +707,13 @@ export default function WordleBR() {
           {/* User info */}
           {user && (
             <div style={{
-              marginTop: 12, color: "#4a5568", fontSize: 10,
+              marginTop: 8, color: "#4a5568", fontSize: 10,
               fontFamily: "'Fira Code', monospace",
             }}>
               {user.nome}
             </div>
           )}
+        </div>
         </div>
       )}
 
