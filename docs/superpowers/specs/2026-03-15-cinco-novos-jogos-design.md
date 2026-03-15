@@ -66,12 +66,14 @@ export const metadata = {
   window.gtag?.("event", "game_start", { game_name: "<slug>" });
   window.gtag?.("event", "game_end", { game_name: "<slug>", score: <valor> });
   ```
-- `AdBanner` com slot especifico por jogo:
+- `AdBanner` com slot especifico por jogo. Slots existentes: `home_bottom`, `mosca_bottom`, `pong_bottom`, `ships_bottom`. Novos slots:
   - `wordle_bottom`, `memory_bottom`, `2048_bottom`, `bubbleshooter_bottom`, `deepattack_bottom`
 - Adicionar eventos gtag tambem aos 3 jogos existentes (AcerteAMosca, Pong, Ships) para consistencia
 - Timing dos eventos multiplayer: `game_start` dispara quando ambos jogadores estao conectados e a partida inicia; `game_end` dispara no cliente de cada jogador quando a partida termina
 
 ### WebSocket — Novos Servidores
+
+Nota: o Pong usa `NEXT_PUBLIC_WS_URL` (sem sufixo de jogo) por razoes historicas. Os novos servidores seguem a convencao do Ships com sufixo. Renomear o do Pong e fora de escopo deste projeto.
 
 Dois novos servidores WS seguindo o padrao existente (`ws-pong.js` porta 3002, `ws-ships.js` porta 3003):
 
@@ -124,7 +126,13 @@ model Score {
 - Bubble Shooter: `{ nivel: 12, bolhasEstouradas: 89 }`
 - Deep Attack: `{ distancia: 4200, inimigosDestruidos: 35 }`
 
-A API `/api/scores/route.js` deve ser atualizada para aceitar os novos campos opcionais.
+A API `/api/scores/route.js` deve ser atualizada:
+
+- Aceitar `metadata` como JSON pass-through (sem validacao de schema por jogo — armazenar como recebido)
+- Campos `acertos`, `erros`, `melhorCombo`, `precisao` continuam aceitos como top-level para retrocompatibilidade com Acerte a Mosca
+- Novos jogos enviam apenas `pontos`, `jogo`, e `metadata`
+- Leaderboard/ranking usa `pontos` como campo universal, filtrado por `jogo`
+- Codigo existente do Acerte a Mosca que le `acertos`/`erros`/etc. continua funcionando pois o jogo ainda envia esses campos
 
 ---
 
@@ -282,7 +290,7 @@ Jogos DOM (Wordle, Memory, 2048) nao precisam de controles mobile customizados �
 - Cada jogador tem seu proprio grid 4x4
 - Ambos jogam simultaneamente (nao e por turnos)
 - Placar lado a lado: score de cada jogador visivel em tempo real
-- Vence quem atingir 2048 primeiro, ou quem tiver maior score quando o oponente perder
+- Vence quem atingir 2048 primeiro (partida termina imediatamente), ou quem tiver maior score quando o oponente perder (sem movimentos possiveis)
 - Se desconectar, o outro vence
 - Servidor sincroniza: eventos de "game over" e "atingiu 2048", score atual de cada jogador
 - Cada jogador processa seu grid localmente (servidor nao valida cada movimento)
