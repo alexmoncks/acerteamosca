@@ -77,7 +77,7 @@ export default function Home() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "40px 16px",
+        padding: "16px 16px",
       }}
     >
       <div style={{ fontSize: 50, marginBottom: 12 }}>🩴</div>
@@ -101,7 +101,7 @@ export default function Home() {
           color: "#ff2d95",
           letterSpacing: 3,
           textShadow: "0 0 10px #ff2d95",
-          marginBottom: 40,
+          marginBottom: 16,
         }}
       >
         JOGOS ONLINE GRATIS
