@@ -9,6 +9,7 @@ import useGameScale from "@/hooks/useGameScale";
 const WS_URL = process.env.NEXT_PUBLIC_WS_2048_URL || "ws://localhost:3005";
 
 const GAME_W = 400;
+const GAME_H = 580;
 const COLOR_BG = "#050510";
 const ACCENT = "#edc22e";
 const ACCENT2 = "#f2b179";
@@ -650,6 +651,41 @@ function GridBoard({ grid, newTiles, mergedTiles }) {
   );
 }
 
+// ---- Arrow Pad for Mobile ----
+function ArrowPad({ onMove, accent }) {
+  const btnStyle = (dir) => ({
+    width: 48,
+    height: 48,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#1a1a2e",
+    border: `2px solid ${accent}40`,
+    borderRadius: 8,
+    color: accent,
+    fontSize: 22,
+    cursor: "pointer",
+    userSelect: "none",
+    fontFamily: "'Fira Code', monospace",
+    WebkitTapHighlightColor: "transparent",
+    touchAction: "manipulation",
+  });
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      gap: 4, marginTop: 10,
+    }}>
+      <button onClick={() => onMove("up")} style={btnStyle("up")}>{"▲"}</button>
+      <div style={{ display: "flex", gap: 4 }}>
+        <button onClick={() => onMove("left")} style={btnStyle("left")}>{"◀"}</button>
+        <button onClick={() => onMove("down")} style={btnStyle("down")}>{"▼"}</button>
+        <button onClick={() => onMove("right")} style={btnStyle("right")}>{"▶"}</button>
+      </div>
+    </div>
+  );
+}
+
 // ---- Main Component ----
 export default function Game2048() {
   const { user, checkedCookie, registering, register } = useJogador("2048");
@@ -1279,14 +1315,23 @@ export default function Game2048() {
       )}
 
       {/* Game container */}
+      <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
       <div
         style={{
           width: GAME_W,
-          maxWidth: GAME_W,
-          transform: `scale(${gameScale})`,
-          transformOrigin: "top center",
+          height: GAME_H,
           position: "relative",
-          minHeight: 500,
+          background: "#0a0a1a",
+          border: `2px solid ${ACCENT}30`,
+          borderRadius: 12,
+          overflow: "hidden",
+          boxShadow: `0 0 20px ${ACCENT}15`,
+          transform: `scale(${gameScale})`,
+          transformOrigin: "top left",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "8px 0",
         }}
       >
         {/* Menu Screen */}
@@ -1579,18 +1624,8 @@ export default function Game2048() {
               )}
             </div>
 
-            {/* Instructions */}
-            <p
-              style={{
-                fontFamily: "'Fira Code', monospace",
-                fontSize: 10,
-                color: "#555",
-                marginTop: 12,
-                textAlign: "center",
-              }}
-            >
-              Use as setas ou deslize para mover
-            </p>
+            {/* Mobile Arrow Controls */}
+            <ArrowPad onMove={handleSoloMove} accent={ACCENT} />
           </div>
         )}
 
@@ -1859,20 +1894,11 @@ export default function Game2048() {
               )}
             </div>
 
-            {/* Instructions */}
-            <p
-              style={{
-                fontFamily: "'Fira Code', monospace",
-                fontSize: 10,
-                color: "#555",
-                marginTop: 12,
-                textAlign: "center",
-              }}
-            >
-              Use as setas ou deslize para mover
-            </p>
+            {/* Mobile Arrow Controls */}
+            <ArrowPad onMove={handleOnlineMove} accent={ONLINE_ACCENT} />
           </div>
         )}
+      </div>
       </div>
 
       {/* Ad Banner */}
