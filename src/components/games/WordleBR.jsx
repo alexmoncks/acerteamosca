@@ -7,7 +7,7 @@ import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 
 const GAME_W = 400;
-const GAME_H = 560;
+const GAME_H = 530;
 
 let ANSWERS = [
   "GATOS","MUNDO","FESTA","PRAIA","LIVRO","CARRO","PLANO","VERDE","TIGRE","NUVEM",
@@ -224,6 +224,7 @@ export default function WordleBR() {
   const [showRegister, setShowRegister] = useState(false);
   const [keyColors, setKeyColors] = useState({});
   const [hasStarted, setHasStarted] = useState(false);
+  const [selectedCol, setSelectedCol] = useState(null);
 
   const toastTimerRef = useRef(null);
   const firstGuessRef = useRef(false);
@@ -291,6 +292,7 @@ export default function WordleBR() {
 
     setGuesses(newGuesses);
     setCurrentGuess("");
+    setSelectedCol(null);
     setRevealingRow(rowIdx);
 
     // After reveal animation completes, update keyboard and check win/loss
@@ -318,17 +320,32 @@ export default function WordleBR() {
   const handleKey = useCallback((key) => {
     if (gameStatus !== "playing") return;
     if (key === "ENTER") {
+      setSelectedCol(null);
       handleSubmit();
       return;
     }
     if (key === "BACKSPACE" || key === "\u232B") {
-      setCurrentGuess(prev => prev.slice(0, -1));
+      if (selectedCol !== null) {
+        // Remove the selected letter and shift remaining left
+        setCurrentGuess(prev => prev.slice(0, selectedCol) + prev.slice(selectedCol + 1));
+        setSelectedCol(prev => prev > 0 ? prev - 1 : null);
+      } else {
+        setCurrentGuess(prev => prev.slice(0, -1));
+      }
       audioRef.current?.backspace();
       return;
     }
-    if (/^[A-Z]$/.test(key) && currentGuess.length < 5) {
-      setCurrentGuess(prev => prev + key);
-      audioRef.current?.keyPress();
+    if (/^[A-Z]$/.test(key)) {
+      if (selectedCol !== null && selectedCol < currentGuess.length) {
+        // Replace the letter at selectedCol
+        setCurrentGuess(prev => prev.slice(0, selectedCol) + key + prev.slice(selectedCol + 1));
+        setSelectedCol(prev => prev < 4 ? prev + 1 : null);
+        audioRef.current?.keyPress();
+      } else if (currentGuess.length < 5) {
+        setCurrentGuess(prev => prev + key);
+        setSelectedCol(null);
+        audioRef.current?.keyPress();
+      }
     }
   }, [gameStatus, currentGuess, handleSubmit]);
 
@@ -364,6 +381,7 @@ export default function WordleBR() {
     setRevealingRow(-1);
     setBounceRow(-1);
     setKeyColors({});
+    setSelectedCol(null);
     setToast(null);
     firstGuessRef.current = false;
   }, []);
@@ -587,7 +605,7 @@ export default function WordleBR() {
           )}
 
           {/* Grid */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 12, marginTop: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8, marginTop: 4 }}>
             {Array.from({ length: 6 }).map((_, rowIdx) => {
               const isRevealing = revealingRow === rowIdx;
               const isShaking = shakeRow === rowIdx;
@@ -597,7 +615,7 @@ export default function WordleBR() {
 
               return (
                 <div key={rowIdx} style={{
-                  display: "flex", gap: 5,
+                  display: "flex", gap: 4,
                   animation: isShaking ? "shakeRow 0.6s" : undefined,
                 }}>
                   {Array.from({ length: 5 }).map((_, colIdx) => {
@@ -632,11 +650,15 @@ export default function WordleBR() {
                       }
                     }
 
+                    const isSelected = isCurrentRow && selectedCol === colIdx;
+
                     return (
-                      <div key={colIdx} style={{
-                        width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 26, fontWeight: "bold", color: "#fff",
-                        border: `2px solid ${borderColor}`, borderRadius: 2,
+                      <div key={colIdx}
+                        onClick={isCurrentRow && colIdx < currentGuess.length ? () => setSelectedCol(colIdx) : undefined}
+                        style={{
+                        width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 24, fontWeight: "bold", color: "#fff",
+                        border: `2px solid ${isSelected ? "#fff" : borderColor}`, borderRadius: 2,
                         background: bgColor, transition: "background 0.1s",
                         animation: shouldFlip
                           ? `flipIn 0.5s ${flipDelay}ms both`
@@ -646,6 +668,7 @@ export default function WordleBR() {
                               ? "tilePop 0.1s both"
                               : undefined,
                         userSelect: "none",
+                        cursor: isCurrentRow && colIdx < currentGuess.length ? "pointer" : "default",
                       }}>
                         {letter}
                       </div>
@@ -689,7 +712,7 @@ export default function WordleBR() {
                       key={key}
                       onClick={() => handleKey(key)}
                       style={{
-                        width: isWide ? 58 : 34, height: 52, display: "flex", alignItems: "center",
+                        width: isWide ? 58 : 34, height: 47, display: "flex", alignItems: "center",
                         justifyContent: "center", background: keyBg, color: "#fff",
                         border: "none", borderRadius: 4, fontSize: isWide ? 11 : 15,
                         fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
