@@ -111,6 +111,7 @@ function findFloating(grid) {
 }
 
 // Find the nearest empty grid cell to a pixel position
+// Only considers cells adjacent to existing bubbles (or in row 0)
 function snapToGrid(grid, px, py) {
   let bestDist = Infinity;
   let bestR = 0;
@@ -121,6 +122,19 @@ function snapToGrid(grid, px, py) {
     for (let c = 0; c < COLS; c++) {
       // Only snap to empty cells
       if (r < grid.length && grid[r][c] != null) continue;
+
+      // Must be adjacent to an existing bubble OR in top row
+      let hasNeighbor = r === 0;
+      if (!hasNeighbor) {
+        for (const [nr, nc] of getNeighbors(r, c)) {
+          if (nr < grid.length && grid[nr]?.[nc] != null) {
+            hasNeighbor = true;
+            break;
+          }
+        }
+      }
+      if (!hasNeighbor) continue;
+
       const { x, y } = hexToPixel(r, c);
       const dx = px - x;
       const dy = py - y;
@@ -175,6 +189,71 @@ function randomColor(grid) {
   return active[Math.floor(Math.random() * active.length)];
 }
 
+// ── Audio ──────────────────────────────────────────────────────────────
+class BubbleShooterAudio {
+  constructor() { this.ctx = null; }
+
+  async init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await this.ctx.resume();
+  }
+
+  _tone(freq, dur, vol = 0.15, type = "square") {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + dur);
+  }
+
+  shoot() {
+    this._tone(600, 0.08, 0.1, "sine");
+  }
+
+  pop() {
+    this._tone(800, 0.06, 0.12, "sine");
+    setTimeout(() => this._tone(1200, 0.04, 0.08, "sine"), 30);
+  }
+
+  match() {
+    this._tone(523, 0.08, 0.1, "sine");
+    setTimeout(() => this._tone(659, 0.08, 0.1, "sine"), 60);
+    setTimeout(() => this._tone(784, 0.1, 0.12, "sine"), 120);
+  }
+
+  fall() {
+    this._tone(400, 0.15, 0.08, "triangle");
+    setTimeout(() => this._tone(300, 0.15, 0.08, "triangle"), 80);
+    setTimeout(() => this._tone(200, 0.2, 0.06, "triangle"), 160);
+  }
+
+  bounce() {
+    this._tone(440, 0.04, 0.06, "square");
+  }
+
+  stick() {
+    this._tone(350, 0.06, 0.08, "triangle");
+  }
+
+  gameOver() {
+    this._tone(440, 0.2, 0.15, "square");
+    setTimeout(() => this._tone(349, 0.2, 0.15, "square"), 200);
+    setTimeout(() => this._tone(262, 0.4, 0.2, "square"), 400);
+  }
+
+  descent() {
+    this._tone(200, 0.15, 0.1, "sawtooth");
+    setTimeout(() => this._tone(250, 0.15, 0.1, "sawtooth"), 100);
+  }
+}
+
 // ── Main component ─────────────────────────────────────────────────────
 export default function BubbleShooter() {
   const { user, checkedCookie, registering, register } = useJogador("bubbleshooter");
@@ -199,6 +278,7 @@ export default function BubbleShooter() {
   const rotateIntervalRef = useRef(null);
   const screenRef = useRef("menu");
   const playCountRef = useRef(0);
+  const audioRef = useRef(null);
 
   // Keep screenRef in sync
   useEffect(() => {
@@ -256,6 +336,7 @@ export default function BubbleShooter() {
       vy,
       color: currentColorRef.current,
     };
+    audioRef.current?.shoot();
     // Advance colors
     currentColorRef.current = nextColorRef.current;
     nextColorRef.current = randomColor(gridRef.current);
@@ -309,6 +390,8 @@ export default function BubbleShooter() {
       let points = 0;
       let popped = 0;
       if (group.length > 0) {
+        // Sound: match found
+        audioRef.current?.match();
         // Remove matched bubbles
         for (const [gr, gc] of group) {
           const { x, y } = hexToPixel(gr, gc);
@@ -324,12 +407,18 @@ export default function BubbleShooter() {
 
         // Find and remove floating bubbles
         const floating = findFloating(grid);
+        if (floating.length > 0) {
+          audioRef.current?.fall();
+        }
         for (const [fr, fc] of floating) {
           spawnFalling(fr, fc, grid[fr][fc]);
           grid[fr][fc] = null;
           points += 15;
           popped++;
         }
+      } else {
+        // No match — bubble just stuck to the grid
+        audioRef.current?.stick();
       }
 
       scoreRef.current += points;
@@ -365,15 +454,22 @@ export default function BubbleShooter() {
       // Descent: every N shots, shift down and add row at top
       if (shotCountRef.current >= SHOTS_PER_DESCENT) {
         shotCountRef.current = 0;
-        // Shift all rows down by 1
+        // Shift all rows down by 1 (use active colors only)
+        const activeColors = getActiveColors(grid);
         const newRow = [];
         for (let c = 0; c < COLS; c++) {
-          newRow.push(Math.floor(Math.random() * COLORS.length));
+          if (activeColors.length > 0) {
+            newRow.push(activeColors[Math.floor(Math.random() * activeColors.length)]);
+          } else {
+            newRow.push(Math.floor(Math.random() * COLORS.length));
+          }
         }
         grid.unshift(newRow);
+        audioRef.current?.descent();
 
         // Check game over after descent
         if (checkGameOver(grid)) {
+          audioRef.current?.gameOver();
           // Submit score
           const finalScore = scoreRef.current;
           const finalPopped = poppedRef.current;
@@ -397,6 +493,7 @@ export default function BubbleShooter() {
 
       // Check game over (non-descent)
       if (checkGameOver(grid)) {
+        audioRef.current?.gameOver();
         const finalScore = scoreRef.current;
         const finalPopped = poppedRef.current;
         fetch("/api/scores", {
@@ -436,10 +533,12 @@ export default function BubbleShooter() {
       // Wall ricochet
       if (shot.x - BUBBLE_R < 0) {
         shot.x = BUBBLE_R;
+        if (shot.vx < 0) audioRef.current?.bounce();
         shot.vx = Math.abs(shot.vx);
       }
       if (shot.x + BUBBLE_R > CANVAS_W) {
         shot.x = CANVAS_W - BUBBLE_R;
+        if (shot.vx > 0) audioRef.current?.bounce();
         shot.vx = -Math.abs(shot.vx);
       }
 
@@ -701,7 +800,7 @@ export default function BubbleShooter() {
 
     ctx.save();
     ctx.translate(baseX, baseY);
-    ctx.rotate(-rad);
+    ctx.rotate(rad - Math.PI);
 
     // Barrel
     const grad = ctx.createLinearGradient(0, -barrelW / 2, 0, barrelW / 2);
@@ -892,10 +991,16 @@ export default function BubbleShooter() {
   }, [stopRotate]);
 
   // ── Screen transitions ───────────────────────────────────────────────
+  const initAudio = useCallback(() => {
+    if (!audioRef.current) audioRef.current = new BubbleShooterAudio();
+    audioRef.current.init();
+  }, []);
+
   const handleRegister = async (userData) => {
     const jogador = await register(userData);
     if (jogador) {
       playCountRef.current++;
+      initAudio();
       initGame();
       setScreen("playing");
       window.gtag?.("event", "game_start", { game_name: "bubbleshooter" });
@@ -905,6 +1010,7 @@ export default function BubbleShooter() {
   const handleMenuStart = () => {
     if (user) {
       playCountRef.current++;
+      initAudio();
       initGame();
       setScreen("playing");
       window.gtag?.("event", "game_start", { game_name: "bubbleshooter" });
@@ -915,6 +1021,7 @@ export default function BubbleShooter() {
 
   const handleRestart = () => {
     playCountRef.current++;
+    initAudio();
     initGame();
     setScreen("playing");
     window.gtag?.("event", "game_start", { game_name: "bubbleshooter" });
