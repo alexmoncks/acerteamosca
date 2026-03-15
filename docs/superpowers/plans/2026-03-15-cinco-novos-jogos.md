@@ -78,15 +78,12 @@ model Score {
 }
 ```
 
-- [ ] **Step 2: Push schema changes**
+- [ ] **Step 2: Create migration and push schema changes**
 
-Run: `npx prisma db push`
-Expected: schema updated successfully, no data loss (fields made nullable)
+Run: `npx prisma migrate dev --name make_score_fields_optional_add_metadata`
+Expected: migration created and applied successfully, no data loss (fields made nullable)
 
-- [ ] **Step 3: Regenerate Prisma client**
-
-Run: `npx prisma generate`
-Expected: Prisma Client generated successfully
+Note: Use `prisma migrate dev` (not `db push`) to create a tracked migration file for production deployments.
 
 - [ ] **Step 4: Commit**
 
@@ -249,37 +246,47 @@ if (existingName && existingName.email !== email) {
 }
 ```
 
-Also update the existing-email-update block: if the user re-registers with an existing email but a new name that belongs to someone else, reject:
+Also update the existing-email-update block. Wrap name check + create/update in a transaction to prevent race conditions:
 
 ```js
-let jogador = await prisma.jogador.findUnique({
-  where: { email },
-});
-
-if (jogador) {
-  // Check if new name conflicts with another user
-  if (nome !== jogador.nome) {
-    const nameConflict = await prisma.jogador.findFirst({
-      where: {
-        nome: { equals: nome, mode: "insensitive" },
-        email: { not: email },
-      },
-    });
-    if (nameConflict) {
-      return NextResponse.json(
-        { error: "Nome já cadastrado" },
-        { status: 400 }
-      );
-    }
+const jogador = await prisma.$transaction(async (tx) => {
+  // Check duplicate name (case-insensitive)
+  const existingName = await tx.jogador.findFirst({
+    where: {
+      nome: { equals: nome, mode: "insensitive" },
+      email: { not: email },
+    },
+  });
+  if (existingName) {
+    throw new Error("NOME_DUPLICADO");
   }
-  jogador = await prisma.jogador.update({
-    where: { email },
-    data: { nome, whatsapp: whatsapp || jogador.whatsapp },
-  });
-} else {
-  jogador = await prisma.jogador.create({
-    data: { nome, email, whatsapp: whatsapp || null, jogoOrigem: jogo },
-  });
+
+  let existing = await tx.jogador.findUnique({ where: { email } });
+
+  if (existing) {
+    return tx.jogador.update({
+      where: { email },
+      data: { nome, whatsapp: whatsapp || existing.whatsapp },
+    });
+  } else {
+    return tx.jogador.create({
+      data: { nome, email, whatsapp: whatsapp || null, jogoOrigem: jogo },
+    });
+  }
+});
+```
+
+Catch the `NOME_DUPLICADO` error and return 400:
+```js
+try {
+  const jogador = await prisma.$transaction(async (tx) => { ... });
+  setJogadorCookie(jogador.id);
+  return NextResponse.json({ jogador: { id: jogador.id, nome: jogador.nome, email: jogador.email, jogoOrigem: jogador.jogoOrigem } });
+} catch (err) {
+  if (err.message === "NOME_DUPLICADO") {
+    return NextResponse.json({ error: "Nome já cadastrado" }, { status: 400 });
+  }
+  throw err;
 }
 ```
 
@@ -472,7 +479,15 @@ Add to the `scripts` section:
 "ws:2048": "node server/ws-2048.js"
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Update local .env file**
+
+Also add the same WS URLs to the actual `.env` file for local development (this file is gitignored):
+```
+NEXT_PUBLIC_WS_MEMORY_URL="ws://localhost:3004"
+NEXT_PUBLIC_WS_2048_URL="ws://localhost:3005"
+```
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add .env.example package.json
@@ -549,19 +564,18 @@ git commit -m "feat: add 5 new games to homepage"
 **Files:**
 - Create: `src/app/jogos/wordle/page.js`
 
-- [ ] **Step 1: Create page route with dynamic import and SEO metadata**
+- [ ] **Step 1: Create page route with dynamic import**
+
+Note: Existing pages use `"use client"` without metadata exports. New pages follow the same pattern for consistency. SEO metadata is handled via the root layout.
 
 ```js
+"use client";
+
 import dynamic from "next/dynamic";
 
 const WordleBR = dynamic(() => import("@/components/games/WordleBR"), {
   ssr: false,
 });
-
-export const metadata = {
-  title: "Wordle BR - Acerte a Mosca! Jogos Online",
-  description: "Adivinhe a palavra de 5 letras em portugues em 6 tentativas! Jogo online gratis.",
-};
 
 export default function WordlePage() {
   return <WordleBR />;
@@ -741,13 +755,25 @@ Each key colored based on `getKeyboardStatus`. onClick calls `handleKey`.
 
 Simple modal triggered by ? icon in header. Shows game rules, color meanings.
 
-- [ ] **Step 9: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag**
+- [ ] **Step 9: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag, and score submission**
 
 Follow the same pattern as `AcerteAMosca.jsx`:
 - Show `RegisterModal` if `!user && checkedCookie`
 - Fire `game_start` event when game begins
 - AdBanner with slot `wordle_bottom`
-- Use `useGameScale` for responsive scaling
+- Use `useGameScale(400)` for responsive scaling (pass game's max width, not default 480)
+- On game end (won or lost), submit score to `/api/scores`:
+  ```js
+  fetch("/api/scores", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      pontos: gameStatus === "won" ? (7 - guesses.length) * 100 : 0,
+      jogo: "wordle",
+      metadata: { tentativas: guesses.length, palavra: target },
+    }),
+  });
+  ```
 
 - [ ] **Step 10: Verify the game works**
 
@@ -770,19 +796,16 @@ git commit -m "feat: add Wordle BR game - 5-letter word guessing game in Portugu
 **Files:**
 - Create: `src/app/jogos/memory/page.js`
 
-- [ ] **Step 1: Create page route with metadata**
+- [ ] **Step 1: Create page route**
 
 ```js
+"use client";
+
 import dynamic from "next/dynamic";
 
 const MemoryGame = dynamic(() => import("@/components/games/MemoryGame"), {
   ssr: false,
 });
-
-export const metadata = {
-  title: "Memory Game - Acerte a Mosca! Jogos Online",
-  description: "Jogo da memoria online gratis! Encontre os pares e desafie amigos.",
-};
 
 export default function MemoryPage() {
   return <MemoryGame />;
@@ -793,7 +816,7 @@ export default function MemoryPage() {
 
 ```bash
 git add src/app/jogos/memory/page.js
-git commit -m "feat: add Memory Game page route with SEO metadata"
+git commit -m "feat: add Memory Game page route"
 ```
 
 ---
@@ -952,12 +975,25 @@ Finished: stars, time, moves, score, "Jogar Novamente" and "Mudar Dificuldade" b
 
 Simple particle system: spawn ~50 divs with random colors, positions, and CSS animation (fall + fade).
 
-- [ ] **Step 8: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag**
+- [ ] **Step 8: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag, and score submission**
 
 Same pattern as Wordle:
 - RegisterModal before game
 - AdBanner slot `memory_bottom`
+- `useGameScale(500)` (Memory max-width is 500px)
 - gtag events: `game_start` when playing begins, `game_end` with score
+- Submit score on game end:
+  ```js
+  fetch("/api/scores", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      pontos: calculateScore(moves, timer, totalPairs),
+      jogo: "memory",
+      metadata: { pares: totalPairs, movimentos: moves, tempo: timer, dificuldade: difficulty },
+    }),
+  });
+  ```
 
 - [ ] **Step 9: Verify single-player works**
 
@@ -1120,19 +1156,16 @@ git commit -m "feat: add Memory Game online multiplayer via WebSocket"
 **Files:**
 - Create: `src/app/jogos/2048/page.js`
 
-- [ ] **Step 1: Create page route with metadata**
+- [ ] **Step 1: Create page route**
 
 ```js
+"use client";
+
 import dynamic from "next/dynamic";
 
 const Game2048 = dynamic(() => import("@/components/games/Game2048"), {
   ssr: false,
 });
-
-export const metadata = {
-  title: "2048 - Acerte a Mosca! Jogos Online",
-  description: "Jogue 2048 online gratis! Deslize os blocos e some ate chegar no 2048.",
-};
 
 export default function Game2048Page() {
   return <Game2048 />;
@@ -1143,7 +1176,7 @@ export default function Game2048Page() {
 
 ```bash
 git add src/app/jogos/2048/page.js
-git commit -m "feat: add 2048 page route with SEO metadata"
+git commit -m "feat: add 2048 page route"
 ```
 
 ---
@@ -1290,9 +1323,21 @@ Grid container with fixed size, 4x4 cells. Each tile:
 - Lose overlay: semi-transparent red, "Sem movimentos!", "Jogar Novamente"
 - New game button in header
 
-- [ ] **Step 8: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag**
+- [ ] **Step 8: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag, and score submission**
 
-Same pattern. AdBanner slot `2048_bottom`.
+Same pattern. AdBanner slot `2048_bottom`. `useGameScale(400)`.
+Submit score on game end:
+```js
+fetch("/api/scores", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    pontos: score,
+    jogo: "2048",
+    metadata: { maiorTile: Math.max(...grid.flat()), modo: "solo" },
+  }),
+});
+```
 
 - [ ] **Step 9: Verify single-player works**
 
@@ -1426,19 +1471,16 @@ git commit -m "feat: add 2048 online multiplayer race mode"
 **Files:**
 - Create: `src/app/jogos/bubbleshooter/page.js`
 
-- [ ] **Step 1: Create page route with metadata**
+- [ ] **Step 1: Create page route**
 
 ```js
+"use client";
+
 import dynamic from "next/dynamic";
 
 const BubbleShooter = dynamic(() => import("@/components/games/BubbleShooter"), {
   ssr: false,
 });
-
-export const metadata = {
-  title: "Bubble Shooter - Acerte a Mosca! Jogos Online",
-  description: "Mire, atire e estoure bolhas da mesma cor! Jogo online gratis.",
-};
 
 export default function BubbleShooterPage() {
   return <BubbleShooter />;
@@ -1449,7 +1491,7 @@ export default function BubbleShooterPage() {
 
 ```bash
 git add src/app/jogos/bubbleshooter/page.js
-git commit -m "feat: add Bubble Shooter page route with SEO metadata"
+git commit -m "feat: add Bubble Shooter page route"
 ```
 
 ---
@@ -1516,7 +1558,7 @@ const CANVAS_W = 400;
 const CANVAS_H = 560;
 const BUBBLE_R = 16;
 const COLORS = ["#ff4444", "#4488ff", "#44cc44", "#ffcc00", "#aa44ff", "#ff8844"];
-const COLS = 12;
+const COLS = 11; // 11 cols * 32px = 352px + offsets fits within 400px canvas with margin
 const INITIAL_ROWS = 8;
 const CANNON_Y = CANVAS_H - 40;
 const SHOOT_SPEED = 10;
@@ -1704,9 +1746,21 @@ Mobile: via `BubbleShooterMobileControls` — callbacks for rotate/fire.
 Menu: "BUBBLE SHOOTER" title + "Jogar" button.
 Game over: final score, "Jogar Novamente" button.
 
-- [ ] **Step 12: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag**
+- [ ] **Step 12: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag, and score submission**
 
-AdBanner slot `bubbleshooter_bottom`. gtag events on start/end.
+AdBanner slot `bubbleshooter_bottom`. `useGameScale(400)`. gtag events on start/end.
+Submit score on game over:
+```js
+fetch("/api/scores", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    pontos: score,
+    jogo: "bubbleshooter",
+    metadata: { bolhasEstouradas: bubblesPopped },
+  }),
+});
+```
 
 - [ ] **Step 13: Verify the game works**
 
@@ -1729,19 +1783,16 @@ git commit -m "feat: add Bubble Shooter game with hex grid, ricochet, and partic
 **Files:**
 - Create: `src/app/jogos/deepattack/page.js`
 
-- [ ] **Step 1: Create page route with metadata**
+- [ ] **Step 1: Create page route**
 
 ```js
+"use client";
+
 import dynamic from "next/dynamic";
 
 const DeepAttack = dynamic(() => import("@/components/games/DeepAttack"), {
   ssr: false,
 });
-
-export const metadata = {
-  title: "Deep Attack - Acerte a Mosca! Jogos Online",
-  description: "Pilote sua nave pelo espaco, destrua aliens e sobreviva! Jogo online gratis.",
-};
 
 export default function DeepAttackPage() {
   return <DeepAttack />;
@@ -1752,7 +1803,7 @@ export default function DeepAttackPage() {
 
 ```bash
 git add src/app/jogos/deepattack/page.js
-git commit -m "feat: add Deep Attack page route with SEO metadata"
+git commit -m "feat: add Deep Attack page route"
 ```
 
 ---
@@ -1986,9 +2037,21 @@ Mobile: via `DeepAttackMobileControls` with same keysRef pattern.
 Menu: "DEEP ATTACK" title with space theme, "Jogar" button.
 Game over: score, best score, distance, enemies destroyed, "Jogar Novamente".
 
-- [ ] **Step 12: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag**
+- [ ] **Step 12: Wire up RegisterModal, AdBanner, useJogador, useGameScale, gtag, and score submission**
 
-AdBanner slot `deepattack_bottom`. gtag events.
+AdBanner slot `deepattack_bottom`. `useGameScale(400)`. gtag events.
+Submit score on game over:
+```js
+fetch("/api/scores", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    pontos: score,
+    jogo: "deepattack",
+    metadata: { distancia: distance, inimigosDestruidos: enemiesDestroyed },
+  }),
+});
+```
 
 - [ ] **Step 13: Verify the game works**
 
