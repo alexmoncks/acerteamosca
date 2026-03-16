@@ -522,6 +522,7 @@ function GameOverScreen({ score, hits, misses, bestCombo, onRestart }) {
           ))}
         </div>
         <button onClick={onRestart} style={{ padding: "14px 36px", background: "linear-gradient(135deg, #00f0ff, #39ff14)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 12, cursor: "pointer", fontWeight: 900, letterSpacing: 1 }}>TENTAR DE NOVO</button>
+        <AdBanner slot="mosca_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
   );
@@ -911,6 +912,11 @@ export default function AcerteAMosca() {
           50% { opacity: 0.7; }
         }
       `}</style>
+
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && (
+        <AdBanner slot="mosca_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
+      )}
 
       {screen !== "splash" && <>
         <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: currentColorStr, textShadow: `0 0 20px ${currentColorStr}, 0 0 40px ${rgbaStr(currentColor, 0.3)}`, marginBottom: 8, letterSpacing: 3, textAlign: "center", transition: "color 1s, text-shadow 1s" }}>

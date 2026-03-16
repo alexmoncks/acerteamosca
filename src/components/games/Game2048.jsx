@@ -1273,7 +1273,7 @@ export default function Game2048() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
         padding: 12,
@@ -1312,6 +1312,11 @@ export default function Game2048() {
           jogoNome="2048"
           accentColor={ACCENT}
         />
+      )}
+
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && screen !== "online-playing" && (
+        <AdBanner slot="2048_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
       )}
 
       {/* Game container */}
@@ -1559,6 +1564,7 @@ export default function Game2048() {
                   >
                     Jogar Novamente
                   </button>
+                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
 
@@ -1620,6 +1626,7 @@ export default function Game2048() {
                   >
                     Jogar Novamente
                   </button>
+                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
             </div>
@@ -1890,6 +1897,7 @@ export default function Game2048() {
                   >
                     Menu
                   </button>
+                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
             </div>

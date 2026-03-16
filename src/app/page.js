@@ -68,6 +68,15 @@ const jogos = [
   },
 ];
 
+const faqs = [
+  { q: "O que e o Acerte a Mosca?", a: "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador. Oferecemos jogos como Wordle em portugues, 2048, Jogo da Memoria, Bubble Shooter, Deep Attack, Pong e Ships. Nao precisa baixar nada!" },
+  { q: "Quais jogos estao disponiveis?", a: "Temos 8 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memoria com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (classico com multiplayer) e Ships (batalha de naves com multiplayer)." },
+  { q: "Preciso baixar alguma coisa para jogar?", a: "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e comecar a jogar." },
+  { q: "Os jogos funcionam no celular?", a: "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack tem botoes de controle dedicados para telas touch." },
+  { q: "Posso jogar com amigos online?", a: "Sim! Memory Game, 2048, Pong e Ships possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
+  { q: "Os jogos sao realmente gratis?", a: "Sim, todos os jogos sao 100% gratis. Basta se cadastrar com nome e email para comecar a jogar." },
+];
+
 export default function Home() {
   return (
     <div
@@ -80,6 +89,46 @@ export default function Home() {
         padding: "8px 12px",
       }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "O que e o Acerte a Mosca?", "acceptedAnswer": { "@type": "Answer", "text": "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador..." } },
+              { "@type": "Question", "name": "Quais jogos estao disponiveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 8 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong e Ships." } },
+              { "@type": "Question", "name": "Preciso baixar alguma coisa?", "acceptedAnswer": { "@type": "Answer", "text": "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador." } },
+              { "@type": "Question", "name": "Os jogos funcionam no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular." } },
+              { "@type": "Question", "name": "Posso jogar com amigos online?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Memory Game, 2048, Pong e Ships possuem modo multiplayer online." } },
+              { "@type": "Question", "name": "Os jogos sao gratis?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, todos os jogos sao 100% gratis." } },
+            ]
+          })
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "Jogos Online Gratis",
+            "description": "Lista de jogos online gratis no Acerte a Mosca",
+            "numberOfItems": 8,
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "url": "https://acerteamosca.com.br/jogos/acerteamosca", "name": "Acerte a Mosca" },
+              { "@type": "ListItem", "position": 2, "url": "https://acerteamosca.com.br/jogos/pong", "name": "Pong" },
+              { "@type": "ListItem", "position": 3, "url": "https://acerteamosca.com.br/jogos/ships", "name": "Ships" },
+              { "@type": "ListItem", "position": 4, "url": "https://acerteamosca.com.br/jogos/wordle", "name": "Wordle BR" },
+              { "@type": "ListItem", "position": 5, "url": "https://acerteamosca.com.br/jogos/memory", "name": "Memory Game" },
+              { "@type": "ListItem", "position": 6, "url": "https://acerteamosca.com.br/jogos/2048", "name": "2048" },
+              { "@type": "ListItem", "position": 7, "url": "https://acerteamosca.com.br/jogos/bubbleshooter", "name": "Bubble Shooter" },
+              { "@type": "ListItem", "position": 8, "url": "https://acerteamosca.com.br/jogos/deepattack", "name": "Deep Attack" },
+            ]
+          })
+        }}
+      />
+
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
         style={{
@@ -106,6 +155,8 @@ export default function Home() {
       >
         JOGOS ONLINE GRATIS
       </p>
+
+      <AdBanner slot="home_top" style={{ marginBottom: 20, maxWidth: 900, width: "100%" }} />
 
       <div
         style={{
@@ -177,6 +228,28 @@ export default function Home() {
       </div>
 
       <AdBanner slot="home_bottom" style={{ marginTop: 30, maxWidth: 900, width: "100%" }} />
+
+      {/* FAQ Section for GEO */}
+      <section style={{ maxWidth: 900, width: "100%", marginTop: 40, padding: "0 16px" }}>
+        <h2 style={{
+          fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: "#00f0ff",
+          textShadow: "0 0 10px rgba(0,240,255,0.3)", marginBottom: 24, textAlign: "center",
+        }}>PERGUNTAS FREQUENTES</h2>
+
+        {faqs.map((faq, i) => (
+          <div key={i} style={{
+            marginBottom: 16, padding: "16px 20px", background: "#0a0a1a",
+            border: "1px solid #1a1a2e", borderRadius: 8,
+          }}>
+            <h3 style={{ color: "#ccd6f6", fontSize: 13, marginBottom: 8, fontFamily: "'Fira Code', monospace" }}>
+              {faq.q}
+            </h3>
+            <p style={{ color: "#8892b0", fontSize: 12, lineHeight: 1.6, fontFamily: "'Fira Code', monospace", margin: 0 }}>
+              {faq.a}
+            </p>
+          </div>
+        ))}
+      </section>
 
       <p
         style={{

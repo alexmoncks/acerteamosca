@@ -358,6 +358,7 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
           <button onClick={onMenu} style={{ padding: "12px 28px", background: "transparent", border: "1px solid #555", borderRadius: 8, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>MENU</button>
         </div>
         {isRemote && remoteReq && <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>Oponente quer revanche!</p>}
+        <AdBanner slot="ships_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
   );
@@ -841,6 +842,11 @@ export default function Ships() {
         @keyframes screenShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,3px)} 50%{transform:translate(3px,-4px)} 75%{transform:translate(-3px,2px)} }
         @keyframes shipBlink { 0%,100%{opacity:1} 50%{opacity:0.2} }
       `}</style>
+
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && (
+        <AdBanner slot="ships_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
+      )}
 
       {screen !== "menu" && screen !== "lobby" && <>
         <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h1>

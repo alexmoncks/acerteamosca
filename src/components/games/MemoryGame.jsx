@@ -1150,6 +1150,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
           Mudar Dificuldade
         </button>
       </div>
+      <AdBanner slot="memory_between" style={{ marginTop: 12, maxWidth: 300 }} />
     </div>
   );
 }
@@ -1336,6 +1337,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
           Menu Principal
         </button>
       </div>
+      <AdBanner slot="memory_between" style={{ marginTop: 12, maxWidth: 300 }} />
     </div>
   );
 }
@@ -1901,6 +1903,11 @@ export default function MemoryGame() {
           jogoNome="MEMORY GAME"
           accentColor={ACCENT}
         />
+      )}
+
+      {/* Top ad - hidden during active play */}
+      {screen !== "playing" && screen !== "online-playing" && (
+        <AdBanner slot="memory_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
       )}
 
       {/* Title H1 above game area */}

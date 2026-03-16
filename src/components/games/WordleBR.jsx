@@ -7,7 +7,7 @@ import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 
 const GAME_W = 400;
-const GAME_H = 530;
+const GAME_H = 550;
 
 let ANSWERS = [
   "GATOS","MUNDO","FESTA","PRAIA","LIVRO","CARRO","PLANO","VERDE","TIGRE","NUVEM",
@@ -271,10 +271,10 @@ export default function WordleBR() {
     if (currentGuess.length !== 5) return;
 
     const guess = currentGuess.toUpperCase();
-    if (!VALID_GUESSES.includes(guess)) {
+    if (!/^[A-Z]{5}$/.test(guess)) {
       setShakeRow(guesses.length);
       setTimeout(() => setShakeRow(-1), 600);
-      showToast("Palavra nao encontrada");
+      showToast("Digite 5 letras");
       audioRef.current?.error();
       return;
     }
@@ -553,6 +553,11 @@ export default function WordleBR() {
         </div>
       )}
 
+      {/* Top ad - hidden during active play */}
+      {gameStatus !== "playing" && (
+        <AdBanner slot="wordle_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
+      )}
+
       {/* Title above game area */}
       {hasStarted && (
         <h1 style={{
@@ -654,7 +659,10 @@ export default function WordleBR() {
 
                     return (
                       <div key={colIdx}
-                        onClick={isCurrentRow && colIdx < currentGuess.length ? () => setSelectedCol(colIdx) : undefined}
+                        onClick={isCurrentRow && colIdx < currentGuess.length ? () => {
+                          setCurrentGuess(prev => prev.slice(0, colIdx) + prev.slice(colIdx + 1));
+                          audioRef.current?.backspace();
+                        } : undefined}
                         style={{
                         width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 24, fontWeight: "bold", color: "#fff",
@@ -681,17 +689,20 @@ export default function WordleBR() {
 
           {/* Action buttons (shown when game is over) */}
           {gameStatus !== "playing" && (
-            <div style={{ display: "flex", gap: 10, marginBottom: 8, animation: "fadeIn 0.5s 0.3s both" }}>
-              <button onClick={handleShare} style={{
-                padding: "8px 18px", background: COLOR_CORRECT, color: "#fff", border: "none",
-                borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer",
-                fontFamily: "'Fira Code', monospace",
-              }}>COMPARTILHAR</button>
-              <button onClick={resetGame} style={{
-                padding: "8px 18px", background: "transparent", color: COLOR_CORRECT,
-                border: `2px solid ${COLOR_CORRECT}`, borderRadius: 6, fontSize: 13,
-                fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
-              }}>NOVA PALAVRA</button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 8, animation: "fadeIn 0.5s 0.3s both" }}>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleShare} style={{
+                  padding: "8px 18px", background: COLOR_CORRECT, color: "#fff", border: "none",
+                  borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer",
+                  fontFamily: "'Fira Code', monospace",
+                }}>COMPARTILHAR</button>
+                <button onClick={resetGame} style={{
+                  padding: "8px 18px", background: "transparent", color: COLOR_CORRECT,
+                  border: `2px solid ${COLOR_CORRECT}`, borderRadius: 6, fontSize: 13,
+                  fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
+                }}>NOVA PALAVRA</button>
+              </div>
+              <AdBanner slot="wordle_between" style={{ marginTop: 4, maxWidth: 300 }} />
             </div>
           )}
 
