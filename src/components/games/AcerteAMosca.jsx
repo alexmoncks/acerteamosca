@@ -864,7 +864,7 @@ export default function AcerteAMosca() {
   useEffect(() => () => audioRef.current?.stop(), []);
 
   const gameScale = useGameScale(CANVAS_W);
-  useLockScroll();
+  useLockScroll(screen === "playing");
   const timerPct = (timeLeft / GAME_DURATION) * 100;
   const timerColor = timeLeft > 10 ? "#39ff14" : timeLeft > 5 ? "#ffe600" : "#ff2d95";
 

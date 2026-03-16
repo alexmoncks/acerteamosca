@@ -212,7 +212,6 @@ function getColorForResult(r) {
 export default function WordleBR() {
   const { user, checkedCookie, registering, register } = useJogador("wordle");
   const gameScale = useGameScale(GAME_W);
-  useLockScroll();
 
   const [answer, setAnswer] = useState(() => pickWord());
   const [guesses, setGuesses] = useState([]);
@@ -226,6 +225,7 @@ export default function WordleBR() {
   const [showRegister, setShowRegister] = useState(false);
   const [keyColors, setKeyColors] = useState({});
   const [hasStarted, setHasStarted] = useState(false);
+  useLockScroll(hasStarted);
   const [selectedCol, setSelectedCol] = useState(null);
 
   const toastTimerRef = useRef(null);

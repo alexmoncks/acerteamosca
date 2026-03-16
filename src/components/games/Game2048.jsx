@@ -691,10 +691,10 @@ function ArrowPad({ onMove, accent }) {
 export default function Game2048() {
   const { user, checkedCookie, registering, register } = useJogador("2048");
   const gameScale = useGameScale(GAME_W);
-  useLockScroll();
 
   // ---- Screen state ----
   const [screen, setScreen] = useState("menu");
+  useLockScroll(screen === "playing" || screen === "online-playing");
   // screens: menu | playing | online-lobby | online-playing | online-finished
   const [showRegister, setShowRegister] = useState(false);
 

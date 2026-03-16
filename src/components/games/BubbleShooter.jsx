@@ -259,9 +259,9 @@ class BubbleShooterAudio {
 export default function BubbleShooter() {
   const { user, checkedCookie, registering, register } = useJogador("bubbleshooter");
   const gameScale = useGameScale(CANVAS_W);
-  useLockScroll();
 
   const [screen, setScreen] = useState("menu"); // menu | register | playing | paused | gameover
+  useLockScroll(screen === "playing");
   const [score, setScore] = useState(0);
   const [bubblesPopped, setBubblesPopped] = useState(0);
 

@@ -422,7 +422,6 @@ function drawHUD(ctx, score, energy, frame) {
 export default function DeepAttack() {
   const { user, checkedCookie, registering, register } = useJogador("deepattack");
   const gameScale = useGameScale(CANVAS_W);
-  useLockScroll();
   const canvasRef = useRef(null);
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);
@@ -434,6 +433,7 @@ export default function DeepAttack() {
 
   // React state for UI
   const [screen, setScreen] = useState("menu");
+  useLockScroll(screen === "playing");
   const [autoFire, setAutoFire] = useState(false);
   const autoFireRef = useRef(false);
   const [finalStats, setFinalStats] = useState({ score: 0, distance: 0, enemies: 0, best: 0 });

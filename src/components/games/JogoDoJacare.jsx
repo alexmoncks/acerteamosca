@@ -971,13 +971,13 @@ function drawTimerBar(ctx, x, y, w, h, pct, phase) {
 export default function JogoDoJacare() {
   const { user, checkedCookie, registering, register } = useJogador("jacare");
   const gameScale = useGameScale(CANVAS_W);
-  useLockScroll();
   const mobile = useMobile();
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
 
   // Screens: menu, register, playing, paused, phaseComplete, gameOver
   const [screen, setScreen] = useState("menu");
+  useLockScroll(screen === "playing");
   const [muted, setMuted] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
   const [displayPhase, setDisplayPhase] = useState(1);

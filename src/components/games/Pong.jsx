@@ -839,7 +839,7 @@ export default function Pong() {
   })();
 
   const gameScale = useGameScale(CANVAS_W);
-  useLockScroll();
+  useLockScroll(screen === "playing");
 
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") && playerNum === 2 ? "RIVAL" : "P1";
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") && playerNum === 1 ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";

@@ -1347,10 +1347,10 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
 export default function MemoryGame() {
   const { user, checkedCookie, registering, register } = useJogador("memory");
   const gameScale = useGameScale(GAME_W);
-  useLockScroll();
 
   // ---- Solo State ----
   const [screen, setScreen] = useState("menu");
+  useLockScroll(screen === "playing" || screen === "online-playing");
   // screens: menu | playing | finished | online-lobby | online-playing | online-finished
   const [difficulty, setDifficulty] = useState("medium");
   const [cards, setCards] = useState([]);
