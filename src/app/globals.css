@@ -13,16 +13,12 @@ body {
   font-family: "Fira Code", monospace;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
 }
 
-/* Lock scroll on game pages - applied by game components via class on body */
+/* Lock scroll during active gameplay - applied via useLockScroll hook */
 body.game-active {
   overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  touch-action: none;
+  overscroll-behavior: none;
 }
 
 a {
