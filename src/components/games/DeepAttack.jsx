@@ -6,6 +6,7 @@ import RegisterModal from "@/components/RegisterModal";
 import { DeepAttackMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 // ── Constants ──────────────────────────────────────────────────────────
 const CANVAS_W = 400;
@@ -421,6 +422,7 @@ function drawHUD(ctx, score, energy, frame) {
 export default function DeepAttack() {
   const { user, checkedCookie, registering, register } = useJogador("deepattack");
   const gameScale = useGameScale(CANVAS_W);
+  useLockScroll();
   const canvasRef = useRef(null);
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);

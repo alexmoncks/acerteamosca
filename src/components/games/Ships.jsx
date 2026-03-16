@@ -6,6 +6,7 @@ import RegisterModal from "@/components/RegisterModal";
 import { ShipsMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 const TILE = 40;
 const COLS = 12;
@@ -831,6 +832,7 @@ export default function Ships() {
   }, [checkedCookie, handleSelectMode]);
 
   const gameScale = useGameScale(CANVAS_W);
+  useLockScroll();
 
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : "P1";
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";

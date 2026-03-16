@@ -5,6 +5,7 @@ import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 const GAME_W = 400;
 const GAME_H = 550;
@@ -211,6 +212,7 @@ function getColorForResult(r) {
 export default function WordleBR() {
   const { user, checkedCookie, registering, register } = useJogador("wordle");
   const gameScale = useGameScale(GAME_W);
+  useLockScroll();
 
   const [answer, setAnswer] = useState(() => pickWord());
   const [guesses, setGuesses] = useState([]);

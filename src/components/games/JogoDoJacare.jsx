@@ -6,6 +6,7 @@ import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 import useMobile from "@/hooks/useMobile";
+import useLockScroll from "@/hooks/useLockScroll";
 
 // ============================================================
 // CONSTANTS
@@ -970,6 +971,7 @@ function drawTimerBar(ctx, x, y, w, h, pct, phase) {
 export default function JogoDoJacare() {
   const { user, checkedCookie, registering, register } = useJogador("jacare");
   const gameScale = useGameScale(CANVAS_W);
+  useLockScroll();
   const mobile = useMobile();
   const canvasRef = useRef(null);
   const audioRef = useRef(null);

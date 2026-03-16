@@ -6,6 +6,7 @@ import RegisterModal from "@/components/RegisterModal";
 import { PongMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 const CANVAS_W = 480;
 const CANVAS_H = 640;
@@ -838,6 +839,7 @@ export default function Pong() {
   })();
 
   const gameScale = useGameScale(CANVAS_W);
+  useLockScroll();
 
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") && playerNum === 2 ? "RIVAL" : "P1";
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") && playerNum === 1 ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";

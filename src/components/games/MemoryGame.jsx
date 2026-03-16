@@ -5,6 +5,7 @@ import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_MEMORY_URL || "ws://localhost:3004";
 
@@ -1346,6 +1347,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
 export default function MemoryGame() {
   const { user, checkedCookie, registering, register } = useJogador("memory");
   const gameScale = useGameScale(GAME_W);
+  useLockScroll();
 
   // ---- Solo State ----
   const [screen, setScreen] = useState("menu");

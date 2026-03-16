@@ -6,6 +6,7 @@ import RegisterModal from "@/components/RegisterModal";
 import { BubbleShooterMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 // ── Constants ──────────────────────────────────────────────────────────
 const CANVAS_W = 400;
@@ -258,6 +259,7 @@ class BubbleShooterAudio {
 export default function BubbleShooter() {
   const { user, checkedCookie, registering, register } = useJogador("bubbleshooter");
   const gameScale = useGameScale(CANVAS_W);
+  useLockScroll();
 
   const [screen, setScreen] = useState("menu"); // menu | register | playing | paused | gameover
   const [score, setScore] = useState(0);

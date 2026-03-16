@@ -5,6 +5,7 @@ import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 const CANVAS_W = 480;
 const CANVAS_H = 640;
@@ -863,6 +864,7 @@ export default function AcerteAMosca() {
   useEffect(() => () => audioRef.current?.stop(), []);
 
   const gameScale = useGameScale(CANVAS_W);
+  useLockScroll();
   const timerPct = (timeLeft / GAME_DURATION) * 100;
   const timerColor = timeLeft > 10 ? "#39ff14" : timeLeft > 5 ? "#ffe600" : "#ff2d95";
 

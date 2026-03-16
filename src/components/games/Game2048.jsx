@@ -5,6 +5,7 @@ import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
+import useLockScroll from "@/hooks/useLockScroll";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_2048_URL || "ws://localhost:3005";
 
@@ -690,6 +691,7 @@ function ArrowPad({ onMove, accent }) {
 export default function Game2048() {
   const { user, checkedCookie, registering, register } = useJogador("2048");
   const gameScale = useGameScale(GAME_W);
+  useLockScroll();
 
   // ---- Screen state ----
   const [screen, setScreen] = useState("menu");
