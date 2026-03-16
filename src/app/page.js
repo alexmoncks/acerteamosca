@@ -77,19 +77,19 @@ export default function Home() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "16px 16px",
+        padding: "8px 12px",
       }}
     >
-      <div style={{ fontSize: 50, marginBottom: 12 }}>🩴</div>
+      <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
         style={{
           fontFamily: "'Press Start 2P', monospace",
-          fontSize: 28,
+          fontSize: 18,
           color: "#00f0ff",
           textShadow: "0 0 30px #00f0ff, 0 0 60px rgba(0,240,255,0.3)",
           letterSpacing: 4,
           textAlign: "center",
-          marginBottom: 8,
+          marginBottom: 4,
         }}
       >
         ACERTE A MOSCA
@@ -97,11 +97,11 @@ export default function Home() {
       <p
         style={{
           fontFamily: "'Press Start 2P', monospace",
-          fontSize: 8,
+          fontSize: 7,
           color: "#ff2d95",
           letterSpacing: 3,
           textShadow: "0 0 10px #ff2d95",
-          marginBottom: 16,
+          marginBottom: 12,
         }}
       >
         JOGOS ONLINE GRATIS
@@ -111,7 +111,7 @@ export default function Home() {
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 20,
+          gap: 12,
           maxWidth: 900,
           width: "100%",
         }}
