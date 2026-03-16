@@ -49,6 +49,12 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <meta name="google-adsense-account" content="ca-pub-4148140889800778" />
+        <meta name="theme-color" content="#050510" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Acerte a Mosca" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         <link
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap"
           rel="stylesheet"
@@ -89,6 +95,9 @@ export default function RootLayout({ children }) {
             crossOrigin="anonymous"
           />
         )}
+        <Script id="register-sw" strategy="afterInteractive">
+          {`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}
+        </Script>
         <Navbar />
         <div style={{ paddingTop: 48 }}>{children}</div>
       </body>

@@ -1,0 +1,7 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'>
+  <rect width='512' height='512' rx='76.8' fill='#050510'/>
+  <rect x='25.6' y='25.6' width='460.8' height='460.8' rx='61.44' fill='#0a0a1a' stroke='#00f0ff' stroke-width='10.24' stroke-opacity='0.3'/>
+  <text x='50%' y='42%' font-size='179.2' text-anchor='middle' dominant-baseline='central'>🩴</text>
+  <text x='50%' y='72%' font-family='Arial Black, sans-serif' font-size='40.96' fill='#00f0ff' text-anchor='middle' dominant-baseline='central' font-weight='900' letter-spacing='2.56'>ACERTE A</text>
+  <text x='50%' y='85%' font-family='Arial Black, sans-serif' font-size='40.96' fill='#00f0ff' text-anchor='middle' dominant-baseline='central' font-weight='900' letter-spacing='2.56'>MOSCA</text>
+</svg>

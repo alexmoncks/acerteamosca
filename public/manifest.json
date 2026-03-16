@@ -1,0 +1,61 @@
+{
+  "name": "Acerte a Mosca - Jogos Online",
+  "short_name": "Acerte a Mosca",
+  "description": "Jogos online gratis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais. Sem download!",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050510",
+  "theme_color": "#050510",
+  "categories": ["games", "entertainment"],
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Wordle BR",
+      "short_name": "Wordle",
+      "url": "/jogos/wordle"
+    },
+    {
+      "name": "2048",
+      "short_name": "2048",
+      "url": "/jogos/2048"
+    },
+    {
+      "name": "Memory Game",
+      "short_name": "Memory",
+      "url": "/jogos/memory"
+    },
+    {
+      "name": "Bubble Shooter",
+      "short_name": "Bubbles",
+      "url": "/jogos/bubbleshooter"
+    },
+    {
+      "name": "Deep Attack",
+      "short_name": "Deep Attack",
+      "url": "/jogos/deepattack"
+    }
+  ]
+}
