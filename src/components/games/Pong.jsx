@@ -332,6 +332,7 @@ export default function Pong() {
   const [lobbyStatus, setLobbyStatus] = useState(null);
   const [sessionId, setSessionId] = useState("");
   const [playerNum, setPlayerNum] = useState(0); // 1 or 2
+  const playerNumRef = useRef(0); // mutable ref so WS handler avoids stale closure
   const [remoteRestartReq, setRemoteRestartReq] = useState(false);
   const [disconnected, setDisconnected] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -351,6 +352,9 @@ export default function Pong() {
   const cpuRef = useRef({ targetX: CANVAS_W / 2, impOffset: 0, ticksSinceUpdate: 0, serveTimer: 0 });
   const trailRef = useRef([]);
   const [trail, setTrail] = useState([]);
+
+  // Keep playerNumRef in sync with playerNum state
+  useEffect(() => { playerNumRef.current = playerNum; }, [playerNum]);
 
   // ---- Audio ----
   const initAudio = useCallback(async () => {
@@ -596,6 +600,9 @@ export default function Pong() {
   }, [screen, mode, localTick]);
 
   // ---- Remote: paddle sending + input loop ----
+  // Local paddle position is tracked separately to avoid jitter from server round-trip.
+  // We render the local paddle from gameRef (updated by input only) and the remote
+  // paddle from server state. The server state for our own paddle is ignored for rendering.
   useEffect(() => {
     if (screen !== "playing" || !mode?.startsWith("remote")) return;
 
@@ -608,7 +615,7 @@ export default function Pong() {
       if (keys.has("ArrowRight")) g[myPaddle] += PADDLE_SPEED;
       g[myPaddle] = clamp(g[myPaddle], PADDLE_W / 2, CANVAS_W - PADDLE_W / 2);
 
-      // Send paddle position
+      // Send paddle position to server
       const ws = wsRef.current;
       if (ws && ws.readyState === 1) {
         ws.send(JSON.stringify({ t: "paddle", x: g[myPaddle] }));
@@ -620,6 +627,10 @@ export default function Pong() {
           ws.send(JSON.stringify({ t: "launch" }));
         }
       }
+
+      // Update local paddle React state directly from local input (no server round-trip)
+      if (playerNum === 1) setP1x(g.p1x);
+      else setP2x(g.p2x);
     }, 1000 / 60);
 
     return () => clearInterval(interval);
@@ -671,11 +682,9 @@ export default function Pong() {
           window.gtag?.("event", "game_start", { game_name: "pong" });
           break;
 
-        case "gs": // game state
+        case "gs": { // game state
           setBallX(msg.bx);
           setBallY(msg.by);
-          setP1x(msg.p1);
-          setP2x(msg.p2);
           setS1(msg.s1);
           setS2(msg.s2);
           setServing(msg.sv);
@@ -684,10 +693,22 @@ export default function Pong() {
           trailRef.current.push({ x: msg.bx, y: msg.by });
           if (trailRef.current.length > 8) trailRef.current.shift();
           setTrail([...trailRef.current]);
-          // Sync gameRef for paddle input
-          gameRef.current.p1x = msg.p1;
-          gameRef.current.p2x = msg.p2;
+
+          // Only update the REMOTE player's paddle from server state.
+          // The local player's paddle is driven by local input to avoid jitter.
+          // Use ref to avoid stale closure (playerNum state may not be current here).
+          const myIdx = playerNumRef.current; // 1 or 2
+          if (myIdx === 1) {
+            // We are P1: update P2 from server, keep P1 local
+            setP2x(msg.p2);
+            gameRef.current.p2x = msg.p2;
+          } else {
+            // We are P2: update P1 from server, keep P2 local
+            setP1x(msg.p1);
+            gameRef.current.p1x = msg.p1;
+          }
           break;
+        }
 
         case "sfx":
           if (msg.s === "paddle") audioRef.current?.paddleHit();
