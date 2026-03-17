@@ -1,15 +1,16 @@
 import { cookies } from "next/headers";
 
 const COOKIE_NAME = "acerteamosca_jogador";
-const MAX_AGE = 60 * 60 * 24 * 365; // 1 ano
+const MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 export function setJogadorCookie(jogadorId) {
   cookies().set(COOKIE_NAME, jogadorId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     sameSite: "lax",
     maxAge: MAX_AGE,
     path: "/",
+    domain: undefined, // let browser default to current domain
   });
 }
 

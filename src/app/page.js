@@ -66,6 +66,14 @@ const jogos = [
     cor: "#22d3ee",
     destaque: false,
   },
+  {
+    slug: "jacare",
+    nome: "Jogo do Jacare",
+    emoji: "🐊",
+    desc: "Atravesse a rua e o rio com o jacare! Estilo Frogger classico.",
+    cor: "#39ff14",
+    destaque: false,
+  },
 ];
 
 const faqs = [

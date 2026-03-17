@@ -1,6 +1,7 @@
 import "./globals.css";
 import Script from "next/script";
 import Navbar from "@/components/Navbar";
+import InstallPrompt from "@/components/InstallPrompt";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
@@ -47,7 +48,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <meta name="google-adsense-account" content="ca-pub-4148140889800778" />
         <meta name="theme-color" content="#050510" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -99,6 +100,7 @@ export default function RootLayout({ children }) {
           {`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}
         </Script>
         <Navbar />
+        <InstallPrompt />
         <div style={{ paddingTop: 48 }}>{children}</div>
       </body>
     </html>

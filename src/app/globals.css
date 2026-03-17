@@ -15,10 +15,34 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* iPhone safe area support */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent long-press actions on game elements (iOS magnifying glass, context menu) */
+canvas,
+button,
+.game-active * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Lock scroll during active gameplay - applied via useLockScroll hook */
 body.game-active {
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* Prevent text selection globally during gameplay */
+body.game-active {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 a {
