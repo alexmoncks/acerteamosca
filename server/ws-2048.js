@@ -104,7 +104,7 @@ wss.on("connection", (ws) => {
         // Send to opponent
         const otherIdx = playerIdx === 0 ? 1 : 0;
         const other = session.players[otherIdx];
-        send(other, { type: "opponent_score", score: msg.score });
+        send(other, { type: "opponent_score", score: msg.score, emptyCells: msg.emptyCells });
         break;
       }
 

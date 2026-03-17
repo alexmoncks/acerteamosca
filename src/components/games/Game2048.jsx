@@ -62,6 +62,16 @@ function getEmptyCells(grid) {
   return cells;
 }
 
+function countEmptyCells(grid) {
+  let count = 0;
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (grid[r][c] === 0) count++;
+    }
+  }
+  return count;
+}
+
 function addRandomTile(grid) {
   const empty = getEmptyCells(grid);
   if (empty.length === 0) return grid;
@@ -713,6 +723,7 @@ export default function Game2048() {
   const [lobbyStatus, setLobbyStatus] = useState("idle");
   const [playerNum, setPlayerNum] = useState(-1);
   const [opponentScore, setOpponentScore] = useState(0);
+  const [opponentEmptyCells, setOpponentEmptyCells] = useState(16);
   const [onlineResult, setOnlineResult] = useState(null); // "win" | "lose" | null
   const [onlineGrid, setOnlineGrid] = useState(() => initGrid());
   const [onlineScore, setOnlineScore] = useState(0);
@@ -867,10 +878,14 @@ export default function Game2048() {
 
       setOnlineScore((prev) => {
         const newScore = prev + result.score;
-        // Send score update to server
+        // Send score update to server (include emptyCells for opponent indicator)
         const ws = wsRef.current;
         if (ws && ws.readyState === 1) {
-          ws.send(JSON.stringify({ type: "score_update", score: newScore }));
+          ws.send(JSON.stringify({
+            type: "score_update",
+            score: newScore,
+            emptyCells: countEmptyCells(withNewTile),
+          }));
         }
         return newScore;
       });
@@ -1097,6 +1112,7 @@ export default function Game2048() {
           setOnlineGrid(initGrid());
           setOnlineScore(0);
           setOpponentScore(0);
+          setOpponentEmptyCells(16);
           setOnlineWon(false);
           setOnlineLost(false);
           setOnlineResult(null);
@@ -1110,6 +1126,9 @@ export default function Game2048() {
 
         case "opponent_score":
           setOpponentScore(msg.score);
+          if (typeof msg.emptyCells === "number") {
+            setOpponentEmptyCells(msg.emptyCells);
+          }
           break;
 
         case "opponent_lost":
@@ -1194,6 +1213,7 @@ export default function Game2048() {
     setRoomId("");
     setPlayerNum(-1);
     setOpponentScore(0);
+    setOpponentEmptyCells(16);
     setOnlineResult(null);
     setOnlineWon(false);
     setOnlineLost(false);
@@ -1303,6 +1323,10 @@ export default function Game2048() {
         @keyframes pulseGlow {
           0%, 100% { box-shadow: 0 0 10px rgba(176,38,255,0.2); }
           50% { box-shadow: 0 0 25px rgba(176,38,255,0.5); }
+        }
+        @keyframes pulseWarning {
+          0%, 100% { opacity: 0.7; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.03); }
         }
       `}</style>
 
@@ -1740,6 +1764,20 @@ export default function Game2048() {
                 >
                   {onlineScore}
                 </p>
+                <p
+                  style={{
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: 8,
+                    color: countEmptyCells(onlineGrid) <= 2
+                      ? "#ff2d55"
+                      : countEmptyCells(onlineGrid) <= 4
+                        ? "#ffcc00"
+                        : "#39ff14",
+                    marginTop: 4,
+                  }}
+                >
+                  {countEmptyCells(onlineGrid)} livres
+                </p>
               </div>
 
               {/* VS */}
@@ -1770,7 +1808,10 @@ export default function Game2048() {
                   borderRadius: 8,
                   padding: "8px 12px",
                   textAlign: "center",
-                  border: "2px solid #2a2a4a",
+                  border: `2px solid ${
+                    opponentEmptyCells <= 2 ? "#ff2d5580" : opponentEmptyCells <= 4 ? "#ffcc0060" : "#2a2a4a"
+                  }`,
+                  transition: "border-color 0.3s",
                 }}
               >
                 <p
@@ -1792,8 +1833,63 @@ export default function Game2048() {
                 >
                   {opponentScore}
                 </p>
+                <p
+                  style={{
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: 8,
+                    color: opponentEmptyCells <= 2
+                      ? "#ff2d55"
+                      : opponentEmptyCells <= 4
+                        ? "#ffcc00"
+                        : "#8892b0",
+                    marginTop: 4,
+                  }}
+                >
+                  {opponentEmptyCells} livres
+                </p>
               </div>
             </div>
+
+            {/* Opponent warning indicator */}
+            {!onlineResult && opponentEmptyCells <= 4 && (
+              <div
+                style={{
+                  width: boardSize,
+                  marginBottom: 6,
+                  padding: "5px 10px",
+                  borderRadius: 6,
+                  textAlign: "center",
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 7,
+                  lineHeight: 1.5,
+                  background: opponentEmptyCells === 0
+                    ? "rgba(255,45,85,0.2)"
+                    : opponentEmptyCells <= 2
+                      ? "rgba(255,45,85,0.15)"
+                      : "rgba(255,204,0,0.12)",
+                  color: opponentEmptyCells === 0
+                    ? "#ff2d55"
+                    : opponentEmptyCells <= 2
+                      ? "#ff6b8a"
+                      : "#ffcc00",
+                  border: `1px solid ${
+                    opponentEmptyCells === 0
+                      ? "#ff2d5560"
+                      : opponentEmptyCells <= 2
+                        ? "#ff2d5540"
+                        : "#ffcc0040"
+                  }`,
+                  animation: opponentEmptyCells <= 2 ? "pulseWarning 1.2s ease-in-out infinite" : "none",
+                  boxSizing: "border-box",
+                }}
+              >
+                {opponentEmptyCells === 0
+                  ? "Oponente sem espaco!"
+                  : opponentEmptyCells <= 2
+                    ? "Oponente quase perdendo!"
+                    : "Oponente com poucas opcoes!"}
+              </div>
+            )}
 
             {/* Grid */}
             <div style={{ position: "relative" }}>
