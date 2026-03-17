@@ -1157,7 +1157,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
 }
 
 // ---- Online Finished Screen ----
-function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, onMenu }) {
+function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, onMenu, waitingRematch }) {
   const youWon = winner === playerNum;
   const isDraw = winner === -1;
 
@@ -1294,23 +1294,26 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
       >
         <button
           onClick={onPlayAgain}
+          disabled={waitingRematch}
           style={{
             fontFamily: "'Press Start 2P', monospace",
             fontSize: 11,
             padding: "12px 28px",
-            background: `linear-gradient(135deg, ${ONLINE_ACCENT}, #5b21b6)`,
+            background: waitingRematch
+              ? "#2a2a4a"
+              : `linear-gradient(135deg, ${ONLINE_ACCENT}, #5b21b6)`,
             color: "#fff",
             border: "none",
             borderRadius: 8,
-            cursor: "pointer",
+            cursor: waitingRematch ? "default" : "pointer",
             letterSpacing: 1,
-            boxShadow: `0 0 20px ${ONLINE_ACCENT}40`,
+            boxShadow: waitingRematch ? "none" : `0 0 20px ${ONLINE_ACCENT}40`,
             transition: "all 0.2s",
           }}
-          onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; }}
+          onMouseEnter={(e) => { if (!waitingRematch) e.target.style.transform = "scale(1.05)"; }}
           onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
         >
-          Jogar Novamente
+          {waitingRematch ? "Aguardando revanche..." : "Jogar Novamente"}
         </button>
         <button
           onClick={onMenu}
@@ -1378,6 +1381,7 @@ export default function MemoryGame() {
   const [onlineScores, setOnlineScores] = useState([0, 0]);
   const [onlineResult, setOnlineResult] = useState(null); // { scores, winner }
   const [onlineMatchedIndices, setOnlineMatchedIndices] = useState([]); // track matched card indices for online
+  const [waitingRematch, setWaitingRematch] = useState(false);
   const pendingOnlineRef = useRef(null);
   const autoJoinRef = useRef(false);
 
@@ -1533,10 +1537,12 @@ export default function MemoryGame() {
           setOnlineScores([0, 0]);
           setOnlineMatchedIndices([]);
           setFlipped([]);
+          setMoves(0);
           setLocked(false);
           setShakeId(null);
           setMatchAnimEmoji(null);
           setOnlineResult(null);
+          setWaitingRematch(false);
           setScreen("online-playing");
           setLobbyStatus("idle");
           // Init audio for online
@@ -1590,8 +1596,13 @@ export default function MemoryGame() {
           }, 600);
           break;
 
+        case "rematch_waiting":
+          // Opponent requested rematch - no action needed, the start message will come
+          break;
+
         case "opponent_left":
           // Opponent disconnected - you win
+          setWaitingRematch(false);
           setOnlineResult({
             scores: onlineScores,
             winner: playerNum,
@@ -1796,6 +1807,7 @@ export default function MemoryGame() {
     setPlayerNum(null);
     setOnlineResult(null);
     setOnlineMatchedIndices([]);
+    setWaitingRematch(false);
   }, [closeWS]);
 
   // ---- Restart solo ----
@@ -1808,14 +1820,21 @@ export default function MemoryGame() {
     setScreen("menu");
   }, []);
 
-  // ---- Online play again (create new room) ----
+  // ---- Online play again (request rematch) ----
   const handleOnlinePlayAgain = useCallback(() => {
-    closeWS();
-    setScreen("online-lobby");
-    setLobbyStatus("idle");
-    setRoomId("");
-    setOnlineResult(null);
-    setOnlineMatchedIndices([]);
+    if (wsRef.current && wsRef.current.readyState === 1) {
+      wsRef.current.send(JSON.stringify({ type: "rematch" }));
+      setWaitingRematch(true);
+    } else {
+      // WS disconnected, go back to lobby
+      closeWS();
+      setScreen("online-lobby");
+      setLobbyStatus("idle");
+      setRoomId("");
+      setOnlineResult(null);
+      setOnlineMatchedIndices([]);
+      setWaitingRematch(false);
+    }
   }, [closeWS]);
 
   // ---- Auto-join from URL param (?sala=XXXX) ----
@@ -2136,6 +2155,7 @@ export default function MemoryGame() {
               playerNum={playerNum}
               onPlayAgain={handleOnlinePlayAgain}
               onMenu={handleBackToMenu}
+              waitingRematch={waitingRematch}
             />
           )}
         </div>

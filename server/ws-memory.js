@@ -239,6 +239,42 @@ wss.on("connection", (ws) => {
         handleFlip(session, ws, msg.index);
         break;
       }
+
+      case "rematch": {
+        const session = sessions.get(ws._sessionId);
+        if (!session) break;
+        // Only allow rematch after game is over
+        if (session.active) break;
+
+        if (!session.rematchRequests) session.rematchRequests = new Set();
+        session.rematchRequests.add(ws._playerIdx);
+
+        // Notify the other player that opponent wants rematch
+        const otherIdx = ws._playerIdx === 0 ? 1 : 0;
+        const otherWs = session.players[otherIdx];
+        if (otherWs && otherWs.readyState === 1) {
+          send(otherWs, { type: "rematch_waiting" });
+        }
+
+        // If both players requested rematch, start a new game
+        if (session.rematchRequests.size >= 2) {
+          session.rematchRequests = new Set();
+          session.deck = generateDeck(session.difficulty);
+          session.turn = 0;
+          session.flippedThisTurn = [];
+          session.matched = [];
+          session.scores = [0, 0];
+          session.active = true;
+
+          broadcast(session, {
+            type: "start",
+            deck: session.deck,
+            difficulty: session.difficulty,
+            turn: session.turn,
+          });
+        }
+        break;
+      }
     }
   });
 
