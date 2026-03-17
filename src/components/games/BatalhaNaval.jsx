@@ -7,6 +7,8 @@ import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 import useLockScroll from "@/hooks/useLockScroll";
 
+const WS_URL = process.env.NEXT_PUBLIC_WS_BATALHA_URL || "ws://localhost:3006";
+
 // ============================================================
 // CONSTANTS
 // ============================================================
@@ -33,6 +35,8 @@ const CELL_HIT = 3;
 const CELL_SUNK = 4;
 
 const ACCENT = "#3b82f6";
+const ONLINE_ACCENT = "#b026ff";
+const NEON_GREEN = "#39ff14";
 
 // ============================================================
 // AUDIO ENGINE (Web Audio API)
@@ -617,7 +621,7 @@ function injectStyles() {
 // ============================================================
 
 // ----------- Menu Screen -----------
-function MenuScreen({ onStart, difficulty, setDifficulty }) {
+function MenuScreen({ onStart, onOnline, difficulty, setDifficulty }) {
   const difficulties = [
     { key: "easy", label: "Marinheiro", icon: "⚓", desc: "Ataques aleatorios", color: "#22c55e" },
     { key: "medium", label: "Capitao", icon: "🎖️", desc: "IA com estrategia", color: "#eab308" },
@@ -654,14 +658,19 @@ function MenuScreen({ onStart, difficulty, setDifficulty }) {
       >VS COMPUTADOR</button>
 
       <button
-        disabled
+        onClick={onOnline}
         style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 10,
-          padding: "10px 24px", background: "#1e293b", color: "#475569",
-          border: "1px solid #334155", borderRadius: 8, cursor: "not-allowed",
+          padding: "10px 24px",
+          background: `linear-gradient(135deg, ${ONLINE_ACCENT}, #5b21b6)`,
+          color: "#fff", border: "none", borderRadius: 8, cursor: "pointer",
           marginBottom: 32,
+          boxShadow: `0 0 20px ${ONLINE_ACCENT}40`,
+          transition: "all 0.2s",
         }}
-      >VS ONLINE (em breve)</button>
+        onMouseEnter={e => { e.target.style.transform = "scale(1.05)"; }}
+        onMouseLeave={e => { e.target.style.transform = "scale(1)"; }}
+      >VS ONLINE</button>
 
       <p style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 9,
@@ -1378,6 +1387,264 @@ function ConfettiOverlay() {
   );
 }
 
+// ----------- Online Lobby -----------
+function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onCancel }) {
+  const [copied, setCopied] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+
+  const handleCopyLink = async () => {
+    if (!roomId) return;
+    const url = `${window.location.origin}${window.location.pathname}?sala=${roomId}`;
+    try { await navigator.clipboard.writeText(url); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      padding: "30px 16px", animation: "bn-fadeIn 0.4s ease",
+    }}>
+      <div style={{ fontSize: 40, marginBottom: 16 }}>{"\u{1F310}"}</div>
+
+      {lobbyStatus === "idle" && (
+        <>
+          <p style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 12,
+            color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
+            marginBottom: 24,
+          }}>ONLINE</p>
+
+          <button
+            onClick={onCreate}
+            style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+              padding: "12px 28px",
+              background: `linear-gradient(135deg, ${ONLINE_ACCENT}, #5b21b6)`,
+              color: "#fff", border: "none", borderRadius: 8, cursor: "pointer",
+              marginBottom: 16,
+              boxShadow: `0 0 20px ${ONLINE_ACCENT}40`,
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+          >{"\u{1F3E0}"}  Criar Sala</button>
+
+          <div style={{ width: 200, height: 1, background: "#2a2a4a", marginBottom: 16 }} />
+
+          <p style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+            color: "#8892b0", marginBottom: 10,
+          }}>ENTRAR EM SALA</p>
+          <input
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            placeholder="CODIGO"
+            maxLength={6}
+            style={{
+              width: 200, padding: "10px 12px",
+              background: "#111127", border: "1px solid #2a2a4a",
+              borderRadius: 6, color: "#e0e0ff", fontSize: 14,
+              fontFamily: "'Press Start 2P', monospace",
+              textAlign: "center", letterSpacing: 4, outline: "none",
+              boxSizing: "border-box", marginBottom: 8,
+            }}
+            onFocus={(e) => { e.target.style.borderColor = ONLINE_ACCENT; }}
+            onBlur={(e) => { e.target.style.borderColor = "#2a2a4a"; }}
+          />
+          <button
+            onClick={() => joinCode.length >= 4 && onJoin(joinCode)}
+            disabled={joinCode.length < 4}
+            style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 9,
+              padding: "10px 24px",
+              background: joinCode.length >= 4 ? ONLINE_ACCENT : "#2a2a4a",
+              color: joinCode.length >= 4 ? "#fff" : "#555",
+              border: "none", borderRadius: 6,
+              cursor: joinCode.length >= 4 ? "pointer" : "not-allowed",
+              marginBottom: 16,
+            }}
+          >ENTRAR</button>
+        </>
+      )}
+
+      {lobbyStatus === "creating" && (
+        <p style={{
+          fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+          color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
+        }}>CONECTANDO...</p>
+      )}
+
+      {lobbyStatus === "waiting" && (
+        <>
+          <p style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+            color: ONLINE_ACCENT, marginBottom: 20,
+            textShadow: `0 0 10px ${ONLINE_ACCENT}`,
+          }}>AGUARDANDO OPONENTE...</p>
+          <div
+            onClick={handleCopyLink}
+            style={{
+              background: "#111127",
+              border: `2px solid ${copied ? NEON_GREEN : ONLINE_ACCENT}`,
+              borderRadius: 10, padding: "16px 28px",
+              marginBottom: 16, cursor: "pointer",
+              transition: "border-color 0.3s",
+            }}
+          >
+            <p style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 7,
+              color: "#555", marginBottom: 8,
+            }}>CODIGO DA SALA</p>
+            <p style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 28,
+              color: ONLINE_ACCENT,
+              textShadow: `0 0 15px ${ONLINE_ACCENT}`,
+              letterSpacing: 8,
+            }}>{roomId}</p>
+          </div>
+          <p style={{
+            fontFamily: "'Fira Code', monospace", fontSize: 10,
+            color: copied ? NEON_GREEN : "#666",
+            transition: "color 0.3s",
+          }}>{copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}</p>
+        </>
+      )}
+
+      {lobbyStatus === "joining" && (
+        <p style={{
+          fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+          color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
+        }}>ENTRANDO NA SALA...</p>
+      )}
+
+      {lobbyStatus === "error" && (
+        <p style={{
+          fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+          color: "#ff2d95", marginBottom: 12,
+        }}>SALA NAO ENCONTRADA</p>
+      )}
+
+      <button
+        onClick={onCancel}
+        style={{
+          marginTop: 20, padding: "10px 24px",
+          background: "transparent", border: "1px solid #555",
+          borderRadius: 6, color: "#555",
+          fontFamily: "'Press Start 2P', monospace", fontSize: 9,
+          cursor: "pointer",
+        }}
+      >CANCELAR</button>
+    </div>
+  );
+}
+
+// ----------- Online Game Over Screen -----------
+function OnlineGameOverScreen({
+  won, stats, playerShips, opponentShips, playerTracking, opponentTracking,
+  onRematch, onMenu, waitingRematch, cellSize, disconnected,
+}) {
+  const miniCell = Math.max(14, Math.floor(cellSize * 0.5));
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      padding: "20px 8px",
+      animation: won ? "bn-fadeIn 0.6s ease" : "bn-shake 0.5s ease, bn-fadeIn 0.6s ease",
+    }}>
+      <div style={{ fontSize: 48, marginBottom: 8 }}>
+        {won ? "\u{1F3C6}" : "\u{1F480}"}
+      </div>
+      <h2 style={{
+        fontFamily: "'Press Start 2P', monospace", fontSize: 22,
+        color: won ? "#22c55e" : "#ef4444",
+        textShadow: `0 0 20px ${won ? "#22c55e" : "#ef4444"}80`,
+        marginBottom: 8,
+      }}>{won ? "VITORIA!" : disconnected ? "OPONENTE SAIU" : "DERROTA"}</h2>
+
+      {disconnected && (
+        <p style={{
+          fontFamily: "'Fira Code', monospace", fontSize: 10,
+          color: "#94a3b8", marginBottom: 16,
+        }}>O oponente desconectou. Voce venceu!</p>
+      )}
+
+      {/* Stats */}
+      {stats && (
+        <div style={{
+          background: "#0f172a", border: "1px solid #1e293b",
+          borderRadius: 8, padding: "12px 16px", marginBottom: 16,
+          width: "100%", maxWidth: 300,
+        }}>
+          {[
+            ["Tiros", stats.totalShots],
+            ["Acertos", stats.hits],
+            ["Precisao", `${stats.accuracy}%`],
+            ["Navios afundados", `${stats.shipsSunk}/${TOTAL_SHIPS}`],
+          ].map(([label, value]) => (
+            <div key={label} style={{
+              display: "flex", justifyContent: "space-between",
+              padding: "4px 0",
+              fontFamily: "'Fira Code', monospace", fontSize: 10,
+            }}>
+              <span style={{ color: "#94a3b8" }}>{label}</span>
+              <span style={{ color: "#e2e8f0" }}>{value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Revealed grids */}
+      {opponentShips && opponentShips.length > 0 && (
+        <div style={{
+          display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap", justifyContent: "center",
+        }}>
+          <div>
+            <p style={{
+              fontFamily: "'Fira Code', monospace", fontSize: 9,
+              color: "#64748b", textAlign: "center", marginBottom: 4,
+            }}>SEU TABULEIRO</p>
+            <RevealedGrid ships={playerShips} attacks={opponentTracking || []} cellSize={miniCell} />
+          </div>
+          <div>
+            <p style={{
+              fontFamily: "'Fira Code', monospace", fontSize: 9,
+              color: "#64748b", textAlign: "center", marginBottom: 4,
+            }}>TABULEIRO INIMIGO</p>
+            <RevealedGrid ships={opponentShips} attacks={playerTracking} cellSize={miniCell} />
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 10 }}>
+        {!disconnected && (
+          <button
+            onClick={onRematch}
+            disabled={waitingRematch}
+            style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+              padding: "12px 20px",
+              background: waitingRematch ? "#1e293b" : `linear-gradient(135deg, ${ONLINE_ACCENT}, #5b21b6)`,
+              color: waitingRematch ? "#94a3b8" : "#fff",
+              border: waitingRematch ? "1px solid #334155" : "none",
+              borderRadius: 8,
+              cursor: waitingRematch ? "default" : "pointer",
+            }}
+          >{waitingRematch ? "AGUARDANDO..." : "REVANCHE"}</button>
+        )}
+        <button
+          onClick={onMenu}
+          style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 10,
+            padding: "12px 20px", background: "#1e293b", color: "#94a3b8",
+            border: "1px solid #334155", borderRadius: 8, cursor: "pointer",
+          }}
+        >MENU</button>
+      </div>
+    </div>
+  );
+}
+
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
@@ -1385,8 +1652,10 @@ export default function BatalhaNaval() {
   // ---- Hooks ----
   const { user, checkedCookie, registering, register } = useJogador("batalha-naval");
   const gameScale = useGameScale(GAME_W);
-  const [screen, setScreen] = useState("menu"); // menu, register, setup, battle, gameover, paused
-  useLockScroll(screen === "battle");
+  const [screen, setScreen] = useState("menu");
+  // screens: menu, register, setup, battle, gameover, paused,
+  //          online-lobby, online-setup, online-waiting, online-battle, online-gameover
+  useLockScroll(screen === "battle" || screen === "online-battle");
 
   // ---- State ----
   const [difficulty, setDifficulty] = useState("medium");
@@ -1428,6 +1697,24 @@ export default function BatalhaNaval() {
   useEffect(() => { playerShipsRef.current = playerShips; }, [playerShips]);
   useEffect(() => { aiTrackingRef.current = aiTracking; }, [aiTracking]);
 
+  // ---- Online State ----
+  const wsRef = useRef(null);
+  const [roomId, setRoomId] = useState("");
+  const [lobbyStatus, setLobbyStatus] = useState("idle"); // idle | creating | waiting | joining | error
+  const [playerNum, setPlayerNum] = useState(null);
+  const [onlineTurn, setOnlineTurn] = useState(null); // 0 or 1
+  const [onlineOpponentReady, setOnlineOpponentReady] = useState(false);
+  const [onlinePlayerReady, setOnlinePlayerReady] = useState(false);
+  const [onlineTracking, setOnlineTracking] = useState(createTrackingGrid); // attacks sent by us on opponent
+  const [onlineIncoming, setOnlineIncoming] = useState([]); // attacks received from opponent on us: {r, c, result}
+  const [onlineSunkOpponent, setOnlineSunkOpponent] = useState([]); // sunk ships revealed from opponent
+  const [onlineGameResult, setOnlineGameResult] = useState(null); // "win" or "lose"
+  const [onlineOpponentShips, setOnlineOpponentShips] = useState([]); // revealed on game_over
+  const [waitingRematch, setWaitingRematch] = useState(false);
+  const [onlineDisconnected, setOnlineDisconnected] = useState(false);
+  const autoJoinRef = useRef(false);
+  const onlineStatsRef = useRef({ totalShots: 0, hits: 0, shipsSunk: 0 });
+
   // ---- Detect mobile ----
   useEffect(() => {
     isMobileRef.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -1467,17 +1754,396 @@ export default function BatalhaNaval() {
     window.gtag?.("event", "game_start", { game_name: "batalha-naval", difficulty });
   }, [user, initAudio, difficulty]);
 
+  // ---- Close WS helper ----
+  const closeWS = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+  }, []);
+
+  // ---- Cleanup on unmount ----
+  useEffect(() => {
+    return () => { closeWS(); };
+  }, [closeWS]);
+
+  // ---- Connect WebSocket ----
+  const connectWS = useCallback((action, joinCode) => {
+    closeWS();
+
+    const ws = new WebSocket(WS_URL);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      if (action === "create") {
+        ws.send(JSON.stringify({ type: "create" }));
+      } else {
+        ws.send(JSON.stringify({ type: "join", roomId: joinCode }));
+        setLobbyStatus("joining");
+      }
+    };
+
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+
+      switch (msg.type) {
+        case "created":
+          setRoomId(msg.roomId);
+          setPlayerNum(msg.playerNum);
+          setLobbyStatus("waiting");
+          break;
+
+        case "joined":
+          setPlayerNum(msg.playerNum);
+          // Go to setup (place ships)
+          setScreen("online-setup");
+          setLobbyStatus("idle");
+          setPlayerShips([]);
+          setSelectedShipDef(FLEET[0]);
+          setHorizontal(true);
+          setOnlinePlayerReady(false);
+          setOnlineOpponentReady(false);
+          break;
+
+        case "opponent_joined":
+          // Player 1 also goes to setup
+          setScreen("online-setup");
+          setLobbyStatus("idle");
+          setPlayerShips([]);
+          setSelectedShipDef(FLEET[0]);
+          setHorizontal(true);
+          setOnlinePlayerReady(false);
+          setOnlineOpponentReady(false);
+          break;
+
+        case "opponent_ready":
+          setOnlineOpponentReady(true);
+          break;
+
+        case "start": {
+          // Both players ready, battle begins
+          setOnlineTurn(msg.firstPlayer);
+          setOnlineTracking(createTrackingGrid());
+          setOnlineIncoming([]);
+          setOnlineSunkOpponent([]);
+          setOnlineGameResult(null);
+          setOnlineOpponentShips([]);
+          setOnlineDisconnected(false);
+          setWaitingRematch(false);
+          setAnimatingCell(null);
+          setLastSunkShip(null);
+          setMobileConfirm(null);
+          setBattleShake(false);
+          setSwappedGrids(false);
+          setLastMoveLog("");
+          onlineStatsRef.current = { totalShots: 0, hits: 0, shipsSunk: 0 };
+          setScreen("online-battle");
+          if (!audioRef.current) audioRef.current = createAudioEngine();
+          audioRef.current?.sonarPing();
+          window.gtag?.("event", "game_start", { game_name: "batalha-naval", mode: "online" });
+          break;
+        }
+
+        case "turn":
+          setOnlineTurn(msg.playerNum);
+          break;
+
+        case "attack_result": {
+          const { row, col, result, shipName, shipCells, attacker } = msg;
+          const isMyAttack = attacker === playerNum;
+
+          if (isMyAttack) {
+            // Update our tracking grid
+            setOnlineTracking(prev => {
+              const g = prev.map(r => [...r]);
+              if (result === "sunk" && shipCells) {
+                for (const cell of shipCells) {
+                  g[cell.r][cell.c] = "sunk";
+                }
+              } else {
+                g[row][col] = result === "miss" ? "miss" : "hit";
+              }
+              return g;
+            });
+
+            if (result === "miss") {
+              audioRef.current?.splash();
+              setLastMoveLog(`Agua em ${cellLabel(row, col)}`);
+            } else if (result === "hit") {
+              audioRef.current?.hit();
+              onlineStatsRef.current.hits++;
+              setLastMoveLog(`Acertou em ${cellLabel(row, col)}!`);
+            } else if (result === "sunk") {
+              audioRef.current?.sunk();
+              onlineStatsRef.current.hits++;
+              onlineStatsRef.current.shipsSunk++;
+              setBattleShake(true);
+              setTimeout(() => setBattleShake(false), 1500);
+              setLastSunkShip({ name: shipName });
+              setTimeout(() => setLastSunkShip(null), 1500);
+              if (shipCells) {
+                setOnlineSunkOpponent(prev => [...prev, {
+                  name: shipName,
+                  cells: shipCells,
+                  color: "#ef4444",
+                }]);
+              }
+              setLastMoveLog(`Voce afundou o ${shipName}!`);
+            }
+            onlineStatsRef.current.totalShots++;
+          } else {
+            // Opponent attacked us
+            const attackResult = result === "sunk" ? "hit" : result;
+            setOnlineIncoming(prev => {
+              if (result === "sunk" && shipCells) {
+                const newIncoming = [...prev];
+                for (const cell of shipCells) {
+                  const existing = newIncoming.findIndex(a => a.r === cell.r && a.c === cell.c);
+                  if (existing >= 0) {
+                    newIncoming[existing] = { r: cell.r, c: cell.c, result: "hit" };
+                  } else {
+                    newIncoming.push({ r: cell.r, c: cell.c, result: "hit" });
+                  }
+                }
+                return newIncoming;
+              }
+              return [...prev, { r: row, c: col, result: attackResult }];
+            });
+
+            if (result === "miss") {
+              audioRef.current?.splash();
+              setLastMoveLog(`Inimigo errou em ${cellLabel(row, col)}`);
+            } else if (result === "hit") {
+              audioRef.current?.hit();
+              setBattleShake(true);
+              setTimeout(() => setBattleShake(false), 500);
+              setLastMoveLog(`Inimigo acertou em ${cellLabel(row, col)}!`);
+            } else if (result === "sunk") {
+              audioRef.current?.sunk();
+              setBattleShake(true);
+              setTimeout(() => setBattleShake(false), 500);
+              setLastMoveLog(`Inimigo afundou seu ${shipName}!`);
+              // Mark the ship as sunk in playerShips
+              setPlayerShips(prev => prev.map(s => {
+                if (s.name === shipName && !s.sunk) {
+                  return { ...s, sunk: true };
+                }
+                return s;
+              }));
+            }
+          }
+
+          // Animation
+          setAnimatingCell({ r: row, c: col, type: result === "miss" ? "miss" : "hit", isAi: !isMyAttack });
+          setTimeout(() => setAnimatingCell(null), 400);
+          break;
+        }
+
+        case "game_over": {
+          const won = msg.winner === playerNum;
+          setOnlineGameResult(won ? "win" : "lose");
+          if (won) {
+            audioRef.current?.victory();
+            setShowConfetti(true);
+          } else {
+            audioRef.current?.defeat();
+          }
+          // Reveal loser's ships
+          if (msg.loserShips) {
+            if (won) {
+              setOnlineOpponentShips(msg.loserShips);
+            } else {
+              // We lost, opponent's ships are already tracked
+              setOnlineOpponentShips(msg.loserShips);
+            }
+          }
+          setTimeout(() => setScreen("online-gameover"), 1200);
+          break;
+        }
+
+        case "rematch_waiting":
+          break;
+
+        case "rematch_start":
+          // New game setup phase
+          setScreen("online-setup");
+          setPlayerShips([]);
+          setSelectedShipDef(FLEET[0]);
+          setHorizontal(true);
+          setOnlinePlayerReady(false);
+          setOnlineOpponentReady(false);
+          setShowConfetti(false);
+          setWaitingRematch(false);
+          break;
+
+        case "opponent_left":
+          setOnlineDisconnected(true);
+          setOnlineGameResult("win");
+          setWaitingRematch(false);
+          if (screen === "online-battle" || screen === "online-setup" || screen === "online-waiting") {
+            audioRef.current?.victory();
+            setScreen("online-gameover");
+          }
+          closeWS();
+          break;
+
+        case "error":
+          if (screen === "online-lobby") {
+            setLobbyStatus("error");
+            setTimeout(() => setLobbyStatus("idle"), 2000);
+          }
+          break;
+      }
+    };
+
+    ws.onclose = () => {};
+    ws.onerror = () => {
+      setLobbyStatus("error");
+      setTimeout(() => {
+        if (screen === "online-lobby") setLobbyStatus("idle");
+      }, 2000);
+    };
+  }, [closeWS, playerNum, screen]);
+
+  // ---- Handle online button ----
+  const handleOnlineClick = useCallback(() => {
+    initAudio();
+    if (!user) {
+      pendingModeRef.current = "online";
+      setScreen("register");
+      return;
+    }
+    setScreen("online-lobby");
+    setLobbyStatus("idle");
+    setRoomId("");
+  }, [user, initAudio]);
+
+  // ---- Handle create room ----
+  const handleCreateRoom = useCallback(() => {
+    setLobbyStatus("creating");
+    connectWS("create");
+  }, [connectWS]);
+
+  // ---- Handle join room ----
+  const handleJoinRoom = useCallback((code) => {
+    setLobbyStatus("joining");
+    connectWS("join", code);
+  }, [connectWS]);
+
+  // ---- Auto-join from URL param (?sala=XXXX) ----
+  useEffect(() => {
+    if (!checkedCookie || autoJoinRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const sala = params.get("sala");
+    if (sala) {
+      autoJoinRef.current = true;
+      window.history.replaceState({}, "", window.location.pathname);
+      if (!user) {
+        pendingModeRef.current = "auto-join";
+        pendingModeRef.current_code = sala;
+        setScreen("register");
+      } else {
+        initAudio();
+        setScreen("online-lobby");
+        setLobbyStatus("joining");
+        connectWS("join", sala);
+      }
+    }
+  }, [checkedCookie, user, connectWS, initAudio]);
+
+  // ---- Online ready (send ships to server) ----
+  const handleOnlineReady = useCallback(() => {
+    if (!wsRef.current || wsRef.current.readyState !== 1) return;
+    if (playerShips.length !== TOTAL_SHIPS) return;
+
+    // Build grid from ships
+    const grid = buildGridFromShips(playerShips);
+
+    // Send ships in a serializable format (no Sets)
+    const shipsData = playerShips.map(s => ({
+      id: s.id,
+      defId: s.defId,
+      name: s.name,
+      size: s.size,
+      color: s.color,
+      cells: s.cells,
+      horizontal: s.horizontal,
+    }));
+
+    wsRef.current.send(JSON.stringify({
+      type: "ready",
+      grid,
+      ships: shipsData,
+    }));
+
+    setOnlinePlayerReady(true);
+    if (onlineOpponentReady) {
+      // Will transition once server sends "start"
+    } else {
+      setScreen("online-waiting");
+    }
+  }, [playerShips, onlineOpponentReady]);
+
+  // ---- Online attack ----
+  const handleOnlineAttack = useCallback((r, c) => {
+    if (onlineTurn !== playerNum) return;
+    if (onlineTracking[r][c] !== null) return;
+    if (!wsRef.current || wsRef.current.readyState !== 1) return;
+
+    // Mobile confirmation
+    if (isMobileRef.current && (!mobileConfirm || mobileConfirm.r !== r || mobileConfirm.c !== c)) {
+      setMobileConfirm({ r, c });
+      return;
+    }
+    setMobileConfirm(null);
+
+    audioRef.current?.shoot();
+    wsRef.current.send(JSON.stringify({ type: "attack", row: r, col: c }));
+  }, [onlineTurn, playerNum, onlineTracking, mobileConfirm]);
+
+  // ---- Online rematch ----
+  const handleOnlineRematch = useCallback(() => {
+    if (!wsRef.current || wsRef.current.readyState !== 1) return;
+    wsRef.current.send(JSON.stringify({ type: "rematch" }));
+    setWaitingRematch(true);
+  }, []);
+
+  // ---- Online menu (go back) ----
+  const handleOnlineMenu = useCallback(() => {
+    closeWS();
+    setScreen("menu");
+    setShowConfetti(false);
+    setOnlineGameResult(null);
+    setOnlineDisconnected(false);
+    setWaitingRematch(false);
+  }, [closeWS]);
+
   const handleRegister = useCallback(async (userData) => {
     const jogador = await register(userData);
     if (jogador && !jogador.error && pendingModeRef.current) {
-      pendingModeRef.current = null;
-      setScreen("setup");
-      setPlayerShips([]);
-      setSelectedShipDef(FLEET[0]);
-      setHorizontal(true);
-      window.gtag?.("event", "game_start", { game_name: "batalha-naval", difficulty });
+      if (pendingModeRef.current === "online") {
+        pendingModeRef.current = null;
+        setScreen("online-lobby");
+        setLobbyStatus("idle");
+        setRoomId("");
+      } else if (pendingModeRef.current === "auto-join") {
+        const code = pendingModeRef.current_code;
+        pendingModeRef.current = null;
+        pendingModeRef.current_code = null;
+        initAudio();
+        setScreen("online-lobby");
+        setLobbyStatus("joining");
+        connectWS("join", code);
+      } else {
+        pendingModeRef.current = null;
+        setScreen("setup");
+        setPlayerShips([]);
+        setSelectedShipDef(FLEET[0]);
+        setHorizontal(true);
+        window.gtag?.("event", "game_start", { game_name: "batalha-naval", difficulty });
+      }
     }
-  }, [register, difficulty]);
+  }, [register, difficulty, connectWS, initAudio]);
 
   // ---- Ship placement ----
   const handleSelectShipDef = useCallback((def) => {
@@ -1590,7 +2256,7 @@ export default function BatalhaNaval() {
 
   // ---- R key for rotation ----
   useEffect(() => {
-    if (screen !== "setup") return;
+    if (screen !== "setup" && screen !== "online-setup") return;
     const handler = (e) => {
       if (e.key === "r" || e.key === "R") {
         setHorizontal(h => !h);
@@ -1919,15 +2585,23 @@ export default function BatalhaNaval() {
     return TOTAL_SHIPS - sunkShipsOpponent.length;
   }, [sunkShipsOpponent]);
 
+  // ---- Online remaining ships ----
+  const onlinePlayerRemaining = useMemo(() => playerShips.filter(s => !s.sunk).length, [playerShips]);
+  const onlineAiRemaining = useMemo(() => TOTAL_SHIPS - onlineSunkOpponent.length, [onlineSunkOpponent]);
+
   // ---- Render ----
+  const isBattleScreen = screen === "battle" || screen === "online-battle";
+  const isOnlineScreen = screen.startsWith("online");
+
   return (
     <div style={{
       minHeight: "100vh", background: "#050510",
       display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center",
       padding: "12px 0",
     }}>
       {/* Top ad - hidden during battle */}
-      {screen !== "battle" && screen !== "paused" && (
+      {!isBattleScreen && screen !== "paused" && (
         <AdBanner slot="batalha-naval_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
       )}
 
@@ -1938,11 +2612,17 @@ export default function BatalhaNaval() {
         transform: `scale(${gameScale})`,
         transformOrigin: "top center",
         position: "relative",
+        border: "2px solid #3b82f633",
+        borderRadius: 12,
+        boxShadow: "0 0 40px rgba(59,130,246,0.08)",
+        background: "#050510",
+        overflow: "hidden",
       }}>
         {/* ============ MENU ============ */}
         {screen === "menu" && (
           <MenuScreen
             onStart={handleStartGame}
+            onOnline={handleOnlineClick}
             difficulty={difficulty}
             setDifficulty={setDifficulty}
           />
@@ -2213,6 +2893,285 @@ export default function BatalhaNaval() {
               onRestart={handleRestart}
               onMenu={handleMenu}
               cellSize={mainCellSize}
+            />
+          </>
+        )}
+
+        {/* ============ ONLINE LOBBY ============ */}
+        {screen === "online-lobby" && (
+          <OnlineLobby
+            roomId={roomId}
+            lobbyStatus={lobbyStatus}
+            opponentReady={onlineOpponentReady}
+            onCreate={handleCreateRoom}
+            onJoin={handleJoinRoom}
+            onCancel={handleOnlineMenu}
+          />
+        )}
+
+        {/* ============ ONLINE SETUP ============ */}
+        {screen === "online-setup" && (
+          <SetupScreen
+            playerShips={playerShips}
+            selectedShipDef={selectedShipDef}
+            horizontal={horizontal}
+            onSelectShipDef={handleSelectShipDef}
+            onToggleRotation={handleToggleRotation}
+            onCellClick={handlePlacementCellClick}
+            onCellHover={(r, c) => setHoverCell({ r, c })}
+            onCellLeave={() => setHoverCell(null)}
+            onRandom={handleRandomPlacement}
+            onClear={handleClearPlacement}
+            onReady={handleOnlineReady}
+            hoverCell={hoverCell}
+            cellSize={mainCellSize}
+          />
+        )}
+
+        {/* ============ ONLINE WAITING ============ */}
+        {screen === "online-waiting" && (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            padding: "40px 16px", animation: "bn-fadeIn 0.4s ease",
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>{"\u2693"}</div>
+            <p style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 11,
+              color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
+              marginBottom: 16, textAlign: "center",
+            }}>NAVIOS POSICIONADOS!</p>
+            <p style={{
+              fontFamily: "'Fira Code', monospace", fontSize: 10,
+              color: "#94a3b8", textAlign: "center",
+              animation: "bn-pulse 1.5s infinite",
+            }}>Aguardando oponente posicionar...</p>
+          </div>
+        )}
+
+        {/* ============ ONLINE BATTLE ============ */}
+        {screen === "online-battle" && (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            animation: battleShake ? "bn-shake 0.3s" : "none",
+            position: "relative",
+          }}>
+            {/* HUD */}
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              width: "100%", padding: "0 8px", marginBottom: 8,
+            }}>
+              <div style={{
+                fontFamily: "'Press Start 2P', monospace", fontSize: 9,
+                color: onlineTurn === playerNum ? "#4ade80" : "#94a3b8",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: onlineTurn === playerNum ? "#4ade80" : "#94a3b8",
+                  display: "inline-block",
+                  animation: onlineTurn === playerNum ? "bn-pulse 1s infinite" : "none",
+                }} />
+                {onlineTurn === playerNum ? "SUA VEZ" : "VEZ DO OPONENTE"}
+              </div>
+              <span style={{
+                fontFamily: "'Press Start 2P', monospace", fontSize: 7,
+                color: ONLINE_ACCENT, textShadow: `0 0 6px ${ONLINE_ACCENT}`,
+              }}>ONLINE</span>
+            </div>
+
+            {/* Ships remaining */}
+            <div style={{
+              display: "flex", justifyContent: "space-between",
+              width: "100%", padding: "0 8px", marginBottom: 6,
+            }}>
+              <span style={{
+                fontFamily: "'Fira Code', monospace", fontSize: 9,
+                color: "#64748b",
+              }}>Seus: <span style={{ color: "#22c55e" }}>{playerShips.filter(s => !s.sunk).length}/{TOTAL_SHIPS}</span></span>
+              <span style={{
+                fontFamily: "'Fira Code', monospace", fontSize: 9,
+                color: "#64748b",
+              }}>Inimigo: <span style={{ color: "#ef4444" }}>{TOTAL_SHIPS - onlineSunkOpponent.length}/{TOTAL_SHIPS}</span></span>
+            </div>
+
+            {/* Waiting for opponent indicator */}
+            {onlineTurn !== playerNum && (
+              <div style={{
+                fontFamily: "'Fira Code', monospace", fontSize: 10,
+                color: "#94a3b8", marginBottom: 6,
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <span>Oponente pensando</span>
+                <span style={{ display: "flex", gap: 3 }}>
+                  {[0, 1, 2].map(i => (
+                    <span key={i} style={{
+                      width: 4, height: 4, borderRadius: "50%",
+                      background: "#94a3b8",
+                      animation: `bn-thinkingDots 1s ${i * 0.2}s infinite`,
+                    }} />
+                  ))}
+                </span>
+              </div>
+            )}
+
+            {/* Main grid (opponent) and Mini grid (player) */}
+            {!swappedGrids ? (
+              <>
+                <div style={{ marginBottom: 4 }}>
+                  <p style={{
+                    fontFamily: "'Fira Code', monospace", fontSize: 9,
+                    color: "#ef4444", textAlign: "center", marginBottom: 4,
+                  }}>TABULEIRO INIMIGO</p>
+                  <BattleGridOpponent
+                    trackingGrid={onlineTracking}
+                    sunkShips={onlineSunkOpponent}
+                    onCellClick={handleOnlineAttack}
+                    onCellHover={(r, c) => setHoverCell({ r, c })}
+                    onCellLeave={() => setHoverCell(null)}
+                    hoverCell={hoverCell}
+                    cellSize={mainCellSize}
+                    disabled={onlineTurn !== playerNum || !!onlineGameResult}
+                    animatingCell={animatingCell && !animatingCell.isAi ? animatingCell : null}
+                    lastSunkShip={lastSunkShip}
+                  />
+                </div>
+
+                {/* Mobile confirm */}
+                {mobileConfirm && onlineTurn === playerNum && (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    marginBottom: 6, padding: "6px 12px",
+                    background: "#0f172a", border: "1px solid #334155",
+                    borderRadius: 6,
+                  }}>
+                    <span style={{
+                      fontFamily: "'Fira Code', monospace", fontSize: 10,
+                      color: "#e2e8f0",
+                    }}>{cellLabel(mobileConfirm.r, mobileConfirm.c)} — Atacar?</span>
+                    <button
+                      onClick={() => handleOnlineAttack(mobileConfirm.r, mobileConfirm.c)}
+                      style={{
+                        fontFamily: "'Press Start 2P', monospace", fontSize: 9,
+                        padding: "6px 14px", background: "#dc2626",
+                        color: "#fff", border: "none", borderRadius: 4,
+                        cursor: "pointer",
+                      }}
+                    >FOGO!</button>
+                  </div>
+                )}
+
+                <div>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    marginBottom: 4,
+                  }}>
+                    <p style={{
+                      fontFamily: "'Fira Code', monospace", fontSize: 8,
+                      color: "#64748b",
+                    }}>SEU TABULEIRO</p>
+                    <button
+                      onClick={() => setSwappedGrids(true)}
+                      style={{
+                        fontFamily: "'Fira Code', monospace", fontSize: 8,
+                        padding: "3px 8px", background: "#0f172a",
+                        color: "#64748b", border: "1px solid #1e293b",
+                        borderRadius: 3, cursor: "pointer",
+                      }}
+                    >AMPLIAR</button>
+                  </div>
+                  <BattleGridPlayer
+                    playerShips={playerShips}
+                    incomingAttacks={onlineIncoming}
+                    cellSize={miniCellSize}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: 4 }}>
+                  <p style={{
+                    fontFamily: "'Fira Code', monospace", fontSize: 9,
+                    color: "#22c55e", textAlign: "center", marginBottom: 4,
+                  }}>SEU TABULEIRO</p>
+                  <BattleGridPlayer
+                    playerShips={playerShips}
+                    incomingAttacks={onlineIncoming}
+                    cellSize={mainCellSize}
+                  />
+                </div>
+
+                <div>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    marginBottom: 4,
+                  }}>
+                    <p style={{
+                      fontFamily: "'Fira Code', monospace", fontSize: 8,
+                      color: "#64748b",
+                    }}>TABULEIRO INIMIGO</p>
+                    <button
+                      onClick={() => setSwappedGrids(false)}
+                      style={{
+                        fontFamily: "'Fira Code', monospace", fontSize: 8,
+                        padding: "3px 8px", background: "#0f172a",
+                        color: "#64748b", border: "1px solid #1e293b",
+                        borderRadius: 3, cursor: "pointer",
+                      }}
+                    >AMPLIAR</button>
+                  </div>
+                  <BattleGridOpponent
+                    trackingGrid={onlineTracking}
+                    sunkShips={onlineSunkOpponent}
+                    onCellClick={handleOnlineAttack}
+                    onCellHover={(r, c) => setHoverCell({ r, c })}
+                    onCellLeave={() => setHoverCell(null)}
+                    hoverCell={hoverCell}
+                    cellSize={miniCellSize}
+                    disabled={onlineTurn !== playerNum || !!onlineGameResult}
+                    animatingCell={null}
+                    lastSunkShip={null}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Last move log */}
+            {lastMoveLog && (
+              <p style={{
+                fontFamily: "'Fira Code', monospace", fontSize: 9,
+                color: lastMoveLog.includes("afundou") ? "#ef4444"
+                  : lastMoveLog.includes("Acertou") || lastMoveLog.includes("acertou") ? "#f59e0b"
+                  : "#64748b",
+                marginTop: 8, textAlign: "center",
+              }}>{lastMoveLog}</p>
+            )}
+
+            {showConfetti && <ConfettiOverlay />}
+          </div>
+        )}
+
+        {/* ============ ONLINE GAME OVER ============ */}
+        {screen === "online-gameover" && (
+          <>
+            {showConfetti && <ConfettiOverlay />}
+            <OnlineGameOverScreen
+              won={onlineGameResult === "win"}
+              stats={{
+                totalShots: onlineStatsRef.current.totalShots,
+                hits: onlineStatsRef.current.hits,
+                accuracy: onlineStatsRef.current.totalShots > 0
+                  ? Math.round((onlineStatsRef.current.hits / onlineStatsRef.current.totalShots) * 100) : 0,
+                shipsSunk: onlineStatsRef.current.shipsSunk,
+              }}
+              playerShips={playerShips}
+              opponentShips={onlineOpponentShips}
+              playerTracking={onlineTracking}
+              opponentTracking={onlineIncoming}
+              onRematch={handleOnlineRematch}
+              onMenu={handleOnlineMenu}
+              waitingRematch={waitingRematch}
+              cellSize={mainCellSize}
+              disconnected={onlineDisconnected}
             />
           </>
         )}

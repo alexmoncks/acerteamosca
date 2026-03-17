@@ -82,14 +82,22 @@ const jogos = [
     cor: "#4ade80",
     destaque: false,
   },
+  {
+    slug: "batalha-naval",
+    nome: "Batalha Naval",
+    emoji: "⚓",
+    desc: "Posicione seus navios e afunde a frota inimiga! VS CPU ou online.",
+    cor: "#3b82f6",
+    destaque: false,
+  },
 ];
 
 const faqs = [
-  { q: "O que e o Acerte a Mosca?", a: "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador. Oferecemos jogos como Wordle em portugues, 2048, Jogo da Memoria, Bubble Shooter, Deep Attack, Pong e Ships. Nao precisa baixar nada!" },
-  { q: "Quais jogos estao disponiveis?", a: "Temos 8 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memoria com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (classico com multiplayer) e Ships (batalha de naves com multiplayer)." },
+  { q: "O que e o Acerte a Mosca?", a: "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador. Oferecemos 11 jogos incluindo Wordle em portugues, 2048, Jogo da Memoria, Batalha Naval, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacare e Tiro ao Alvo. Nao precisa baixar nada!" },
+  { q: "Quais jogos estao disponiveis?", a: "Temos 11 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memoria com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (classico com multiplayer), Ships (batalha de naves com multiplayer), Jogo do Jacare (estilo Frogger), Tiro ao Alvo (reflexo) e Batalha Naval (estrategia com multiplayer online)." },
   { q: "Preciso baixar alguma coisa para jogar?", a: "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e comecar a jogar." },
   { q: "Os jogos funcionam no celular?", a: "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack tem botoes de controle dedicados para telas touch." },
-  { q: "Posso jogar com amigos online?", a: "Sim! Memory Game, 2048, Pong e Ships possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
+  { q: "Posso jogar com amigos online?", a: "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
   { q: "Os jogos sao realmente gratis?", a: "Sim, todos os jogos sao 100% gratis. Basta se cadastrar com nome e email para comecar a jogar." },
 ];
 
@@ -113,10 +121,10 @@ export default function Home() {
             "@type": "FAQPage",
             "mainEntity": [
               { "@type": "Question", "name": "O que e o Acerte a Mosca?", "acceptedAnswer": { "@type": "Answer", "text": "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador..." } },
-              { "@type": "Question", "name": "Quais jogos estao disponiveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 8 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong e Ships." } },
+              { "@type": "Question", "name": "Quais jogos estao disponiveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 11 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacare, Tiro ao Alvo e Batalha Naval." } },
               { "@type": "Question", "name": "Preciso baixar alguma coisa?", "acceptedAnswer": { "@type": "Answer", "text": "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador." } },
               { "@type": "Question", "name": "Os jogos funcionam no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular." } },
-              { "@type": "Question", "name": "Posso jogar com amigos online?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Memory Game, 2048, Pong e Ships possuem modo multiplayer online." } },
+              { "@type": "Question", "name": "Posso jogar com amigos online?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online." } },
               { "@type": "Question", "name": "Os jogos sao gratis?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, todos os jogos sao 100% gratis." } },
             ]
           })
@@ -130,7 +138,7 @@ export default function Home() {
             "@type": "ItemList",
             "name": "Jogos Online Gratis",
             "description": "Lista de jogos online gratis no Acerte a Mosca",
-            "numberOfItems": 8,
+            "numberOfItems": 11,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "url": "https://acerteamosca.com.br/jogos/acerteamosca", "name": "Acerte a Mosca" },
               { "@type": "ListItem", "position": 2, "url": "https://acerteamosca.com.br/jogos/pong", "name": "Pong" },
@@ -140,6 +148,9 @@ export default function Home() {
               { "@type": "ListItem", "position": 6, "url": "https://acerteamosca.com.br/jogos/2048", "name": "2048" },
               { "@type": "ListItem", "position": 7, "url": "https://acerteamosca.com.br/jogos/bubbleshooter", "name": "Bubble Shooter" },
               { "@type": "ListItem", "position": 8, "url": "https://acerteamosca.com.br/jogos/deepattack", "name": "Deep Attack" },
+              { "@type": "ListItem", "position": 9, "url": "https://acerteamosca.com.br/jogos/jacare", "name": "Jogo do Jacare" },
+              { "@type": "ListItem", "position": 10, "url": "https://acerteamosca.com.br/jogos/tiroaoalvo", "name": "Tiro ao Alvo" },
+              { "@type": "ListItem", "position": 11, "url": "https://acerteamosca.com.br/jogos/batalha-naval", "name": "Batalha Naval" },
             ]
           })
         }}

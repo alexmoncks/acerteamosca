@@ -31,12 +31,13 @@ const server = createServer((req, res) => {
   res.end("Acerte a Mosca unified WS server");
 });
 
-// ===== CREATE 4 WSS INSTANCES (noServer) =====
+// ===== CREATE 5 WSS INSTANCES (noServer) =====
 
 const wssPong = new WebSocketServer({ noServer: true });
 const wssShips = new WebSocketServer({ noServer: true });
 const wssMemory = new WebSocketServer({ noServer: true });
 const wss2048 = new WebSocketServer({ noServer: true });
+const wssBatalha = new WebSocketServer({ noServer: true });
 
 // ===== ROUTE UPGRADE REQUESTS BY PATH =====
 
@@ -58,6 +59,10 @@ server.on("upgrade", (request, socket, head) => {
   } else if (pathname === "/2048") {
     wss2048.handleUpgrade(request, socket, head, (ws) => {
       wss2048.emit("connection", ws, request);
+    });
+  } else if (pathname === "/batalha-naval") {
+    wssBatalha.handleUpgrade(request, socket, head, (ws) => {
+      wssBatalha.emit("connection", ws, request);
     });
   } else {
     socket.destroy();
@@ -1033,10 +1038,243 @@ wss2048.on("connection", (ws) => {
 });
 
 // =============================================================================
+// ===== BATALHA NAVAL GAME LOGIC =====
+// =============================================================================
+
+const batalhaSessions = new Map();
+
+function batalhaCleanupSession(sessionId) {
+  const session = batalhaSessions.get(sessionId);
+  if (!session) return;
+  session.active = false;
+  batalhaSessions.delete(sessionId);
+}
+
+function batalhaResetSession(session) {
+  session.grids = [null, null];
+  session.ships = [null, null];
+  session.ready = [false, false];
+  session.turn = 0;
+  session.active = false;
+  session.phase = "setup";
+  session.hitCells = [new Set(), new Set()];
+  session.rematchRequests = new Set();
+}
+
+function batalhaFindShipAt(ships, row, col) {
+  return ships.find(s => s.cells.some(c => c.r === row && c.c === col));
+}
+
+function batalhaIsShipSunk(ship, hitCells) {
+  return ship.cells.every(c => hitCells.has(`${c.r},${c.c}`));
+}
+
+function batalhaAllShipsSunk(ships, hitCells) {
+  for (const ship of ships) {
+    for (const cell of ship.cells) {
+      if (!hitCells.has(`${cell.r},${cell.c}`)) return false;
+    }
+  }
+  return true;
+}
+
+wssBatalha.on("connection", (ws) => {
+  ws.on("message", (raw) => {
+    let msg;
+    try {
+      msg = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    switch (msg.type) {
+      case "create": {
+        const session = {
+          id: null,
+          players: [ws, null],
+          grids: [null, null],
+          ships: [null, null],
+          ready: [false, false],
+          turn: 0,
+          active: false,
+          phase: "setup",
+          hitCells: [new Set(), new Set()],
+          rematchRequests: new Set(),
+        };
+
+        let id;
+        do {
+          id = genId();
+        } while (batalhaSessions.has(id));
+        session.id = id;
+        batalhaSessions.set(id, session);
+        ws._sessionId = id;
+        ws._playerIdx = 0;
+
+        send(ws, { type: "created", roomId: id, playerNum: 0 });
+        break;
+      }
+
+      case "join": {
+        const roomId = msg.roomId?.toUpperCase();
+        const session = batalhaSessions.get(roomId);
+        if (!session || session.players[1]) {
+          send(ws, { type: "error", message: "Sala nao encontrada ou cheia" });
+          break;
+        }
+
+        session.players[1] = ws;
+        ws._sessionId = session.id;
+        ws._playerIdx = 1;
+
+        send(ws, { type: "joined", playerNum: 1 });
+        send(session.players[0], { type: "opponent_joined" });
+        break;
+      }
+
+      case "ready": {
+        const session = batalhaSessions.get(ws._sessionId);
+        if (!session) break;
+        if (session.phase !== "setup") break;
+
+        const playerIdx = ws._playerIdx;
+        session.grids[playerIdx] = msg.grid;
+        session.ships[playerIdx] = msg.ships;
+        session.ready[playerIdx] = true;
+
+        const otherIdx = playerIdx === 0 ? 1 : 0;
+        const other = session.players[otherIdx];
+        send(other, { type: "opponent_ready" });
+
+        if (session.ready[0] && session.ready[1]) {
+          session.phase = "battle";
+          session.active = true;
+          session.turn = Math.random() < 0.5 ? 0 : 1;
+          session.hitCells = [new Set(), new Set()];
+          broadcast(session, { type: "start", firstPlayer: session.turn });
+          broadcast(session, { type: "turn", playerNum: session.turn });
+        }
+        break;
+      }
+
+      case "attack": {
+        const session = batalhaSessions.get(ws._sessionId);
+        if (!session || !session.active || session.phase !== "battle") break;
+
+        const attackerIdx = ws._playerIdx;
+        const defenderIdx = attackerIdx === 0 ? 1 : 0;
+
+        if (session.turn !== attackerIdx) {
+          send(ws, { type: "error", message: "Nao e sua vez" });
+          break;
+        }
+
+        const row = msg.row;
+        const col = msg.col;
+        if (typeof row !== "number" || typeof col !== "number") break;
+        if (row < 0 || row >= 10 || col < 0 || col >= 10) break;
+
+        const cellKey = `${row},${col}`;
+        if (session.hitCells[defenderIdx].has(cellKey)) {
+          send(ws, { type: "error", message: "Celula ja atacada" });
+          break;
+        }
+
+        session.hitCells[defenderIdx].add(cellKey);
+
+        const defenderGrid = session.grids[defenderIdx];
+        const defenderShips = session.ships[defenderIdx];
+        const targetShip = batalhaFindShipAt(defenderShips, row, col);
+
+        if (targetShip) {
+          if (batalhaIsShipSunk(targetShip, session.hitCells[defenderIdx])) {
+            broadcast(session, {
+              type: "attack_result",
+              row, col,
+              result: "sunk",
+              shipName: targetShip.name,
+              shipCells: targetShip.cells,
+              attacker: attackerIdx,
+            });
+
+            if (batalhaAllShipsSunk(defenderShips, session.hitCells[defenderIdx])) {
+              session.phase = "gameover";
+              session.active = false;
+              broadcast(session, {
+                type: "game_over",
+                winner: attackerIdx,
+                loserGrid: defenderGrid,
+                loserShips: defenderShips,
+              });
+              break;
+            }
+
+            broadcast(session, { type: "turn", playerNum: attackerIdx });
+          } else {
+            broadcast(session, {
+              type: "attack_result",
+              row, col,
+              result: "hit",
+              attacker: attackerIdx,
+            });
+            broadcast(session, { type: "turn", playerNum: attackerIdx });
+          }
+        } else {
+          broadcast(session, {
+            type: "attack_result",
+            row, col,
+            result: "miss",
+            attacker: attackerIdx,
+          });
+          session.turn = defenderIdx;
+          broadcast(session, { type: "turn", playerNum: defenderIdx });
+        }
+        break;
+      }
+
+      case "rematch": {
+        const session = batalhaSessions.get(ws._sessionId);
+        if (!session) break;
+        if (session.active) break;
+
+        session.rematchRequests.add(ws._playerIdx);
+
+        const otherIdx = ws._playerIdx === 0 ? 1 : 0;
+        const otherWs = session.players[otherIdx];
+        if (otherWs && otherWs.readyState === 1) {
+          send(otherWs, { type: "rematch_waiting" });
+        }
+
+        if (session.rematchRequests.size >= 2) {
+          batalhaResetSession(session);
+          broadcast(session, { type: "rematch_start" });
+        }
+        break;
+      }
+    }
+  });
+
+  ws.on("close", () => {
+    const sessionId = ws._sessionId;
+    if (!sessionId) return;
+    const session = batalhaSessions.get(sessionId);
+    if (!session) return;
+
+    const otherIdx = ws._playerIdx === 0 ? 1 : 0;
+    const other = session.players[otherIdx];
+    if (other && other.readyState === 1) {
+      send(other, { type: "opponent_left" });
+    }
+
+    batalhaCleanupSession(sessionId);
+  });
+});
+
+// =============================================================================
 // ===== START UNIFIED SERVER =====
 // =============================================================================
 
 server.listen(PORT, () => {
   console.log(`Acerte a Mosca unified WS server on port ${PORT}`);
-  console.log("  /pong, /ships, /memory, /2048");
+  console.log("  /pong, /ships, /memory, /2048, /batalha-naval");
 });
