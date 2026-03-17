@@ -13,11 +13,21 @@ function isValidPhone(phone) {
 }
 
 // GET - verifica se jogador já está logado via cookie
-export async function GET() {
+export async function GET(request) {
   try {
-    const jogadorId = getJogadorCookie();
+    // Try cookie first
+    let jogadorId = getJogadorCookie();
+
+    // Fallback: check query param (sent from client localStorage)
     if (!jogadorId) {
-      return NextResponse.json({ jogador: null });
+      const { searchParams } = new URL(request.url);
+      jogadorId = searchParams.get("id");
+    }
+
+    if (!jogadorId) {
+      return NextResponse.json({ jogador: null }, {
+        headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+      });
     }
 
     const jogador = await prisma.jogador.findUnique({
@@ -26,10 +36,17 @@ export async function GET() {
     });
 
     if (!jogador) {
-      return NextResponse.json({ jogador: null });
+      return NextResponse.json({ jogador: null }, {
+        headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+      });
     }
 
-    return NextResponse.json({ jogador });
+    // Re-set cookie in case it was lost (refresh it)
+    setJogadorCookie(jogador.id);
+
+    return NextResponse.json({ jogador }, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+    });
   } catch (err) {
     console.error("GET /api/jogadores error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
