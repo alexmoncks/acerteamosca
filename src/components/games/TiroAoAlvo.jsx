@@ -31,10 +31,10 @@ const RETICLE_SIZES = [70, 58, 46, 36]; // 0-4, 5-9, 10-14, 15+
 const RETICLE_THRESHOLDS = [0, 5, 10, 15];
 const BONUS_DISC_INTERVAL = 5; // blue bonus disc every N consecutive hits
 
-// Medal thresholds
-const MEDAL_GOLD = 8000;
-const MEDAL_SILVER = 5000;
-const MEDAL_BRONZE = 3000;
+// Medal thresholds (scaled for bonus disc + streak scoring)
+const MEDAL_GOLD = 18000;
+const MEDAL_SILVER = 12000;
+const MEDAL_BRONZE = 6000;
 
 function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
