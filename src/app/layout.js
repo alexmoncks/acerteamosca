@@ -25,6 +25,14 @@ export const metadata = {
     siteName: "Acerte a Mosca",
     title: "Acerte a Mosca - Jogos Online Gratis",
     description: "Jogos online gratis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais. Sem download!",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Acerte a Mosca - Jogos Online Gratis",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
