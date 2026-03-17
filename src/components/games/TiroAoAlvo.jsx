@@ -10,7 +10,7 @@ import useLockScroll from "@/hooks/useLockScroll";
 const CANVAS_W = 400;
 const CANVAS_H = 500;
 const ACCENT = "#4ade80";
-const GRAVITY = 0.12;
+const GRAVITY = 0.05;
 const PLATES_PER_ROUND = 10;
 const TOTAL_ROUNDS = 3;
 
@@ -312,12 +312,15 @@ function drawPlate(ctx, plate, time) {
   if (plate.hit || plate.offscreen) return;
   ctx.save();
   ctx.translate(plate.x, plate.y);
-  // Spin: rotate 360deg / 500ms
-  const angle = ((time % 500) / 500) * Math.PI * 2;
-  ctx.rotate(angle);
-  // Ellipse with spin effect — squash y based on angle
-  const squash = Math.abs(Math.cos(angle * 2)) * 0.6 + 0.4;
-  ctx.scale(1, squash);
+
+  // Tilt based on flight direction (slight angle like a frisbee)
+  const tilt = plate.vx > 0 ? 0.15 : -0.15;
+  ctx.rotate(tilt);
+
+  // Wobble effect: the disc appears to wobble in flight (perspective squash oscillation)
+  const wobble = Math.sin((time % 300) / 300 * Math.PI * 2);
+  const yScale = 0.6 + Math.abs(wobble) * 0.4; // varies between 0.6 and 1.0
+  ctx.scale(1, yScale);
 
   // Terracotta gradient
   const grad = ctx.createLinearGradient(-15, 0, 15, 0);
@@ -329,10 +332,15 @@ function drawPlate(ctx, plate, time) {
   ctx.ellipse(0, 0, 15, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // Edge line (rim of disc)
+  ctx.strokeStyle = "#b85a2a";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
   // White highlight
-  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
   ctx.beginPath();
-  ctx.ellipse(-4, -2, 6, 2, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(-3, -1.5, 5, 1.5, -0.2, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -589,14 +597,14 @@ export default function TiroAoAlvo() {
       // Launch from right launcher toward left reticle
       startX = CANVAS_W - 30;
       startY = CANVAS_H * 0.85;
-      vx = -(2.0 + Math.random() * 0.8) * speedMult;
-      vy = -(4.5 + Math.random() * 0.5) * speedMult;
+      vx = -(2.5 + Math.random() * 0.8) * speedMult;
+      vy = -(4.0 + Math.random() * 0.5) * speedMult;
     } else {
       // Launch from left launcher toward right reticle
       startX = 30;
       startY = CANVAS_H * 0.85;
-      vx = (2.0 + Math.random() * 0.8) * speedMult;
-      vy = -(4.5 + Math.random() * 0.5) * speedMult;
+      vx = (2.5 + Math.random() * 0.8) * speedMult;
+      vy = -(4.0 + Math.random() * 0.5) * speedMult;
     }
 
     return {
@@ -842,7 +850,7 @@ export default function TiroAoAlvo() {
           if (gs.paused) {
             audioRef.current?.stopMusic();
           } else {
-            audioRef.current?.startMusic(gs.round);
+            // no background music
           }
           // Force re-render for pause overlay
           setScreen(gs.paused ? "paused" : "playing");
@@ -934,7 +942,7 @@ export default function TiroAoAlvo() {
             gs.roundHits = 0;
             gs.plateIndex = 0;
             gs.plateStatuses = new Array(PLATES_PER_ROUND).fill("pending");
-            audioRef.current?.startMusic(gs.round);
+            // no background music
             setScreen("playing");
           }
         } else if (gs.gamePhase === "playing") {
@@ -1416,7 +1424,7 @@ export default function TiroAoAlvo() {
         audioRef.current?.stopMusic();
         setScreen("paused");
       } else {
-        audioRef.current?.startMusic(gs.round);
+        // no background music
         setScreen("playing");
       }
     }
@@ -1856,7 +1864,7 @@ export default function TiroAoAlvo() {
                   const g = gameRef.current;
                   if (g) {
                     g.paused = false;
-                    audioRef.current?.startMusic(g.round);
+                    // no background music
                     setScreen("playing");
                   }
                 }}
