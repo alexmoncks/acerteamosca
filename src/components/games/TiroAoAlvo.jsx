@@ -991,10 +991,12 @@ export default function TiroAoAlvo() {
         gs.leftReticleSize = lerp(gs.leftReticleSize, gs.targetLeftSize, dt * 0.005);
         gs.rightReticleSize = lerp(gs.rightReticleSize, gs.targetRightSize, dt * 0.005);
 
-        // Reticles track active target Y position (plate, bird, or parrot)
+        // Reticles track active target Y position (plate, bird, parrot, or bonus disc)
         let trackTarget = null;
         if (gs.currentPlate && !gs.currentPlate.hit && !gs.currentPlate.offscreen) {
           trackTarget = gs.currentPlate;
+        } else if (gs.bonusDisc && !gs.bonusDisc.hit) {
+          trackTarget = gs.bonusDisc;
         } else if (gs.bird && !gs.bird.hit) {
           trackTarget = gs.bird;
         } else if (gs.parrot && !gs.parrot.dead) {
@@ -1133,14 +1135,13 @@ export default function TiroAoAlvo() {
             advanceRoundRef.current();
           }
         } else if (gs.gamePhase === "bonusPhase") {
+          let bonusDone = false;
+
           if (gs.bird && !gs.bird.hit) {
             gs.bird.x += gs.bird.vx;
             gs.bird.y += gs.bird.vy;
             if (gs.bird.x > CANVAS_W + 30 || gs.bird.y < -30) {
               gs.bird = null;
-              if (!gs.parrot) {
-                advanceRoundRef.current();
-              }
             }
           }
 
@@ -1149,18 +1150,18 @@ export default function TiroAoAlvo() {
             gs.parrot.y = gs.parrot.baseY + Math.sin((timestamp - gs.parrot.spawnTime) * 0.003) * 30;
             if (gs.parrot.x < -30) {
               gs.parrot = null;
-              advanceRoundRef.current();
             }
           } else if (gs.parrot && gs.parrot.dead) {
             if (!gs.parrotDeadTimer) gs.parrotDeadTimer = timestamp;
             if (timestamp - gs.parrotDeadTimer > 1000) {
               gs.parrot = null;
               gs.parrotDeadTimer = null;
-              advanceRoundRef.current();
             }
           }
 
-          if (!gs.bird && !gs.parrot) {
+          // Only advance once when all bonus targets are gone
+          if (!gs.bird && !gs.parrot && !bonusDone) {
+            bonusDone = true;
             advanceRoundRef.current();
           }
         }
