@@ -33,16 +33,22 @@ button,
 }
 
 /* Lock scroll during active gameplay - applied via useLockScroll hook */
+html.game-active,
 body.game-active {
   overflow: hidden;
   overscroll-behavior: none;
-}
-
-/* Prevent text selection globally during gameplay */
-body.game-active {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  -webkit-overflow-scrolling: auto;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* Prevent canvas/game area from being scrollable on iOS */
+body.game-active canvas {
+  touch-action: none;
 }
 
 a {
