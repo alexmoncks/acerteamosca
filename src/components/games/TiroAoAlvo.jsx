@@ -934,14 +934,23 @@ export default function TiroAoAlvo() {
         gs.leftReticleSize = lerp(gs.leftReticleSize, gs.targetLeftSize, dt * 0.005);
         gs.rightReticleSize = lerp(gs.rightReticleSize, gs.targetRightSize, dt * 0.005);
 
-        // Reticles track plate Y position (auto-adjust vertically)
+        // Reticles track active target Y position (plate, bird, or parrot)
+        let trackTarget = null;
         if (gs.currentPlate && !gs.currentPlate.hit && !gs.currentPlate.offscreen) {
-          const targetY = gs.currentPlate.y;
-          const clampedY = Math.max(CANVAS_H * 0.15, Math.min(CANVAS_H * 0.65, targetY));
-          gs.leftReticleY = lerp(gs.leftReticleY, clampedY, dt * 0.008);
-          gs.rightReticleY = lerp(gs.rightReticleY, clampedY, dt * 0.008);
+          trackTarget = gs.currentPlate;
+        } else if (gs.bird && !gs.bird.hit) {
+          trackTarget = gs.bird;
+        } else if (gs.parrot && !gs.parrot.dead) {
+          trackTarget = gs.parrot;
+        }
+
+        if (trackTarget) {
+          const targetY = trackTarget.y;
+          const clampedY = Math.max(CANVAS_H * 0.10, Math.min(CANVAS_H * 0.70, targetY));
+          gs.leftReticleY = lerp(gs.leftReticleY, clampedY, dt * 0.012);
+          gs.rightReticleY = lerp(gs.rightReticleY, clampedY, dt * 0.012);
         } else {
-          // Return to default position when no plate
+          // Return to default position when no target
           gs.leftReticleY = lerp(gs.leftReticleY, CANVAS_H * 0.4, dt * 0.003);
           gs.rightReticleY = lerp(gs.rightReticleY, CANVAS_H * 0.4, dt * 0.003);
         }
