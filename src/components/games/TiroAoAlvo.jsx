@@ -14,11 +14,11 @@ const GRAVITY = 0.05;
 const PLATES_PER_ROUND = 10;
 const TOTAL_ROUNDS = 3;
 
-// Round configs
+// Round configs — reticleShrink reduces base reticle sizes progressively
 const ROUND_CFG = [
-  { interval: 1500, hitWindow: 600, speedMult: 1.0 },
-  { interval: 1200, hitWindow: 500, speedMult: 1.2 },
-  { interval: 900, hitWindow: 400, speedMult: 1.4 },
+  { interval: 1500, hitWindow: 600, speedMult: 1.0, reticleShrink: 1.0 },
+  { interval: 1200, hitWindow: 500, speedMult: 1.2, reticleShrink: 0.85 },
+  { interval: 900, hitWindow: 400, speedMult: 1.4, reticleShrink: 0.7 },
 ];
 
 // Scoring
@@ -591,22 +591,24 @@ export default function TiroAoAlvo() {
   // ==================== PLATE GENERATION ====================
   const spawnPlate = useCallback((gs, time) => {
     const roundCfg = ROUND_CFG[Math.min(gs.round, TOTAL_ROUNDS - 1)];
-    const goesLeft = Math.random() < 0.6; // 60% cross left reticle
+    const fromRight = Math.random() < 0.5; // 50/50 launch side
     const speedMult = roundCfg.speedMult * gs.speedMultiplier;
 
     let vx, vy, startX, startY;
-    if (goesLeft) {
-      // Launch from right launcher toward left reticle
-      startX = CANVAS_W - 30;
-      startY = CANVAS_H * 0.85;
-      vx = -(2.5 + Math.random() * 0.8) * speedMult;
-      vy = -(4.0 + Math.random() * 0.5) * speedMult;
+    // Plates fly across the FULL width, crossing BOTH reticles
+    // Higher horizontal speed, moderate vertical — shallow arc
+    if (fromRight) {
+      // Launch from right launcher, flies left across both reticles
+      startX = CANVAS_W - 20;
+      startY = CANVAS_H * 0.82;
+      vx = -(3.5 + Math.random() * 0.8) * speedMult;
+      vy = -(3.0 + Math.random() * 0.5) * speedMult;
     } else {
-      // Launch from left launcher toward right reticle
-      startX = 30;
-      startY = CANVAS_H * 0.85;
-      vx = (2.5 + Math.random() * 0.8) * speedMult;
-      vy = -(4.0 + Math.random() * 0.5) * speedMult;
+      // Launch from left launcher, flies right across both reticles
+      startX = 20;
+      startY = CANVAS_H * 0.82;
+      vx = (3.5 + Math.random() * 0.8) * speedMult;
+      vy = -(3.0 + Math.random() * 0.5) * speedMult;
     }
 
     return {
@@ -614,7 +616,7 @@ export default function TiroAoAlvo() {
       y: startY,
       vx,
       vy,
-      goesLeft,
+      fromRight,
       hit: false,
       missed: false,
       offscreen: false,
@@ -759,10 +761,12 @@ export default function TiroAoAlvo() {
       // Explosion
       gs.explosions.push(createExplosion(plate.x, plate.y));
 
-      // Update reticle size target
+      // Update reticle size target (shrinks with round progression)
       const sizeIdx = gs.streak >= 15 ? 3 : gs.streak >= 10 ? 2 : gs.streak >= 5 ? 1 : 0;
-      gs.targetLeftSize = RETICLE_SIZES[sizeIdx];
-      gs.targetRightSize = RETICLE_SIZES[sizeIdx];
+      const roundCfg = ROUND_CFG[Math.min(gs.round, TOTAL_ROUNDS - 1)];
+      const shrink = roundCfg.reticleShrink * Math.max(0.5, 1 - gs.continueCount * 0.05);
+      gs.targetLeftSize = Math.round(RETICLE_SIZES[sizeIdx] * shrink);
+      gs.targetRightSize = Math.round(RETICLE_SIZES[sizeIdx] * shrink);
     }
   }, [ensureAudio, isPlateInReticle, createExplosion, addFloatingText]);
 
@@ -983,7 +987,7 @@ export default function TiroAoAlvo() {
               const pIdx = gs.plateIndex - 1;
               if (pIdx < PLATES_PER_ROUND) gs.plateStatuses[pIdx] = "current";
 
-              if (plate.goesLeft) {
+              if (plate.fromRight) {
                 gs.rightKick = 1;
                 for (let i = 0; i < 3; i++) {
                   gs.launcherSmoke.push({
@@ -1025,8 +1029,10 @@ export default function TiroAoAlvo() {
                   plate.missed = true;
                   gs.totalMisses++;
                   gs.streak = 0;
-                  gs.targetLeftSize = RETICLE_SIZES[0];
-                  gs.targetRightSize = RETICLE_SIZES[0];
+                  const missCfg = ROUND_CFG[Math.min(gs.round, TOTAL_ROUNDS - 1)];
+                  const missShrink = missCfg.reticleShrink * Math.max(0.5, 1 - gs.continueCount * 0.05);
+                  gs.targetLeftSize = Math.round(RETICLE_SIZES[0] * missShrink);
+                  gs.targetRightSize = Math.round(RETICLE_SIZES[0] * missShrink);
 
                   const pIdx = gs.plateIndex - 1;
                   if (pIdx >= 0 && pIdx < PLATES_PER_ROUND) {
