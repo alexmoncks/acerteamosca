@@ -490,7 +490,7 @@ function SplashScreen({ onStart }) {
         🩴 ENTRAR
       </button>
 
-      <p style={{ position: "absolute", bottom: 16, fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#2a2a4a", opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s" }}>
+      <p style={{ position: "absolute", bottom: 16, fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#5a5a7a", opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s" }}>
         v1.0 - powered by chineladas
       </p>
     </div>
@@ -703,8 +703,10 @@ export default function AcerteAMosca() {
   // ---- Game loop ----
   useEffect(() => {
     if (screen !== "playing") return;
-    gameLoopRef.current = setInterval(moveFly, 1000 / 60);
-    return () => clearInterval(gameLoopRef.current);
+    let rafId;
+    const loop = () => { moveFly(); rafId = requestAnimationFrame(loop); };
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
   }, [screen, moveFly]);
 
   // ---- Timer ----

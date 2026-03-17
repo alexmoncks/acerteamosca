@@ -684,8 +684,10 @@ export default function Ships() {
   // ---- Local game loop ----
   useEffect(() => {
     if (screen !== "playing" || mode?.startsWith("remote")) return;
-    loopRef.current = setInterval(localTick, 1000 / 60);
-    return () => clearInterval(loopRef.current);
+    let rafId;
+    const loop = () => { localTick(); rafId = requestAnimationFrame(loop); };
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
   }, [screen, mode, localTick]);
 
   // ---- Remote input sending ----

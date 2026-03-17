@@ -43,7 +43,7 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
   ];
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
+    <div role="dialog" aria-label="Cadastro para jogar" style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
       <div style={{ background: "#0a0a1a", border: `2px solid ${accentColor}`, borderRadius: 12, padding: 28, width: 340, boxShadow: `0 0 40px ${accentColor}22` }}>
         <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: accentColor, textAlign: "center", marginBottom: 6, textShadow: `0 0 10px ${accentColor}` }}>
           {jogoNome || "ACERTE A MOSCA"}
@@ -54,16 +54,18 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
 
         {fields.map(f => (
           <div key={f.label} style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", color: "#39ff14", fontSize: 9, fontFamily: "'Press Start 2P', monospace", marginBottom: 5, letterSpacing: 1 }}>{f.label}</label>
-            <input type={f.type} value={f.value}
+            <label htmlFor={`field-${f.key}`} style={{ display: "block", color: "#39ff14", fontSize: 9, fontFamily: "'Press Start 2P', monospace", marginBottom: 5, letterSpacing: 1 }}>{f.label}</label>
+            <input id={`field-${f.key}`} type={f.type} value={f.value}
               onChange={e => f.set(e.target.value)}
               onBlur={() => setTouched(prev => ({ ...prev, [f.key]: true }))}
               placeholder={f.ph}
+              aria-invalid={f.error ? "true" : undefined}
+              aria-describedby={f.error ? `error-${f.key}` : undefined}
               style={{ width: "100%", padding: "10px 12px", background: "#111127", border: `1px solid ${f.error ? "#ff4444" : "#2a2a4a"}`, borderRadius: 6, color: "#e0e0ff", fontSize: 14, fontFamily: "'Fira Code', monospace", outline: "none", boxSizing: "border-box" }}
               onFocus={e => e.target.style.borderColor = f.error ? "#ff4444" : accentColor}
             />
             {f.error && (
-              <p style={{ color: "#ff4444", fontSize: 10, fontFamily: "'Fira Code', monospace", margin: "4px 0 0 0" }}>{f.error}</p>
+              <p id={`error-${f.key}`} role="alert" style={{ color: "#ff4444", fontSize: 10, fontFamily: "'Fira Code', monospace", margin: "4px 0 0 0" }}>{f.error}</p>
             )}
           </div>
         ))}

@@ -129,7 +129,7 @@ export default function Home() {
         }}
       />
 
-      <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
+      <div style={{ fontSize: 32, marginBottom: 4 }} role="img" aria-label="Chinelo">🩴</div>
       <h1
         style={{
           fontFamily: "'Press Start 2P', monospace",
@@ -168,7 +168,7 @@ export default function Home() {
         }}
       >
         {jogos.map((jogo) => (
-          <Link key={jogo.slug} href={`/jogos/${jogo.slug}`}>
+          <Link key={jogo.slug} href={`/jogos/${jogo.slug}`} aria-label={`Jogar ${jogo.nome}`}>
             <div
               style={{
                 background: "#0a0a1a",
@@ -182,7 +182,7 @@ export default function Home() {
                   : "none",
               }}
             >
-              <div style={{ fontSize: 40, marginBottom: 12 }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }} role="img" aria-hidden="true">
                 {jogo.emoji}
               </div>
               <h2
@@ -254,7 +254,7 @@ export default function Home() {
       <p
         style={{
           marginTop: 30,
-          color: "#2a2a4a",
+          color: "#5a5a7a",
           fontSize: 10,
           fontFamily: "'Fira Code', monospace",
         }}

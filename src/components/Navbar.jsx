@@ -8,7 +8,7 @@ export default function Navbar() {
   const isHome = pathname === "/";
 
   return (
-    <nav style={{
+    <nav aria-label="Navegacao principal" style={{
       position: "fixed",
       top: 0,
       left: 0,
@@ -23,13 +23,13 @@ export default function Navbar() {
       padding: "0 20px",
       zIndex: 1000,
     }}>
-      <Link href="/" style={{
+      <Link href="/" aria-label="Pagina inicial - Acerte a Mosca" style={{
         display: "flex",
         alignItems: "center",
         gap: 10,
         textDecoration: "none",
       }}>
-        <span style={{ fontSize: 22 }}>🩴</span>
+        <span style={{ fontSize: 22 }} role="img" aria-hidden="true">🩴</span>
         <span style={{
           fontFamily: "'Press Start 2P', monospace",
           fontSize: 11,
@@ -60,6 +60,7 @@ export default function Navbar() {
           ← JOGOS
         </Link>
       )}
+
     </nav>
   );
 }
