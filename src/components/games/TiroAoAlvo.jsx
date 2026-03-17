@@ -567,6 +567,8 @@ export default function TiroAoAlvo() {
       rightReticleSize: RETICLE_SIZES[0],
       targetLeftSize: RETICLE_SIZES[0],
       targetRightSize: RETICLE_SIZES[0],
+      leftReticleY: CANVAS_H * 0.4,
+      rightReticleY: CANVAS_H * 0.4,
       currentPlate: null,
       plateActive: false,
       plateTimer: 0,
@@ -715,7 +717,7 @@ export default function TiroAoAlvo() {
     else plate.shotAttemptedRight = true;
 
     const reticleX = side === "left" ? CANVAS_W * 0.25 : CANVAS_W * 0.75;
-    const reticleY = CANVAS_H * 0.4;
+    const reticleY = side === "left" ? gs.leftReticleY : gs.rightReticleY;
     const reticleSize = side === "left" ? gs.leftReticleSize : gs.rightReticleSize;
 
     if (isPlateInReticle(plate, reticleX, reticleY, reticleSize)) {
@@ -787,7 +789,7 @@ export default function TiroAoAlvo() {
     }
 
     const reticleX = side === "left" ? CANVAS_W * 0.25 : CANVAS_W * 0.75;
-    const reticleY = CANVAS_H * 0.4;
+    const reticleY = side === "left" ? gs.leftReticleY : gs.rightReticleY;
     const reticleSize = side === "left" ? gs.leftReticleSize : gs.rightReticleSize;
 
     // Check bird
@@ -931,6 +933,18 @@ export default function TiroAoAlvo() {
         // Smooth reticle size
         gs.leftReticleSize = lerp(gs.leftReticleSize, gs.targetLeftSize, dt * 0.005);
         gs.rightReticleSize = lerp(gs.rightReticleSize, gs.targetRightSize, dt * 0.005);
+
+        // Reticles track plate Y position (auto-adjust vertically)
+        if (gs.currentPlate && !gs.currentPlate.hit && !gs.currentPlate.offscreen) {
+          const targetY = gs.currentPlate.y;
+          const clampedY = Math.max(CANVAS_H * 0.15, Math.min(CANVAS_H * 0.65, targetY));
+          gs.leftReticleY = lerp(gs.leftReticleY, clampedY, dt * 0.008);
+          gs.rightReticleY = lerp(gs.rightReticleY, clampedY, dt * 0.008);
+        } else {
+          // Return to default position when no plate
+          gs.leftReticleY = lerp(gs.leftReticleY, CANVAS_H * 0.4, dt * 0.003);
+          gs.rightReticleY = lerp(gs.rightReticleY, CANVAS_H * 0.4, dt * 0.003);
+        }
 
         // GAME PHASE LOGIC
         if (gs.gamePhase === "roundIntro") {
@@ -1133,16 +1147,17 @@ export default function TiroAoAlvo() {
         drawExplosion(ctx, expl);
       }
 
-      // Reticles
+      // Reticles (Y position tracks plate height)
       const pulsePhase = gs.elapsed * 0.001;
       const leftReticleX = CANVAS_W * 0.25;
       const rightReticleX = CANVAS_W * 0.75;
-      const reticleY = CANVAS_H * 0.4;
+      const leftReticleY = gs.leftReticleY;
+      const rightReticleY = gs.rightReticleY;
 
       const plateInLeft = gs.currentPlate && !gs.currentPlate.hit && !gs.currentPlate.offscreen &&
-        isPlateInReticle(gs.currentPlate, leftReticleX, reticleY, gs.leftReticleSize);
+        isPlateInReticle(gs.currentPlate, leftReticleX, leftReticleY, gs.leftReticleSize);
       const plateInRight = gs.currentPlate && !gs.currentPlate.hit && !gs.currentPlate.offscreen &&
-        isPlateInReticle(gs.currentPlate, rightReticleX, reticleY, gs.rightReticleSize);
+        isPlateInReticle(gs.currentPlate, rightReticleX, rightReticleY, gs.rightReticleSize);
 
       const leftColor = plateInLeft ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)";
       const rightColor = plateInRight ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)";
@@ -1150,8 +1165,8 @@ export default function TiroAoAlvo() {
       const streakLevel = gs.streak >= 15 ? 3 : gs.streak >= 10 ? 2 : gs.streak >= 5 ? 1 : 0;
 
       if (gs.gamePhase === "playing" || gs.gamePhase === "bonusPhase") {
-        drawReticle(ctx, leftReticleX, reticleY, gs.leftReticleSize, leftColor, "#ff6b35", gs.leftFlash, pulsePhase, streakLevel);
-        drawReticle(ctx, rightReticleX, reticleY, gs.rightReticleSize, rightColor, "#ff6b35", gs.rightFlash, pulsePhase, streakLevel);
+        drawReticle(ctx, leftReticleX, leftReticleY, gs.leftReticleSize, leftColor, "#ff6b35", gs.leftFlash, pulsePhase, streakLevel);
+        drawReticle(ctx, rightReticleX, rightReticleY, gs.rightReticleSize, rightColor, "#ff6b35", gs.rightFlash, pulsePhase, streakLevel);
       }
 
       drawFloatingText(ctx, gs.floatingTexts);
