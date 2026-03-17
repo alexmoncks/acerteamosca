@@ -1135,8 +1135,7 @@ export default function TiroAoAlvo() {
             advanceRoundRef.current();
           }
         } else if (gs.gamePhase === "bonusPhase") {
-          let bonusDone = false;
-
+          // Update bird (flying)
           if (gs.bird && !gs.bird.hit) {
             gs.bird.x += gs.bird.vx;
             gs.bird.y += gs.bird.vy;
@@ -1144,14 +1143,24 @@ export default function TiroAoAlvo() {
               gs.bird = null;
             }
           }
+          // Clear bird after hit (wait for explosion to finish, ~500ms)
+          if (gs.bird && gs.bird.hit) {
+            if (!gs.bird.hitTime) gs.bird.hitTime = timestamp;
+            if (timestamp - gs.bird.hitTime > 600) {
+              gs.bird = null;
+            }
+          }
 
+          // Update parrot (flying)
           if (gs.parrot && !gs.parrot.dead) {
             gs.parrot.x += gs.parrot.vx;
             gs.parrot.y = gs.parrot.baseY + Math.sin((timestamp - gs.parrot.spawnTime) * 0.003) * 30;
             if (gs.parrot.x < -30) {
               gs.parrot = null;
             }
-          } else if (gs.parrot && gs.parrot.dead) {
+          }
+          // Clear dead parrot after delay
+          if (gs.parrot && gs.parrot.dead) {
             if (!gs.parrotDeadTimer) gs.parrotDeadTimer = timestamp;
             if (timestamp - gs.parrotDeadTimer > 1000) {
               gs.parrot = null;
@@ -1159,9 +1168,8 @@ export default function TiroAoAlvo() {
             }
           }
 
-          // Only advance once when all bonus targets are gone
-          if (!gs.bird && !gs.parrot && !bonusDone) {
-            bonusDone = true;
+          // Advance round when all bonus targets are resolved
+          if (!gs.bird && !gs.parrot) {
             advanceRoundRef.current();
           }
         }
