@@ -272,11 +272,12 @@ function createLanes(phase) {
 
   const vehicles = [
     // row, direction (+1=right, -1=left), speed, tileLength, count, type
-    { row: 1, dir: 1, speed: 1.2 * speedMult, len: 2, count: 3, type: "car" },
-    { row: 2, dir: -1, speed: 0.7 * speedMult, len: 3, count: 2, type: "truck" },
-    { row: 3, dir: 1, speed: 1.8 * speedMult, len: 1, count: 4, type: "moto" },
-    { row: 4, dir: -1, speed: 1.0 * speedMult, len: 2, count: 3, type: "car2" },
-    { row: 5, dir: 1, speed: 0.9 * speedMult, len: 4, count: 2, type: "bus" },
+    // Base speeds reduced by 30% (×0.7) so Phase 1 isn't too fast
+    { row: 1, dir: 1, speed: 0.84 * speedMult, len: 2, count: 3, type: "car" },
+    { row: 2, dir: -1, speed: 0.49 * speedMult, len: 3, count: 2, type: "truck" },
+    { row: 3, dir: 1, speed: 1.26 * speedMult, len: 1, count: 4, type: "moto" },
+    { row: 4, dir: -1, speed: 0.70 * speedMult, len: 2, count: 3, type: "car2" },
+    { row: 5, dir: 1, speed: 0.63 * speedMult, len: 4, count: 2, type: "bus" },
   ];
 
   const riverSpeedMult = phase <= 4
@@ -1074,6 +1075,8 @@ export default function JogoDoJacare() {
       phaseCompleteTimer: 0,
       // Master mode
       masterTriggered: false,
+      // Guard flag to prevent double home detection in the same frame
+      justEnteredHome: false,
     };
   }, []);
 
@@ -1217,6 +1220,11 @@ export default function JogoDoJacare() {
     });
 
     // ---- COLLISION DETECTION ----
+    // Reset home-entry guard when player is not on the homes row
+    if (gs.playerRow !== ROW_HOMES) {
+      gs.justEnteredHome = false;
+    }
+
     if (gs.playerAlive && !gs.deathType) {
       const px = colToCanvasX(gs.playerCol) + gs.playerPixelOffsetX;
       const py = rowToCanvasY(gs.playerRow);
@@ -1315,101 +1323,113 @@ export default function JogoDoJacare() {
       }
 
       // Check homes (row 12)
-      if (gs.playerRow === ROW_HOMES && gs.playerAlive) {
-        let landedHome = false;
-        HOME_COLS.forEach((col, idx) => {
-          // Home opening spans about 1.5 tiles centered on col
+      // Guard: skip if we already processed a home entry this frame
+      if (gs.playerRow === ROW_HOMES && gs.playerAlive && !gs.justEnteredHome) {
+        const playerCenter = colToCanvasX(gs.playerCol) + TILE_W / 2;
+
+        // Find the single closest home whose opening contains the player center
+        let bestIdx = -1;
+        let bestDist = Infinity;
+        for (let idx = 0; idx < HOME_COLS.length; idx++) {
+          const col = HOME_COLS[idx];
           const homeLeft = col * TILE_W;
           const homeRight = (col + 1.5) * TILE_W;
-          const playerCenter = colToCanvasX(gs.playerCol) + TILE_W / 2;
-
           if (playerCenter >= homeLeft && playerCenter <= homeRight) {
-            if (gs.filledHomes[idx]) {
-              // Already filled - die
-              gs.deathType = "splash";
-              gs.deathAnim = 0;
-              gs.deathX = playerCenter;
-              gs.deathY = rowToCanvasY(ROW_HOMES) + TILE_H / 2;
-              gs.playerAlive = false;
-              if (audioRef.current) audioRef.current.splash();
-            } else {
-              // Fill home!
-              gs.filledHomes[idx] = true;
-              gs.totalHomesFilled++;
-              const timeBonus = Math.floor(gs.timer);
-              gs.score += 25 + timeBonus;
-              gs.cumulativeScore = gs.score;
-              setDisplayScore(gs.score);
-
-              if (audioRef.current) audioRef.current.victory();
-
-              // Check extra life
-              if (gs.score >= gs.extraLifeThreshold && gs.lives < 5) {
-                gs.lives++;
-                gs.extraLifeThreshold += 1000;
-                setDisplayLives(gs.lives);
-                if (audioRef.current) audioRef.current.powerUp();
-              }
-
-              // Check master mode (5000 points)
-              if (gs.score >= 5000 && !gs.masterTriggered) {
-                gs.masterTriggered = true;
-                setMasterMode(true);
-                setMasterModeTimer(2);
-                // Reset difficulty but keep score
-                const newGs = initGameState(1, gs.score, gs.lives, gs.totalHomesFilled);
-                newGs.masterTriggered = true;
-                gsRef.current = newGs;
-                setDisplayPhase(1);
-                rafRef.current = requestAnimationFrame(gameLoop);
-                return;
-              }
-
-              // Check all homes filled
-              if (gs.filledHomes.every(Boolean)) {
-                // Phase complete!
-                gs.score += 200; // bonus
-                setDisplayScore(gs.score);
-                if (audioRef.current) audioRef.current.phaseComplete();
-                if (audioRef.current) audioRef.current.stopMusic();
-
-                setPhaseCompleteData({
-                  phase: gs.phase,
-                  score: gs.score,
-                  homesFilled: gs.totalHomesFilled,
-                });
-                setScreen("phaseComplete");
-
-                // Auto-advance after 3s
-                setTimeout(() => {
-                  const nextPhase = gs.phase + 1;
-                  const newGs = initGameState(nextPhase, gs.score, gs.lives, gs.totalHomesFilled);
-                  newGs.masterTriggered = gs.masterTriggered;
-                  newGs.extraLifeThreshold = gs.extraLifeThreshold;
-                  gsRef.current = newGs;
-                  setDisplayPhase(nextPhase);
-                  setScreen("playing");
-                  if (audioRef.current) audioRef.current.startMusic(nextPhase);
-                  lastTimeRef.current = performance.now();
-                  rafRef.current = requestAnimationFrame(gameLoop);
-                }, 3000);
-
-                gsRef.current = null; // Stop current loop
-                return;
-              }
-
-              // Respawn player
-              gs.playerCol = 6;
-              gs.playerRow = 0;
-              gs.playerDir = "up";
-              gs.timer = gs.timerMax;
-              landedHome = true;
+            const homeCenter = (homeLeft + homeRight) / 2;
+            const dist = Math.abs(playerCenter - homeCenter);
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestIdx = idx;
             }
           }
-        });
+        }
 
-        // If in homes row but not on a home opening -> water -> die
-        if (!landedHome && gs.playerAlive) {
+        if (bestIdx >= 0) {
+          // Set guard flag to prevent double-processing
+          gs.justEnteredHome = true;
+
+          if (gs.filledHomes[bestIdx]) {
+            // Already filled - die
+            gs.deathType = "splash";
+            gs.deathAnim = 0;
+            gs.deathX = playerCenter;
+            gs.deathY = rowToCanvasY(ROW_HOMES) + TILE_H / 2;
+            gs.playerAlive = false;
+            if (audioRef.current) audioRef.current.splash();
+          } else {
+            // Fill home!
+            gs.filledHomes[bestIdx] = true;
+            gs.totalHomesFilled++;
+            const timeBonus = Math.floor(gs.timer);
+            gs.score += 25 + timeBonus;
+            gs.cumulativeScore = gs.score;
+            setDisplayScore(gs.score);
+
+            if (audioRef.current) audioRef.current.victory();
+
+            // Check extra life
+            if (gs.score >= gs.extraLifeThreshold && gs.lives < 5) {
+              gs.lives++;
+              gs.extraLifeThreshold += 1000;
+              setDisplayLives(gs.lives);
+              if (audioRef.current) audioRef.current.powerUp();
+            }
+
+            // Check master mode (5000 points)
+            if (gs.score >= 5000 && !gs.masterTriggered) {
+              gs.masterTriggered = true;
+              setMasterMode(true);
+              setMasterModeTimer(2);
+              // Reset difficulty but keep score
+              const newGs = initGameState(1, gs.score, gs.lives, gs.totalHomesFilled);
+              newGs.masterTriggered = true;
+              gsRef.current = newGs;
+              setDisplayPhase(1);
+              rafRef.current = requestAnimationFrame(gameLoop);
+              return;
+            }
+
+            // Check all homes filled
+            if (gs.filledHomes.every(Boolean)) {
+              // Phase complete!
+              gs.score += 200; // bonus
+              setDisplayScore(gs.score);
+              if (audioRef.current) audioRef.current.phaseComplete();
+              if (audioRef.current) audioRef.current.stopMusic();
+
+              setPhaseCompleteData({
+                phase: gs.phase,
+                score: gs.score,
+                homesFilled: gs.totalHomesFilled,
+              });
+              setScreen("phaseComplete");
+
+              // Auto-advance after 3s
+              setTimeout(() => {
+                const nextPhase = gs.phase + 1;
+                const newGs = initGameState(nextPhase, gs.score, gs.lives, gs.totalHomesFilled);
+                newGs.masterTriggered = gs.masterTriggered;
+                newGs.extraLifeThreshold = gs.extraLifeThreshold;
+                gsRef.current = newGs;
+                setDisplayPhase(nextPhase);
+                setScreen("playing");
+                if (audioRef.current) audioRef.current.startMusic(nextPhase);
+                lastTimeRef.current = performance.now();
+                rafRef.current = requestAnimationFrame(gameLoop);
+              }, 3000);
+
+              gsRef.current = null; // Stop current loop
+              return;
+            }
+
+            // Respawn player
+            gs.playerCol = 6;
+            gs.playerRow = 0;
+            gs.playerDir = "up";
+            gs.timer = gs.timerMax;
+          }
+        } else if (gs.playerAlive) {
+          // In homes row but not on a home opening -> water -> die
           gs.deathType = "splash";
           gs.deathAnim = 0;
           gs.deathX = colToCanvasX(gs.playerCol) + TILE_W / 2;
