@@ -1135,6 +1135,15 @@ export default function TiroAoAlvo() {
             advanceRoundRef.current();
           }
         } else if (gs.gamePhase === "bonusPhase") {
+          // Safety timeout — force advance if bonus phase lasts over 8s
+          if (!gs.bonusPhaseStart) gs.bonusPhaseStart = timestamp;
+          if (timestamp - gs.bonusPhaseStart > 8000) {
+            gs.bird = null;
+            gs.parrot = null;
+            gs.bonusPhaseStart = null;
+            advanceRoundRef.current();
+          }
+
           // Update bird (flying)
           if (gs.bird && !gs.bird.hit) {
             gs.bird.x += gs.bird.vx;
@@ -1170,6 +1179,7 @@ export default function TiroAoAlvo() {
 
           // Advance round when all bonus targets are resolved
           if (!gs.bird && !gs.parrot) {
+            gs.bonusPhaseStart = null;
             advanceRoundRef.current();
           }
         }
