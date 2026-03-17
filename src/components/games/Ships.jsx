@@ -337,6 +337,8 @@ function ShipsLobby({ sessionId, status, onCancel }) {
 function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remoteReq }) {
   const isRemote = mode?.startsWith("remote");
   const youWon = isRemote ? winner === playerNum : null;
+  const sentRestart = remoteReq === "sent";
+  const opponentWants = remoteReq === true;
   return (
     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
       <div style={{ textAlign: "center" }}>
@@ -353,12 +355,12 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
           ))}
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          <button onClick={onRestart} style={{ padding: "12px 28px", background: "linear-gradient(135deg, #00f0ff, #39ff14)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer", fontWeight: 900 }}>
-            {isRemote ? (remoteReq ? "ACEITAR REVANCHE" : "REVANCHE") : "JOGAR DE NOVO"}
+          <button onClick={onRestart} disabled={sentRestart && !opponentWants} style={{ padding: "12px 28px", background: sentRestart && !opponentWants ? "#2a2a4a" : "linear-gradient(135deg, #00f0ff, #39ff14)", border: "none", borderRadius: 8, color: sentRestart && !opponentWants ? "#888" : "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: sentRestart && !opponentWants ? "default" : "pointer", fontWeight: 900 }}>
+            {isRemote ? (opponentWants ? "ACEITAR REVANCHE" : sentRestart ? "AGUARDANDO..." : "REVANCHE") : "JOGAR DE NOVO"}
           </button>
           <button onClick={onMenu} style={{ padding: "12px 28px", background: "transparent", border: "1px solid #555", borderRadius: 8, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>MENU</button>
         </div>
-        {isRemote && remoteReq && <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>Oponente quer revanche!</p>}
+        {isRemote && opponentWants && <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>Oponente quer revanche!</p>}
         <AdBanner slot="ships_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
@@ -733,12 +735,21 @@ export default function Ships() {
         case "start":
           setMaze(msg.maze);
           gameRef.current.maze = msg.maze;
+          gameRef.current.s = [{ ...SPAWN[0], alive: true }, { ...SPAWN[1], alive: true }];
+          gameRef.current.b = [null, null];
+          gameRef.current.sc = [0, 0];
+          gameRef.current.state = "playing";
+          gameRef.current.timer = 0;
+          setShip1({ ...SPAWN[0], alive: true }); setShip2({ ...SPAWN[1], alive: true });
+          setBullet1(null); setBullet2(null);
           setScreen("playing");
           setLobbyStatus(null);
           setDisconnected(false);
           setRemoteReq(false);
           setRoundState("playing");
+          setWinner(0);
           setS1(0); setS2(0);
+          setExplosions([]);
           window.gtag?.("event", "game_start", { game_name: "ships" });
           break;
         case "g":
@@ -769,9 +780,19 @@ export default function Ships() {
           setMaze(msg.maze);
           gameRef.current.maze = msg.maze;
           break;
-        case "restart_req": setRemoteReq(true); break;
+        case "restart_req":
+          // If we already sent our restart, server will start game momentarily
+          // (both voted). Otherwise, show opponent's request.
+          setRemoteReq(prev => prev === "sent" ? "sent" : true);
+          break;
         case "left": setDisconnected(true); break;
         case "error": setLobbyStatus("error"); setTimeout(() => { setScreen("menu"); setLobbyStatus(null); }, 2000); break;
+      }
+    };
+    ws.onclose = () => {
+      // If we're still in a game or gameover screen, mark as disconnected
+      if (wsRef.current === ws) {
+        wsRef.current = null;
       }
     };
     ws.onerror = () => { setLobbyStatus("error"); setTimeout(() => { setScreen("menu"); setLobbyStatus(null); }, 2000); };
@@ -803,33 +824,54 @@ export default function Ships() {
     }
   }, [register, startMode]);
 
-  const handleRestart = useCallback(() => {
-    if (mode?.startsWith("remote")) {
-      const ws = wsRef.current;
-      if (ws?.readyState === 1) ws.send(JSON.stringify({ t: "restart" }));
-    } else { resetGame(); setScreen("playing"); window.gtag?.("event", "game_start", { game_name: "ships" }); }
-  }, [mode, resetGame]);
-
   const handleMenu = useCallback(() => {
     if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
     clearInterval(loopRef.current);
+    keysRef.current.clear();
     setScreen("menu"); setMode(null); setLobbyStatus(null); setDisconnected(false); setRemoteReq(false);
+    setPlayerNum(0); setSessionId(""); setWinner(0);
+    setS1(0); setS2(0); setRoundState("playing"); setExplosions([]);
+    setShip1({ ...SPAWN[0], alive: true }); setShip2({ ...SPAWN[1], alive: true });
+    setBullet1(null); setBullet2(null); setShakeScreen(false);
+    gameRef.current.s = [{ ...SPAWN[0], alive: true }, { ...SPAWN[1], alive: true }];
+    gameRef.current.b = [null, null];
+    gameRef.current.sc = [0, 0];
+    gameRef.current.state = "playing";
+    gameRef.current.timer = 0;
+    gameRef.current.maze = [];
+    cpuRef.current = { wanderAngle: 0, stuckTimer: 0, shootCooldown: 0 };
   }, []);
+
+  const handleRestart = useCallback(() => {
+    if (mode?.startsWith("remote")) {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ t: "restart" }));
+        setRemoteReq("sent");
+      } else {
+        // WS connection is dead, go back to menu
+        handleMenu();
+      }
+    } else { resetGame(); setScreen("playing"); window.gtag?.("event", "game_start", { game_name: "ships" }); }
+  }, [mode, resetGame, handleMenu]);
 
   useEffect(() => () => { audioRef.current?.stop(); clearInterval(loopRef.current); wsRef.current?.close(); }, []);
 
-  // ---- Auto-join from URL param (?sala=XXXX) ----
+  // ---- Auto-join from URL param (?sala=XXXX or ?room=XXXX) ----
   const autoJoinRef = useRef(false);
+  const handleSelectModeRef = useRef(handleSelectMode);
+  useEffect(() => { handleSelectModeRef.current = handleSelectMode; }, [handleSelectMode]);
   useEffect(() => {
     if (!checkedCookie || autoJoinRef.current) return;
     const params = new URLSearchParams(window.location.search);
-    const sala = params.get("sala");
+    const sala = params.get("sala") || params.get("room");
     if (sala) {
       autoJoinRef.current = true;
       window.history.replaceState({}, "", window.location.pathname);
-      handleSelectMode("remote-join", sala);
+      // Use timeout to ensure all state from cookie check has settled
+      setTimeout(() => handleSelectModeRef.current("remote-join", sala), 0);
     }
-  }, [checkedCookie, handleSelectMode]);
+  }, [checkedCookie]);
 
   const gameScale = useGameScale(CANVAS_W);
   useLockScroll(screen === "playing");
