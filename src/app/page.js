@@ -74,6 +74,14 @@ const jogos = [
     cor: "#39ff14",
     destaque: false,
   },
+  {
+    slug: "tiroaoalvo",
+    nome: "Tiro ao Alvo",
+    emoji: "🎯",
+    desc: "Acerte os pratos de argila no timing certo! Reflexo puro.",
+    cor: "#4ade80",
+    destaque: false,
+  },
 ];
 
 const faqs = [
