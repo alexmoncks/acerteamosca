@@ -26,9 +26,10 @@ const STREAK_POINTS = [100, 200, 300, 500];
 const TIMING_BONUS = 50;
 const BIRD_POINTS = [3000, 4000, 6000];
 
-// Reticle configs
-const RETICLE_SIZES = [60, 80, 100, 120]; // 0-4, 5-9, 10-14, 15+
+// Reticle configs — SHRINK as streak grows (harder = smaller)
+const RETICLE_SIZES = [70, 58, 46, 36]; // 0-4, 5-9, 10-14, 15+
 const RETICLE_THRESHOLDS = [0, 5, 10, 15];
+const BONUS_DISC_INTERVAL = 5; // blue bonus disc every N consecutive hits
 
 // Medal thresholds
 const MEDAL_GOLD = 8000;
@@ -576,6 +577,7 @@ export default function TiroAoAlvo() {
       roundActive: false,
       bird: null,
       parrot: null,
+      bonusDisc: null,
       paused: false,
       speedMultiplier: 1,
       continueCount: 0,
@@ -767,6 +769,40 @@ export default function TiroAoAlvo() {
       const shrink = roundCfg.reticleShrink * Math.max(0.5, 1 - gs.continueCount * 0.05);
       gs.targetLeftSize = Math.round(RETICLE_SIZES[sizeIdx] * shrink);
       gs.targetRightSize = Math.round(RETICLE_SIZES[sizeIdx] * shrink);
+
+      // Spawn blue bonus disc every BONUS_DISC_INTERVAL consecutive hits
+      if (gs.streak > 0 && gs.streak % BONUS_DISC_INTERVAL === 0 && !gs.bonusDisc) {
+        const fromRight = Math.random() < 0.5;
+        const bSpeedMult = roundCfg.speedMult * gs.speedMultiplier;
+        gs.bonusDisc = {
+          x: fromRight ? CANVAS_W + 15 : -15,
+          y: CANVAS_H * 0.2 + Math.random() * CANVAS_H * 0.25,
+          vx: (fromRight ? -4.5 : 4.5) * bSpeedMult,
+          vy: 0,
+          hit: false,
+        };
+        audioRef.current?.birdAppear();
+      }
+    }
+
+    // Also check blue bonus disc during normal play
+    if (gs.bonusDisc && !gs.bonusDisc.hit) {
+      const bReticleX = side === "left" ? CANVAS_W * 0.25 : CANVAS_W * 0.75;
+      const bReticleY = side === "left" ? gs.leftReticleY : gs.rightReticleY;
+      const bReticleSize = side === "left" ? gs.leftReticleSize : gs.rightReticleSize;
+      const dx = gs.bonusDisc.x - bReticleX;
+      const dy = gs.bonusDisc.y - bReticleY;
+      if (Math.sqrt(dx * dx + dy * dy) < bReticleSize / 2 + 15) {
+        gs.bonusDisc.hit = true;
+        const bonusPts = 500;
+        gs.score += bonusPts;
+        gs.roundScores[gs.round] += bonusPts;
+        setScore(gs.score);
+        addFloatingText(gs, `+${bonusPts} BONUS!`, gs.bonusDisc.x, gs.bonusDisc.y, "#60a5fa", 12, false, true);
+        gs.explosions.push(createExplosion(gs.bonusDisc.x, gs.bonusDisc.y));
+        audioRef.current?.perfectHit();
+        gs.bonusDisc = null;
+      }
     }
   }, [ensureAudio, isPlateInReticle, createExplosion, addFloatingText]);
 
@@ -840,6 +876,23 @@ export default function TiroAoAlvo() {
           gs.parrot.dead = true;
           gs.explosions.push(createExplosion(gs.parrot.x, gs.parrot.y));
         }
+      }
+    }
+
+    // Check blue bonus disc
+    if (gs.bonusDisc && !gs.bonusDisc.hit) {
+      const dx = gs.bonusDisc.x - reticleX;
+      const dy = gs.bonusDisc.y - reticleY;
+      if (Math.sqrt(dx * dx + dy * dy) < reticleSize / 2 + 15) {
+        gs.bonusDisc.hit = true;
+        const bonusPts = 500;
+        gs.score += bonusPts;
+        gs.roundScores[gs.round] += bonusPts;
+        setScore(gs.score);
+        addFloatingText(gs, `+${bonusPts} BONUS!`, gs.bonusDisc.x, gs.bonusDisc.y, "#60a5fa", 12, false, true);
+        gs.explosions.push(createExplosion(gs.bonusDisc.x, gs.bonusDisc.y));
+        audioRef.current?.perfectHit();
+        gs.bonusDisc = null;
       }
     }
   }, [addFloatingText, createExplosion]);
@@ -1138,6 +1191,14 @@ export default function TiroAoAlvo() {
           t.alpha = Math.max(0, 1 - t.age / t.maxAge);
           if (t.age >= t.maxAge) gs.floatingTexts.splice(i, 1);
         }
+
+        // Update blue bonus disc
+        if (gs.bonusDisc && !gs.bonusDisc.hit) {
+          gs.bonusDisc.x += gs.bonusDisc.vx;
+          if (gs.bonusDisc.x < -30 || gs.bonusDisc.x > CANVAS_W + 30) {
+            gs.bonusDisc = null;
+          }
+        }
       }
 
       // ==================== DRAW ====================
@@ -1157,6 +1218,43 @@ export default function TiroAoAlvo() {
 
       drawBird(ctx, gs.bird, gs.elapsed);
       drawParrot(ctx, gs.parrot, gs.elapsed);
+
+      // Draw blue bonus disc
+      if (gs.bonusDisc && !gs.bonusDisc.hit) {
+        ctx.save();
+        ctx.translate(gs.bonusDisc.x, gs.bonusDisc.y);
+        const wobble = Math.sin((gs.elapsed % 300) / 300 * Math.PI * 2);
+        const yScale = 0.6 + Math.abs(wobble) * 0.4;
+        const tilt = gs.bonusDisc.vx > 0 ? 0.15 : -0.15;
+        ctx.rotate(tilt);
+        ctx.scale(1, yScale);
+        // Blue gradient
+        const grad = ctx.createLinearGradient(-15, 0, 15, 0);
+        grad.addColorStop(0, "#3b82f6");
+        grad.addColorStop(0.5, "#60a5fa");
+        grad.addColorStop(1, "#2563eb");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 15, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#2563eb";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Glow
+        ctx.shadowColor = "#60a5fa";
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = "rgba(96,165,250,0.3)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Highlight
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.beginPath();
+        ctx.ellipse(-3, -1.5, 5, 1.5, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
 
       for (const expl of gs.explosions) {
         drawExplosion(ctx, expl);
