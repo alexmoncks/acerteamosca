@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AdBanner from "@/components/AdBanner";
+import UpdateModal from "@/components/UpdateModal";
 
 const jogos = [
   {
@@ -156,54 +157,7 @@ export default function Home() {
         JOGOS ONLINE GRATIS
       </p>
 
-      <div
-        style={{
-          maxWidth: 900,
-          width: "100%",
-          background: "linear-gradient(90deg, #0a0a1a 0%, #1a0a2e 50%, #0a0a1a 100%)",
-          border: "1px solid #b026ff",
-          borderRadius: 10,
-          padding: "12px 18px",
-          marginBottom: 16,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          animation: "fadeInBanner 0.5s ease-out",
-        }}
-      >
-        <span style={{ fontSize: 22 }} role="img" aria-label="Novidade">🆕</span>
-        <div style={{ flex: 1 }}>
-          <p
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 9,
-              color: "#b026ff",
-              marginBottom: 4,
-              textShadow: "0 0 8px #b026ff",
-            }}
-          >
-            NOVIDADE!
-          </p>
-          <p style={{ color: "#c0c8e0", fontSize: 13, lineHeight: 1.5 }}>
-            Novo jogo disponivel! <strong style={{ color: "#22d3ee" }}>Deep Attack</strong> ja esta no ar — pilote sua nave e destrua aliens!
-          </p>
-        </div>
-        <Link href="/jogos/deepattack" style={{ textDecoration: "none" }}>
-          <span
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 8,
-              color: "#050510",
-              background: "#b026ff",
-              padding: "8px 14px",
-              borderRadius: 6,
-              whiteSpace: "nowrap",
-            }}
-          >
-            JOGAR
-          </span>
-        </Link>
-      </div>
+      <UpdateModal />
 
       <AdBanner slot="home_top" style={{ marginBottom: 20, maxWidth: 900, width: "100%" }} />
 
