@@ -11,6 +11,7 @@ export const metadata = {
     description: "Pilote sua nave pelo espaco, destrua aliens e sobreviva no corredor espacial!",
     url: "https://acerteamosca.com.br/jogos/deepattack",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

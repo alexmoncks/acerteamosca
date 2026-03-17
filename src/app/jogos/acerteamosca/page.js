@@ -11,6 +11,7 @@ export const metadata = {
     description: "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online gratis.",
     url: "https://acerteamosca.com.br/jogos/acerteamosca",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

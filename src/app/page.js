@@ -67,11 +67,19 @@ const jogos = [
     cor: "#22d3ee",
     destaque: false,
   },
+  {
+    slug: "jacare",
+    nome: "Jogo do Jacare",
+    emoji: "🐊",
+    desc: "Atravesse a rua e o rio com o jacare! Estilo Frogger online.",
+    cor: "#4ade80",
+    destaque: false,
+  },
 ];
 
 const faqs = [
-  { q: "O que e o Acerte a Mosca?", a: "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador. Oferecemos jogos como Wordle em portugues, 2048, Jogo da Memoria, Bubble Shooter, Deep Attack, Pong e Ships. Nao precisa baixar nada!" },
-  { q: "Quais jogos estao disponiveis?", a: "Temos 8 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memoria com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (classico com multiplayer) e Ships (batalha de naves com multiplayer)." },
+  { q: "O que e o Acerte a Mosca?", a: "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador. Oferecemos jogos como Wordle em portugues, 2048, Jogo da Memoria, Bubble Shooter, Deep Attack, Jogo do Jacare, Pong e Ships. Nao precisa baixar nada!" },
+  { q: "Quais jogos estao disponiveis?", a: "Temos 9 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memoria com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Jogo do Jacare (estilo Frogger), Pong (classico com multiplayer) e Ships (batalha de naves com multiplayer)." },
   { q: "Preciso baixar alguma coisa para jogar?", a: "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e comecar a jogar." },
   { q: "Os jogos funcionam no celular?", a: "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack tem botoes de controle dedicados para telas touch." },
   { q: "Posso jogar com amigos online?", a: "Sim! Memory Game, 2048, Pong e Ships possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
@@ -98,7 +106,7 @@ export default function Home() {
             "@type": "FAQPage",
             "mainEntity": [
               { "@type": "Question", "name": "O que e o Acerte a Mosca?", "acceptedAnswer": { "@type": "Answer", "text": "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador..." } },
-              { "@type": "Question", "name": "Quais jogos estao disponiveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 8 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong e Ships." } },
+              { "@type": "Question", "name": "Quais jogos estao disponiveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 9 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Jogo do Jacare, Pong e Ships." } },
               { "@type": "Question", "name": "Preciso baixar alguma coisa?", "acceptedAnswer": { "@type": "Answer", "text": "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador." } },
               { "@type": "Question", "name": "Os jogos funcionam no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular." } },
               { "@type": "Question", "name": "Posso jogar com amigos online?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Memory Game, 2048, Pong e Ships possuem modo multiplayer online." } },
@@ -115,7 +123,7 @@ export default function Home() {
             "@type": "ItemList",
             "name": "Jogos Online Gratis",
             "description": "Lista de jogos online gratis no Acerte a Mosca",
-            "numberOfItems": 8,
+            "numberOfItems": 9,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "url": "https://acerteamosca.com.br/jogos/acerteamosca", "name": "Acerte a Mosca" },
               { "@type": "ListItem", "position": 2, "url": "https://acerteamosca.com.br/jogos/pong", "name": "Pong" },
@@ -125,6 +133,7 @@ export default function Home() {
               { "@type": "ListItem", "position": 6, "url": "https://acerteamosca.com.br/jogos/2048", "name": "2048" },
               { "@type": "ListItem", "position": 7, "url": "https://acerteamosca.com.br/jogos/bubbleshooter", "name": "Bubble Shooter" },
               { "@type": "ListItem", "position": 8, "url": "https://acerteamosca.com.br/jogos/deepattack", "name": "Deep Attack" },
+              { "@type": "ListItem", "position": 9, "url": "https://acerteamosca.com.br/jogos/jacare", "name": "Jogo do Jacare" },
             ]
           })
         }}

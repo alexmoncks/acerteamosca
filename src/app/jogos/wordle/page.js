@@ -11,6 +11,7 @@ export const metadata = {
     description: "Adivinhe a palavra de 5 letras em 6 tentativas! Jogo online gratis.",
     url: "https://acerteamosca.com.br/jogos/wordle",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

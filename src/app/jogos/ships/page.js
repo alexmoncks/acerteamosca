@@ -11,6 +11,7 @@ export const metadata = {
     description: "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo multiplayer online gratis.",
     url: "https://acerteamosca.com.br/jogos/ships",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

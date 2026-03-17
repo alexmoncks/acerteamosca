@@ -11,6 +11,7 @@ export const metadata = {
     description: "Jogue 2048 online gratis! Deslize os blocos e some ate chegar no 2048.",
     url: "https://acerteamosca.com.br/jogos/2048",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

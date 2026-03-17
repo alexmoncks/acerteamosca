@@ -12,6 +12,7 @@ export const metadata = {
     description: "Atravesse a rua e o rio com o jacare! Desvie de carros, pule em troncos!",
     url: "https://acerteamosca.com.br/jogos/jacare",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

@@ -11,6 +11,7 @@ export const metadata = {
     description: "Bubble Shooter online gratis! Mire, atire e estoure bolhas da mesma cor.",
     url: "https://acerteamosca.com.br/jogos/bubbleshooter",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

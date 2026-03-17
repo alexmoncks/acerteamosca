@@ -11,6 +11,7 @@ export const metadata = {
     description: "Jogo da memoria online gratis! 3 niveis de dificuldade e multiplayer online.",
     url: "https://acerteamosca.com.br/jogos/memory",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {

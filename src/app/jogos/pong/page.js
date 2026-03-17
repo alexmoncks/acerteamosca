@@ -11,6 +11,7 @@ export const metadata = {
     description: "Jogue Pong online gratis! Classico dos classicos com modo solo contra CPU e multiplayer online.",
     url: "https://acerteamosca.com.br/jogos/pong",
   },
+  other: { "geo.region": "BR", "geo.placename": "Brasil" },
 };
 
 const jsonLd = {
