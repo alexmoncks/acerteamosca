@@ -709,6 +709,27 @@ export default function TiroAoAlvo() {
       try { navigator.vibrate(30); } catch (e) {}
     }
 
+    // Check blue bonus disc first (can coexist with plate)
+    if (gs.bonusDisc && !gs.bonusDisc.hit) {
+      const bReticleX = side === "left" ? CANVAS_W * 0.25 : CANVAS_W * 0.75;
+      const bReticleY = side === "left" ? gs.leftReticleY : gs.rightReticleY;
+      const bReticleSize = side === "left" ? gs.leftReticleSize : gs.rightReticleSize;
+      const dx = gs.bonusDisc.x - bReticleX;
+      const dy = gs.bonusDisc.y - bReticleY;
+      if (Math.sqrt(dx * dx + dy * dy) < bReticleSize / 2 + 15) {
+        gs.bonusDisc.hit = true;
+        const bonusPts = 500;
+        gs.score += bonusPts;
+        gs.roundScores[gs.round] += bonusPts;
+        setScore(gs.score);
+        addFloatingText(gs, `+${bonusPts} BONUS!`, gs.bonusDisc.x, gs.bonusDisc.y, "#60a5fa", 12, false, true);
+        gs.explosions.push(createExplosion(gs.bonusDisc.x, gs.bonusDisc.y));
+        audioRef.current?.perfectHit();
+        gs.bonusDisc = null;
+        return;
+      }
+    }
+
     // Check if plate can be shot from this side
     const plate = gs.currentPlate;
     if (!plate || plate.hit || plate.offscreen) return;
@@ -785,25 +806,6 @@ export default function TiroAoAlvo() {
       }
     }
 
-    // Also check blue bonus disc during normal play
-    if (gs.bonusDisc && !gs.bonusDisc.hit) {
-      const bReticleX = side === "left" ? CANVAS_W * 0.25 : CANVAS_W * 0.75;
-      const bReticleY = side === "left" ? gs.leftReticleY : gs.rightReticleY;
-      const bReticleSize = side === "left" ? gs.leftReticleSize : gs.rightReticleSize;
-      const dx = gs.bonusDisc.x - bReticleX;
-      const dy = gs.bonusDisc.y - bReticleY;
-      if (Math.sqrt(dx * dx + dy * dy) < bReticleSize / 2 + 15) {
-        gs.bonusDisc.hit = true;
-        const bonusPts = 500;
-        gs.score += bonusPts;
-        gs.roundScores[gs.round] += bonusPts;
-        setScore(gs.score);
-        addFloatingText(gs, `+${bonusPts} BONUS!`, gs.bonusDisc.x, gs.bonusDisc.y, "#60a5fa", 12, false, true);
-        gs.explosions.push(createExplosion(gs.bonusDisc.x, gs.bonusDisc.y));
-        audioRef.current?.perfectHit();
-        gs.bonusDisc = null;
-      }
-    }
   }, [ensureAudio, isPlateInReticle, createExplosion, addFloatingText]);
 
   // ==================== SHOOT BONUS TARGETS ====================
