@@ -1702,6 +1702,7 @@ export default function BatalhaNaval() {
   const [roomId, setRoomId] = useState("");
   const [lobbyStatus, setLobbyStatus] = useState("idle"); // idle | creating | waiting | joining | error
   const [playerNum, setPlayerNum] = useState(null);
+  const playerNumRef = useRef(null);
   const [onlineTurn, setOnlineTurn] = useState(null); // 0 or 1
   const [onlineOpponentReady, setOnlineOpponentReady] = useState(false);
   const [onlinePlayerReady, setOnlinePlayerReady] = useState(false);
@@ -1790,11 +1791,13 @@ export default function BatalhaNaval() {
         case "created":
           setRoomId(msg.roomId);
           setPlayerNum(msg.playerNum);
+          playerNumRef.current = msg.playerNum;
           setLobbyStatus("waiting");
           break;
 
         case "joined":
           setPlayerNum(msg.playerNum);
+          playerNumRef.current = msg.playerNum;
           // Go to setup (place ships)
           setScreen("online-setup");
           setLobbyStatus("idle");
@@ -1850,7 +1853,7 @@ export default function BatalhaNaval() {
 
         case "attack_result": {
           const { row, col, result, shipName, shipCells, attacker } = msg;
-          const isMyAttack = attacker === playerNum;
+          const isMyAttack = attacker === playerNumRef.current;
 
           if (isMyAttack) {
             // Update our tracking grid
@@ -1940,7 +1943,7 @@ export default function BatalhaNaval() {
         }
 
         case "game_over": {
-          const won = msg.winner === playerNum;
+          const won = msg.winner === playerNumRef.current;
           setOnlineGameResult(won ? "win" : "lose");
           if (won) {
             audioRef.current?.victory();
