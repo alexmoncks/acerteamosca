@@ -37,12 +37,12 @@ const ET_CARRIER = 4;
 const ET_MINE = 5;
 
 const ENEMY_DEFS = [
-  { name: "Scout",   color: "#39ff14", hp: 1, w: 24, h: 24, points: 50,  shotType: "single" },
-  { name: "Fighter", color: "#ffd700", hp: 2, w: 26, h: 26, points: 100, shotType: "dual" },
-  { name: "Bomber",  color: "#ff4444", hp: 3, w: 28, h: 28, points: 150, shotType: "triple" },
-  { name: "Ace",     color: "#a855f7", hp: 1, w: 22, h: 22, points: 200, shotType: "aimed" },
-  { name: "Carrier", color: "#1e3a5f", hp: 5, w: 36, h: 36, points: 300, shotType: "none" },
-  { name: "Mine",    color: "#888888", hp: 1, w: 20, h: 20, points: 75,  shotType: "none" },
+  { name: "Scout",   color: "#39ff14", hp: 1.2, w: 24, h: 24, points: 50,  shotType: "single" },
+  { name: "Fighter", color: "#ffd700", hp: 2.4, w: 26, h: 26, points: 100, shotType: "dual" },
+  { name: "Bomber",  color: "#ff4444", hp: 3.6, w: 28, h: 28, points: 150, shotType: "triple" },
+  { name: "Ace",     color: "#a855f7", hp: 1.2, w: 22, h: 22, points: 200, shotType: "aimed" },
+  { name: "Carrier", color: "#1e3a5f", hp: 6,   w: 36, h: 36, points: 300, shotType: "none" },
+  { name: "Mine",    color: "#888888", hp: 1.2, w: 20, h: 20, points: 75,  shotType: "none" },
 ];
 
 // ── Power-up types ─────────────────────────────────────────────────────
@@ -290,56 +290,61 @@ function getPhaseConfig(phase) {
   let survivalDuration = 0;
 
   switch (phase) {
+    // ── WORLD 1: EARTH ORBIT ──
     case 1:
-      enemyTypes = [ET_SCOUT]; waveCount = 3; waveSize = 12; break;
+      enemyTypes = [ET_SCOUT]; waveCount = 4; waveSize = 16; break;
     case 2:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 3; waveSize = 18; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 5; waveSize = 22; break;
     case 3:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE]; waveCount = 4; waveSize = 15; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE]; waveCount = 5; waveSize = 20; break;
     case 4:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE, ET_MINE]; waveCount = 4; waveSize = 20; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE, ET_MINE]; waveCount = 6; waveSize = 24; break;
     case 5: break; // Boss
 
+    // ── WORLD 2: PHOBOS ──
     case 6:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 3; waveSize = 16; invaderGrid = true; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 5; waveSize = 22; invaderGrid = true; break;
     case 7:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 4; waveSize = 16; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 5; waveSize = 22; break;
     case 8:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER]; waveCount = 3; waveSize = 12; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER]; waveCount = 5; waveSize = 18; break;
     case 9:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER]; waveCount = 5; waveSize = 20; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER]; waveCount = 7; waveSize = 26; break;
     case 10: break; // Boss
 
+    // ── WORLD 3: MARS SURFACE ──
     case 11:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 4; waveSize = 18; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 6; waveSize = 24; break;
     case 12:
-      enemyTypes = [ET_CARRIER, ET_SCOUT, ET_FIGHTER]; waveCount = 3; waveSize = 14; break;
+      enemyTypes = [ET_CARRIER, ET_SCOUT, ET_FIGHTER]; waveCount = 5; waveSize = 20; break;
     case 13:
-      enemyTypes = [ET_MINE, ET_ACE, ET_FIGHTER]; waveCount = 4; waveSize = 16; break;
+      enemyTypes = [ET_MINE, ET_ACE, ET_FIGHTER]; waveCount = 6; waveSize = 22; break;
     case 14:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 5; waveSize = 24; invaderGrid = true; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 7; waveSize = 30; invaderGrid = true; break;
     case 15: break; // Boss
 
+    // ── WORLD 4: ASTEROID BELT ──
     case 16:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_MINE]; waveCount = 4; waveSize = 16; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_MINE]; waveCount = 6; waveSize = 22; break;
     case 17:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 4; waveSize = 18; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 6; waveSize = 24; break;
     case 18:
-      enemyTypes = [ET_MINE, ET_SCOUT, ET_ACE]; waveCount = 3; waveSize = 14; break;
+      enemyTypes = [ET_MINE, ET_SCOUT, ET_ACE]; waveCount = 5; waveSize = 20; break;
     case 19:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER, ET_MINE]; waveCount = 5; waveSize = 20; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER, ET_MINE]; waveCount = 7; waveSize = 26; break;
     case 20: break; // Boss
 
+    // ── WORLD 5: JUPITER ──
     case 21:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 4; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 6; waveSize = 30; break;
     case 22:
-      enemyTypes = [ET_FIGHTER, ET_ACE]; waveCount = 4; waveSize = 16; break;
+      enemyTypes = [ET_FIGHTER, ET_ACE]; waveCount = 6; waveSize = 22; break;
     case 23:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 5; waveSize = 20; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 7; waveSize = 28; break;
     case 24:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_MINE]; survivalMode = true; survivalDuration = 5400; break; // 90s
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_MINE]; survivalMode = true; survivalDuration = 7200; break; // 120s
     case 25: break; // Boss
-    default: enemyTypes = [ET_SCOUT]; waveCount = 3; waveSize = 12;
+    default: enemyTypes = [ET_SCOUT]; waveCount = 4; waveSize = 16;
   }
 
   return { world, localPhase, isBoss, enemyTypes, waveCount, waveSize, invaderGrid, survivalMode, survivalDuration };
