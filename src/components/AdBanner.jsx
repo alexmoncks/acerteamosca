@@ -34,10 +34,9 @@ export default function AdBanner({ slot, format = "auto", responsive = true, sty
       style={{
         textAlign: "center",
         overflow: "hidden",
-        minHeight: hasAd ? undefined : 0,
-        maxHeight: hasAd ? undefined : 0,
+        minHeight: 90,
         opacity: hasAd ? 1 : 0,
-        transition: "all 0.3s",
+        transition: "opacity 0.3s",
         ...style,
       }}
     >

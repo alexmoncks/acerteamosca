@@ -56,7 +56,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="google-adsense-account" content="ca-pub-4148140889800778" />
         <meta name="theme-color" content="#050510" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -67,6 +67,8 @@ export default function RootLayout({ children }) {
         <link
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap"
           rel="stylesheet"
+          media="print"
+          onLoad="this.media='all'"
         />
       </head>
       <body>
@@ -109,7 +111,7 @@ export default function RootLayout({ children }) {
         </Script>
         <Navbar />
         <InstallPrompt />
-        <div style={{ paddingTop: 48 }}>{children}</div>
+        <main style={{ paddingTop: 48 }}>{children}</main>
       </body>
     </html>
   );
