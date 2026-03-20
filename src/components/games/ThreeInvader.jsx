@@ -1348,6 +1348,7 @@ export default function ThreeInvader() {
       patternTimer: 0,
       spawnTimer: 0,
       entering: true,
+      invulnTimer: 0, // counts up after entering is done; vulnerable after 120 frames (2s)
       // Boss-specific
       turretHpL: bossIndex === 1 ? 15 : 0,
       turretHpR: bossIndex === 1 ? 15 : 0,
@@ -1777,9 +1778,9 @@ export default function ThreeInvader() {
       }
     }
 
-    // Damage boss
-    if (g.boss && g.boss.alive) {
-      g.boss.hp -= 5;
+    // Damage boss (reduced: 5 → 1.25 base)
+    if (g.boss && g.boss.alive && !g.boss.entering && g.boss.invulnTimer >= 120) {
+      g.boss.hp -= 1.25;
       g.boss.damageFlash = 10;
       if (g.boss.hp <= 0) {
         g.boss.alive = false;
@@ -1967,13 +1968,13 @@ export default function ThreeInvader() {
           }
         }
       }
-      // Damage boss
-      if (g.boss && g.boss.alive) {
+      // Damage boss (reduced: 0.1 → 0.025 base)
+      if (g.boss && g.boss.alive && !g.boss.entering && g.boss.invulnTimer >= 120) {
         const bCx = g.boss.x + g.boss.w / 2;
         if (Math.abs(bCx - laserX) < g.boss.w / 2) {
           let dmgMult = 1;
           if (g.boss.bossIndex === 3 && g.boss.eyeOpen) dmgMult = 3;
-          g.boss.hp -= 0.1 * dmgMult;
+          g.boss.hp -= 0.025 * dmgMult;
           g.boss.damageFlash = 3;
           if (g.boss.hp <= 0) g.boss.alive = false;
         }
@@ -2184,16 +2185,27 @@ export default function ThreeInvader() {
         boss.y = lerp(boss.y, boss.targetY, 0.02);
         if (Math.abs(boss.y - boss.targetY) < 2) {
           boss.entering = false;
+          boss.invulnTimer = 0;
           boss.y = boss.targetY;
         }
+      } else if (boss.invulnTimer < 120) {
+        // 2s presentation: boss visible but invulnerable, no shooting yet
+        boss.invulnTimer++;
       } else {
         // Boss movement
+        const hpPct = boss.hp / boss.maxHp;
+        const isRage = hpPct <= 0.05; // 5% HP = rage mode
+
         if (!boss.chargePhase) {
-          boss.x += Math.sin(boss.phaseTimer * 0.015) * 1.5;
+          // Rage mode: faster, more erratic movement
+          const moveSpeed = isRage ? 3.5 : 1.5;
+          const moveFreq = isRage ? 0.035 : 0.015;
+          boss.x += Math.sin(boss.phaseTimer * moveFreq) * moveSpeed;
+          if (isRage) boss.y += Math.sin(boss.phaseTimer * 0.04) * 1.2; // vertical jitter in rage
           boss.x = clamp(boss.x, 10, CW - boss.w - 10);
+          boss.y = clamp(boss.y, 20, CH * 0.45);
 
           // Update boss phase based on HP
-          const hpPct = boss.hp / boss.maxHp;
           if (hpPct > 0.7) boss.phase = 1;
           else if (hpPct > 0.3) boss.phase = 2;
           else boss.phase = 3;
@@ -2208,12 +2220,15 @@ export default function ThreeInvader() {
           }
         }
 
-        // Boss shooting
+        // Boss shooting (rage mode = 3x faster fire rate)
         boss.shootTimer++;
-        const shootInterval = Math.max(20, 60 - boss.phase * 15);
+        const baseInterval = Math.max(20, 60 - boss.phase * 15);
+        const shootInterval = isRage ? Math.max(6, Math.floor(baseInterval / 3)) : baseInterval;
         if (boss.shootTimer >= shootInterval) {
           boss.shootTimer = 0;
           bossShoot(g, boss);
+          // Rage mode: double shots
+          if (isRage) bossShoot(g, boss);
         }
 
         // Boss spawn enemies
@@ -2308,27 +2323,26 @@ export default function ThreeInvader() {
       }
 
       // Bullet vs boss
-      if (!hit && g.boss && g.boss.alive) {
+      if (!hit && g.boss && g.boss.alive && !g.boss.entering && g.boss.invulnTimer >= 120) {
         if (aabb(b, { x: g.boss.x, y: g.boss.y, w: g.boss.w, h: g.boss.h })) {
           hit = true;
-          let dmgMult = 1;
-          // Weak points
+          let dmgMult = 0.25; // 4x less damage to bosses
+          // Weak points (still apply multiplier ON TOP of reduced base)
           if (g.boss.bossIndex === 0) {
-            // Antenna (top center)
             const acx = g.boss.x + g.boss.w / 2;
-            if (Math.abs(b.x - acx) < 10 && b.y < g.boss.y + 15) dmgMult = 2;
+            if (Math.abs(b.x - acx) < 10 && b.y < g.boss.y + 15) dmgMult = 0.5;
           }
           if (g.boss.bossIndex === 3 && g.boss.eyeOpen) {
             const ecx = g.boss.x + g.boss.w / 2;
             const ecy = g.boss.y + g.boss.h / 2;
-            if (Math.abs(b.x - ecx) < 15 && Math.abs(b.y - ecy) < 15) dmgMult = 3;
+            if (Math.abs(b.x - ecx) < 15 && Math.abs(b.y - ecy) < 15) dmgMult = 0.75;
           }
           // Turret damage for HIVE-01
           if (g.boss.bossIndex === 1) {
             if (b.x < g.boss.x + 45 && g.boss.turretHpL > 0) {
-              g.boss.turretHpL -= b.dmg;
+              g.boss.turretHpL -= b.dmg * 0.25;
             } else if (b.x > g.boss.x + g.boss.w - 45 && g.boss.turretHpR > 0) {
-              g.boss.turretHpR -= b.dmg;
+              g.boss.turretHpR -= b.dmg * 0.25;
             }
           }
           g.boss.hp -= b.dmg * dmgMult;
@@ -2373,10 +2387,10 @@ export default function ThreeInvader() {
         }
       }
 
-      if (!hit && g.boss && g.boss.alive) {
+      if (!hit && g.boss && g.boss.alive && !g.boss.entering && g.boss.invulnTimer >= 120) {
         if (aabb(m, { x: g.boss.x, y: g.boss.y, w: g.boss.w, h: g.boss.h })) {
           hit = true;
-          g.boss.hp -= m.dmg;
+          g.boss.hp -= m.dmg * 0.25;
           g.boss.damageFlash = 5;
           if (g.boss.hp <= 0) g.boss.alive = false;
         }
