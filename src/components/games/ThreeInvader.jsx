@@ -2825,16 +2825,26 @@ export default function ThreeInvader() {
     // Tutorial text for phase 1
     if (g.phase === 1 && g.phaseTimer < 600) {
       ctx.save();
-      ctx.fillStyle = `rgba(255,255,255,${Math.max(0, 1 - g.phaseTimer / 600)})`;
-      ctx.font = "9px 'Press Start 2P', monospace";
+      const tutAlpha = Math.max(0, 1 - g.phaseTimer / 600);
       ctx.textAlign = "center";
-      if (g.phaseTimer < 200) {
-        ctx.fillText("SETAS/WASD: MOVER", CW / 2, CH / 2);
-      } else if (g.phaseTimer < 400) {
-        ctx.fillText("N/ESPACO: ATIRAR", CW / 2, CH / 2);
-      } else {
-        ctx.fillText("M: BOMBA NOVA", CW / 2, CH / 2);
-      }
+      let tutText = "";
+      if (g.phaseTimer < 200) tutText = "SETAS/WASD: MOVER";
+      else if (g.phaseTimer < 400) tutText = "N/ESPACO: ATIRAR";
+      else tutText = "M: BOMBA NOVA";
+      // Background box
+      ctx.font = "11px 'Press Start 2P', monospace";
+      const tw = ctx.measureText(tutText).width;
+      ctx.fillStyle = `rgba(0,0,0,${0.7 * tutAlpha})`;
+      ctx.fillRect(CW / 2 - tw / 2 - 16, CH / 2 - 16, tw + 32, 32);
+      ctx.strokeStyle = `rgba(0,240,255,${0.6 * tutAlpha})`;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(CW / 2 - tw / 2 - 16, CH / 2 - 16, tw + 32, 32);
+      // Text with glow
+      ctx.shadowColor = "#00f0ff";
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = `rgba(255,255,255,${tutAlpha})`;
+      ctx.fillText(tutText, CW / 2, CH / 2 + 4);
+      ctx.shadowBlur = 0;
       ctx.restore();
     }
 
@@ -3387,8 +3397,12 @@ export default function ThreeInvader() {
                 bottom: 12,
                 fontFamily: "'Press Start 2P', monospace",
                 fontSize: 7,
-                color: "#333",
+                color: "#8899aa",
                 textAlign: "center",
+                background: "rgba(0,0,0,0.5)",
+                padding: "4px 10px",
+                borderRadius: 4,
+                border: "1px solid rgba(0,240,255,0.2)",
               }}>
                 SETAS/WASD: MOVER | N: ATIRAR | M: BOMBA
               </div>
