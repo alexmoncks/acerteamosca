@@ -4,7 +4,7 @@ export default function sitemap() {
   const jogos = [
     "acerteamosca", "pong", "ships", "wordle", "memory",
     "2048", "bubbleshooter", "deepattack", "jacare",
-    "tiroaoalvo", "batalha-naval",
+    "tiroaoalvo", "batalha-naval", "brickbreaker",
   ];
 
   return [
