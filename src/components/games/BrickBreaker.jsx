@@ -604,9 +604,12 @@ export default function BrickBreaker() {
   const [screen, setScreen] = useState("menu");
   const [muted, setMuted] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [dontShowTutorial, setDontShowTutorial] = useState(false);
   const [selectWorld, setSelectWorld] = useState(false);
   const [finalStats, setFinalStats] = useState(null);
   const playCountRef = useRef(0);
+  const pendingStartPhaseRef = useRef(1);
 
   useLockScroll(screen === "playing" || screen === "paused");
 
@@ -2142,6 +2145,14 @@ export default function BrickBreaker() {
 
   const handleMenuStart = async (startPhase = 1) => {
     if (user) {
+      // Check if tutorial has been seen
+      let tutorialSeen = false;
+      try { tutorialSeen = localStorage.getItem("brickbreaker_tutorial_seen") === "true"; } catch { /* */ }
+      if (!tutorialSeen) {
+        pendingStartPhaseRef.current = startPhase;
+        setShowTutorial(true);
+        return;
+      }
       await initAudio();
       playCountRef.current++;
       initGame(startPhase);
@@ -2150,6 +2161,24 @@ export default function BrickBreaker() {
     } else {
       setScreen("register");
     }
+  };
+
+  const handleTutorialStart = async () => {
+    if (dontShowTutorial) {
+      try { localStorage.setItem("brickbreaker_tutorial_seen", "true"); } catch { /* */ }
+    }
+    setShowTutorial(false);
+    setDontShowTutorial(false);
+    const startPhase = pendingStartPhaseRef.current;
+    await initAudio();
+    playCountRef.current++;
+    initGame(startPhase);
+    setScreen("playing");
+    window.gtag?.("event", "game_start", { game_name: "brickbreaker" });
+  };
+
+  const handleShowHowToPlay = () => {
+    setShowHowTo(true);
   };
 
   const handleRestart = async () => {
@@ -2227,7 +2256,7 @@ export default function BrickBreaker() {
         <AdBanner slot="brickbreaker_top" style={{ marginBottom: 12, maxWidth: CW }} />
       )}
 
-      {screen !== "menu" && !selectWorld && !showHowTo && (
+      {screen !== "menu" && !selectWorld && !showHowTo && !showTutorial && (
         <>
           <h1
             style={{
@@ -2283,7 +2312,7 @@ export default function BrickBreaker() {
           />
 
           {/* ── MENU OVERLAY ───────────────────────────── */}
-          {screen === "menu" && !showHowTo && !selectWorld && (
+          {screen === "menu" && !showHowTo && !selectWorld && !showTutorial && (
             <div
               style={{
                 position: "absolute",
@@ -2374,7 +2403,7 @@ export default function BrickBreaker() {
               )}
 
               <button
-                onClick={() => setShowHowTo(true)}
+                onClick={handleShowHowToPlay}
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 9,
@@ -2387,7 +2416,7 @@ export default function BrickBreaker() {
                   letterSpacing: 1,
                 }}
               >
-                COMO JOGAR
+                {"❓ COMO JOGAR"}
               </button>
 
               <div
@@ -2485,75 +2514,233 @@ export default function BrickBreaker() {
             </div>
           )}
 
-          {/* ── HOW TO PLAY ───────────────────────────── */}
+          {/* ── HOW TO PLAY (from menu button) ────────── */}
           {screen === "menu" && showHowTo && (
             <div
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(5,5,16,0.95)",
+                background: "rgba(5,5,16,0.92)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
                 zIndex: 100,
-                padding: 20,
-                overflowY: "auto",
+                animation: "fadeSlideIn 0.3s ease-out",
               }}
             >
-              <h2 style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: 14,
-                color: ACCENT,
-                marginBottom: 16,
-                marginTop: 10,
+              <div style={{
+                background: "rgba(10,15,30,0.95)",
+                border: `1px solid ${ACCENT}33`,
+                borderRadius: 16,
+                padding: "24px 28px",
+                maxWidth: 400,
+                width: "90%",
+                boxShadow: `0 0 40px rgba(0,240,255,0.1), inset 0 0 30px rgba(0,240,255,0.03)`,
               }}>
-                COMO JOGAR
-              </h2>
-
-              <div style={{ color: "#ccc", fontSize: 11, lineHeight: 2, maxWidth: 400, textAlign: "left" }}>
-                <p style={{ color: "#eab308", fontFamily: "'Press Start 2P', monospace", fontSize: 8, marginBottom: 8 }}>OBJETIVO</p>
-                <p style={{ marginBottom: 12 }}>Destrua todos os blocos em cada fase usando a bola e a raquete. Sao 25 fases em 5 mundos!</p>
-
-                <p style={{ color: "#eab308", fontFamily: "'Press Start 2P', monospace", fontSize: 8, marginBottom: 8 }}>CONTROLES</p>
-                <p style={{ marginBottom: 4 }}>Mouse/Touch: mover raquete</p>
-                <p style={{ marginBottom: 4 }}>Espaco/Tap: lancar bola</p>
-                <p style={{ marginBottom: 12 }}>P/ESC: pausar | M: mute</p>
-
-                <p style={{ color: "#eab308", fontFamily: "'Press Start 2P', monospace", fontSize: 8, marginBottom: 8 }}>BLOCOS</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: "#ef4444" }}>Colorido</span>: 1 golpe (10 pts)</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: "#c0c0c0" }}>Prata</span>: 2 golpes (25 pts)</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: "#ffd700" }}>Ouro</span>: 5 golpes (100 pts)</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: "#666" }}>Cinza</span>: Indestrutivel</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: "#00ff88" }}>Verde brilhante</span>: Solta power-up</p>
-                <p style={{ marginBottom: 12 }}><span style={{ color: "#ff4444" }}>Vermelho pulsante</span>: Explosivo!</p>
-
-                <p style={{ color: "#eab308", fontFamily: "'Press Start 2P', monospace", fontSize: 8, marginBottom: 8 }}>POWER-UPS</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: PU_COLORS[0] }}>Triple</span>: 3 bolas</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: PU_COLORS[1] }}>Sticky</span>: Bola gruda</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: PU_COLORS[2] }}>Cannon</span>: Tiros automaticos</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: PU_COLORS[3] }}>Big</span>: Raquete maior</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: PU_COLORS[4] }}>Fire</span>: Bola de fogo</p>
-                <p style={{ marginBottom: 4 }}><span style={{ color: PU_COLORS[5] }}>Shield</span>: Barreira</p>
-                <p style={{ marginBottom: 12 }}><span style={{ color: PU_COLORS[6] }}>Life</span>: +1 vida</p>
-              </div>
-
-              <button
-                onClick={() => setShowHowTo(false)}
-                style={{
+                <h2 style={{
                   fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 9,
-                  color: "#666",
-                  background: "transparent",
-                  border: "1px solid #333",
-                  borderRadius: 6,
-                  padding: "8px 20px",
-                  cursor: "pointer",
-                  marginTop: 12,
+                  fontSize: 14,
+                  color: ACCENT,
                   marginBottom: 20,
-                }}
-              >
-                VOLTAR
-              </button>
+                  textAlign: "center",
+                  textShadow: `0 0 20px rgba(0,240,255,0.5)`,
+                }}>
+                  COMO JOGAR
+                </h2>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {[
+                    { emoji: "\uD83D\uDDB1\uFE0F", text: "Mova o mouse para controlar o batedor", label: "Desktop" },
+                    { emoji: "\uD83D\uDCF1", text: "Arraste o dedo para mover o batedor", label: "Mobile" },
+                    { emoji: "\u2328\uFE0F", text: "ESPA\u00C7O ou toque para lan\u00E7ar a bola" },
+                    { emoji: "\uD83E\uDDF1", text: "Destrua todos os tijolos para avan\u00E7ar" },
+                    { emoji: "\uD83D\uDC8A", text: "Colete power-ups que caem dos tijolos" },
+                    { emoji: "\uD83D\uDC7E", text: "Cuidado com os inimigos a partir da Fase 3" },
+                    { emoji: "\u2764\uFE0F", text: "Voc\u00EA come\u00E7a com 3 vidas" },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                    }}>
+                      <span style={{ fontSize: 18, flexShrink: 0, width: 28, textAlign: "center" }}>
+                        {item.emoji}
+                      </span>
+                      <span style={{
+                        fontFamily: "'Fira Code', monospace",
+                        fontSize: 11,
+                        color: "#ccd6f6",
+                        lineHeight: 1.4,
+                      }}>
+                        {item.label && (
+                          <span style={{
+                            fontFamily: "'Press Start 2P', monospace",
+                            fontSize: 7,
+                            color: ACCENT,
+                            marginRight: 6,
+                          }}>
+                            {item.label}:
+                          </span>
+                        )}
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setShowHowTo(false)}
+                  style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: 9,
+                    color: "#666",
+                    background: "transparent",
+                    border: "1px solid #333",
+                    borderRadius: 6,
+                    padding: "8px 20px",
+                    cursor: "pointer",
+                    marginTop: 20,
+                    display: "block",
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                >
+                  VOLTAR
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TUTORIAL OVERLAY (first-time or pre-game) ── */}
+          {showTutorial && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(5,5,16,0.92)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 110,
+                animation: "fadeSlideIn 0.3s ease-out",
+              }}
+            >
+              <div style={{
+                background: "rgba(10,15,30,0.95)",
+                border: `1px solid ${ACCENT}33`,
+                borderRadius: 16,
+                padding: "24px 28px",
+                maxWidth: 400,
+                width: "90%",
+                boxShadow: `0 0 40px rgba(0,240,255,0.1), inset 0 0 30px rgba(0,240,255,0.03)`,
+              }}>
+                <h2 style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 14,
+                  color: ACCENT,
+                  marginBottom: 20,
+                  textAlign: "center",
+                  textShadow: `0 0 20px rgba(0,240,255,0.5)`,
+                }}>
+                  COMO JOGAR
+                </h2>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {[
+                    { emoji: "\uD83D\uDDB1\uFE0F", text: "Mova o mouse para controlar o batedor", label: "Desktop" },
+                    { emoji: "\uD83D\uDCF1", text: "Arraste o dedo para mover o batedor", label: "Mobile" },
+                    { emoji: "\u2328\uFE0F", text: "ESPA\u00C7O ou toque para lan\u00E7ar a bola" },
+                    { emoji: "\uD83E\uDDF1", text: "Destrua todos os tijolos para avan\u00E7ar" },
+                    { emoji: "\uD83D\uDC8A", text: "Colete power-ups que caem dos tijolos" },
+                    { emoji: "\uD83D\uDC7E", text: "Cuidado com os inimigos a partir da Fase 3" },
+                    { emoji: "\u2764\uFE0F", text: "Voc\u00EA come\u00E7a com 3 vidas" },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                    }}>
+                      <span style={{ fontSize: 18, flexShrink: 0, width: 28, textAlign: "center" }}>
+                        {item.emoji}
+                      </span>
+                      <span style={{
+                        fontFamily: "'Fira Code', monospace",
+                        fontSize: 11,
+                        color: "#ccd6f6",
+                        lineHeight: 1.4,
+                      }}>
+                        {item.label && (
+                          <span style={{
+                            fontFamily: "'Press Start 2P', monospace",
+                            fontSize: 7,
+                            color: ACCENT,
+                            marginRight: 6,
+                          }}>
+                            {item.label}:
+                          </span>
+                        )}
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <label style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginTop: 20,
+                  cursor: "pointer",
+                  justifyContent: "center",
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={dontShowTutorial}
+                    onChange={(e) => setDontShowTutorial(e.target.checked)}
+                    style={{
+                      width: 16,
+                      height: 16,
+                      accentColor: ACCENT,
+                      cursor: "pointer",
+                    }}
+                  />
+                  <span style={{
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: 10,
+                    color: "#8892b0",
+                  }}>
+                    {"N\u00E3o mostrar novamente"}
+                  </span>
+                </label>
+
+                <button
+                  onClick={handleTutorialStart}
+                  style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: 12,
+                    color: "#050510",
+                    background: "#22c55e",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "12px 40px",
+                    cursor: "pointer",
+                    boxShadow: "0 0 20px rgba(34,197,94,0.4)",
+                    letterSpacing: 2,
+                    marginTop: 16,
+                    display: "block",
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                >
+                  {"JOGAR!"}
+                </button>
+              </div>
             </div>
           )}
 
