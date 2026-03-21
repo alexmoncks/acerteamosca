@@ -1233,7 +1233,9 @@ export default function ThreeInvader() {
   }, []);
 
   // ── Background music helpers ──────────────────────────────────
-  const playMusic = useCallback((trackPath, loop = true) => {
+  const musicTargetVolRef = useRef(0.15);
+
+  const playMusic = useCallback((trackPath, loop = true, vol = 0.15, fadeToVol = null) => {
     // Cancel any ongoing fade
     if (musicFadeRef.current) {
       clearInterval(musicFadeRef.current);
@@ -1241,11 +1243,12 @@ export default function ThreeInvader() {
     }
 
     const prev = musicRef.current;
-    const targetVol = muted ? 0 : 0.15;
+    musicTargetVolRef.current = fadeToVol != null ? fadeToVol : vol;
+    const startVol = muted ? 0 : vol;
 
     // If already playing this track, do nothing
     if (prev && prev.src && prev.src.endsWith(trackPath.replace(/ /g, "%20"))) {
-      prev.volume = targetVol;
+      prev.volume = startVol;
       return;
     }
 
@@ -1253,9 +1256,26 @@ export default function ThreeInvader() {
     const startNew = () => {
       const audio = new Audio(trackPath);
       audio.loop = loop;
-      audio.volume = targetVol;
+      audio.volume = startVol;
       musicRef.current = audio;
       audio.play().catch(() => {});
+      // If fadeToVol is set, gradually reduce volume from startVol to fadeToVol
+      if (fadeToVol != null && fadeToVol < vol && !muted) {
+        const fadeDuration = 10000; // 10 seconds
+        const steps = 50;
+        const stepInterval = fadeDuration / steps;
+        const volStep = (vol - fadeToVol) / steps;
+        let currentStep = 0;
+        const fadeId = setInterval(() => {
+          currentStep++;
+          if (currentStep >= steps || !musicRef.current || musicRef.current !== audio) {
+            clearInterval(fadeId);
+            if (musicRef.current === audio) audio.volume = muted ? 0 : fadeToVol;
+            return;
+          }
+          audio.volume = muted ? 0 : Math.max(fadeToVol, vol - volStep * currentStep);
+        }, stepInterval);
+      }
     };
 
     if (prev && !prev.paused) {
@@ -1319,15 +1339,20 @@ export default function ThreeInvader() {
   // ── Music on screen change ────────────────────────────────────
   useEffect(() => {
     if (screen === "intro") {
-      playMusic("/audio/3invader/Starfire Overture.mp3", true);
+      playMusic("/audio/3invader/Starfire Overture.mp3", true, 0.6);
     } else if (screen === "playing") {
       const g = gameRef.current;
       const track = getMusicTrackForPhase(g?.phase || 1);
-      playMusic(track, true);
+      // Final Boss starts at 60% and fades to 15%
+      if (track.includes("Final Boss")) {
+        playMusic(track, true, 0.6, 0.15);
+      } else {
+        playMusic(track, true, 0.15);
+      }
     } else if (screen === "gameover") {
-      playMusic("/audio/3invader/Falling Past the Stars.mp3", false);
+      playMusic("/audio/3invader/Falling Past the Stars.mp3", false, 0.6);
     } else if (screen === "victory") {
-      playMusic("/audio/3invader/Starfire Final.mp3", false);
+      playMusic("/audio/3invader/Starfire Final.mp3", false, 0.6);
     } else if (screen === "menu") {
       stopMusic();
     }
@@ -1518,7 +1543,11 @@ export default function ThreeInvader() {
     // Switch music if track changed for new phase
     if (screenRef.current === "playing") {
       const track = getMusicTrackForPhase(phase);
-      playMusic(track, true);
+      if (track.includes("Final Boss")) {
+        playMusic(track, true, 0.6, 0.15);
+      } else {
+        playMusic(track, true, 0.15);
+      }
     }
   }
 
@@ -3394,7 +3423,7 @@ export default function ThreeInvader() {
     setMuted(prev => {
       const next = !prev;
       if (audioRef.current) audioRef.current.muted = next;
-      if (musicRef.current) musicRef.current.volume = next ? 0 : 0.15;
+      if (musicRef.current) musicRef.current.volume = next ? 0 : musicTargetVolRef.current;
       return next;
     });
   };
