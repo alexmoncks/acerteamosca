@@ -84,6 +84,28 @@ const BOSS_DEFS = [
   { name: "3I/ATLAS",  hp: 200, w: 160, h: 200, points: 25000, color: "#ffd700" },
 ];
 
+// ── Difficulty configs ──────────────────────────────────────────────────
+const DIFFICULTIES = [
+  { id: "novato",     label: "Novato",       enemyHpMult: 0.5,  bossHpMult: 1,   enemyShotFreq: 0.5,  powerUpRate: 2.0,  color: "#4ade80", desc: "Inimigos fracos, muitos power-ups. Ideal para conhecer o jogo." },
+  { id: "medio",      label: "Medio",        enemyHpMult: 1.0,  bossHpMult: 2,   enemyShotFreq: 1.0,  powerUpRate: 0.5,  color: "#fbbf24", desc: "Equilibrado. A experiencia padrao do 3INVADER." },
+  { id: "experiente", label: "Experiente",    enemyHpMult: 2.0,  bossHpMult: 4,   enemyShotFreq: 1.5,  powerUpRate: 0.33, color: "#f97316", desc: "Inimigos resistentes, poucos power-ups. Para pilotos veteranos." },
+  { id: "maluco",     label: "Ta Maluco?",    enemyHpMult: 4.0,  bossHpMult: 8,   enemyShotFreq: 2.5,  powerUpRate: 0.25, color: "#ef4444", desc: "Sobrevivencia extrema. Voce foi avisado." },
+];
+
+// ── Jukebox tracks ─────────────────────────────────────────────────────
+const JUKEBOX_TRACKS = [
+  { path: "/audio/3invader/Starfire Overture.mp3",       name: "Starfire Overture",       tag: "Historia" },
+  { path: "/audio/3invader/Orbit On Repeat.mp3",         name: "Orbit On Repeat",         tag: "Mundo 1" },
+  { path: "/audio/3invader/Lead to Phobos.mp3",          name: "Lead to Phobos",          tag: "Mundo 2" },
+  { path: "/audio/3invader/Breach Mars.mp3",             name: "Breach Mars",             tag: "Mundo 3" },
+  { path: "/audio/3invader/Asteroids.mp3",               name: "Asteroids",               tag: "Mundo 4" },
+  { path: "/audio/3invader/Singularity Countdown.mp3",   name: "Singularity Countdown",   tag: "Mundo 5" },
+  { path: "/audio/3invader/Boss Stage.mp3",              name: "Boss Stage",              tag: "Chefes" },
+  { path: "/audio/3invader/Final Boss.mp3",              name: "Final Boss",              tag: "Chefe Final" },
+  { path: "/audio/3invader/Starfire Final.mp3",          name: "Starfire Final",          tag: "Vitoria" },
+  { path: "/audio/3invader/Falling Past the Stars.mp3",  name: "Falling Past the Stars",  tag: "Game Over" },
+];
+
 // ── Scoring ────────────────────────────────────────────────────────────
 const RANK_THRESHOLDS = [
   { min: 0,      label: "Cadete" },
@@ -237,59 +259,59 @@ function getPhaseConfig(phase) {
   switch (phase) {
     // ── WORLD 1: EARTH ORBIT ──
     case 1:
-      enemyTypes = [ET_SCOUT]; waveCount = 4; waveSize = 16; break;
+      enemyTypes = [ET_SCOUT]; waveCount = 6; waveSize = 16; break;
     case 2:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 5; waveSize = 22; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 22; break;
     case 3:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE]; waveCount = 5; waveSize = 20; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE]; waveCount = 7; waveSize = 20; break;
     case 4:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE, ET_MINE]; waveCount = 6; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE, ET_MINE]; waveCount = 8; waveSize = 24; break;
     case 5: break; // Boss
 
     // ── WORLD 2: PHOBOS ──
     case 6:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 5; waveSize = 22; invaderGrid = true; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 7; waveSize = 22; invaderGrid = true; break;
     case 7:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 5; waveSize = 22; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 22; break;
     case 8:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER]; waveCount = 5; waveSize = 18; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER]; waveCount = 7; waveSize = 18; break;
     case 9:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER]; waveCount = 7; waveSize = 26; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER]; waveCount = 9; waveSize = 26; break;
     case 10: break; // Boss
 
     // ── WORLD 3: MARS SURFACE ──
     case 11:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 6; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 8; waveSize = 24; break;
     case 12:
-      enemyTypes = [ET_CARRIER, ET_SCOUT, ET_FIGHTER]; waveCount = 5; waveSize = 20; break;
+      enemyTypes = [ET_CARRIER, ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 20; break;
     case 13:
-      enemyTypes = [ET_MINE, ET_ACE, ET_FIGHTER]; waveCount = 6; waveSize = 22; break;
+      enemyTypes = [ET_MINE, ET_ACE, ET_FIGHTER]; waveCount = 8; waveSize = 22; break;
     case 14:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 7; waveSize = 30; invaderGrid = true; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 9; waveSize = 30; invaderGrid = true; break;
     case 15: break; // Boss
 
     // ── WORLD 4: ASTEROID BELT ──
     case 16:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_MINE]; waveCount = 6; waveSize = 22; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_MINE]; waveCount = 8; waveSize = 22; break;
     case 17:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 6; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 8; waveSize = 24; break;
     case 18:
-      enemyTypes = [ET_MINE, ET_SCOUT, ET_ACE]; waveCount = 5; waveSize = 20; break;
+      enemyTypes = [ET_MINE, ET_SCOUT, ET_ACE]; waveCount = 7; waveSize = 20; break;
     case 19:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER, ET_MINE]; waveCount = 7; waveSize = 26; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER, ET_MINE]; waveCount = 9; waveSize = 26; break;
     case 20: break; // Boss
 
     // ── WORLD 5: JUPITER ──
     case 21:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 6; waveSize = 30; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 8; waveSize = 30; break;
     case 22:
-      enemyTypes = [ET_FIGHTER, ET_ACE]; waveCount = 6; waveSize = 22; break;
+      enemyTypes = [ET_FIGHTER, ET_ACE]; waveCount = 8; waveSize = 22; break;
     case 23:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 7; waveSize = 28; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 9; waveSize = 28; break;
     case 24:
       enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_MINE]; survivalMode = true; survivalDuration = 7200; break; // 120s
     case 25: break; // Boss
-    default: enemyTypes = [ET_SCOUT]; waveCount = 4; waveSize = 16;
+    default: enemyTypes = [ET_SCOUT]; waveCount = 6; waveSize = 16;
   }
 
   return { world, localPhase, isBoss, enemyTypes, waveCount, waveSize, invaderGrid, survivalMode, survivalDuration };
@@ -1312,6 +1334,25 @@ export default function ThreeInvader() {
 
   const [screen, setScreen] = useState("menu");
   const [muted, setMuted] = useState(false);
+  const [sfxVolume, setSfxVolume] = useState(() => {
+    try { return parseFloat(localStorage.getItem("3inv_sfx_vol") || "0.5"); } catch { return 0.5; }
+  });
+  const [musicVolume, setMusicVolume] = useState(() => {
+    try { return parseFloat(localStorage.getItem("3inv_music_vol") || "0.5"); } catch { return 0.5; }
+  });
+  const [sfxMuted, setSfxMuted] = useState(false);
+  const [musicMuted, setMusicMuted] = useState(false);
+  const [difficulty, setDifficulty] = useState(() => {
+    try {
+      const saved = localStorage.getItem("3inv_difficulty");
+      const found = DIFFICULTIES.find(d => d.id === saved);
+      return found || DIFFICULTIES[1]; // default Medio
+    } catch { return DIFFICULTIES[1]; }
+  });
+  const [jukeboxPlaying, setJukeboxPlaying] = useState(-1);
+  const difficultyRef = useRef(null);
+  const sfxVolumeRef = useRef(0.5);
+  const sfxMutedRef = useRef(false);
   const [finalStats, setFinalStats] = useState(null);
   const [introScreen, setIntroScreen] = useState(0);
   const [introText, setIntroText] = useState("");
@@ -1324,6 +1365,42 @@ export default function ThreeInvader() {
   useLockScroll(screen === "playing" || screen === "intro");
 
   useEffect(() => { screenRef.current = screen; }, [screen]);
+
+  // Keep refs in sync for use inside game loop / callbacks
+  useEffect(() => { difficultyRef.current = difficulty; }, [difficulty]);
+  useEffect(() => { sfxVolumeRef.current = sfxVolume; }, [sfxVolume]);
+  useEffect(() => { sfxMutedRef.current = sfxMuted; }, [sfxMuted]);
+
+  // Persist volume settings
+  useEffect(() => {
+    try { localStorage.setItem("3inv_sfx_vol", String(sfxVolume)); } catch {}
+  }, [sfxVolume]);
+  useEffect(() => {
+    try { localStorage.setItem("3inv_music_vol", String(musicVolume)); } catch {}
+  }, [musicVolume]);
+  useEffect(() => {
+    try { localStorage.setItem("3inv_difficulty", difficulty.id); } catch {}
+  }, [difficulty]);
+
+  // Update music volume in real-time when musicVolume or musicMuted changes
+  useEffect(() => {
+    if (musicRef.current) {
+      musicRef.current.volume = musicMuted ? 0 : musicVolume;
+    }
+    musicTargetVolRef.current = musicVolume;
+  }, [musicVolume, musicMuted]);
+
+  // Update SFX muted state
+  useEffect(() => {
+    if (sfxRef.current) {
+      Object.values(sfxRef.current).forEach(pool => pool.setMuted(sfxMuted));
+    }
+  }, [sfxMuted]);
+
+  // playSfx helper
+  const playSfx = useCallback((pool, vol = 0.3) => {
+    if (!sfxMutedRef.current && pool) pool.play(vol * sfxVolumeRef.current);
+  }, []);
 
   // ── Preload intro images ──────────────────────────────────────
   useEffect(() => {
@@ -1408,8 +1485,10 @@ export default function ThreeInvader() {
     }
 
     const prev = musicRef.current;
-    musicTargetVolRef.current = fadeToVol != null ? fadeToVol : vol;
-    const startVol = muted ? 0 : vol;
+    const effectiveVol = vol * musicVolume;
+    const effectiveFade = fadeToVol != null ? fadeToVol * musicVolume : null;
+    musicTargetVolRef.current = effectiveFade != null ? effectiveFade : effectiveVol;
+    const startVol = musicMuted ? 0 : effectiveVol;
 
     // If already playing this track, do nothing
     if (prev && prev.src && prev.src.endsWith(trackPath.replace(/ /g, "%20"))) {
@@ -1424,21 +1503,21 @@ export default function ThreeInvader() {
       audio.volume = startVol;
       musicRef.current = audio;
       audio.play().catch(() => {});
-      // If fadeToVol is set, gradually reduce volume from startVol to fadeToVol
-      if (fadeToVol != null && fadeToVol < vol && !muted) {
+      // If fadeToVol is set, gradually reduce volume from startVol to effectiveFade
+      if (effectiveFade != null && effectiveFade < effectiveVol && !musicMuted) {
         const fadeDuration = 10000; // 10 seconds
         const steps = 50;
         const stepInterval = fadeDuration / steps;
-        const volStep = (vol - fadeToVol) / steps;
+        const volStep = (effectiveVol - effectiveFade) / steps;
         let currentStep = 0;
         const fadeId = setInterval(() => {
           currentStep++;
           if (currentStep >= steps || !musicRef.current || musicRef.current !== audio) {
             clearInterval(fadeId);
-            if (musicRef.current === audio) audio.volume = muted ? 0 : fadeToVol;
+            if (musicRef.current === audio) audio.volume = musicMuted ? 0 : effectiveFade;
             return;
           }
-          audio.volume = muted ? 0 : Math.max(fadeToVol, vol - volStep * currentStep);
+          audio.volume = musicMuted ? 0 : Math.max(effectiveFade, effectiveVol - volStep * currentStep);
         }, stepInterval);
       }
     };
@@ -1465,7 +1544,7 @@ export default function ThreeInvader() {
       }
       startNew();
     }
-  }, [muted]);
+  }, [musicMuted, musicVolume]);
 
   const stopMusic = useCallback(() => {
     if (musicFadeRef.current) {
@@ -1753,6 +1832,10 @@ export default function ThreeInvader() {
   // ── Spawn enemy ────────────────────────────────────────────────
   function spawnEnemy(g, type, x, y, pattern) {
     const def = ENEMY_DEFS[type];
+    const diff = difficultyRef.current || DIFFICULTIES[1];
+    const scaledHp = def.hp * diff.enemyHpMult;
+    const baseShootTimer = 120 + Math.floor(Math.random() * 120);
+    const scaledShootTimer = diff.enemyShotFreq > 0 ? Math.floor(baseShootTimer / diff.enemyShotFreq) : baseShootTimer;
     const enemy = {
       id: g.nextId++,
       type,
@@ -1760,21 +1843,24 @@ export default function ThreeInvader() {
       y: y !== undefined ? y : -def.h - 10,
       w: def.w,
       h: def.h,
-      hp: def.hp,
-      maxHp: def.hp,
+      hp: scaledHp,
+      maxHp: scaledHp,
       speed: 1 + g.world * 0.3,
       pattern: pattern || "galaga",
       patternTimer: 0,
       baseX: 0,
       baseY: 0,
+      baseGridX: 0,
+      baseGridY: 0,
       gridSlot: null,
       inGrid: false,
+      entering: true,
       diving: false,
       diveTargetX: 0,
       diveTargetY: 0,
-      shootTimer: 120 + Math.floor(Math.random() * 120),
+      shootTimer: scaledShootTimer,
       alive: true,
-      hasPowerUp: Math.random() < 0.15,
+      hasPowerUp: Math.random() < (0.15 * diff.powerUpRate),
       enterPhase: 0,
       enterAngle: Math.random() * Math.PI * 2,
       sineOffset: Math.random() * Math.PI * 2,
@@ -1789,6 +1875,8 @@ export default function ThreeInvader() {
   function spawnBoss(g) {
     const bossIndex = g.world;
     const def = BOSS_DEFS[bossIndex];
+    const diff = difficultyRef.current || DIFFICULTIES[1];
+    const scaledHp = def.hp * diff.bossHpMult;
     g.boss = {
       bossIndex,
       x: CW / 2 - def.w / 2,
@@ -1796,8 +1884,8 @@ export default function ThreeInvader() {
       targetY: 40,
       w: def.w,
       h: def.h,
-      hp: def.hp,
-      maxHp: def.hp,
+      hp: scaledHp,
+      maxHp: scaledHp,
       phase: 1,
       phaseTimer: 0,
       shootTimer: 0,
@@ -1907,7 +1995,7 @@ export default function ThreeInvader() {
       life: 180, // 3s max
       target: null,
     });
-    sfxRef.current?.missileLaunch.play(0.25);
+    playSfx(sfxRef.current?.missileLaunch, 0.25);
   }
 
   // ── Enemy shooting ─────────────────────────────────────────────
@@ -2128,13 +2216,18 @@ export default function ThreeInvader() {
         e.gridSlot = { col: gridCol, row: gridRow };
         e.baseX = 40 + gridCol * 50;
         e.baseY = 50 + gridRow * 40;
+        e.baseGridX = e.baseX;
+        e.baseGridY = e.baseY;
       } else if (pattern === "invader") {
         const gridCol = i % 8;
         const gridRow = Math.floor(i / 8);
         e.gridSlot = { col: gridCol, row: gridRow };
         e.inGrid = true;
+        e.entering = false; // placed directly in grid
         e.x = 20 + gridCol * 50;
         e.y = 30 + gridRow * 35;
+        e.baseGridX = e.x;
+        e.baseGridY = e.y;
       }
     }
   }
@@ -2213,7 +2306,7 @@ export default function ThreeInvader() {
 
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#4488ff", 30);
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff4444", 20);
-    sfxRef.current?.bigExplosion.play(0.5);
+    playSfx(sfxRef.current?.bigExplosion, 0.5);
 
     return true;
   }
@@ -2253,7 +2346,7 @@ export default function ThreeInvader() {
       }
     }
 
-    sfxRef.current?.shockwave.play(0.5);
+    playSfx(sfxRef.current?.shockwave, 0.5);
   }
 
   // ── Game loop ──────────────────────────────────────────────────
@@ -2398,9 +2491,9 @@ export default function ThreeInvader() {
         if (g.laserTimer <= 0) {
           firePlayerShot(g);
           if (g.shotLevel >= 4) {
-            sfxRef.current?.plasmaCannon.play(0.2);
+            playSfx(sfxRef.current?.plasmaCannon, 0.2);
           } else {
-            sfxRef.current?.laserShot.play(0.15);
+            playSfx(sfxRef.current?.laserShot, 0.15);
           }
         }
       }
@@ -2419,6 +2512,7 @@ export default function ThreeInvader() {
       // Damage enemies in laser path
       for (let i = g.enemies.length - 1; i >= 0; i--) {
         const e = g.enemies[i];
+        if (e.entering) continue; // invulnerable during entry
         const eDef = ENEMY_DEFS[e.type];
         if (Math.abs((e.x + eDef.w / 2) - laserX) < 10 && e.y < g.playerY) {
           e.hp -= 0.15;
@@ -2436,7 +2530,7 @@ export default function ThreeInvader() {
               }
             }
             g.enemies.splice(i, 1);
-            sfxRef.current?.smallExplosion.play(0.25);
+            playSfx(sfxRef.current?.smallExplosion, 0.25);
           }
         }
       }
@@ -2521,18 +2615,21 @@ export default function ThreeInvader() {
       switch (e.pattern) {
         case "galaga": {
           if (e.enterPhase < 60) {
-            // Enter with curve
+            // Enter with curve — enemy is invulnerable during this phase
             e.enterPhase++;
-            const t = e.enterPhase / 60;
             const targetX = e.baseX;
             const targetY = e.baseY;
             e.x = lerp(e.x, targetX + Math.sin(e.enterAngle + e.enterPhase * 0.1) * 30, 0.04);
             e.y = lerp(e.y, targetY, 0.03);
           } else if (!e.diving) {
             e.inGrid = true;
+            e.entering = false;
             // Formation movement with swarm oscillation
             const gridX = 40 + (e.gridSlot?.col || 0) * 50;
             const gridY = 50 + (e.gridSlot?.row || 0) * 40;
+            // Save base grid position for return from dive
+            e.baseGridX = gridX;
+            e.baseGridY = gridY;
             // Global swarm offset + individual micro-movement
             const microX = Math.sin(g.swarmAngle * 1.5 + e.id * 0.7) * 4;
             const microY = Math.cos(g.swarmAngle * 1.3 + e.id * 0.5) * 3;
@@ -2544,7 +2641,9 @@ export default function ThreeInvader() {
             // Shoot periodically
             e.shootTimer--;
             if (e.shootTimer <= 0 && def.shotType !== "none") {
-              e.shootTimer = 120 + Math.floor(Math.random() * 180) - g.world * 20;
+              const diff = difficultyRef.current || DIFFICULTIES[1];
+              const baseTimer = 120 + Math.floor(Math.random() * 180) - g.world * 20;
+              e.shootTimer = diff.enemyShotFreq > 0 ? Math.floor(baseTimer / diff.enemyShotFreq) : baseTimer;
               enemyShoot(g, e);
             }
           } else {
@@ -2555,20 +2654,28 @@ export default function ThreeInvader() {
             if (e.patternTimer % 30 === 0 && def.shotType !== "none") {
               enemyShoot(g, e);
             }
+            // Enemies that survive diving return to top and re-enter grid
             if (e.y > CH + 20) {
-              g.enemies.splice(i, 1);
-              continue;
+              e.y = -30;
+              e.diving = false;
+              e.entering = true;
+              e.enterPhase = 0;
+              e.inGrid = false;
+              e.x = e.baseGridX || e.baseX;
             }
           }
           break;
         }
         case "invader": {
-          // Space Invaders pattern
+          // Space Invaders pattern — entering false once placed in grid
+          if (e.entering && e.inGrid) e.entering = false;
           if (e.inGrid) {
             e.x += g.invaderDir * g.invaderSpeed;
             e.shootTimer--;
             if (e.shootTimer <= 0 && def.shotType !== "none") {
-              e.shootTimer = 180 + Math.floor(Math.random() * 240) - g.world * 30;
+              const diff = difficultyRef.current || DIFFICULTIES[1];
+              const baseTimer = 180 + Math.floor(Math.random() * 240) - g.world * 30;
+              e.shootTimer = diff.enemyShotFreq > 0 ? Math.floor(baseTimer / diff.enemyShotFreq) : baseTimer;
               enemyShoot(g, e);
             }
           }
@@ -2799,7 +2906,7 @@ export default function ThreeInvader() {
         spawnExplosion(g, bd.x, bd.y, bd.color, 30);
         spawnExplosion(g, bd.x, bd.y, "#ffd700", 20);
         g.screenShake = 30;
-        sfxRef.current?.bigExplosion.play(0.6);
+        playSfx(sfxRef.current?.bigExplosion, 0.6);
       }
       // Timer 180: animation complete, advance
       if (bd.timer >= bd.maxTimer) {
@@ -2817,6 +2924,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
+        if (e.entering) continue; // invulnerable during entry animation
         const def = ENEMY_DEFS[e.type];
         if (aabb(b, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -2835,10 +2943,10 @@ export default function ThreeInvader() {
               }
             }
             g.enemies.splice(ei, 1);
-            sfxRef.current?.smallExplosion.play(0.25);
+            playSfx(sfxRef.current?.smallExplosion, 0.25);
           } else {
             spawnExplosion(g, b.x, b.y, def.color, 4);
-            sfxRef.current?.smallExplosion.play(0.25);
+            playSfx(sfxRef.current?.smallExplosion, 0.25);
           }
           break;
         }
@@ -2871,7 +2979,7 @@ export default function ThreeInvader() {
           g.boss.damageFlash = 5;
           spawnExplosion(g, b.x, b.y, "#ffffff", 3);
           if (g.boss.hp <= 0) g.boss.alive = false;
-          sfxRef.current?.shieldHit.play(0.2);
+          playSfx(sfxRef.current?.shieldHit, 0.2);
         }
       }
 
@@ -2887,6 +2995,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
+        if (e.entering) continue; // invulnerable during entry animation
         const def = ENEMY_DEFS[e.type];
         if (aabb(m, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -2994,7 +3103,7 @@ export default function ThreeInvader() {
           applyPowerUp(g, g.powerUps[i].type);
           spawnExplosion(g, g.powerUps[i].x + 10, g.powerUps[i].y + 10, PU_COLORS[g.powerUps[i].type], 8);
           g.powerUps.splice(i, 1);
-          sfxRef.current?.powerUp.play(0.4);
+          playSfx(sfxRef.current?.powerUp, 0.4);
         }
       }
     }
@@ -3065,7 +3174,7 @@ export default function ThreeInvader() {
 
   function completePhase(g) {
     g.phaseComplete = true;
-    sfxRef.current?.powerUp.play(0.4);
+    playSfx(sfxRef.current?.powerUp, 0.4);
 
     // Phase bonus
     const phaseBonus = g.phaseDeathCount === 0 ? 1000 * g.phase : 500 * g.phase;
@@ -3153,7 +3262,7 @@ export default function ThreeInvader() {
     }
 
     setFinalStats(stats);
-    sfxRef.current?.powerUp.play(0.4);
+    playSfx(sfxRef.current?.powerUp, 0.4);
 
     fetch("/api/scores", {
       method: "POST",
@@ -3629,7 +3738,7 @@ export default function ThreeInvader() {
 
   // ── Menu/gameover background animation ─────────────────────────
   useEffect(() => {
-    if (screen !== "menu" && screen !== "gameover" && screen !== "victory" && screen !== "howtoplay" && screen !== "highscores") return;
+    if (screen !== "menu" && screen !== "gameover" && screen !== "victory" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -3675,7 +3784,7 @@ export default function ThreeInvader() {
         shockwave: createSoundPool("/audio/3invader/shockwave.mp3", 2),
       };
     }
-    if (muted) {
+    if (muted || sfxMuted) {
       Object.values(sfxRef.current).forEach(pool => pool.setMuted(true));
     }
   };
@@ -3757,10 +3866,13 @@ export default function ThreeInvader() {
     setMuted(prev => {
       const next = !prev;
       if (audioRef.current) audioRef.current.muted = next;
-      if (sfxRef.current) {
-        Object.values(sfxRef.current).forEach(pool => pool.setMuted(next));
+      if (next) {
+        setSfxMuted(true);
+        setMusicMuted(true);
+      } else {
+        setSfxMuted(false);
+        setMusicMuted(false);
       }
-      if (musicRef.current) musicRef.current.volume = next ? 0 : musicTargetVolRef.current;
       return next;
     });
   };
@@ -3821,7 +3933,7 @@ export default function ThreeInvader() {
         <AdBanner slot="3invader_top" style={{ marginBottom: 8, maxWidth: CW }} />
       )}
 
-      {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "howtoplay" && screen !== "highscores" && (
+      {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
         <>
           <h1
             style={{
@@ -4087,6 +4199,57 @@ export default function ThreeInvader() {
               </button>
 
               <button
+                onClick={() => setScreen("difficulty")}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 9,
+                  color: difficulty.color,
+                  background: "transparent",
+                  border: `1px solid ${difficulty.color}44`,
+                  borderRadius: 6,
+                  padding: "8px 24px",
+                  cursor: "pointer",
+                  marginBottom: 8,
+                }}
+              >
+                DIFICULDADE
+              </button>
+
+              <button
+                onClick={() => { initAudio(); setScreen("sound"); }}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 9,
+                  color: "#666",
+                  background: "transparent",
+                  border: "1px solid #333",
+                  borderRadius: 6,
+                  padding: "8px 24px",
+                  cursor: "pointer",
+                  marginBottom: 8,
+                }}
+              >
+                SOM
+              </button>
+
+              <button
+                onClick={() => { initAudio(); setScreen("jukebox"); }}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 9,
+                  color: "#666",
+                  background: "transparent",
+                  border: "1px solid #333",
+                  borderRadius: 6,
+                  padding: "8px 24px",
+                  cursor: "pointer",
+                  marginBottom: 8,
+                }}
+              >
+                JUKEBOX
+              </button>
+
+              <button
                 onClick={() => setScreen("highscores")}
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
@@ -4103,23 +4266,22 @@ export default function ThreeInvader() {
                 HIGH SCORES
               </button>
 
-              {/* Rank display */}
+              {/* Rank + difficulty display */}
               {(() => {
                 let best = 0;
                 try { best = parseInt(localStorage.getItem("3invader_best"), 10) || 0; } catch {}
-                if (best > 0) {
-                  return (
-                    <div style={{ textAlign: "center" }}>
+                return (
+                  <div style={{ textAlign: "center" }}>
+                    {best > 0 && (
                       <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
                         MELHOR: {best.toLocaleString()}
                       </div>
-                      <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>
-                        {getRank(best, false)}
-                      </div>
+                    )}
+                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: difficulty.color }}>
+                      DIFICULDADE: {difficulty.label}
                     </div>
-                  );
-                }
-                return null;
+                  </div>
+                );
               })()}
 
               <div style={{
@@ -4273,6 +4435,276 @@ export default function ThreeInvader() {
                   padding: "10px 24px",
                   cursor: "pointer",
                   marginTop: 20,
+                }}
+              >
+                VOLTAR
+              </button>
+            </div>
+          )}
+
+          {/* ── DIFFICULTY ───────────────────────────────── */}
+          {screen === "difficulty" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(2,8,36,0.95)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 100,
+                padding: "20px 16px",
+                overflowY: "auto",
+              }}
+            >
+              <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 20 }}>
+                DIFICULDADE
+              </h2>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 400 }}>
+                {DIFFICULTIES.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDifficulty(d)}
+                    style={{
+                      fontFamily: "'Fira Code', monospace",
+                      fontSize: 11,
+                      color: d.color,
+                      background: difficulty.id === d.id ? `${d.color}18` : "rgba(0,0,0,0.3)",
+                      border: `2px solid ${difficulty.id === d.id ? d.color : d.color + "44"}`,
+                      borderRadius: 8,
+                      padding: "12px 16px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, marginBottom: 4 }}>
+                      {difficulty.id === d.id ? "\u25B6 " : "  "}{d.label}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#8892b0", lineHeight: 1.4 }}>
+                      {d.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setScreen("menu")}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 10,
+                  color: ACCENT,
+                  background: "transparent",
+                  border: `1px solid ${ACCENT}44`,
+                  borderRadius: 6,
+                  padding: "10px 24px",
+                  cursor: "pointer",
+                  marginTop: 20,
+                }}
+              >
+                VOLTAR
+              </button>
+            </div>
+          )}
+
+          {/* ── SOUND ────────────────────────────────────── */}
+          {screen === "sound" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(2,8,36,0.95)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 100,
+                padding: "20px 16px",
+              }}
+            >
+              <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 24 }}>
+                SOM
+              </h2>
+
+              <div style={{ width: "100%", maxWidth: 360, marginBottom: 24 }}>
+                {/* Music volume */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>MUSICA</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: "#8892b0" }}>{Math.round(musicVolume * 100)}%</span>
+                      <button
+                        onClick={() => setMusicMuted(p => !p)}
+                        style={{
+                          fontFamily: "'Press Start 2P', monospace",
+                          fontSize: 10,
+                          color: musicMuted ? "#ff4444" : "#4ade80",
+                          background: "transparent",
+                          border: `1px solid ${musicMuted ? "#ff444444" : "#4ade8044"}`,
+                          borderRadius: 4,
+                          padding: "4px 8px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {musicMuted ? "MUDO" : "ON"}
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={Math.round(musicVolume * 100)}
+                    onChange={(e) => setMusicVolume(parseInt(e.target.value, 10) / 100)}
+                    style={{
+                      width: "100%",
+                      accentColor: ACCENT,
+                      height: 6,
+                      cursor: "pointer",
+                    }}
+                  />
+                </div>
+
+                {/* SFX volume */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>EFEITOS</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: "#8892b0" }}>{Math.round(sfxVolume * 100)}%</span>
+                      <button
+                        onClick={() => setSfxMuted(p => !p)}
+                        style={{
+                          fontFamily: "'Press Start 2P', monospace",
+                          fontSize: 10,
+                          color: sfxMuted ? "#ff4444" : "#4ade80",
+                          background: "transparent",
+                          border: `1px solid ${sfxMuted ? "#ff444444" : "#4ade8044"}`,
+                          borderRadius: 4,
+                          padding: "4px 8px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {sfxMuted ? "MUDO" : "ON"}
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={Math.round(sfxVolume * 100)}
+                    onChange={(e) => setSfxVolume(parseInt(e.target.value, 10) / 100)}
+                    style={{
+                      width: "100%",
+                      accentColor: ACCENT,
+                      height: 6,
+                      cursor: "pointer",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => setScreen("menu")}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 10,
+                  color: ACCENT,
+                  background: "transparent",
+                  border: `1px solid ${ACCENT}44`,
+                  borderRadius: 6,
+                  padding: "10px 24px",
+                  cursor: "pointer",
+                  marginTop: 8,
+                }}
+              >
+                VOLTAR
+              </button>
+            </div>
+          )}
+
+          {/* ── JUKEBOX ──────────────────────────────────── */}
+          {screen === "jukebox" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(2,8,36,0.95)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                zIndex: 100,
+                padding: "20px 12px",
+                overflowY: "auto",
+              }}
+            >
+              <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 16 }}>
+                JUKEBOX
+              </h2>
+
+              <div style={{ width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 6 }}>
+                {JUKEBOX_TRACKS.map((track, idx) => {
+                  const isPlaying = jukeboxPlaying === idx;
+                  return (
+                    <button
+                      key={track.path}
+                      onClick={() => {
+                        if (isPlaying) {
+                          // Pause
+                          if (musicRef.current) {
+                            musicRef.current.pause();
+                          }
+                          setJukeboxPlaying(-1);
+                        } else {
+                          // Play this track
+                          playMusic(track.path, true, 0.6);
+                          setJukeboxPlaying(idx);
+                        }
+                      }}
+                      style={{
+                        fontFamily: "'Fira Code', monospace",
+                        fontSize: 11,
+                        color: isPlaying ? ACCENT : "#8892b0",
+                        background: isPlaying ? "rgba(0,240,255,0.08)" : "transparent",
+                        border: `1px solid ${isPlaying ? ACCENT + "66" : "#333"}`,
+                        borderRadius: 6,
+                        padding: "8px 12px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <span>
+                        {isPlaying ? "\u23F8" : "\u25B6"} {track.name}
+                      </span>
+                      <span style={{ fontSize: 9, color: "#4a5568" }}>({track.tag})</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => {
+                  stopMusic();
+                  setJukeboxPlaying(-1);
+                  setScreen("menu");
+                }}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 10,
+                  color: ACCENT,
+                  background: "transparent",
+                  border: `1px solid ${ACCENT}44`,
+                  borderRadius: 6,
+                  padding: "10px 24px",
+                  cursor: "pointer",
+                  marginTop: 16,
                 }}
               >
                 VOLTAR
