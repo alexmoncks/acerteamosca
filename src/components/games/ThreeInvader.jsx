@@ -478,9 +478,9 @@ function drawEnemy(ctx, enemy, frame, sprites) {
   ctx.shadowColor = def.color;
   ctx.shadowBlur = 8;
 
-  // Try sprite-based rendering for non-mine enemies
+  // Try sprite-based rendering for all enemies
   let usedSprite = false;
-  if (enemy.type !== ET_MINE && sprites) {
+  if (sprites) {
     let sprite = null;
     let sw = w, sh = h;
     switch (enemy.type) {
@@ -493,7 +493,7 @@ function drawEnemy(ctx, enemy, frame, sprites) {
         sw = 40; sh = 32;
         break;
       case ET_BOMBER:
-        sprite = sprites.enemyFighter; // reuse fighter sprite, drawn larger
+        sprite = sprites.enemyBomber;
         sw = 48; sh = 38;
         break;
       case ET_ACE:
@@ -501,8 +501,12 @@ function drawEnemy(ctx, enemy, frame, sprites) {
         sw = 28; sh = 32;
         break;
       case ET_CARRIER:
-        sprite = sprites.enemyFighter; // reuse fighter sprite, drawn larger
+        sprite = sprites.enemyCarrier;
         sw = 56; sh = 44;
+        break;
+      case ET_MINE:
+        sprite = sprites.enemyMine;
+        sw = 24; sh = 24;
         break;
       default: break;
     }
@@ -629,7 +633,7 @@ function drawEnemy(ctx, enemy, frame, sprites) {
   ctx.restore();
 }
 
-function drawBoss(ctx, boss, frame) {
+function drawBoss(ctx, boss, frame, sprites) {
   const def = BOSS_DEFS[boss.bossIndex];
   const { x, y } = boss;
   const w = def.w, h = def.h;
@@ -641,6 +645,54 @@ function drawBoss(ctx, boss, frame) {
   ctx.shadowColor = damageFlash ? "#ffffff" : def.color;
   ctx.shadowBlur = damageFlash ? 20 : 12;
 
+  // Try sprite-based boss rendering
+  let bossSprite = null;
+  if (sprites) {
+    switch (boss.bossIndex) {
+      case 0: // ORION-9: phase 1=open, phase 2=closed, phase 3=critical
+        if (hpPct > 0.7) bossSprite = sprites.bossOrion9Open;
+        else if (hpPct > 0.3) bossSprite = sprites.bossOrion9Closed;
+        else bossSprite = sprites.bossOrion9Critical;
+        break;
+      case 1: // HIVE-01: alternate closed/open based on frame cycle
+        bossSprite = (Math.floor(frame / 60) % 2 === 0) ? sprites.bossHive01Closed : sprites.bossHive01Open;
+        break;
+      case 2: // GOLIATH: anchored sprite, rotated in chargePhase
+        bossSprite = sprites.bossGoliathAnchored;
+        break;
+      case 3: // CHARYBDIS: eye open/closed
+        bossSprite = boss.eyeOpen ? sprites.bossCharybdisOpen : sprites.bossCharybdisClosed;
+        break;
+      case 4: // 3I/ATLAS: phase 1/2/3
+        if (hpPct > 0.7) bossSprite = sprites.bossAtlasPhase1;
+        else if (hpPct > 0.3) bossSprite = sprites.bossAtlasPhase2;
+        else bossSprite = sprites.bossAtlasPhase3;
+        break;
+      default: break;
+    }
+  }
+
+  if (spriteReady(bossSprite)) {
+    // Apply damage flash tint
+    if (damageFlash) {
+      ctx.globalAlpha = 0.7;
+    }
+    // Goliath chargePhase rotation
+    if (boss.bossIndex === 2 && boss.chargePhase) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(Math.PI);
+      ctx.translate(-cx, -cy);
+      ctx.drawImage(bossSprite, x, y, w, h);
+      ctx.restore();
+    } else {
+      ctx.drawImage(bossSprite, x, y, w, h);
+    }
+    if (damageFlash) {
+      ctx.globalAlpha = 1;
+    }
+  } else {
+  // Fallback: original canvas drawing
   switch (boss.bossIndex) {
     case 0: { // ORION-9 satellite
       ctx.fillStyle = damageFlash ? "#ffffff" : "#336699";
@@ -702,6 +754,13 @@ function drawBoss(ctx, boss, frame) {
       break;
     }
     case 2: { // GOLIATH tank
+      if (boss.chargePhase) {
+        // Rotate 180° during kamikaze charge so it faces the player
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(Math.PI);
+        ctx.translate(-cx, -cy);
+      }
       ctx.fillStyle = damageFlash ? "#ffffff" : "#664422";
       // Treads
       ctx.fillRect(x, y + 10, 20, h - 20);
@@ -720,6 +779,9 @@ function drawBoss(ctx, boss, frame) {
       ctx.beginPath();
       ctx.arc(cx, cy, 12, 0, Math.PI * 2);
       ctx.fill();
+      if (boss.chargePhase) {
+        ctx.restore();
+      }
       break;
     }
     case 3: { // CHARYBDIS asteroid
@@ -808,6 +870,7 @@ function drawBoss(ctx, boss, frame) {
     }
     default: break;
   }
+  } // end fallback else
 
   // HP bar at top
   ctx.shadowBlur = 0;
@@ -826,60 +889,93 @@ function drawBoss(ctx, boss, frame) {
   ctx.restore();
 }
 
-function drawPlayerBullet(ctx, b) {
+function drawPlayerBullet(ctx, b, sprites) {
   ctx.save();
-  ctx.shadowColor = "#00ffff";
-  ctx.shadowBlur = 6;
-  ctx.fillStyle = "#00eeff";
-  ctx.fillRect(b.x, b.y, b.w, b.h);
-  ctx.globalAlpha = 0.3;
-  ctx.fillRect(b.x, b.y + b.h, b.w, 6);
+  // Try sprite: use heavy for larger bullets (dmg > 1.5), normal otherwise
+  const sprite = (b.dmg > 1.5 && sprites?.bulletPlayerHeavy) ? sprites.bulletPlayerHeavy : sprites?.bulletPlayer;
+  if (spriteReady(sprite)) {
+    const sw = b.dmg > 1.5 ? 12 : 8;
+    const sh = b.dmg > 1.5 ? 20 : 16;
+    ctx.drawImage(sprite, b.x + b.w / 2 - sw / 2, b.y, sw, sh);
+  } else {
+    // Fallback
+    ctx.shadowColor = "#00ffff";
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = "#00eeff";
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(b.x, b.y + b.h, b.w, 6);
+  }
   ctx.restore();
 }
 
-function drawEnemyBullet(ctx, b) {
+function drawEnemyBullet(ctx, b, sprites) {
   ctx.save();
-  ctx.shadowColor = "#ff4444";
-  ctx.shadowBlur = 6;
-  ctx.fillStyle = "#ff6666";
-  ctx.beginPath();
-  ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2);
-  ctx.fill();
+  const sprite = sprites?.bulletEnemy;
+  if (spriteReady(sprite)) {
+    ctx.drawImage(sprite, b.x, b.y, b.w, b.h);
+  } else {
+    // Fallback
+    ctx.shadowColor = "#ff4444";
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = "#ff6666";
+    ctx.beginPath();
+    ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 }
 
-function drawHomingMissile(ctx, m, frame) {
+function drawHomingMissile(ctx, m, frame, sprites) {
   ctx.save();
-  ctx.shadowColor = "#ff8800";
-  ctx.shadowBlur = 6;
-  ctx.fillStyle = "#ffaa00";
-  ctx.beginPath();
-  ctx.moveTo(m.x + m.w / 2, m.y);
-  ctx.lineTo(m.x + m.w, m.y + m.h);
-  ctx.lineTo(m.x, m.y + m.h);
-  ctx.closePath();
-  ctx.fill();
-  // Trail
-  ctx.globalAlpha = 0.4;
-  ctx.fillStyle = "#ff4400";
-  ctx.beginPath();
-  ctx.moveTo(m.x + m.w / 2 - 2, m.y + m.h);
-  ctx.lineTo(m.x + m.w / 2, m.y + m.h + 4 + Math.random() * 3);
-  ctx.lineTo(m.x + m.w / 2 + 2, m.y + m.h);
-  ctx.closePath();
-  ctx.fill();
+  const sprite = sprites?.bulletHoming;
+  if (spriteReady(sprite)) {
+    ctx.drawImage(sprite, m.x, m.y, 8, 16);
+  } else {
+    // Fallback
+    ctx.shadowColor = "#ff8800";
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = "#ffaa00";
+    ctx.beginPath();
+    ctx.moveTo(m.x + m.w / 2, m.y);
+    ctx.lineTo(m.x + m.w, m.y + m.h);
+    ctx.lineTo(m.x, m.y + m.h);
+    ctx.closePath();
+    ctx.fill();
+    // Trail
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = "#ff4400";
+    ctx.beginPath();
+    ctx.moveTo(m.x + m.w / 2 - 2, m.y + m.h);
+    ctx.lineTo(m.x + m.w / 2, m.y + m.h + 4 + Math.random() * 3);
+    ctx.lineTo(m.x + m.w / 2 + 2, m.y + m.h);
+    ctx.closePath();
+    ctx.fill();
+  }
   ctx.restore();
 }
 
-function drawLaser(ctx, x, y, frame) {
+function drawLaser(ctx, x, y, frame, sprites) {
   ctx.save();
-  const width = 6 + 2 * Math.sin(frame * 0.3);
-  ctx.shadowColor = "#a855f7";
-  ctx.shadowBlur = 15;
-  ctx.fillStyle = `rgba(168,85,247,${0.6 + 0.3 * Math.sin(frame * 0.2)})`;
-  ctx.fillRect(x - width / 2, 0, width, y);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(x - 1, 0, 2, y);
+  const sprite = sprites?.laserBeam;
+  if (spriteReady(sprite)) {
+    // Tile the laser beam sprite from player to top of screen
+    const sw = 16, sh = 128;
+    const beamX = x - sw / 2;
+    for (let ty = y; ty > -sh; ty -= sh) {
+      ctx.globalAlpha = 0.6 + 0.3 * Math.sin(frame * 0.2 + ty * 0.01);
+      ctx.drawImage(sprite, beamX, ty, sw, sh);
+    }
+  } else {
+    // Fallback
+    const width = 6 + 2 * Math.sin(frame * 0.3);
+    ctx.shadowColor = "#a855f7";
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = `rgba(168,85,247,${0.6 + 0.3 * Math.sin(frame * 0.2)})`;
+    ctx.fillRect(x - width / 2, 0, width, y);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(x - 1, 0, 2, y);
+  }
   ctx.restore();
 }
 
@@ -908,21 +1004,29 @@ function drawPowerUp(ctx, pu, frame) {
   ctx.restore();
 }
 
-function drawBombEffect(ctx, bomb) {
+function drawBombEffect(ctx, bomb, sprites) {
   if (!bomb.active) return;
   ctx.save();
   const progress = bomb.timer / bomb.maxTimer;
   const radius = 240 * progress;
   const alpha = 1 - progress;
 
-  // White-blue ring
-  ctx.strokeStyle = `rgba(200,220,255,${alpha * 0.8})`;
-  ctx.lineWidth = 8 - 6 * progress;
-  ctx.shadowColor = "#88aaff";
-  ctx.shadowBlur = 20;
-  ctx.beginPath();
-  ctx.arc(CW / 2, CH / 2, radius, 0, Math.PI * 2);
-  ctx.stroke();
+  // Try nova ring sprite
+  const novaSprite = sprites?.novaRing;
+  if (spriteReady(novaSprite)) {
+    const size = radius * 2;
+    ctx.globalAlpha = alpha * 0.8;
+    ctx.drawImage(novaSprite, CW / 2 - size / 2, CH / 2 - size / 2, size, size);
+  } else {
+    // Fallback: White-blue ring
+    ctx.strokeStyle = `rgba(200,220,255,${alpha * 0.8})`;
+    ctx.lineWidth = 8 - 6 * progress;
+    ctx.shadowColor = "#88aaff";
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(CW / 2, CH / 2, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   // Flash overlay at start
   if (progress < 0.1) {
@@ -975,15 +1079,30 @@ function drawStars(ctx, stars, scrollMult) {
   }
 }
 
-function drawWorldBg(ctx, world, frame, parallaxOffset) {
+function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
   const colors = WORLD_BG_COLORS[world] || WORLD_BG_COLORS[0];
 
-  // Gradient background
+  // Gradient background (always draw as base)
   const grad = ctx.createLinearGradient(0, 0, 0, CH);
   grad.addColorStop(0, colors[0]);
   grad.addColorStop(1, colors[1]);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CW, CH);
+
+  // World background image as first parallax layer
+  const bgKeys = ["bgEarth", "bgPhobos", "bgMars", "bgAsteroids", "bgJupiter"];
+  const bgSprite = sprites?.[bgKeys[world]];
+  if (spriteReady(bgSprite)) {
+    const bgH = 1440; // image height
+    const scrollSpeed = 0.3;
+    const scrollY = (frame * scrollSpeed) % bgH;
+    ctx.save();
+    ctx.globalAlpha = 0.5; // semi-transparent so gradient still shows through
+    // Draw two copies for seamless tiling
+    ctx.drawImage(bgSprite, 0, scrollY - bgH, CW, bgH);
+    ctx.drawImage(bgSprite, 0, scrollY, CW, bgH);
+    ctx.restore();
+  }
 
   // World-specific parallax elements
   switch (world) {
@@ -1218,16 +1337,51 @@ export default function ThreeInvader() {
   // ── Preload game sprites ────────────────────────────────────
   useEffect(() => {
     const sprites = {
+      // Player
       ship: "/images/3invader/ship.png",
       shipOff: "/images/3invader/ship-off.png",
       shipShield: "/images/3invader/ship-shield.png",
       shipShieldFail: "/images/3invader/ship-shield-fail.png",
+      // Explosions
       explosion1: "/images/3invader/explosion-1.png",
       explosion2: "/images/3invader/explosion-2.png",
       explosion3: "/images/3invader/explosion-3.png",
+      // Enemies
       enemyFighter: "/images/3invader/enemy-fighter.png",
       enemyScout: "/images/3invader/enemy-scout.png",
       enemyAce: "/images/3invader/enemy-ace.png",
+      enemyBomber: "/images/3invader/enemy-bomber.png",
+      enemyCarrier: "/images/3invader/enemy-carrier.png",
+      enemyMine: "/images/3invader/enemy-mine.png",
+      enemyGold: "/images/3invader/enemy-gold.png",
+      // Bosses
+      bossOrion9Open: "/images/3invader/boss-orion9-open.png",
+      bossOrion9Closed: "/images/3invader/boss-orion9-closed-sm.png",
+      bossOrion9Critical: "/images/3invader/boss-orion9-critical-sm.png",
+      bossHive01Closed: "/images/3invader/boss-hive01-closed.png",
+      bossHive01Open: "/images/3invader/boss-hive01-open.png",
+      bossGoliathAnchored: "/images/3invader/boss-goliath-anchored.png",
+      bossCharybdisClosed: "/images/3invader/boss-charybdis-closed.png",
+      bossCharybdisOpen: "/images/3invader/boss-charybdis-open.png",
+      bossAtlasPhase1: "/images/3invader/boss-atlas-phase1.png",
+      bossAtlasPhase2: "/images/3invader/boss-atlas-phase2.png",
+      bossAtlasPhase3: "/images/3invader/boss-atlas-phase3.png",
+      // Projectiles
+      bulletPlayer: "/images/3invader/bullet-player.png",
+      bulletPlayerHeavy: "/images/3invader/bullet-player-heavy.png",
+      bulletHoming: "/images/3invader/bullet-homing.png",
+      bulletCannon: "/images/3invader/bullet-cannon.png",
+      laserBeam: "/images/3invader/laser-beam.png",
+      bulletEnemy: "/images/3invader/bullet-enemy.png",
+      bulletEnemyAimed: "/images/3invader/bullet-enemy-aimed.png",
+      bulletEnemySpread: "/images/3invader/bullet-enemy-spread.png",
+      novaRing: "/images/3invader/nova-ring.png",
+      // Backgrounds (per world)
+      bgEarth: "/images/3invader/bg-earth.jpg",
+      bgPhobos: "/images/3invader/bg-phobos.jpg",
+      bgMars: "/images/3invader/bg-mars.jpg",
+      bgAsteroids: "/images/3invader/bg-asteroids.jpg",
+      bgJupiter: "/images/3invader/bg-jupiter.jpg",
     };
     for (const [key, src] of Object.entries(sprites)) {
       const img = new Image();
@@ -1498,6 +1652,9 @@ export default function ThreeInvader() {
       // Boss warning
       bossWarning: 0,
 
+      // Boss death animation
+      bossDeathAnim: null,
+
       // Phase transition
       phaseTransitionTimer: 0,
       worldTransitionTimer: 0,
@@ -1527,6 +1684,7 @@ export default function ThreeInvader() {
     g.survivalTimer = 0;
     g.boss = null;
     g.bossWarning = 0;
+    g.bossDeathAnim = null;
     g.phaseTransitionTimer = 0;
     g.worldTransitionTimer = 0;
     g.showingWorldBriefing = false;
@@ -2125,9 +2283,7 @@ export default function ThreeInvader() {
 
     // ---- Pause ----
     if (keys.has("p") || keys.has("P") || keys.has("Escape")) {
-      keys.delete("p");
-      keys.delete("P");
-      keys.delete("Escape");
+      keysRef.current.clear();
       setScreen("paused");
       return;
     }
@@ -2173,6 +2329,10 @@ export default function ThreeInvader() {
       g.playerX = clamp(g.playerX + dx, 0, CW - PLAYER_W);
       g.playerY = clamp(g.playerY + dy, 0, CH - PLAYER_H);
     }
+
+    // Safety clamp: ensure player always stays within bounds
+    g.playerX = clamp(g.playerX, 0, CW - PLAYER_W);
+    g.playerY = clamp(g.playerY, 0, CH - PLAYER_H);
 
     // Visual tilt
     g.playerTilt = lerp(g.playerTilt, dx * 0.5, 0.2);
@@ -2546,21 +2706,61 @@ export default function ThreeInvader() {
       if (boss.damageFlash > 0) boss.damageFlash--;
     }
 
-    // Check boss death
-    if (g.boss && !g.boss.alive) {
+    // Check boss death — start cinematic death animation
+    if (g.boss && !g.boss.alive && !g.bossDeathAnim) {
       const def = BOSS_DEFS[g.boss.bossIndex];
       g.score += def.points * g.combo;
       if (!g.phaseBombUsed) g.score += 3000;
       g.totalEnemiesKilled++;
-      spawnExplosion(g, g.boss.x + g.boss.w / 2, g.boss.y + g.boss.h / 2, def.color, 40);
-      spawnExplosion(g, g.boss.x + g.boss.w / 2, g.boss.y + g.boss.h / 2, "#ffffff", 20);
-      g.screenShake = 30;
-      audioRef.current?.phaseComplete();
-      g.boss = null;
-      g.phaseBossActive = false;
+      // Clear enemy bullets so player is safe during death sequence
+      g.enemyBullets = [];
+      // Start cinematic death animation (3 seconds = 180 frames)
+      g.bossDeathAnim = {
+        x: g.boss.x + g.boss.w / 2,
+        y: g.boss.y + g.boss.h / 2,
+        w: g.boss.w,
+        h: g.boss.h,
+        timer: 0,
+        maxTimer: 180,
+        color: def.color,
+      };
+      g.screenShake = 10;
+    }
 
-      // Phase complete
-      completePhase(g);
+    // Update boss death animation
+    if (g.bossDeathAnim) {
+      const bd = g.bossDeathAnim;
+      bd.timer++;
+      // Increasing screen shake
+      g.screenShake = Math.min(30, 5 + bd.timer * 0.15);
+      // Spawn random explosions around the boss every 10 frames
+      if (bd.timer % 10 === 0 && bd.timer < 120) {
+        const offX = (Math.random() - 0.5) * bd.w;
+        const offY = (Math.random() - 0.5) * bd.h;
+        spawnExplosion(g, bd.x + offX, bd.y + offY, bd.color, 12);
+        spawnExplosion(g, bd.x + offX, bd.y + offY, "#ffffff", 6);
+      }
+      // Timer 60: big central explosion
+      if (bd.timer === 60) {
+        spawnExplosion(g, bd.x, bd.y, bd.color, 30);
+        spawnExplosion(g, bd.x, bd.y, "#ffffff", 20);
+        g.screenShake = 25;
+      }
+      // Timer 120: massive final explosion
+      if (bd.timer === 120) {
+        spawnExplosion(g, bd.x, bd.y, "#ffffff", 40);
+        spawnExplosion(g, bd.x, bd.y, bd.color, 30);
+        spawnExplosion(g, bd.x, bd.y, "#ffd700", 20);
+        g.screenShake = 30;
+        audioRef.current?.phaseComplete();
+      }
+      // Timer 180: animation complete, advance
+      if (bd.timer >= bd.maxTimer) {
+        g.bossDeathAnim = null;
+        g.boss = null;
+        g.phaseBossActive = false;
+        completePhase(g);
+      }
     }
 
     // ---- Collision: player bullets vs enemies ----
@@ -2853,7 +3053,7 @@ export default function ThreeInvader() {
     }
 
     setFinalStats(stats);
-    audioRef.current?.gameOver();
+    // Game over SFX removed — only "Falling Past the Stars" music plays
 
     fetch("/api/scores", {
       method: "POST",
@@ -2965,8 +3165,11 @@ export default function ThreeInvader() {
       ctx.translate(sx, sy);
     }
 
+    // Sprites reference
+    const sp = spritesRef.current;
+
     // Background
-    drawWorldBg(ctx, g.world, g.frame, 0);
+    drawWorldBg(ctx, g.world, g.frame, 0, sp);
 
     // Stars
     drawStars(ctx, g.stars, 1);
@@ -2977,34 +3180,41 @@ export default function ThreeInvader() {
     }
 
     // Enemies
-    const sp = spritesRef.current;
     for (let i = 0; i < g.enemies.length; i++) {
       drawEnemy(ctx, g.enemies[i], g.frame, sp);
     }
 
-    // Boss
-    if (g.boss && g.boss.alive) {
-      drawBoss(ctx, g.boss, g.frame);
+    // Boss (draw during death animation too, with fading)
+    if (g.boss) {
+      if (g.boss.alive) {
+        drawBoss(ctx, g.boss, g.frame, sp);
+      } else if (g.bossDeathAnim && g.bossDeathAnim.timer < 120) {
+        // Boss visible but fading during death animation
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - g.bossDeathAnim.timer / 120);
+        drawBoss(ctx, g.boss, g.frame, sp);
+        ctx.restore();
+      }
     }
 
     // Enemy bullets
     for (let i = 0; i < g.enemyBullets.length; i++) {
-      drawEnemyBullet(ctx, g.enemyBullets[i]);
+      drawEnemyBullet(ctx, g.enemyBullets[i], sp);
     }
 
     // Player bullets
     for (let i = 0; i < g.playerBullets.length; i++) {
-      drawPlayerBullet(ctx, g.playerBullets[i]);
+      drawPlayerBullet(ctx, g.playerBullets[i], sp);
     }
 
     // Homing missiles
     for (let i = 0; i < g.homingMissiles.length; i++) {
-      drawHomingMissile(ctx, g.homingMissiles[i], g.frame);
+      drawHomingMissile(ctx, g.homingMissiles[i], g.frame, sp);
     }
 
     // Laser beam
     if (g.laserTimer > 0 && !g.dead) {
-      drawLaser(ctx, g.playerX + PLAYER_W / 2, g.playerY, g.frame);
+      drawLaser(ctx, g.playerX + PLAYER_W / 2, g.playerY, g.frame, sp);
     }
 
     // Player
@@ -3065,7 +3275,28 @@ export default function ThreeInvader() {
     }
 
     // Bomb effect
-    drawBombEffect(ctx, g.bombEffect);
+    drawBombEffect(ctx, g.bombEffect, sp);
+
+    // Boss death cinematic
+    if (g.bossDeathAnim) {
+      const bd = g.bossDeathAnim;
+      ctx.save();
+      // White flash at timer 120
+      if (bd.timer >= 118 && bd.timer <= 130) {
+        const flashAlpha = bd.timer <= 120
+          ? (bd.timer - 118) / 2
+          : Math.max(0, 1 - (bd.timer - 120) / 10);
+        ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+        ctx.fillRect(0, 0, CW, CH);
+      }
+      // Fade to black at timer 150-180
+      if (bd.timer >= 150) {
+        const fadeAlpha = Math.min(1, (bd.timer - 150) / 30);
+        ctx.fillStyle = `rgba(0,0,0,${fadeAlpha * 0.7})`;
+        ctx.fillRect(0, 0, CW, CH);
+      }
+      ctx.restore();
+    }
 
     // Scanlines
     drawScanlines(ctx);
@@ -3093,9 +3324,13 @@ export default function ThreeInvader() {
       }
     }
 
-    // Phase transition overlay
+    // Phase transition overlay with fade-in
     if (g.phaseTransitionTimer > 0 && g.phaseComplete) {
       ctx.save();
+      // Fade-in: opacity 0→1 over first 60 frames (1 second)
+      const elapsed = 180 - g.phaseTransitionTimer;
+      const fadeInAlpha = Math.min(1, elapsed / 60);
+      ctx.globalAlpha = fadeInAlpha;
       ctx.fillStyle = "rgba(5,5,16,0.6)";
       ctx.fillRect(0, 0, CW, CH);
       ctx.fillStyle = "#22c55e";
@@ -3222,11 +3457,21 @@ export default function ThreeInvader() {
     const onKeyUp = (e) => {
       keysRef.current.delete(e.key);
     };
+    const clearAllKeys = () => {
+      keysRef.current.clear();
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) clearAllKeys();
+    };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", clearAllKeys);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", clearAllKeys);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
 
