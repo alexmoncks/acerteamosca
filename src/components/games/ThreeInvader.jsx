@@ -1301,6 +1301,11 @@ function drawHUD(ctx, g) {
 // ── Main Component ──────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════
 export default function ThreeInvader() {
+  // Test mode: ?tst=t enables phase selector
+  const [testMode] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("tst") === "t"; } catch { return false; }
+  });
+
   const { user, checkedCookie, registering, register } = useJogador("3invader");
   // Custom scale that considers BOTH width and height (game is tall)
   const [gameScale, setGameScale] = useState(1);
@@ -3925,7 +3930,7 @@ export default function ThreeInvader() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: screen === "menu" || isPlaying || screen === "intro" || screen === "gameover" || screen === "victory" ? "flex-start" : "center",
+        justifyContent: screen === "menu" || isPlaying || screen === "intro" || screen === "gameover" || screen === "victory" || screen === "phaseselect" ? "flex-start" : "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
         padding: "2px 12px 0",
@@ -4151,7 +4156,7 @@ export default function ThreeInvader() {
                 style={{
                   fontFamily: "'Fira Code', monospace",
                   fontSize: 10,
-                  color: "#4a5568",
+                  color: "#7a8baa",
                   marginBottom: 20,
                 }}
               >
@@ -4221,9 +4226,9 @@ export default function ThreeInvader() {
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 9,
-                  color: "#666",
+                  color: "#a0c4ff",
                   background: "transparent",
-                  border: "1px solid #333",
+                  border: "1px solid #a0c4ff55",
                   borderRadius: 6,
                   padding: "8px 24px",
                   cursor: "pointer",
@@ -4240,7 +4245,7 @@ export default function ThreeInvader() {
                   fontSize: 9,
                   color: difficulty.color,
                   background: "transparent",
-                  border: `1px solid ${difficulty.color}44`,
+                  border: `1px solid ${difficulty.color}66`,
                   borderRadius: 6,
                   padding: "8px 24px",
                   cursor: "pointer",
@@ -4255,9 +4260,9 @@ export default function ThreeInvader() {
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 9,
-                  color: "#666",
+                  color: "#c0a0ff",
                   background: "transparent",
-                  border: "1px solid #333",
+                  border: "1px solid #c0a0ff55",
                   borderRadius: 6,
                   padding: "8px 24px",
                   cursor: "pointer",
@@ -4272,9 +4277,9 @@ export default function ThreeInvader() {
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 9,
-                  color: "#666",
+                  color: "#ffa0c0",
                   background: "transparent",
-                  border: "1px solid #333",
+                  border: "1px solid #ffa0c055",
                   borderRadius: 6,
                   padding: "8px 24px",
                   cursor: "pointer",
@@ -4289,17 +4294,37 @@ export default function ThreeInvader() {
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 9,
-                  color: "#666",
+                  color: "#ffd700",
                   background: "transparent",
-                  border: "1px solid #333",
+                  border: "1px solid #ffd70055",
                   borderRadius: 6,
                   padding: "8px 24px",
                   cursor: "pointer",
-                  marginBottom: 16,
+                  marginBottom: 8,
                 }}
               >
                 HIGH SCORES
               </button>
+
+              {/* Phase selector (test mode only: ?tst=t) */}
+              {testMode && (
+                <button
+                  onClick={() => setScreen("phaseselect")}
+                  style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: 9,
+                    color: "#ff4444",
+                    background: "rgba(255,68,68,0.1)",
+                    border: "1px solid #ff444466",
+                    borderRadius: 6,
+                    padding: "8px 24px",
+                    cursor: "pointer",
+                    marginBottom: 8,
+                  }}
+                >
+                  SELECIONAR FASE [TEST]
+                </button>
+              )}
 
               {/* Rank + difficulty display */}
               {(() => {
@@ -4800,6 +4825,98 @@ export default function ThreeInvader() {
               <div style={{ marginTop: 16, fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#4a5568" }}>
                 P / ESC: RETOMAR
               </div>
+            </div>
+          )}
+
+          {/* ── PHASE SELECTOR (test mode) ─────────────── */}
+          {screen === "phaseselect" && testMode && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(2,8,36,0.95)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                zIndex: 100,
+                padding: 16,
+                overflowY: "auto",
+              }}
+            >
+              <h2 style={{
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: 14,
+                color: "#ff4444",
+                marginBottom: 16,
+              }}>SELECIONAR FASE</h2>
+
+              {[
+                { world: "ORBITA TERRESTRE", color: "#00f0ff", phases: [1,2,3,4,5] },
+                { world: "PHOBOS", color: "#b026ff", phases: [6,7,8,9,10] },
+                { world: "MARTE", color: "#ff6b35", phases: [11,12,13,14,15] },
+                { world: "ASTEROIDES", color: "#888", phases: [16,17,18,19,20] },
+                { world: "JUPITER", color: "#ffd700", phases: [21,22,23,24,25] },
+              ].map((w, wi) => (
+                <div key={wi} style={{ marginBottom: 12, width: "100%" }}>
+                  <div style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: 8,
+                    color: w.color,
+                    marginBottom: 6,
+                  }}>
+                    MUNDO {wi + 1}: {w.world}
+                  </div>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {w.phases.map(p => (
+                      <button
+                        key={p}
+                        onClick={() => {
+                          initAudio();
+                          if (!user) {
+                            pendingModeRef.current = "test-phase";
+                            pendingModeRef.current_phase = p;
+                            setScreen("register");
+                            return;
+                          }
+                          initGame(p, 3, 0, 5, 3);
+                          setScreen("playing");
+                        }}
+                        style={{
+                          fontFamily: "'Press Start 2P', monospace",
+                          fontSize: 9,
+                          color: p % 5 === 0 ? "#ffd700" : w.color,
+                          background: p % 5 === 0 ? "rgba(255,215,0,0.15)" : "rgba(255,255,255,0.05)",
+                          border: `1px solid ${p % 5 === 0 ? "#ffd700" : w.color}55`,
+                          borderRadius: 4,
+                          padding: "6px 10px",
+                          cursor: "pointer",
+                          minWidth: 42,
+                        }}
+                      >
+                        {p % 5 === 0 ? `BOSS` : `F${p}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() => setScreen("menu")}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 10,
+                  color: ACCENT,
+                  background: "transparent",
+                  border: `1px solid ${ACCENT}66`,
+                  borderRadius: 6,
+                  padding: "10px 32px",
+                  cursor: "pointer",
+                  marginTop: 12,
+                }}
+              >
+                VOLTAR
+              </button>
             </div>
           )}
 
