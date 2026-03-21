@@ -3511,6 +3511,8 @@ export default function ThreeInvader() {
 
     const onTouchStart = (e) => {
       if (screenRef.current !== "playing") return;
+      // Don't intercept touches on buttons (data-allow-touch)
+      if (e.target.closest("[data-allow-touch]") && e.target !== canvas) return;
       e.preventDefault();
       const pos = getScaledPos(e);
       const g = gameRef.current;
@@ -3529,28 +3531,34 @@ export default function ThreeInvader() {
 
     const onTouchMove = (e) => {
       if (screenRef.current !== "playing") return;
-      e.preventDefault();
       if (!touchRef.current.active) return;
-      const pos = getScaledPos(e);
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const pos = {
+        x: (touch.clientX - rect.left) / gameScale,
+        y: (touch.clientY - rect.top) / gameScale,
+      };
       touchRef.current.currentX = pos.x;
       touchRef.current.currentY = pos.y;
     };
 
     const onTouchEnd = (e) => {
-      e.preventDefault();
+      if (touchRef.current.active) e.preventDefault();
       touchRef.current.active = false;
     };
 
+    // Listen on document so touch continues even if finger leaves canvas
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
-    canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd, { passive: false });
+    document.addEventListener("touchcancel", onTouchEnd, { passive: false });
 
     return () => {
       canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchEnd);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchEnd);
     };
   }, [gameScale]);
 
@@ -4494,28 +4502,12 @@ export default function ThreeInvader() {
           style={{
             width: CW * gameScale,
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
             marginTop: 8,
             padding: "0 4px",
+            gap: 8,
           }}
         >
-          <button
-            onClick={toggleMute}
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 9,
-              color: muted ? "#ff4444" : "#4a5568",
-              background: "transparent",
-              border: `1px solid ${muted ? "#ff444444" : "#4a556844"}`,
-              borderRadius: 6,
-              padding: "6px 10px",
-              cursor: "pointer",
-            }}
-          >
-            {muted ? "SOM OFF" : "SOM ON"}
-          </button>
-
           <button
             data-allow-touch
             onTouchStart={(e) => {
@@ -4529,54 +4521,73 @@ export default function ThreeInvader() {
             }}
             style={{
               fontFamily: "'Press Start 2P', monospace",
-              fontSize: 11,
+              fontSize: 13,
               color: "#3b82f6",
               background: "rgba(59,130,246,0.15)",
               border: "2px solid #3b82f6",
-              borderRadius: 8,
-              padding: "10px 16px",
+              borderRadius: 10,
+              padding: "14px 20px",
               cursor: "pointer",
               touchAction: "manipulation",
+              minWidth: 100,
+              minHeight: 48,
             }}
           >
-            BOMBA
+            💣 BOMBA
           </button>
 
-          <button
-            data-allow-touch
-            onClick={() => {
-              keysRef.current.add("Escape");
-              setTimeout(() => keysRef.current.delete("Escape"), 100);
-            }}
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 9,
-              color: "#4a5568",
-              background: "transparent",
-              border: "1px solid #4a556844",
-              borderRadius: 6,
-              padding: "6px 10px",
-              cursor: "pointer",
-            }}
-          >
-            PAUSA
-          </button>
-        </div>
-      )}
-
-      {user && isPlaying && (
-        <div
-          style={{
-            width: CW * gameScale,
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 6,
-            padding: "0 4px",
-          }}
-        >
-          <span style={{ color: "#4a5568", fontSize: 10, fontFamily: "'Fira Code', monospace" }}>
-            {user.nome}
+          <span style={{
+            flex: 1,
+            textAlign: "center",
+            color: "#8899aa",
+            fontSize: 10,
+            fontFamily: "'Fira Code', monospace",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}>
+            {user?.nome || ""}
           </span>
+
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              onClick={toggleMute}
+              style={{
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: 8,
+                color: muted ? "#ff4444" : "#4a5568",
+                background: "transparent",
+                border: `1px solid ${muted ? "#ff444444" : "#4a556844"}`,
+                borderRadius: 6,
+                padding: "6px 8px",
+                cursor: "pointer",
+                minHeight: 36,
+              }}
+            >
+              {muted ? "🔇" : "🔊"}
+            </button>
+
+            <button
+              data-allow-touch
+              onClick={() => {
+                keysRef.current.add("Escape");
+                setTimeout(() => keysRef.current.delete("Escape"), 100);
+              }}
+              style={{
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: 8,
+                color: "#4a5568",
+                background: "transparent",
+                border: "1px solid #4a556844",
+                borderRadius: 6,
+                padding: "6px 8px",
+                cursor: "pointer",
+                minHeight: 36,
+              }}
+            >
+              ⏸
+            </button>
+          </div>
         </div>
       )}
 
