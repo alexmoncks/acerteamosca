@@ -112,6 +112,27 @@ const INTRO_SCREENS = [
 // ── Audio Engine ───────────────────────────────────────────────────────
 const SFX_MULTIPLIER = 2.5; // boost SFX volume
 
+// MP3 sound pool for overlapping playback of frequent sounds
+function createSoundPool(src, poolSize = 4) {
+  const pool = [];
+  for (let i = 0; i < poolSize; i++) {
+    pool.push(new Audio(src));
+  }
+  let idx = 0;
+  return {
+    play(volume = 0.3) {
+      const audio = pool[idx];
+      audio.currentTime = 0;
+      audio.volume = volume;
+      audio.play().catch(() => {});
+      idx = (idx + 1) % pool.length;
+    },
+    setMuted(m) {
+      pool.forEach(a => a.muted = m);
+    }
+  };
+}
+
 class InvaderAudio {
   constructor() { this.ctx = null; this.muted = false; }
 
@@ -139,87 +160,7 @@ class InvaderAudio {
     osc.stop(t + dur + 0.01);
   }
 
-  _noise(dur, vol = 0.1, delay = 0) {
-    if (!this.ctx || this.muted) return;
-    const v = Math.min(1, vol * SFX_MULTIPLIER);
-    const t = this.ctx.currentTime + delay;
-    const sz = Math.floor(this.ctx.sampleRate * dur);
-    if (sz <= 0) return;
-    const buf = this.ctx.createBuffer(1, sz, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < sz; i++) d[i] = (Math.random() * 2 - 1);
-    const src = this.ctx.createBufferSource();
-    src.buffer = buf;
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(v, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    src.connect(gain);
-    gain.connect(this.ctx.destination);
-    src.start(t);
-    src.stop(t + dur + 0.01);
-  }
-
-  _sweep(startF, endF, dur, vol = 0.1, type = "sine", delay = 0) {
-    if (!this.ctx || this.muted) return;
-    const t = this.ctx.currentTime + delay;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(startF, t);
-    osc.frequency.linearRampToValueAtTime(endF, t + dur);
-    gain.gain.setValueAtTime(vol, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(t);
-    osc.stop(t + dur + 0.01);
-  }
-
-  shoot() {
-    this._sweep(1200, 600, 0.05, 0.08, "square");
-  }
-
-  bomb() {
-    this._sweep(100, 400, 0.5, 0.12, "sawtooth");
-    this._noise(0.4, 0.15, 0.2);
-    this._osc("sine", 60, 0.4, 0.1, 0.3);
-  }
-
-  enemyHit() {
-    this._noise(0.06, 0.08);
-    this._sweep(600, 200, 0.1, 0.06);
-  }
-
-  bossHit() {
-    this._osc("sine", 100, 0.15, 0.1);
-  }
-
-  powerUp() {
-    this._osc("sine", 523, 0.1, 0.1, 0);
-    this._osc("sine", 659, 0.1, 0.1, 0.08);
-    this._osc("sine", 784, 0.12, 0.1, 0.16);
-  }
-
-  lifeLost() {
-    this._noise(0.3, 0.12);
-    this._osc("square", 120, 0.2, 0.1, 0.1);
-    this._osc("square", 100, 0.2, 0.1, 0.35);
-    this._osc("square", 80, 0.3, 0.1, 0.6);
-  }
-
-  phaseComplete() {
-    this._osc("sine", 523, 0.12, 0.1, 0);
-    this._osc("sine", 659, 0.12, 0.1, 0.1);
-    this._osc("sine", 784, 0.12, 0.1, 0.2);
-    this._osc("sine", 1047, 0.2, 0.1, 0.3);
-  }
-
-  gameOver() {
-    this._osc("square", 440, 0.2, 0.12);
-    this._osc("square", 349, 0.2, 0.12, 0.2);
-    this._osc("square", 262, 0.4, 0.15, 0.4);
-  }
-
+  // Only used for typewriter click (procedural, no MP3 needed)
   typeClick() {
     this._osc("square", 800, 0.02, 0.015);
   }
@@ -1327,6 +1268,7 @@ export default function ThreeInvader() {
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);
   const audioRef = useRef(null);
+  const sfxRef = useRef(null);
   const touchRef = useRef({ active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, playerStartX: 0, playerStartY: 0 });
   const musicRef = useRef(null);
   const musicFadeRef = useRef(null);
@@ -1928,6 +1870,7 @@ export default function ThreeInvader() {
       life: 180, // 3s max
       target: null,
     });
+    sfxRef.current?.missileLaunch.play(0.25);
   }
 
   // ── Enemy shooting ─────────────────────────────────────────────
@@ -2233,7 +2176,7 @@ export default function ThreeInvader() {
 
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#4488ff", 30);
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff4444", 20);
-    audioRef.current?.lifeLost();
+    sfxRef.current?.bigExplosion.play(0.5);
 
     return true;
   }
@@ -2273,7 +2216,7 @@ export default function ThreeInvader() {
       }
     }
 
-    audioRef.current?.bomb();
+    sfxRef.current?.shockwave.play(0.5);
   }
 
   // ── Game loop ──────────────────────────────────────────────────
@@ -2417,7 +2360,11 @@ export default function ThreeInvader() {
       if (wantShoot && g.frame % SHOT_COOLDOWN === 0) {
         if (g.laserTimer <= 0) {
           firePlayerShot(g);
-          audioRef.current?.shoot();
+          if (g.shotLevel >= 4) {
+            sfxRef.current?.plasmaCannon.play(0.2);
+          } else {
+            sfxRef.current?.laserShot.play(0.15);
+          }
         }
       }
 
@@ -2452,7 +2399,7 @@ export default function ThreeInvader() {
               }
             }
             g.enemies.splice(i, 1);
-            audioRef.current?.enemyHit();
+            sfxRef.current?.smallExplosion.play(0.25);
           }
         }
       }
@@ -2805,7 +2752,7 @@ export default function ThreeInvader() {
         spawnExplosion(g, bd.x, bd.y, bd.color, 30);
         spawnExplosion(g, bd.x, bd.y, "#ffd700", 20);
         g.screenShake = 30;
-        audioRef.current?.phaseComplete();
+        sfxRef.current?.bigExplosion.play(0.6);
       }
       // Timer 180: animation complete, advance
       if (bd.timer >= bd.maxTimer) {
@@ -2841,10 +2788,10 @@ export default function ThreeInvader() {
               }
             }
             g.enemies.splice(ei, 1);
-            audioRef.current?.enemyHit();
+            sfxRef.current?.smallExplosion.play(0.25);
           } else {
             spawnExplosion(g, b.x, b.y, def.color, 4);
-            audioRef.current?.enemyHit();
+            sfxRef.current?.smallExplosion.play(0.25);
           }
           break;
         }
@@ -2877,7 +2824,7 @@ export default function ThreeInvader() {
           g.boss.damageFlash = 5;
           spawnExplosion(g, b.x, b.y, "#ffffff", 3);
           if (g.boss.hp <= 0) g.boss.alive = false;
-          audioRef.current?.bossHit();
+          sfxRef.current?.shieldHit.play(0.2);
         }
       }
 
@@ -3000,7 +2947,7 @@ export default function ThreeInvader() {
           applyPowerUp(g, g.powerUps[i].type);
           spawnExplosion(g, g.powerUps[i].x + 10, g.powerUps[i].y + 10, PU_COLORS[g.powerUps[i].type], 8);
           g.powerUps.splice(i, 1);
-          audioRef.current?.powerUp();
+          sfxRef.current?.powerUp.play(0.4);
         }
       }
     }
@@ -3071,7 +3018,7 @@ export default function ThreeInvader() {
 
   function completePhase(g) {
     g.phaseComplete = true;
-    audioRef.current?.phaseComplete();
+    sfxRef.current?.powerUp.play(0.4);
 
     // Phase bonus
     const phaseBonus = g.phaseDeathCount === 0 ? 1000 * g.phase : 500 * g.phase;
@@ -3159,7 +3106,7 @@ export default function ThreeInvader() {
     }
 
     setFinalStats(stats);
-    audioRef.current?.phaseComplete();
+    sfxRef.current?.powerUp.play(0.4);
 
     fetch("/api/scores", {
       method: "POST",
@@ -3659,6 +3606,22 @@ export default function ThreeInvader() {
     }
     audioRef.current.init();
     audioRef.current.muted = muted;
+
+    if (!sfxRef.current) {
+      sfxRef.current = {
+        laserShot: createSoundPool("/audio/3invader/laser-shot.mp3", 6),
+        plasmaCannon: createSoundPool("/audio/3invader/plasma-cannon.mp3", 3),
+        smallExplosion: createSoundPool("/audio/3invader/small-explosion.mp3", 6),
+        bigExplosion: createSoundPool("/audio/3invader/big-explosion.mp3", 3),
+        powerUp: createSoundPool("/audio/3invader/power-up.mp3", 2),
+        shieldHit: createSoundPool("/audio/3invader/shield-hit.mp3", 3),
+        missileLaunch: createSoundPool("/audio/3invader/missile-launch.mp3", 3),
+        shockwave: createSoundPool("/audio/3invader/shockwave.mp3", 2),
+      };
+    }
+    if (muted) {
+      Object.values(sfxRef.current).forEach(pool => pool.setMuted(true));
+    }
   };
 
   const handleMenuStart = () => {
@@ -3738,6 +3701,9 @@ export default function ThreeInvader() {
     setMuted(prev => {
       const next = !prev;
       if (audioRef.current) audioRef.current.muted = next;
+      if (sfxRef.current) {
+        Object.values(sfxRef.current).forEach(pool => pool.setMuted(next));
+      }
       if (musicRef.current) musicRef.current.volume = next ? 0 : musicTargetVolRef.current;
       return next;
     });
