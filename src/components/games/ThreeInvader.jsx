@@ -352,7 +352,11 @@ function getPhaseConfig(phase) {
 
 // ── Drawing helpers ────────────────────────────────────────────────────
 
-function drawPlayerShip(ctx, x, y, tilt, invuln, frame) {
+function spriteReady(img) {
+  return img && img.complete && img.naturalWidth > 0;
+}
+
+function drawPlayerShip(ctx, x, y, tilt, invuln, frame, sprites, shieldTimer) {
   ctx.save();
   if (invuln && Math.floor(frame / 4) % 2 === 0) {
     ctx.globalAlpha = 0.4;
@@ -364,83 +368,103 @@ function drawPlayerShip(ctx, x, y, tilt, invuln, frame) {
   ctx.rotate(tilt * 0.15);
   ctx.translate(-cx, -cy);
 
-  // Main body (blue metallic)
-  ctx.shadowColor = "#4488ff";
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = "#2255aa";
-  ctx.beginPath();
-  ctx.moveTo(x + PLAYER_W / 2, y);
-  ctx.lineTo(x + PLAYER_W - 2, y + PLAYER_H * 0.7);
-  ctx.lineTo(x + PLAYER_W - 4, y + PLAYER_H);
-  ctx.lineTo(x + 4, y + PLAYER_H);
-  ctx.lineTo(x + 2, y + PLAYER_H * 0.7);
-  ctx.closePath();
-  ctx.fill();
+  // Determine which sprite to use for shield states
+  const shieldActive = shieldTimer > 0;
+  const shieldExpiring = shieldActive && shieldTimer <= 180; // last 3s at 60fps
+  let shipSprite = sprites?.ship;
 
-  // Highlight stripe
-  ctx.fillStyle = "#4488cc";
-  ctx.beginPath();
-  ctx.moveTo(x + PLAYER_W / 2, y + 4);
-  ctx.lineTo(x + PLAYER_W / 2 + 4, y + PLAYER_H * 0.6);
-  ctx.lineTo(x + PLAYER_W / 2 - 4, y + PLAYER_H * 0.6);
-  ctx.closePath();
-  ctx.fill();
+  if (shieldActive) {
+    if (shieldExpiring) {
+      // Alternate between shield and shield-fail every 0.3s (18 frames)
+      const alt = Math.floor(frame / 18) % 2 === 0;
+      shipSprite = alt ? sprites?.shipShield : sprites?.shipShieldFail;
+    } else {
+      shipSprite = sprites?.shipShield;
+    }
+  }
 
-  // Delta wings
-  ctx.fillStyle = "#1a3a6a";
-  ctx.beginPath();
-  ctx.moveTo(x + 2, y + PLAYER_H * 0.5);
-  ctx.lineTo(x - 6, y + PLAYER_H * 0.85);
-  ctx.lineTo(x + 6, y + PLAYER_H * 0.85);
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x + PLAYER_W - 2, y + PLAYER_H * 0.5);
-  ctx.lineTo(x + PLAYER_W + 6, y + PLAYER_H * 0.85);
-  ctx.lineTo(x + PLAYER_W - 6, y + PLAYER_H * 0.85);
-  ctx.closePath();
-  ctx.fill();
+  if (spriteReady(shipSprite)) {
+    // Shield sprites are 80x60, normal ship is 64x48
+    const sw = shieldActive ? 80 : 64;
+    const sh = shieldActive ? 60 : 48;
+    // Center the sprite on the player position (PLAYER_W x PLAYER_H hitbox)
+    const drawX = x + PLAYER_W / 2 - sw / 2;
+    const drawY = y + PLAYER_H / 2 - sh / 2;
+    ctx.drawImage(shipSprite, drawX, drawY, sw, sh);
+  } else {
+    // Fallback: original canvas drawing
+    ctx.shadowColor = "#4488ff";
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "#2255aa";
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W / 2, y);
+    ctx.lineTo(x + PLAYER_W - 2, y + PLAYER_H * 0.7);
+    ctx.lineTo(x + PLAYER_W - 4, y + PLAYER_H);
+    ctx.lineTo(x + 4, y + PLAYER_H);
+    ctx.lineTo(x + 2, y + PLAYER_H * 0.7);
+    ctx.closePath();
+    ctx.fill();
 
-  // Cockpit
-  ctx.shadowColor = "#00ffff";
-  ctx.shadowBlur = 6;
-  ctx.fillStyle = "#00ddff";
-  ctx.beginPath();
-  ctx.ellipse(x + PLAYER_W / 2, y + PLAYER_H * 0.35, 3, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
+    ctx.fillStyle = "#4488cc";
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W / 2, y + 4);
+    ctx.lineTo(x + PLAYER_W / 2 + 4, y + PLAYER_H * 0.6);
+    ctx.lineTo(x + PLAYER_W / 2 - 4, y + PLAYER_H * 0.6);
+    ctx.closePath();
+    ctx.fill();
 
-  // Booster glow
-  ctx.shadowColor = "#00ffff";
-  ctx.shadowBlur = 10;
-  ctx.fillStyle = "#00eeff";
-  const boosterLen = 6 + Math.random() * 6;
-  ctx.beginPath();
-  ctx.moveTo(x + PLAYER_W / 2 - 5, y + PLAYER_H);
-  ctx.lineTo(x + PLAYER_W / 2, y + PLAYER_H + boosterLen);
-  ctx.lineTo(x + PLAYER_W / 2 + 5, y + PLAYER_H);
-  ctx.closePath();
-  ctx.fill();
+    ctx.fillStyle = "#1a3a6a";
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y + PLAYER_H * 0.5);
+    ctx.lineTo(x - 6, y + PLAYER_H * 0.85);
+    ctx.lineTo(x + 6, y + PLAYER_H * 0.85);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W - 2, y + PLAYER_H * 0.5);
+    ctx.lineTo(x + PLAYER_W + 6, y + PLAYER_H * 0.85);
+    ctx.lineTo(x + PLAYER_W - 6, y + PLAYER_H * 0.85);
+    ctx.closePath();
+    ctx.fill();
 
-  // Secondary boosters on wings
-  const booster2 = 3 + Math.random() * 3;
-  ctx.fillStyle = "#00ccee88";
-  ctx.beginPath();
-  ctx.moveTo(x + 6, y + PLAYER_H);
-  ctx.lineTo(x + 8, y + PLAYER_H + booster2);
-  ctx.lineTo(x + 10, y + PLAYER_H);
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x + PLAYER_W - 10, y + PLAYER_H);
-  ctx.lineTo(x + PLAYER_W - 8, y + PLAYER_H + booster2);
-  ctx.lineTo(x + PLAYER_W - 6, y + PLAYER_H);
-  ctx.closePath();
-  ctx.fill();
+    ctx.shadowColor = "#00ffff";
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = "#00ddff";
+    ctx.beginPath();
+    ctx.ellipse(x + PLAYER_W / 2, y + PLAYER_H * 0.35, 3, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowColor = "#00ffff";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#00eeff";
+    const boosterLen = 6 + Math.random() * 6;
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W / 2 - 5, y + PLAYER_H);
+    ctx.lineTo(x + PLAYER_W / 2, y + PLAYER_H + boosterLen);
+    ctx.lineTo(x + PLAYER_W / 2 + 5, y + PLAYER_H);
+    ctx.closePath();
+    ctx.fill();
+
+    const booster2 = 3 + Math.random() * 3;
+    ctx.fillStyle = "#00ccee88";
+    ctx.beginPath();
+    ctx.moveTo(x + 6, y + PLAYER_H);
+    ctx.lineTo(x + 8, y + PLAYER_H + booster2);
+    ctx.lineTo(x + 10, y + PLAYER_H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + PLAYER_W - 10, y + PLAYER_H);
+    ctx.lineTo(x + PLAYER_W - 8, y + PLAYER_H + booster2);
+    ctx.lineTo(x + PLAYER_W - 6, y + PLAYER_H);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   ctx.restore();
 }
 
-function drawEnemy(ctx, enemy, frame) {
+function drawEnemy(ctx, enemy, frame, sprites) {
   const def = ENEMY_DEFS[enemy.type];
   const { x, y } = enemy;
   const w = def.w, h = def.h;
@@ -450,110 +474,153 @@ function drawEnemy(ctx, enemy, frame) {
   ctx.shadowColor = def.color;
   ctx.shadowBlur = 8;
 
-  switch (enemy.type) {
-    case ET_SCOUT: {
-      ctx.fillStyle = def.color;
-      ctx.beginPath();
-      ctx.moveTo(cx, y);
-      ctx.lineTo(x + w, y + h * 0.6);
-      ctx.lineTo(cx + 4, y + h);
-      ctx.lineTo(cx - 4, y + h);
-      ctx.lineTo(x, y + h * 0.6);
-      ctx.closePath();
-      ctx.fill();
-      // Eye
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(cx, cy - 2, 3, 0, Math.PI * 2);
-      ctx.fill();
-      break;
+  // Try sprite-based rendering for non-mine enemies
+  let usedSprite = false;
+  if (enemy.type !== ET_MINE && sprites) {
+    let sprite = null;
+    let sw = w, sh = h;
+    switch (enemy.type) {
+      case ET_SCOUT:
+        sprite = sprites.enemyScout;
+        sw = 32; sh = 29;
+        break;
+      case ET_FIGHTER:
+        sprite = sprites.enemyFighter;
+        sw = 40; sh = 32;
+        break;
+      case ET_BOMBER:
+        sprite = sprites.enemyFighter; // reuse fighter sprite, drawn larger
+        sw = 48; sh = 38;
+        break;
+      case ET_ACE:
+        sprite = sprites.enemyAce;
+        sw = 28; sh = 32;
+        break;
+      case ET_CARRIER:
+        sprite = sprites.enemyFighter; // reuse fighter sprite, drawn larger
+        sw = 56; sh = 44;
+        break;
+      default: break;
     }
-    case ET_FIGHTER: {
-      ctx.fillStyle = def.color;
-      ctx.beginPath();
-      ctx.moveTo(cx, y);
-      ctx.lineTo(x + w, y + h * 0.5);
-      ctx.lineTo(x + w - 4, y + h);
-      ctx.lineTo(x + 4, y + h);
-      ctx.lineTo(x, y + h * 0.5);
-      ctx.closePath();
-      ctx.fill();
-      // Wings
-      ctx.fillStyle = "#cc9900";
-      ctx.fillRect(x - 4, y + h * 0.3, 8, 4);
-      ctx.fillRect(x + w - 4, y + h * 0.3, 8, 4);
-      // Eye
-      ctx.fillStyle = "#ff0000";
-      ctx.beginPath();
-      ctx.arc(cx, cy - 2, 3, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
-    case ET_BOMBER: {
-      ctx.fillStyle = def.color;
-      ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
-      ctx.fillStyle = "#cc0000";
-      ctx.fillRect(x + 4, y + 4, w - 8, h - 8);
-      // Cannons
-      ctx.fillStyle = "#ff6666";
-      ctx.fillRect(x - 2, y + h * 0.4, 4, 8);
-      ctx.fillRect(x + w - 2, y + h * 0.4, 4, 8);
-      ctx.fillRect(cx - 2, y + h - 2, 4, 6);
-      break;
-    }
-    case ET_ACE: {
-      const angle = frame * 0.1;
-      ctx.fillStyle = def.color;
-      ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const a = angle + (Math.PI * 2 / 5) * i - Math.PI / 2;
-        const r = i % 2 === 0 ? w / 2 : w / 4;
-        const px = cx + r * Math.cos(a);
-        const py = cy + r * Math.sin(a);
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      break;
-    }
-    case ET_CARRIER: {
-      ctx.fillStyle = def.color;
-      ctx.fillRect(x, y + 4, w, h - 8);
-      ctx.fillStyle = "#2a5a8f";
-      ctx.fillRect(x + 4, y, w - 8, h);
-      // Hangars
-      ctx.fillStyle = "#39ff14";
-      ctx.fillRect(x + 8, y + h / 2 - 3, 6, 6);
-      ctx.fillRect(x + w - 14, y + h / 2 - 3, 6, 6);
-      // HP bar
-      if (enemy.hp < def.hp) {
+    if (spriteReady(sprite)) {
+      usedSprite = true;
+      // Center sprite on enemy position
+      const drawX = cx - sw / 2;
+      const drawY = cy - sh / 2;
+      ctx.drawImage(sprite, drawX, drawY, sw, sh);
+      // HP bar for carriers (still draw on top of sprite)
+      if (enemy.type === ET_CARRIER && enemy.hp < def.hp) {
         const pct = enemy.hp / def.hp;
         ctx.fillStyle = "#39ff1488";
         ctx.fillRect(x, y - 6, w * pct, 3);
         ctx.strokeStyle = "#39ff1444";
+        ctx.lineWidth = 1;
         ctx.strokeRect(x, y - 6, w, 3);
       }
-      break;
     }
-    case ET_MINE: {
-      const pulse = 0.8 + 0.2 * Math.sin(frame * 0.15);
-      ctx.fillStyle = def.color;
-      ctx.beginPath();
-      ctx.arc(cx, cy, w / 2 * pulse, 0, Math.PI * 2);
-      ctx.fill();
-      // Spikes
-      ctx.strokeStyle = "#ff4444";
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 8; i++) {
-        const a = (Math.PI * 2 / 8) * i + frame * 0.03;
+  }
+
+  if (!usedSprite) {
+    // Fallback: original canvas drawing
+    switch (enemy.type) {
+      case ET_SCOUT: {
+        ctx.fillStyle = def.color;
         ctx.beginPath();
-        ctx.moveTo(cx + (w / 2 - 2) * Math.cos(a), cy + (h / 2 - 2) * Math.sin(a));
-        ctx.lineTo(cx + (w / 2 + 4) * Math.cos(a), cy + (h / 2 + 4) * Math.sin(a));
-        ctx.stroke();
+        ctx.moveTo(cx, y);
+        ctx.lineTo(x + w, y + h * 0.6);
+        ctx.lineTo(cx + 4, y + h);
+        ctx.lineTo(cx - 4, y + h);
+        ctx.lineTo(x, y + h * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(cx, cy - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        break;
       }
-      break;
+      case ET_FIGHTER: {
+        ctx.fillStyle = def.color;
+        ctx.beginPath();
+        ctx.moveTo(cx, y);
+        ctx.lineTo(x + w, y + h * 0.5);
+        ctx.lineTo(x + w - 4, y + h);
+        ctx.lineTo(x + 4, y + h);
+        ctx.lineTo(x, y + h * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#cc9900";
+        ctx.fillRect(x - 4, y + h * 0.3, 8, 4);
+        ctx.fillRect(x + w - 4, y + h * 0.3, 8, 4);
+        ctx.fillStyle = "#ff0000";
+        ctx.beginPath();
+        ctx.arc(cx, cy - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case ET_BOMBER: {
+        ctx.fillStyle = def.color;
+        ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+        ctx.fillStyle = "#cc0000";
+        ctx.fillRect(x + 4, y + 4, w - 8, h - 8);
+        ctx.fillStyle = "#ff6666";
+        ctx.fillRect(x - 2, y + h * 0.4, 4, 8);
+        ctx.fillRect(x + w - 2, y + h * 0.4, 4, 8);
+        ctx.fillRect(cx - 2, y + h - 2, 4, 6);
+        break;
+      }
+      case ET_ACE: {
+        const angle = frame * 0.1;
+        ctx.fillStyle = def.color;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a = angle + (Math.PI * 2 / 5) * i - Math.PI / 2;
+          const r = i % 2 === 0 ? w / 2 : w / 4;
+          const px = cx + r * Math.cos(a);
+          const py = cy + r * Math.sin(a);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+      case ET_CARRIER: {
+        ctx.fillStyle = def.color;
+        ctx.fillRect(x, y + 4, w, h - 8);
+        ctx.fillStyle = "#2a5a8f";
+        ctx.fillRect(x + 4, y, w - 8, h);
+        ctx.fillStyle = "#39ff14";
+        ctx.fillRect(x + 8, y + h / 2 - 3, 6, 6);
+        ctx.fillRect(x + w - 14, y + h / 2 - 3, 6, 6);
+        if (enemy.hp < def.hp) {
+          const pct = enemy.hp / def.hp;
+          ctx.fillStyle = "#39ff1488";
+          ctx.fillRect(x, y - 6, w * pct, 3);
+          ctx.strokeStyle = "#39ff1444";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x, y - 6, w, 3);
+        }
+        break;
+      }
+      case ET_MINE: {
+        const pulse = 0.8 + 0.2 * Math.sin(frame * 0.15);
+        ctx.fillStyle = def.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, w / 2 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ff4444";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+          const a = (Math.PI * 2 / 8) * i + frame * 0.03;
+          ctx.beginPath();
+          ctx.moveTo(cx + (w / 2 - 2) * Math.cos(a), cy + (h / 2 - 2) * Math.sin(a));
+          ctx.lineTo(cx + (w / 2 + 4) * Math.cos(a), cy + (h / 2 + 4) * Math.sin(a));
+          ctx.stroke();
+        }
+        break;
+      }
+      default: break;
     }
-    default: break;
   }
   ctx.restore();
 }
@@ -1108,6 +1175,7 @@ export default function ThreeInvader() {
   const musicRef = useRef(null);
   const musicFadeRef = useRef(null);
   const introImagesRef = useRef([]);
+  const spritesRef = useRef({});
 
   const gameRef = useRef(null);
   const screenRef = useRef("menu");
@@ -1141,6 +1209,27 @@ export default function ThreeInvader() {
       return img;
     });
     introImagesRef.current = imgs;
+  }, []);
+
+  // ── Preload game sprites ────────────────────────────────────
+  useEffect(() => {
+    const sprites = {
+      ship: "/images/3invader/ship.png",
+      shipOff: "/images/3invader/ship-off.png",
+      shipShield: "/images/3invader/ship-shield.png",
+      shipShieldFail: "/images/3invader/ship-shield-fail.png",
+      explosion1: "/images/3invader/explosion-1.png",
+      explosion2: "/images/3invader/explosion-2.png",
+      explosion3: "/images/3invader/explosion-3.png",
+      enemyFighter: "/images/3invader/enemy-fighter.png",
+      enemyScout: "/images/3invader/enemy-scout.png",
+      enemyAce: "/images/3invader/enemy-ace.png",
+    };
+    for (const [key, src] of Object.entries(sprites)) {
+      const img = new Image();
+      img.src = src;
+      spritesRef.current[key] = img;
+    }
   }, []);
 
   // ── Background music helpers ──────────────────────────────────
@@ -1350,6 +1439,8 @@ export default function ThreeInvader() {
       invulnTimer: 0,
       respawnTimer: 0,
       dead: false,
+      deathExplosion: null, // { x, y, timer, frame }
+
 
       // Formation grid for Galaga
       formationGrid: [],
@@ -1883,6 +1974,13 @@ export default function ThreeInvader() {
     g.phaseDeathCount++;
     g.respawnTimer = RESPAWN_TIME;
     g.screenShake = 20;
+
+    // Sprite-based death explosion sequence
+    g.deathExplosion = {
+      x: g.playerX + PLAYER_W / 2,
+      y: g.playerY + PLAYER_H / 2,
+      timer: 0,
+    };
 
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#4488ff", 30);
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff4444", 20);
@@ -2841,8 +2939,9 @@ export default function ThreeInvader() {
     }
 
     // Enemies
+    const sp = spritesRef.current;
     for (let i = 0; i < g.enemies.length; i++) {
-      drawEnemy(ctx, g.enemies[i], g.frame);
+      drawEnemy(ctx, g.enemies[i], g.frame, sp);
     }
 
     // Boss
@@ -2872,8 +2971,9 @@ export default function ThreeInvader() {
 
     // Player
     if (!g.dead) {
-      drawPlayerShip(ctx, g.playerX, g.playerY, g.playerTilt, g.invulnTimer > 0, g.frame);
-      if (g.shieldTimer > 0) {
+      drawPlayerShip(ctx, g.playerX, g.playerY, g.playerTilt, g.invulnTimer > 0, g.frame, sp, g.shieldTimer);
+      // Only draw the old procedural shield ring if sprite shield is NOT being used
+      if (g.shieldTimer > 0 && !spriteReady(sp.shipShield)) {
         drawShield(ctx, g.playerX, g.playerY, g.frame);
       }
       if (g.starTimer > 0) {
@@ -2887,6 +2987,38 @@ export default function ThreeInvader() {
         ctx.stroke();
         ctx.restore();
       }
+    }
+
+    // Death explosion sprite sequence
+    if (g.deathExplosion) {
+      const de = g.deathExplosion;
+      de.timer += 16.67; // ~1 frame at 60fps
+      const ew = 96, eh = 72;
+      const dx = de.x - ew / 2;
+      const dy = de.y - eh / 2;
+      ctx.save();
+      if (de.timer < 300) {
+        // Frame 1: initial blast (0-300ms)
+        if (spriteReady(sp.explosion1)) {
+          ctx.drawImage(sp.explosion1, dx, dy, ew, eh);
+        }
+      } else if (de.timer < 600) {
+        // Frame 2: expanding (300-600ms)
+        if (spriteReady(sp.explosion2)) {
+          ctx.drawImage(sp.explosion2, dx, dy, ew, eh);
+        }
+      } else if (de.timer < 1000) {
+        // Frame 3: dissipating with fade-out (600-1000ms)
+        if (spriteReady(sp.explosion3)) {
+          const fadeAlpha = 1 - (de.timer - 600) / 400;
+          ctx.globalAlpha = Math.max(0, fadeAlpha);
+          ctx.drawImage(sp.explosion3, dx, dy, ew, eh);
+        }
+      } else {
+        // Explosion sequence complete
+        g.deathExplosion = null;
+      }
+      ctx.restore();
     }
 
     // Particles
@@ -3513,7 +3645,19 @@ export default function ThreeInvader() {
 
               {/* Ship icon */}
               <div style={{ animation: "menuFloat 2s ease-in-out infinite", marginBottom: 24 }}>
-                <svg width="40" height="48" viewBox="0 0 40 48">
+                <img
+                  src="/images/3invader/ship-off.png"
+                  alt="ARROW-7"
+                  width={64}
+                  height={48}
+                  style={{ imageRendering: "pixelated" }}
+                  onError={(e) => {
+                    // Fallback to SVG if sprite fails to load
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "block";
+                  }}
+                />
+                <svg width="40" height="48" viewBox="0 0 40 48" style={{ display: "none" }}>
                   <polygon points="20,0 38,28 30,40 10,40 2,28" fill="#2255aa" opacity="0.9" />
                   <polygon points="20,5 30,24 10,24" fill="#4488cc" opacity="0.7" />
                   <ellipse cx="20" cy="16" rx="3" ry="4" fill="#00ddff" opacity="0.9" />
