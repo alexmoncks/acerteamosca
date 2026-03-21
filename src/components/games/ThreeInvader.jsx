@@ -1105,6 +1105,9 @@ export default function ThreeInvader() {
   const rafRef = useRef(null);
   const audioRef = useRef(null);
   const touchRef = useRef({ active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, playerStartX: 0, playerStartY: 0 });
+  const musicRef = useRef(null);
+  const musicFadeRef = useRef(null);
+  const introImagesRef = useRef([]);
 
   const gameRef = useRef(null);
   const screenRef = useRef("menu");
@@ -1116,6 +1119,7 @@ export default function ThreeInvader() {
   const [introText, setIntroText] = useState("");
   const [introCharIndex, setIntroCharIndex] = useState(0);
   const [showIntro, setShowIntro] = useState(false);
+  const [introFade, setIntroFade] = useState(0); // tracks introScreen for fade animation
   const [continueCount, setContinueCount] = useState(10);
   const playCountRef = useRef(0);
 
@@ -1123,7 +1127,131 @@ export default function ThreeInvader() {
 
   useEffect(() => { screenRef.current = screen; }, [screen]);
 
+  // ── Preload intro images ──────────────────────────────────────
+  useEffect(() => {
+    const paths = [
+      "/images/3invader/intro-1.jpg",
+      "/images/3invader/intro-2.jpg",
+      "/images/3invader/intro-3.jpg",
+      "/images/3invader/intro-4.jpg",
+    ];
+    const imgs = paths.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+    introImagesRef.current = imgs;
+  }, []);
+
+  // ── Background music helpers ──────────────────────────────────
+  const playMusic = useCallback((trackPath, loop = true) => {
+    // Cancel any ongoing fade
+    if (musicFadeRef.current) {
+      clearInterval(musicFadeRef.current);
+      musicFadeRef.current = null;
+    }
+
+    const prev = musicRef.current;
+    const targetVol = muted ? 0 : 0.15;
+
+    // If already playing this track, do nothing
+    if (prev && prev.src && prev.src.endsWith(trackPath.replace(/ /g, "%20"))) {
+      prev.volume = targetVol;
+      return;
+    }
+
+    // Fade out previous track then start new one
+    const startNew = () => {
+      const audio = new Audio(trackPath);
+      audio.loop = loop;
+      audio.volume = targetVol;
+      musicRef.current = audio;
+      audio.play().catch(() => {});
+    };
+
+    if (prev && !prev.paused) {
+      const fadeStep = 0.02;
+      const fadeInterval = 15; // ~20 steps in 300ms
+      musicFadeRef.current = setInterval(() => {
+        if (prev.volume > fadeStep) {
+          prev.volume = Math.max(0, prev.volume - fadeStep);
+        } else {
+          prev.volume = 0;
+          prev.pause();
+          prev.src = "";
+          clearInterval(musicFadeRef.current);
+          musicFadeRef.current = null;
+          startNew();
+        }
+      }, fadeInterval);
+    } else {
+      if (prev) {
+        prev.pause();
+        prev.src = "";
+      }
+      startNew();
+    }
+  }, [muted]);
+
+  const stopMusic = useCallback(() => {
+    if (musicFadeRef.current) {
+      clearInterval(musicFadeRef.current);
+      musicFadeRef.current = null;
+    }
+    if (musicRef.current) {
+      musicRef.current.pause();
+      musicRef.current.src = "";
+      musicRef.current = null;
+    }
+  }, []);
+
+  // ── Determine music track for current game phase ──────────────
+  const getMusicTrackForPhase = useCallback((phase) => {
+    if (!phase) return "/audio/3invader/Orbit On Repeat.mp3";
+    const localPhase = ((phase - 1) % PHASES_PER_WORLD) + 1;
+    const world = Math.floor((phase - 1) / PHASES_PER_WORLD);
+
+    // Final boss (phase 25)
+    if (phase === 25) return "/audio/3invader/Final Boss.mp3";
+    // Boss phases: 5, 10, 15, 20
+    if (localPhase === 5) return "/audio/3invader/Boss Stage.mp3";
+
+    // World tracks
+    switch (world) {
+      case 0: return "/audio/3invader/Orbit On Repeat.mp3";
+      case 1: return "/audio/3invader/Lead to Phobos.mp3";
+      case 2: return "/audio/3invader/Breach Mars.mp3";
+      case 3: return "/audio/3invader/Asteroids.mp3";
+      case 4: return "/audio/3invader/Singularity Countdown.mp3";
+      default: return "/audio/3invader/Orbit On Repeat.mp3";
+    }
+  }, []);
+
+  // ── Music on screen change ────────────────────────────────────
+  useEffect(() => {
+    if (screen === "intro") {
+      playMusic("/audio/3invader/Starfire Overture.mp3", true);
+    } else if (screen === "playing") {
+      const g = gameRef.current;
+      const track = getMusicTrackForPhase(g?.phase || 1);
+      playMusic(track, true);
+    } else if (screen === "gameover") {
+      playMusic("/audio/3invader/Falling Past the Stars.mp3", false);
+    } else if (screen === "victory") {
+      playMusic("/audio/3invader/Starfire Final.mp3", false);
+    } else if (screen === "menu") {
+      stopMusic();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
   // ── Intro cinematic ──────────────────────────────────────────────
+  useEffect(() => {
+    if (screen !== "intro") return;
+    // Trigger fade-in for new screen
+    setIntroFade(introScreen);
+  }, [screen, introScreen]);
+
   useEffect(() => {
     if (screen !== "intro") return;
     const fullText = INTRO_SCREENS[introScreen];
@@ -1294,6 +1422,12 @@ export default function ThreeInvader() {
 
     if (g.phaseConfig.isBoss) {
       g.bossWarning = 180; // 3s warning
+    }
+
+    // Switch music if track changed for new phase
+    if (screenRef.current === "playing") {
+      const track = getMusicTrackForPhase(phase);
+      playMusic(track, true);
     }
   }
 
@@ -2989,6 +3123,16 @@ export default function ThreeInvader() {
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      // Stop music on unmount
+      if (musicFadeRef.current) {
+        clearInterval(musicFadeRef.current);
+        musicFadeRef.current = null;
+      }
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current.src = "";
+        musicRef.current = null;
+      }
     };
   }, []);
 
@@ -3118,6 +3262,7 @@ export default function ThreeInvader() {
     setMuted(prev => {
       const next = !prev;
       if (audioRef.current) audioRef.current.muted = next;
+      if (musicRef.current) musicRef.current.volume = next ? 0 : 0.15;
       return next;
     });
   };
@@ -3166,6 +3311,10 @@ export default function ThreeInvader() {
         @keyframes typewriter {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes introImageFadeIn {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
         }
       `}</style>
 
@@ -3232,37 +3381,87 @@ export default function ThreeInvader() {
           {/* ── INTRO CINEMATIC ────────────────────────── */}
           {screen === "intro" && (
             <div
+              key={`intro-${introFade}`}
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(2,8,36,0.95)",
+                background: "#020824",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "flex-start",
                 zIndex: 100,
-                padding: 30,
                 cursor: "pointer",
+                animation: "introImageFadeIn 0.6s ease-out",
               }}
             >
+              {/* Intro image — upper 60% */}
               <div
                 style={{
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: 12,
-                  color: "#00ff88",
-                  lineHeight: 1.8,
-                  whiteSpace: "pre-wrap",
-                  maxWidth: 400,
-                  textShadow: "0 0 5px rgba(0,255,136,0.5)",
+                  position: "relative",
+                  width: "100%",
+                  height: "60%",
+                  overflow: "hidden",
+                  flexShrink: 0,
                 }}
               >
-                {introText}
-                <span style={{ animation: "bossFlash 0.8s infinite" }}>_</span>
+                <img
+                  src={`/images/3invader/intro-${introScreen + 1}.jpg`}
+                  alt=""
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+                {/* Dark gradient overlay at bottom for text readability */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "50%",
+                    background: "linear-gradient(to bottom, transparent 0%, rgba(2,8,36,0.7) 60%, #020824 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
               </div>
+
+              {/* Typewriter text — lower 40% */}
+              <div
+                style={{
+                  flex: 1,
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0 24px",
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: 11,
+                    color: "#00ff88",
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                    maxWidth: 420,
+                    textShadow: "0 0 5px rgba(0,255,136,0.5)",
+                  }}
+                >
+                  {introText}
+                  <span style={{ animation: "bossFlash 0.8s infinite" }}>_</span>
+                </div>
+              </div>
+
               <div
                 style={{
                   position: "absolute",
-                  bottom: 20,
+                  bottom: 12,
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 8,
                   color: "#4a5568",
