@@ -916,27 +916,49 @@ function drawHomingMissile(ctx, m, frame, sprites) {
   ctx.restore();
 }
 
-function drawLaser(ctx, x, y, frame, sprites) {
+function drawLaser(ctx, x, y, frame) {
   ctx.save();
-  const sprite = sprites?.laserBeam;
-  if (spriteReady(sprite)) {
-    // Tile the laser beam sprite from player to top of screen
-    const sw = 16, sh = 128;
-    const beamX = x - sw / 2;
-    for (let ty = y; ty > -sh; ty -= sh) {
-      ctx.globalAlpha = 0.6 + 0.3 * Math.sin(frame * 0.2 + ty * 0.01);
-      ctx.drawImage(sprite, beamX, ty, sw, sh);
-    }
-  } else {
-    // Fallback
-    const width = 6 + 2 * Math.sin(frame * 0.3);
-    ctx.shadowColor = "#a855f7";
-    ctx.shadowBlur = 15;
-    ctx.fillStyle = `rgba(168,85,247,${0.6 + 0.3 * Math.sin(frame * 0.2)})`;
-    ctx.fillRect(x - width / 2, 0, width, y);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(x - 1, 0, 2, y);
+  const wobble = Math.sin(frame * 0.3) * 2;
+  const baseWidth = 8 + wobble;
+  const beamHeight = y;
+
+  // Outer glow (wide, soft)
+  ctx.shadowColor = "#a855f7";
+  ctx.shadowBlur = 25;
+  ctx.globalAlpha = 0.2 + 0.1 * Math.sin(frame * 0.15);
+  ctx.fillStyle = "#a855f7";
+  ctx.fillRect(x - baseWidth * 1.5, 0, baseWidth * 3, beamHeight);
+
+  // Mid beam (purple)
+  ctx.globalAlpha = 0.5 + 0.2 * Math.sin(frame * 0.2);
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = "#b06aff";
+  ctx.fillRect(x - baseWidth / 2, 0, baseWidth, beamHeight);
+
+  // Core beam (bright white-purple)
+  ctx.globalAlpha = 0.8 + 0.2 * Math.sin(frame * 0.25);
+  ctx.shadowColor = "#ffffff";
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = "#e0c0ff";
+  ctx.fillRect(x - 2, 0, 4, beamHeight);
+
+  // Hot white center line
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x - 0.5, 0, 1, beamHeight);
+
+  // Energy particles along the beam
+  ctx.globalAlpha = 0.7;
+  for (let i = 0; i < 8; i++) {
+    const py = ((frame * 4 + i * 90) % beamHeight);
+    const px = x + Math.sin(frame * 0.1 + i * 1.5) * (baseWidth * 0.8);
+    const size = 1.5 + Math.sin(frame * 0.3 + i) * 1;
+    ctx.fillStyle = "#e0c0ff";
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI * 2);
+    ctx.fill();
   }
+
   ctx.restore();
 }
 
@@ -3214,7 +3236,7 @@ export default function ThreeInvader() {
 
     // Laser beam
     if (g.laserTimer > 0 && !g.dead) {
-      drawLaser(ctx, g.playerX + PLAYER_W / 2, g.playerY, g.frame, sp);
+      drawLaser(ctx, g.playerX + PLAYER_W / 2, g.playerY, g.frame);
     }
 
     // Player
