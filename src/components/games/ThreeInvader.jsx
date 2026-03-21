@@ -110,6 +110,8 @@ const INTRO_SCREENS = [
 ];
 
 // ── Audio Engine ───────────────────────────────────────────────────────
+const SFX_MULTIPLIER = 2.5; // boost SFX volume
+
 class InvaderAudio {
   constructor() { this.ctx = null; this.muted = false; }
 
@@ -123,12 +125,13 @@ class InvaderAudio {
 
   _osc(type, freq, dur, vol = 0.12, delay = 0) {
     if (!this.ctx || this.muted) return;
+    const v = Math.min(1, vol * SFX_MULTIPLIER);
     const t = this.ctx.currentTime + delay;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(vol, t);
+    gain.gain.setValueAtTime(v, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -138,6 +141,7 @@ class InvaderAudio {
 
   _noise(dur, vol = 0.1, delay = 0) {
     if (!this.ctx || this.muted) return;
+    const v = Math.min(1, vol * SFX_MULTIPLIER);
     const t = this.ctx.currentTime + delay;
     const sz = Math.floor(this.ctx.sampleRate * dur);
     if (sz <= 0) return;
@@ -147,7 +151,7 @@ class InvaderAudio {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(vol, t);
+    gain.gain.setValueAtTime(v, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
     src.connect(gain);
     gain.connect(this.ctx.destination);
@@ -1233,9 +1237,9 @@ export default function ThreeInvader() {
   }, []);
 
   // ── Background music helpers ──────────────────────────────────
-  const musicTargetVolRef = useRef(0.15);
+  const musicTargetVolRef = useRef(0.30);
 
-  const playMusic = useCallback((trackPath, loop = true, vol = 0.15, fadeToVol = null) => {
+  const playMusic = useCallback((trackPath, loop = true, vol = 0.30, fadeToVol = null) => {
     // Cancel any ongoing fade
     if (musicFadeRef.current) {
       clearInterval(musicFadeRef.current);
@@ -1345,9 +1349,9 @@ export default function ThreeInvader() {
       const track = getMusicTrackForPhase(g?.phase || 1);
       // Final Boss starts at 60% and fades to 15%
       if (track.includes("Final Boss")) {
-        playMusic(track, true, 0.6, 0.15);
+        playMusic(track, true, 0.6, 0.30);
       } else {
-        playMusic(track, true, 0.15);
+        playMusic(track, true, 0.30);
       }
     } else if (screen === "gameover") {
       playMusic("/audio/3invader/Falling Past the Stars.mp3", false, 0.6);
@@ -1377,7 +1381,12 @@ export default function ThreeInvader() {
       }, 30);
       return () => clearTimeout(timer);
     }
-  }, [screen, introScreen, introCharIndex]);
+    // Auto-advance 3s after text finishes typing
+    const autoTimer = setTimeout(() => {
+      advanceIntro();
+    }, 3000);
+    return () => clearTimeout(autoTimer);
+  }, [screen, introScreen, introCharIndex, advanceIntro]);
 
   const advanceIntro = useCallback(() => {
     if (introCharIndex < INTRO_SCREENS[introScreen].length) {
@@ -1544,9 +1553,9 @@ export default function ThreeInvader() {
     if (screenRef.current === "playing") {
       const track = getMusicTrackForPhase(phase);
       if (track.includes("Final Boss")) {
-        playMusic(track, true, 0.6, 0.15);
+        playMusic(track, true, 0.6, 0.30);
       } else {
-        playMusic(track, true, 0.15);
+        playMusic(track, true, 0.30);
       }
     }
   }
