@@ -221,7 +221,7 @@ class InvaderAudio {
   }
 
   typeClick() {
-    this._osc("square", 800, 0.02, 0.04);
+    this._osc("square", 800, 0.02, 0.015);
   }
 }
 
@@ -1309,7 +1309,20 @@ function drawHUD(ctx, g) {
 // ══════════════════════════════════════════════════════════════════════
 export default function ThreeInvader() {
   const { user, checkedCookie, registering, register } = useJogador("3invader");
-  const gameScale = useGameScale(CW);
+  // Custom scale that considers BOTH width and height (game is tall)
+  const [gameScale, setGameScale] = useState(1);
+  useEffect(() => {
+    function calc() {
+      const maxW = window.innerWidth - 24;
+      const maxH = window.innerHeight - 120; // header(48) + controls(50) + padding(22)
+      const scaleW = maxW < CW ? maxW / CW : 1;
+      const scaleH = maxH < CH ? maxH / CH : 1;
+      setGameScale(Math.min(scaleW, scaleH));
+    }
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
+  }, []);
   const canvasRef = useRef(null);
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);
@@ -1562,7 +1575,10 @@ export default function ThreeInvader() {
     return () => clearTimeout(autoTimer);
   }, [screen, introScreen, introCharIndex, advanceIntro]);
 
+  const [introFadingOut, setIntroFadingOut] = useState(false);
+
   const advanceIntro = useCallback(() => {
+    if (introFadingOut) return; // Already fading
     if (introCharIndex < INTRO_SCREENS[introScreen].length) {
       // Skip to full text
       setIntroText(INTRO_SCREENS[introScreen]);
@@ -1574,11 +1590,28 @@ export default function ThreeInvader() {
       setIntroCharIndex(0);
       setIntroText("");
     } else {
-      // End intro
-      try { localStorage.setItem("3invader_intro_seen", "1"); } catch {}
-      setScreen("menu");
+      // Fade out intro: music fades, screen fades to black, then menu fades in
+      setIntroFadingOut(true);
+      // Fade music
+      if (musicRef.current) {
+        const audio = musicRef.current;
+        const fadeSteps = 30;
+        const startVol = audio.volume;
+        let step = 0;
+        const fadeId = setInterval(() => {
+          step++;
+          audio.volume = Math.max(0, startVol * (1 - step / fadeSteps));
+          if (step >= fadeSteps) { clearInterval(fadeId); audio.pause(); }
+        }, 50); // 1.5s fade
+      }
+      // After 1.5s, switch to menu
+      setTimeout(() => {
+        try { localStorage.setItem("3invader_intro_seen", "1"); } catch {}
+        setIntroFadingOut(false);
+        setScreen("menu");
+      }, 1500);
     }
-  }, [introScreen, introCharIndex]);
+  }, [introScreen, introCharIndex, introFadingOut]);
 
   useEffect(() => {
     if (screen !== "intro") return;
@@ -3718,7 +3751,7 @@ export default function ThreeInvader() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "calc(100vh - 48px)",
         background: "#020824",
         display: "flex",
         flexDirection: "column",
@@ -3726,7 +3759,7 @@ export default function ThreeInvader() {
         justifyContent: "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
-        padding: 12,
+        padding: "4px 12px",
       }}
     >
       <style>{`
@@ -3761,9 +3794,9 @@ export default function ThreeInvader() {
         }
       `}</style>
 
-      {/* Top ad */}
-      {!isPlaying && screen !== "intro" && (
-        <AdBanner slot="3invader_top" style={{ marginBottom: 12, maxWidth: CW }} />
+      {/* Top ad - only on non-game screens that have space */}
+      {!isPlaying && screen !== "intro" && screen !== "menu" && (
+        <AdBanner slot="3invader_top" style={{ marginBottom: 8, maxWidth: CW }} />
       )}
 
       {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "howtoplay" && screen !== "highscores" && (
@@ -3832,6 +3865,8 @@ export default function ThreeInvader() {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                opacity: introFadingOut ? 0 : 1,
+                transition: "opacity 1.5s ease-out",
                 justifyContent: "flex-start",
                 zIndex: 100,
                 cursor: "pointer",
