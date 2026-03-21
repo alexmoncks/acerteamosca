@@ -1114,15 +1114,17 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     ctx.save();
     ctx.globalAlpha = 0.7;
 
-    if (world === 0) {
-      // Earth: no tiling. Scroll from bottom of image to top. When image ends, show only gradient+stars.
-      // Image starts with its bottom aligned to canvas bottom (scrollY=0 shows end of image)
+    if (world === 0 || world === 1) {
+      // Earth & Phobos: no tiling. Scroll from bottom to top.
       const imgTop = CH - imgH + scrollY;
       if (imgTop < CH) {
-        // Image still visible
         ctx.drawImage(bgSprite, 0, imgTop, CW, imgH);
       }
-      // else: image has scrolled past, only gradient+stars remain (natural transition to space)
+      // When image ends: Earth shows gradient+stars, Phobos stays on last frame
+      if (world === 1 && imgTop >= CH) {
+        // Show the top portion of the image (Phobos surface with crater) pinned
+        ctx.drawImage(bgSprite, 0, 0, CW, CH, 0, 0, CW, CH);
+      }
     } else {
       // Other worlds: tile seamlessly
       const tiledY = scrollY % imgH;
@@ -1137,16 +1139,7 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     case 0: { // Earth - no overlay elements (bg image handles it)
       break;
     }
-    case 1: { // Phobos
-      ctx.fillStyle = `rgba(180,30,60,0.12)`;
-      ctx.beginPath();
-      ctx.arc(CW * 0.3, CH * 0.4 + Math.sin(frame * 0.004) * 8, 100, 0, Math.PI * 2);
-      ctx.fill();
-      // Phobos moon
-      ctx.fillStyle = `rgba(140,100,80,0.2)`;
-      ctx.beginPath();
-      ctx.arc(CW * 0.7, CH * 0.2 + Math.sin(frame * 0.006) * 5, 30, 0, Math.PI * 2);
-      ctx.fill();
+    case 1: { // Phobos - bg image handles everything
       break;
     }
     case 2: { // Mars surface
@@ -2791,11 +2784,32 @@ export default function ThreeInvader() {
         const isRage = hpPct <= 0.05; // 5% HP = rage mode
 
         if (!boss.chargePhase) {
-          // Rage mode: faster, more erratic movement
-          const moveSpeed = isRage ? 3.5 : 1.5;
-          const moveFreq = isRage ? 0.035 : 0.015;
-          boss.x += Math.sin(boss.phaseTimer * moveFreq) * moveSpeed;
-          if (isRage) boss.y += Math.sin(boss.phaseTimer * 0.04) * 1.2; // vertical jitter in rage
+          if (boss.bossIndex === 1) {
+            // HIVE-01: erratic random movement like a living organism
+            // Change direction randomly every 60-120 frames
+            if (!boss.moveDir) boss.moveDir = { vx: 0, vy: 0, timer: 0, maxTimer: 90 };
+            boss.moveDir.timer++;
+            if (boss.moveDir.timer >= boss.moveDir.maxTimer) {
+              boss.moveDir.timer = 0;
+              boss.moveDir.maxTimer = 60 + Math.floor(Math.random() * 60);
+              const angle = Math.random() * Math.PI * 2;
+              const speed = (isRage ? 3 : 1.2) + Math.random() * (isRage ? 2 : 0.8);
+              boss.moveDir.vx = Math.cos(angle) * speed;
+              boss.moveDir.vy = Math.sin(angle) * speed * 0.5;
+            }
+            // Smooth lerp toward desired velocity
+            boss.x += boss.moveDir.vx;
+            boss.y += boss.moveDir.vy;
+            // Add micro-oscillation for organic feel
+            boss.x += Math.sin(boss.phaseTimer * 0.08) * 0.8;
+            boss.y += Math.cos(boss.phaseTimer * 0.06) * 0.4;
+          } else {
+            // Other bosses: sinusoidal movement
+            const moveSpeed = isRage ? 3.5 : 1.5;
+            const moveFreq = isRage ? 0.035 : 0.015;
+            boss.x += Math.sin(boss.phaseTimer * moveFreq) * moveSpeed;
+            if (isRage) boss.y += Math.sin(boss.phaseTimer * 0.04) * 1.2;
+          }
           boss.x = clamp(boss.x, 10, CW - boss.w - 10);
           boss.y = clamp(boss.y, 20, CH * 0.45);
 
@@ -3332,8 +3346,24 @@ export default function ThreeInvader() {
     // Background
     drawWorldBg(ctx, g.world, g.frame, 0, sp);
 
-    // Stars
-    drawStars(ctx, g.stars, 1);
+    // Stars - fade out near Phobos surface (world 1)
+    if (g.world === 1) {
+      const bgSprite = sp?.bgPhobos;
+      const imgH = (bgSprite && bgSprite.naturalHeight) || 1440;
+      const scrollY = g.frame * 0.15;
+      const imgTop = CH - imgH + scrollY;
+      // Stars fade out in last 25% of image scroll (approaching Phobos surface)
+      const fadeStart = imgH * 0.75;
+      const starAlpha = scrollY < fadeStart ? 1 : Math.max(0, 1 - (scrollY - fadeStart) / (imgH * 0.25));
+      if (starAlpha > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = starAlpha;
+        drawStars(ctx, g.stars, 1);
+        ctx.restore();
+      }
+    } else {
+      drawStars(ctx, g.stars, 1);
+    }
 
     // Power-ups
     for (let i = 0; i < g.powerUps.length; i++) {
