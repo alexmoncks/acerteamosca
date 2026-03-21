@@ -3890,10 +3890,10 @@ export default function ThreeInvader() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: isPlaying || screen === "intro" ? "flex-start" : "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
-        padding: "0 12px",
+        padding: isPlaying || screen === "intro" ? "2px 12px 0" : "0 12px",
       }}
     >
       <style>{`
