@@ -889,40 +889,60 @@ function drawBoss(ctx, boss, frame, sprites) {
   ctx.restore();
 }
 
-function drawPlayerBullet(ctx, b, sprites) {
+function drawPlayerBullet(ctx, b) {
   ctx.save();
-  // Try sprite: use heavy for larger bullets (dmg > 1.5), normal otherwise
-  const sprite = (b.dmg > 1.5 && sprites?.bulletPlayerHeavy) ? sprites.bulletPlayerHeavy : sprites?.bulletPlayer;
-  if (spriteReady(sprite)) {
-    const sw = b.dmg > 1.5 ? 12 : 8;
-    const sh = b.dmg > 1.5 ? 20 : 16;
-    ctx.drawImage(sprite, b.x + b.w / 2 - sw / 2, b.y, sw, sh);
-  } else {
-    // Fallback
-    ctx.shadowColor = "#00ffff";
-    ctx.shadowBlur = 6;
-    ctx.fillStyle = "#00eeff";
-    ctx.fillRect(b.x, b.y, b.w, b.h);
-    ctx.globalAlpha = 0.3;
-    ctx.fillRect(b.x, b.y + b.h, b.w, 6);
-  }
+  const cx = b.x + b.w / 2;
+  const cy = b.y + b.h / 2;
+  // Outer glow
+  ctx.shadowColor = "#00ffff";
+  ctx.shadowBlur = 12;
+  // Glow halo
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "#00ffff";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, b.w + 3, b.h / 2 + 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Core
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#00eeff";
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  // Bright center
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(b.x + 1, b.y + 1, Math.max(1, b.w - 2), b.h - 2);
+  // Trail
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = "#00ccff";
+  ctx.fillRect(b.x, b.y + b.h, b.w, 8);
+  ctx.globalAlpha = 0.1;
+  ctx.fillRect(b.x, b.y + b.h + 8, b.w, 6);
   ctx.restore();
 }
 
-function drawEnemyBullet(ctx, b, sprites) {
+function drawEnemyBullet(ctx, b) {
   ctx.save();
-  const sprite = sprites?.bulletEnemy;
-  if (spriteReady(sprite)) {
-    ctx.drawImage(sprite, b.x, b.y, b.w, b.h);
-  } else {
-    // Fallback
-    ctx.shadowColor = "#ff4444";
-    ctx.shadowBlur = 6;
-    ctx.fillStyle = "#ff6666";
-    ctx.beginPath();
-    ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  const cx = b.x + b.w / 2;
+  const cy = b.y + b.h / 2;
+  const r = Math.max(b.w, b.h) / 2;
+  // Outer glow
+  ctx.shadowColor = "#ff4444";
+  ctx.shadowBlur = 14;
+  // Glow halo
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = "#ff4444";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+  ctx.fill();
+  // Core
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ff6644";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  // Hot center
+  ctx.fillStyle = "#ffcc44";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.5, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -1532,13 +1552,13 @@ export default function ThreeInvader() {
         setIntroText(fullText.substring(0, introCharIndex + 1));
         setIntroCharIndex(introCharIndex + 1);
         audioRef.current?.typeClick();
-      }, 30);
+      }, 120);
       return () => clearTimeout(timer);
     }
-    // Auto-advance 3s after text finishes typing
+    // Auto-advance 15s after text finishes typing
     const autoTimer = setTimeout(() => {
       advanceIntro();
-    }, 3000);
+    }, 15000);
     return () => clearTimeout(autoTimer);
   }, [screen, introScreen, introCharIndex, advanceIntro]);
 
@@ -3199,12 +3219,12 @@ export default function ThreeInvader() {
 
     // Enemy bullets
     for (let i = 0; i < g.enemyBullets.length; i++) {
-      drawEnemyBullet(ctx, g.enemyBullets[i], sp);
+      drawEnemyBullet(ctx, g.enemyBullets[i]);
     }
 
     // Player bullets
     for (let i = 0; i < g.playerBullets.length; i++) {
-      drawPlayerBullet(ctx, g.playerBullets[i], sp);
+      drawPlayerBullet(ctx, g.playerBullets[i]);
     }
 
     // Homing missiles
@@ -3860,11 +3880,11 @@ export default function ThreeInvader() {
                 <div
                   style={{
                     fontFamily: "'Fira Code', monospace",
-                    fontSize: 11,
+                    fontSize: 14,
                     color: "#00ff88",
-                    lineHeight: 1.7,
+                    lineHeight: 1.6,
                     whiteSpace: "pre-wrap",
-                    maxWidth: 420,
+                    maxWidth: 440,
                     textShadow: "0 0 5px rgba(0,255,136,0.5)",
                   }}
                 >
