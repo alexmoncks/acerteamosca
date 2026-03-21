@@ -1309,7 +1309,7 @@ export default function ThreeInvader() {
   useEffect(() => {
     function calc() {
       const maxW = window.innerWidth - 24;
-      const maxH = window.innerHeight - 48 - 56; // navbar(48) + controls+padding(56)
+      const maxH = window.innerHeight - 48 - 70; // navbar(48) + controls+padding(70)
       const scaleW = maxW < CW ? maxW / CW : 1;
       const scaleH = maxH < CH ? maxH / CH : 1;
       setGameScale(Math.min(scaleW, scaleH));
@@ -3890,10 +3890,10 @@ export default function ThreeInvader() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
-        padding: "2px 12px 0",
+        padding: "0 12px",
       }}
     >
       <style>{`
