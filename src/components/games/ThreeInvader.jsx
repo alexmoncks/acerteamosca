@@ -23,7 +23,7 @@ const TOTAL_PHASES = 25;
 const TOTAL_WORLDS = 5;
 const PHASES_PER_WORLD = 5;
 const ACCENT = "#00f0ff";
-const MAX_PARTICLES = 300;
+const MAX_PARTICLES = 150;
 const POWERUP_FALL_SPEED = 1.5;
 const INVULN_TIME = 120; // 2s at 60fps
 const RESPAWN_TIME = 120;
@@ -409,15 +409,20 @@ function drawPlayerShip(ctx, x, y, tilt, invuln, frame, sprites, shieldTimer) {
   ctx.restore();
 }
 
-function drawEnemy(ctx, enemy, frame, sprites) {
+function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
   const def = ENEMY_DEFS[enemy.type];
-  const { x, y } = enemy;
+  // Apply swarm render offset for invader-pattern grid enemies
+  let x = enemy.x, y = enemy.y;
+  if (enemy.pattern === "invader" && enemy.inGrid && swarmAngle !== undefined) {
+    const microX = Math.sin(swarmAngle * 1.5 + enemy.id * 0.7) * 2;
+    const microY = Math.cos(swarmAngle * 1.3 + enemy.id * 0.5) * 2;
+    x += Math.cos(swarmAngle * 0.7) * 6 + microX;
+    y += Math.cos(swarmAngle * 0.7) * 12 + microY;
+  }
   const w = def.w, h = def.h;
   const cx = x + w / 2, cy = y + h / 2;
 
   ctx.save();
-  ctx.shadowColor = def.color;
-  ctx.shadowBlur = 8;
 
   // Try sprite-based rendering for all enemies
   let usedSprite = false;
@@ -583,8 +588,11 @@ function drawBoss(ctx, boss, frame, sprites) {
   const damageFlash = boss.damageFlash > 0;
 
   ctx.save();
-  ctx.shadowColor = damageFlash ? "#ffffff" : def.color;
-  ctx.shadowBlur = damageFlash ? 20 : 12;
+  // Only use shadowBlur during damage flash (rare), not continuously
+  if (damageFlash) {
+    ctx.shadowColor = "#ffffff";
+    ctx.shadowBlur = 20;
+  }
 
   // Try sprite-based boss rendering
   let bossSprite = null;
@@ -834,10 +842,7 @@ function drawPlayerBullet(ctx, b) {
   ctx.save();
   const cx = b.x + b.w / 2;
   const cy = b.y + b.h / 2;
-  // Outer glow
-  ctx.shadowColor = "#00ffff";
-  ctx.shadowBlur = 12;
-  // Glow halo
+  // Fake glow halo (no shadowBlur)
   ctx.globalAlpha = 0.25;
   ctx.fillStyle = "#00ffff";
   ctx.beginPath();
@@ -864,10 +869,7 @@ function drawEnemyBullet(ctx, b) {
   const cx = b.x + b.w / 2;
   const cy = b.y + b.h / 2;
   const r = Math.max(b.w, b.h) / 2;
-  // Outer glow
-  ctx.shadowColor = "#ff4444";
-  ctx.shadowBlur = 14;
-  // Glow halo
+  // Fake glow halo (no shadowBlur)
   ctx.globalAlpha = 0.3;
   ctx.fillStyle = "#ff4444";
   ctx.beginPath();
@@ -893,9 +895,13 @@ function drawHomingMissile(ctx, m, frame, sprites) {
   if (spriteReady(sprite)) {
     ctx.drawImage(sprite, m.x, m.y, 8, 16);
   } else {
-    // Fallback
-    ctx.shadowColor = "#ff8800";
-    ctx.shadowBlur = 6;
+    // Fallback (no shadowBlur - fake glow)
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = "#ff8800";
+    ctx.beginPath();
+    ctx.arc(m.x + m.w / 2, m.y + m.h / 2, m.w, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
     ctx.fillStyle = "#ffaa00";
     ctx.beginPath();
     ctx.moveTo(m.x + m.w / 2, m.y);
@@ -922,23 +928,18 @@ function drawLaser(ctx, x, y, frame) {
   const baseWidth = 8 + wobble;
   const beamHeight = y;
 
-  // Outer glow (wide, soft)
-  ctx.shadowColor = "#a855f7";
-  ctx.shadowBlur = 25;
+  // Outer glow (wide, soft - no shadowBlur)
   ctx.globalAlpha = 0.2 + 0.1 * Math.sin(frame * 0.15);
   ctx.fillStyle = "#a855f7";
   ctx.fillRect(x - baseWidth * 1.5, 0, baseWidth * 3, beamHeight);
 
   // Mid beam (purple)
   ctx.globalAlpha = 0.5 + 0.2 * Math.sin(frame * 0.2);
-  ctx.shadowBlur = 15;
   ctx.fillStyle = "#b06aff";
   ctx.fillRect(x - baseWidth / 2, 0, baseWidth, beamHeight);
 
   // Core beam (bright white-purple)
   ctx.globalAlpha = 0.8 + 0.2 * Math.sin(frame * 0.25);
-  ctx.shadowColor = "#ffffff";
-  ctx.shadowBlur = 10;
   ctx.fillStyle = "#e0c0ff";
   ctx.fillRect(x - 2, 0, 4, beamHeight);
 
@@ -968,8 +969,13 @@ function drawPowerUp(ctx, pu, frame) {
   const r = 10 * pulse;
   const color = PU_COLORS[pu.type];
 
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 12 * pulse;
+  // Fake glow (no shadowBlur)
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(pu.x + 10, pu.y + 10, r + 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
   ctx.fillStyle = color + "44";
   ctx.beginPath();
   ctx.arc(pu.x + 10, pu.y + 10, r + 4, 0, Math.PI * 2);
@@ -1022,24 +1028,28 @@ function drawBombEffect(ctx, bomb, sprites) {
 function drawShield(ctx, x, y, frame) {
   ctx.save();
   const pulse = 0.8 + 0.2 * Math.sin(frame * 0.08);
+  const scx = x + PLAYER_W / 2;
+  const scy = y + PLAYER_H / 2;
+  const sr = PLAYER_W * 0.8 * pulse;
+  // Fake glow (no shadowBlur)
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = "#22c55e";
+  ctx.beginPath();
+  ctx.arc(scx, scy, sr + 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = `rgba(34,197,94,${0.4 * pulse})`;
   ctx.lineWidth = 2;
-  ctx.shadowColor = "#22c55e";
-  ctx.shadowBlur = 10;
   ctx.beginPath();
-  ctx.arc(x + PLAYER_W / 2, y + PLAYER_H / 2, PLAYER_W * 0.8 * pulse, 0, Math.PI * 2);
+  ctx.arc(scx, scy, sr, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
 
 function drawParticle(ctx, p) {
-  ctx.save();
   ctx.globalAlpha = p.life;
   ctx.fillStyle = p.color;
-  ctx.shadowColor = p.color;
-  ctx.shadowBlur = 4;
   ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-  ctx.restore();
 }
 
 function drawScanlines(ctx) {
@@ -1653,6 +1663,11 @@ export default function ThreeInvader() {
       formationY: 40,
       formationDir: 1,
       formationDiveTimer: 0,
+
+      // Swarm oscillation (organic flock movement)
+      swarmX: 0,
+      swarmY: 0,
+      swarmAngle: 0,
 
       // Invaders grid for Space Invaders pattern
       invaderGrid: [],
@@ -2492,6 +2507,11 @@ export default function ThreeInvader() {
       }
     }
 
+    // ---- Update swarm oscillation ----
+    g.swarmAngle += 0.02;
+    g.swarmX = Math.sin(g.swarmAngle) * 30;
+    g.swarmY = Math.cos(g.swarmAngle * 0.7) * 12;
+
     // ---- Update enemies ----
     for (let i = g.enemies.length - 1; i >= 0; i--) {
       const e = g.enemies[i];
@@ -2510,11 +2530,16 @@ export default function ThreeInvader() {
             e.y = lerp(e.y, targetY, 0.03);
           } else if (!e.diving) {
             e.inGrid = true;
-            // Formation movement
+            // Formation movement with swarm oscillation
             const gridX = 40 + (e.gridSlot?.col || 0) * 50;
             const gridY = 50 + (e.gridSlot?.row || 0) * 40;
-            e.x = lerp(e.x, gridX + g.formationX - CW / 2 + 100, 0.05);
-            e.y = lerp(e.y, gridY, 0.05);
+            // Global swarm offset + individual micro-movement
+            const microX = Math.sin(g.swarmAngle * 1.5 + e.id * 0.7) * 4;
+            const microY = Math.cos(g.swarmAngle * 1.3 + e.id * 0.5) * 3;
+            const targetX = gridX + g.formationX - CW / 2 + 100 + g.swarmX + microX;
+            const targetY = gridY + g.swarmY + microY;
+            e.x = lerp(e.x, targetX, 0.05);
+            e.y = lerp(e.y, targetY, 0.05);
 
             // Shoot periodically
             e.shootTimer--;
@@ -3203,7 +3228,7 @@ export default function ThreeInvader() {
 
     // Enemies
     for (let i = 0; i < g.enemies.length; i++) {
-      drawEnemy(ctx, g.enemies[i], g.frame, sp);
+      drawEnemy(ctx, g.enemies[i], g.frame, sp, g.swarmAngle);
     }
 
     // Boss (draw during death animation too, with fading)
@@ -3248,12 +3273,20 @@ export default function ThreeInvader() {
       }
       if (g.starTimer > 0) {
         ctx.save();
-        ctx.strokeStyle = `rgba(255,215,0,${0.5 + 0.3 * Math.sin(g.frame * 0.15)})`;
-        ctx.lineWidth = 2;
-        ctx.shadowColor = "#ffd700";
-        ctx.shadowBlur = 15;
+        const starAlpha = 0.5 + 0.3 * Math.sin(g.frame * 0.15);
+        const starCx = g.playerX + PLAYER_W / 2;
+        const starCy = g.playerY + PLAYER_H / 2;
+        // Fake glow (no shadowBlur)
+        ctx.globalAlpha = starAlpha * 0.3;
+        ctx.fillStyle = "#ffd700";
         ctx.beginPath();
-        ctx.arc(g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, PLAYER_W, 0, Math.PI * 2);
+        ctx.arc(starCx, starCy, PLAYER_W + 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = `rgba(255,215,0,${starAlpha})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(starCx, starCy, PLAYER_W, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
@@ -3291,10 +3324,11 @@ export default function ThreeInvader() {
       ctx.restore();
     }
 
-    // Particles
+    // Particles (no save/restore per particle for perf)
     for (let i = 0; i < g.particles.length; i++) {
       drawParticle(ctx, g.particles[i]);
     }
+    ctx.globalAlpha = 1;
 
     // Bomb effect
     drawBombEffect(ctx, g.bombEffect, sp);
