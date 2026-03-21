@@ -1104,32 +1104,37 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CW, CH);
 
-  // World background image as first parallax layer
+  // World background image as parallax layer
   const bgKeys = ["bgEarth", "bgPhobos", "bgMars", "bgAsteroids", "bgJupiter"];
   const bgSprite = sprites?.[bgKeys[world]];
   if (spriteReady(bgSprite)) {
-    const bgH = 1440; // image height
-    const scrollSpeed = 0.3;
-    const scrollY = (frame * scrollSpeed) % bgH;
+    const imgH = bgSprite.naturalHeight || 1440;
+    const scrollSpeed = 0.15;
+    const scrollY = frame * scrollSpeed;
     ctx.save();
-    ctx.globalAlpha = 0.5; // semi-transparent so gradient still shows through
-    // Draw two copies for seamless tiling
-    ctx.drawImage(bgSprite, 0, scrollY - bgH, CW, bgH);
-    ctx.drawImage(bgSprite, 0, scrollY, CW, bgH);
+    ctx.globalAlpha = 0.7;
+
+    if (world === 0) {
+      // Earth: no tiling. Scroll from bottom of image to top. When image ends, show only gradient+stars.
+      // Image starts with its bottom aligned to canvas bottom (scrollY=0 shows end of image)
+      const imgTop = CH - imgH + scrollY;
+      if (imgTop < CH) {
+        // Image still visible
+        ctx.drawImage(bgSprite, 0, imgTop, CW, imgH);
+      }
+      // else: image has scrolled past, only gradient+stars remain (natural transition to space)
+    } else {
+      // Other worlds: tile seamlessly
+      const tiledY = scrollY % imgH;
+      ctx.drawImage(bgSprite, 0, tiledY - imgH, CW, imgH);
+      ctx.drawImage(bgSprite, 0, tiledY, CW, imgH);
+    }
     ctx.restore();
   }
 
   // World-specific parallax elements
   switch (world) {
-    case 0: { // Earth
-      ctx.fillStyle = `rgba(0,100,200,0.15)`;
-      ctx.beginPath();
-      ctx.arc(CW * 0.7, CH * 0.3 + Math.sin(frame * 0.005) * 10, 120, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = `rgba(0,150,255,0.08)`;
-      ctx.beginPath();
-      ctx.arc(CW * 0.7, CH * 0.3 + Math.sin(frame * 0.005) * 10, 130, 0, Math.PI * 2);
-      ctx.fill();
+    case 0: { // Earth - no overlay elements (bg image handles it)
       break;
     }
     case 1: { // Phobos
@@ -3890,10 +3895,10 @@ export default function ThreeInvader() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: isPlaying || screen === "intro" ? "flex-start" : "center",
+        justifyContent: screen === "menu" || isPlaying || screen === "intro" || screen === "gameover" || screen === "victory" ? "flex-start" : "center",
         fontFamily: "'Fira Code', monospace",
         overflow: "hidden",
-        padding: isPlaying || screen === "intro" ? "2px 12px 0" : "0 12px",
+        padding: "2px 12px 0",
       }}
     >
       <style>{`
