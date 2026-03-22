@@ -2300,8 +2300,7 @@ export default function ThreeInvader() {
 
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#4488ff", 30);
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff4444", 20);
-    playSfx(sfxRef.current?.smallExplosion, 0.6);
-    playSfx(sfxRef.current?.shockwave, 0.3);
+    playSfx(sfxRef.current?.bigExplosion, 0.5);
 
     return true;
   }
@@ -2976,7 +2975,7 @@ export default function ThreeInvader() {
           spawnExplosion(g, bd.x + ox, bd.y + oy, bd.color, 10);
         }
         spawnExplosion(g, bd.x, bd.y, "#ffd700", 30);
-        playSfx(sfxRef.current?.smallExplosion, 0.7);
+        playSfx(sfxRef.current?.bigExplosion, 0.7);
         playSfx(sfxRef.current?.shockwave, 0.4);
       }
 
