@@ -1326,7 +1326,7 @@ export default function ThreeInvader() {
   const rafRef = useRef(null);
   const audioRef = useRef(null);
   const sfxRef = useRef(null);
-  const touchRef = useRef({ active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, playerStartX: 0, playerStartY: 0 });
+  const touchRef = useRef({ active: false, lastClientX: 0, lastClientY: 0 });
   const musicRef = useRef(null);
   const musicFadeRef = useRef(null);
   const introImagesRef = useRef([]);
@@ -3677,27 +3677,23 @@ export default function ThreeInvader() {
   }, []);
 
   // ── Touch input ────────────────────────────────────────────────
+  // Store gameScale in ref for touch handlers
+  const gameScaleRef = useRef(gameScale);
+  useEffect(() => { gameScaleRef.current = gameScale; }, [gameScale]);
+
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Use ref for gameScale so closure always has latest value
-    const scaleRef = { current: gameScale };
-
     const onTouchStart = (e) => {
       if (screenRef.current !== "playing") return;
-      // Don't intercept touches on buttons with data-allow-touch
-      if (e.target.closest && e.target.closest("[data-allow-touch]")) return;
+      // Skip if touching a button element
+      const tag = e.target.tagName;
+      if (tag === "BUTTON" || tag === "INPUT" || tag === "SELECT") return;
       e.preventDefault();
       const t = e.touches[0];
-      const g = gameRef.current;
-      if (g) {
-        touchRef.current = {
-          active: true,
-          lastClientX: t.clientX,
-          lastClientY: t.clientY,
-        };
-      }
+      touchRef.current = {
+        active: true,
+        lastClientX: t.clientX,
+        lastClientY: t.clientY,
+      };
     };
 
     const onTouchMove = (e) => {
@@ -3705,7 +3701,7 @@ export default function ThreeInvader() {
       e.preventDefault();
       const t = e.touches[0];
       const ref = touchRef.current;
-      const scale = scaleRef.current || 1;
+      const scale = gameScaleRef.current || 1;
       const dx = (t.clientX - ref.lastClientX) / scale;
       const dy = (t.clientY - ref.lastClientY) / scale;
       ref.lastClientX = t.clientX;
@@ -3721,8 +3717,6 @@ export default function ThreeInvader() {
       touchRef.current.active = false;
     };
 
-    // Listen on document for ALL touch events (not just canvas)
-    // This ensures touch works even over overlays
     document.addEventListener("touchstart", onTouchStart, { passive: false });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
     document.addEventListener("touchend", onTouchEnd, { passive: false });
@@ -3734,7 +3728,7 @@ export default function ThreeInvader() {
       document.removeEventListener("touchend", onTouchEnd);
       document.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [gameScale]);
+  }, []);
 
   // ── Cleanup ────────────────────────────────────────────────────
   useEffect(() => {
