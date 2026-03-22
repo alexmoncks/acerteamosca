@@ -77,19 +77,19 @@ const WORLD_TAGS = [
 
 // ── Boss configs ───────────────────────────────────────────────────────
 const BOSS_DEFS = [
-  { name: "ORION-9",   hp: 50,  w: 96,  h: 80,  points: 2000,  color: "#00c8ff" },
-  { name: "HIVE-01",   hp: 80,  w: 160, h: 64,  points: 5000,  color: "#b026ff" },
-  { name: "GOLIATH",   hp: 100, w: 128, h: 96,  points: 8000,  color: "#ff6600" },
-  { name: "CHARYBDIS", hp: 120, w: 144, h: 144, points: 12000, color: "#4a90d9" },
-  { name: "3I/ATLAS",  hp: 200, w: 160, h: 200, points: 25000, color: "#ffd700" },
+  { name: "ORION-9",   hp: 65,  w: 288, h: 240, points: 2000,  color: "#00c8ff" },
+  { name: "HIVE-01",   hp: 104, w: 320, h: 128, points: 5000,  color: "#b026ff" },
+  { name: "GOLIATH",   hp: 130, w: 288, h: 216, points: 8000,  color: "#ff6600" },
+  { name: "CHARYBDIS", hp: 156, w: 288, h: 288, points: 12000, color: "#4a90d9" },
+  { name: "3I/ATLAS",  hp: 260, w: 300, h: 380, points: 25000, color: "#ffd700" },
 ];
 
 // ── Difficulty configs ──────────────────────────────────────────────────
 const DIFFICULTIES = [
-  { id: "novato",     label: "Novato",       enemyHpMult: 0.5,  bossHpMult: 1,   enemyShotFreq: 0.5,  powerUpRate: 2.0,  color: "#4ade80", desc: "Inimigos fracos, muitos power-ups. Ideal para conhecer o jogo." },
-  { id: "medio",      label: "Medio",        enemyHpMult: 1.0,  bossHpMult: 2,   enemyShotFreq: 1.0,  powerUpRate: 0.5,  color: "#fbbf24", desc: "Equilibrado. A experiencia padrao do 3INVADER." },
-  { id: "experiente", label: "Experiente",    enemyHpMult: 2.0,  bossHpMult: 4,   enemyShotFreq: 1.5,  powerUpRate: 0.33, color: "#f97316", desc: "Inimigos resistentes, poucos power-ups. Para pilotos veteranos." },
-  { id: "maluco",     label: "Ta Maluco?",    enemyHpMult: 4.0,  bossHpMult: 8,   enemyShotFreq: 2.5,  powerUpRate: 0.25, color: "#ef4444", desc: "Sobrevivencia extrema. Voce foi avisado." },
+  { id: "novato",     label: "Novato",       enemyHpMult: 0.5,  bossHpMult: 1.3,  enemyShotFreq: 0.5,  powerUpRate: 2.0,  color: "#4ade80", desc: "Inimigos fracos, muitos power-ups. Ideal para conhecer o jogo." },
+  { id: "medio",      label: "Medio",        enemyHpMult: 1.0,  bossHpMult: 2.6,  enemyShotFreq: 1.0,  powerUpRate: 0.5,  color: "#fbbf24", desc: "Equilibrado. A experiencia padrao do 3INVADER." },
+  { id: "experiente", label: "Experiente",    enemyHpMult: 2.0,  bossHpMult: 5.2,  enemyShotFreq: 1.5,  powerUpRate: 0.33, color: "#f97316", desc: "Inimigos resistentes, poucos power-ups. Para pilotos veteranos." },
+  { id: "maluco",     label: "Ta Maluco?",    enemyHpMult: 4.0,  bossHpMult: 10.4, enemyShotFreq: 2.5,  powerUpRate: 0.25, color: "#ef4444", desc: "Sobrevivencia extrema. Voce foi avisado." },
 ];
 
 // ── Jukebox tracks ─────────────────────────────────────────────────────
@@ -1872,7 +1872,7 @@ export default function ThreeInvader() {
       bossIndex,
       x: CW / 2 - def.w / 2,
       y: -def.h - 20,
-      targetY: 40,
+      targetY: 20,
       w: def.w,
       h: def.h,
       hp: scaledHp,
@@ -2799,8 +2799,8 @@ export default function ThreeInvader() {
             boss.x += Math.sin(boss.phaseTimer * moveFreq) * moveSpeed;
             if (isRage) boss.y += Math.sin(boss.phaseTimer * 0.04) * 1.2;
           }
-          boss.x = clamp(boss.x, 10, CW - boss.w - 10);
-          boss.y = clamp(boss.y, 20, CH * 0.45);
+          boss.x = clamp(boss.x, -boss.w * 0.15, CW - boss.w * 0.85);
+          boss.y = clamp(boss.y, 10, Math.min(CH * 0.4, CH - boss.h - 200));
 
           // Update boss phase based on HP
           if (hpPct > 0.7) boss.phase = 1;
