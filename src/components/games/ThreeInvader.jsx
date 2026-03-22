@@ -37,12 +37,12 @@ const ET_CARRIER = 4;
 const ET_MINE = 5;
 
 const ENEMY_DEFS = [
-  { name: "Scout",   color: "#39ff14", hp: 1.2, w: 24, h: 24, points: 50,  shotType: "single" },
-  { name: "Fighter", color: "#ffd700", hp: 2.4, w: 26, h: 26, points: 100, shotType: "dual" },
-  { name: "Bomber",  color: "#ff4444", hp: 3.6, w: 28, h: 28, points: 150, shotType: "triple" },
-  { name: "Ace",     color: "#a855f7", hp: 1.2, w: 22, h: 22, points: 200, shotType: "aimed" },
-  { name: "Carrier", color: "#1e3a5f", hp: 6,   w: 36, h: 36, points: 300, shotType: "none" },
-  { name: "Mine",    color: "#888888", hp: 1.2, w: 20, h: 20, points: 75,  shotType: "none" },
+  { name: "Scout",   color: "#39ff14", hp: 1.2, w: 28, h: 28, points: 50,  shotType: "single" },
+  { name: "Fighter", color: "#ffd700", hp: 2.4, w: 30, h: 30, points: 100, shotType: "dual" },
+  { name: "Bomber",  color: "#ff4444", hp: 3.6, w: 32, h: 32, points: 150, shotType: "triple" },
+  { name: "Ace",     color: "#a855f7", hp: 1.2, w: 25, h: 25, points: 200, shotType: "aimed" },
+  { name: "Carrier", color: "#1e3a5f", hp: 6,   w: 41, h: 41, points: 300, shotType: "none" },
+  { name: "Mine",    color: "#888888", hp: 1.2, w: 23, h: 23, points: 75,  shotType: "none" },
 ];
 
 // ── Power-up types ─────────────────────────────────────────────────────
@@ -323,7 +323,7 @@ function spriteReady(img) {
   return img && img.complete && img.naturalWidth > 0;
 }
 
-function drawPlayerShip(ctx, x, y, tilt, invuln, frame, sprites, shieldTimer) {
+function drawPlayerShip(ctx, x, y, tilt, invuln, frame, sprites, shieldTimer, movingUp) {
   ctx.save();
   if (invuln && Math.floor(frame / 4) % 2 === 0) {
     ctx.globalAlpha = 0.4;
@@ -335,29 +335,32 @@ function drawPlayerShip(ctx, x, y, tilt, invuln, frame, sprites, shieldTimer) {
   ctx.rotate(tilt * 0.15);
   ctx.translate(-cx, -cy);
 
-  // Determine which sprite to use for shield states
-  const shieldActive = shieldTimer > 0;
-  const shieldExpiring = shieldActive && shieldTimer <= 180; // last 3s at 60fps
-  let shipSprite = sprites?.ship;
+  // Ship sprite size (fixed, never changes for shield)
+  const sw = 64, sh = 48;
 
-  if (shieldActive) {
-    if (shieldExpiring) {
-      // Alternate between shield and shield-fail every 0.3s (18 frames)
-      const alt = Math.floor(frame / 18) % 2 === 0;
-      shipSprite = alt ? sprites?.shipShield : sprites?.shipShieldFail;
-    } else {
-      shipSprite = sprites?.shipShield;
-    }
-  }
+  // Select base ship sprite: engines on when moving up/diagonally up, off when moving down/stopped
+  let shipSprite = movingUp ? sprites?.ship : sprites?.shipOff;
+  if (!spriteReady(shipSprite)) shipSprite = sprites?.ship;
 
   if (spriteReady(shipSprite)) {
-    // Shield sprites are 80x60, normal ship is 64x48
-    const sw = shieldActive ? 80 : 64;
-    const sh = shieldActive ? 60 : 48;
-    // Center the sprite on the player position (PLAYER_W x PLAYER_H hitbox)
     const drawX = x + PLAYER_W / 2 - sw / 2;
     const drawY = y + PLAYER_H / 2 - sh / 2;
     ctx.drawImage(shipSprite, drawX, drawY, sw, sh);
+
+    // Draw shield as overlay effect (not changing ship size)
+    if (shieldTimer > 0) {
+      const shieldExpiring = shieldTimer <= 180;
+      ctx.globalAlpha = shieldExpiring ? (Math.floor(frame / 12) % 2 === 0 ? 0.5 : 0.2) : 0.4;
+      ctx.strokeStyle = shieldExpiring ? "#ff8800" : "#00ffaa";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, sw / 2 + 6, sh / 2 + 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = shieldExpiring ? 0.08 : 0.12;
+      ctx.fillStyle = shieldExpiring ? "#ff8800" : "#00ffaa";
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
   } else {
     // Fallback: original canvas drawing
     ctx.shadowColor = "#4488ff";
@@ -2499,7 +2502,7 @@ export default function ThreeInvader() {
       // Damage enemies in laser path
       for (let i = g.enemies.length - 1; i >= 0; i--) {
         const e = g.enemies[i];
-        if (e.entering) continue; // invulnerable during entry
+        if (e.entering || (e.inGrid && !e.diving)) continue; // only vulnerable when diving/attacking
         const eDef = ENEMY_DEFS[e.type];
         if (Math.abs((e.x + eDef.w / 2) - laserX) < 10 && e.y < g.playerY) {
           e.hp -= 0.15;
@@ -2635,19 +2638,41 @@ export default function ThreeInvader() {
             }
           } else {
             // Diving
-            e.x = lerp(e.x, e.diveTargetX, 0.03);
-            e.y += e.speed * 2.5;
+            if (e.flankSide) {
+              // Gold fighter flank attack: approach from sides, converge to center, then exit laterally
+              e.flankPhase = (e.flankPhase || 0) + 1;
+              const fp = e.flankPhase;
+              if (fp < 60) {
+                // Phase 1: sweep in from flank
+                e.x += e.flankSide * -3; // move toward center
+                e.y += 2;
+              } else if (fp < 120) {
+                // Phase 2: converge toward player
+                e.x = lerp(e.x, e.diveTargetX, 0.04);
+                e.y += 3;
+              } else {
+                // Phase 3: exit laterally
+                e.x += e.flankSide * 4;
+                e.y += 1;
+              }
+            } else {
+              // Normal dive
+              e.x = lerp(e.x, e.diveTargetX, 0.03);
+              e.y += e.speed * 2.5;
+            }
             // Shoot during dive
             if (e.patternTimer % 30 === 0 && def.shotType !== "none") {
               enemyShoot(g, e);
             }
             // Enemies that survive diving return to top and re-enter grid
-            if (e.y > CH + 20) {
+            if (e.y > CH + 20 || e.x < -40 || e.x > CW + 40) {
               e.y = -30;
               e.diving = false;
               e.entering = true;
               e.enterPhase = 0;
               e.inGrid = false;
+              e.flankSide = 0;
+              e.flankPhase = 0;
               e.x = e.baseGridX || e.baseX;
             }
           }
@@ -2703,13 +2728,30 @@ export default function ThreeInvader() {
     if (g.formationDiveTimer >= diveInterval) {
       g.formationDiveTimer = 0;
       const gridEnemies = g.enemies.filter(e => e.pattern === "galaga" && e.inGrid && !e.diving);
-      const diveCount = Math.min(1 + Math.floor(g.world * 0.5), 3, gridEnemies.length);
-      for (let d = 0; d < diveCount; d++) {
-        const e = gridEnemies[Math.floor(Math.random() * gridEnemies.length)];
-        if (e) {
-          e.diving = true;
-          e.inGrid = false;
-          e.diveTargetX = g.playerX + PLAYER_W / 2;
+      // Gold fighters always dive in pairs with flank attack
+      const goldEnemies = gridEnemies.filter(e => e.isGold);
+      const normalEnemies = gridEnemies.filter(e => !e.isGold);
+
+      if (goldEnemies.length >= 2 && Math.random() < 0.4) {
+        // Gold pair flank attack
+        const pair = goldEnemies.slice(0, 2);
+        pair[0].diving = true; pair[0].inGrid = false;
+        pair[0].flankSide = -1; // approach from left
+        pair[0].flankPhase = 0;
+        pair[0].diveTargetX = g.playerX + PLAYER_W / 2;
+        pair[1].diving = true; pair[1].inGrid = false;
+        pair[1].flankSide = 1; // approach from right
+        pair[1].flankPhase = 0;
+        pair[1].diveTargetX = g.playerX + PLAYER_W / 2;
+      } else {
+        const diveCount = Math.min(1 + Math.floor(g.world * 0.5), 3, normalEnemies.length);
+        for (let d = 0; d < diveCount; d++) {
+          const e = normalEnemies[Math.floor(Math.random() * normalEnemies.length)];
+          if (e) {
+            e.diving = true;
+            e.inGrid = false;
+            e.diveTargetX = g.playerX + PLAYER_W / 2;
+          }
         }
       }
     }
@@ -2932,7 +2974,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
-        if (e.entering) continue; // invulnerable during entry animation
+        if (e.entering || (e.inGrid && !e.diving)) continue; // only vulnerable when diving/attacking
         const def = ENEMY_DEFS[e.type];
         if (aabb(b, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -3003,7 +3045,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
-        if (e.entering) continue; // invulnerable during entry animation
+        if (e.entering || (e.inGrid && !e.diving)) continue; // only vulnerable when diving/attacking
         const def = ENEMY_DEFS[e.type];
         if (aabb(m, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -3399,7 +3441,8 @@ export default function ThreeInvader() {
 
     // Player
     if (!g.dead) {
-      drawPlayerShip(ctx, g.playerX, g.playerY, g.playerTilt, g.invulnTimer > 0, g.frame, sp, g.shieldTimer);
+      const isMovingUp = keysRef.current.has("ArrowUp") || keysRef.current.has("w") || keysRef.current.has("W") || touchRef.current.active;
+      drawPlayerShip(ctx, g.playerX, g.playerY, g.playerTilt, g.invulnTimer > 0, g.frame, sp, g.shieldTimer, isMovingUp);
       // Only draw the old procedural shield ring if sprite shield is NOT being used
       if (g.shieldTimer > 0 && !spriteReady(sp.shipShield)) {
         drawShield(ctx, g.playerX, g.playerY, g.frame);
