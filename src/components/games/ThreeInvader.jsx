@@ -2447,14 +2447,10 @@ export default function ThreeInvader() {
     if (keys.has("ArrowUp") || keys.has("w") || keys.has("W")) dy -= moveSpeed;
     if (keys.has("ArrowDown") || keys.has("s") || keys.has("S")) dy += moveSpeed;
 
-    // Touch movement
+    // Touch movement is applied directly in onTouchMove (like Brick Breaker)
+    // Keyboard movement only when not touching
     const touch = touchRef.current;
-    if (touch.active) {
-      const tdx = touch.currentX - touch.startX;
-      const tdy = touch.currentY - touch.startY;
-      g.playerX = clamp(touch.playerStartX + tdx, 0, CW - PLAYER_W);
-      g.playerY = clamp(touch.playerStartY + tdy, 0, CH - PLAYER_H);
-    } else {
+    if (!touch.active) {
       g.playerX = clamp(g.playerX + dx, 0, CW - PLAYER_W);
       g.playerY = clamp(g.playerY + dy, 0, CH - PLAYER_H);
     }
@@ -3685,29 +3681,18 @@ export default function ThreeInvader() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const getScaledPos = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      return {
-        x: (touch.clientX - rect.left) / gameScale,
-        y: (touch.clientY - rect.top) / gameScale,
-      };
-    };
-
     const onTouchStart = (e) => {
       if (screenRef.current !== "playing") return;
-      // Don't intercept touches on buttons (data-allow-touch)
+      // Don't intercept touches on buttons
       if (e.target.closest("[data-allow-touch]") && e.target !== canvas) return;
       e.preventDefault();
-      const pos = getScaledPos(e);
+      const t = e.touches[0];
       const g = gameRef.current;
       if (g) {
         touchRef.current = {
           active: true,
-          startX: pos.x,
-          startY: pos.y,
-          currentX: pos.x,
-          currentY: pos.y,
+          startClientX: t.clientX,
+          startClientY: t.clientY,
           playerStartX: g.playerX,
           playerStartY: g.playerY,
         };
@@ -3718,14 +3703,15 @@ export default function ThreeInvader() {
       if (screenRef.current !== "playing") return;
       if (!touchRef.current.active) return;
       e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      const pos = {
-        x: (touch.clientX - rect.left) / gameScale,
-        y: (touch.clientY - rect.top) / gameScale,
-      };
-      touchRef.current.currentX = pos.x;
-      touchRef.current.currentY = pos.y;
+      const t = e.touches[0];
+      const ref = touchRef.current;
+      const dx = (t.clientX - ref.startClientX) / gameScale;
+      const dy = (t.clientY - ref.startClientY) / gameScale;
+      const g = gameRef.current;
+      if (g) {
+        g.playerX = clamp(ref.playerStartX + dx, 0, CW - PLAYER_W);
+        g.playerY = clamp(ref.playerStartY + dy, 0, CH - PLAYER_H);
+      }
     };
 
     const onTouchEnd = (e) => {
