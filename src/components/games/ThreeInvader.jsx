@@ -1114,14 +1114,14 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     ctx.save();
     ctx.globalAlpha = 0.7;
 
-    if (world === 0 || world === 1) {
+    if (world === 0 || world === 1 || world === 2) {
       // Earth & Phobos: no tiling. Scroll from bottom to top.
       const imgTop = CH - imgH + scrollY;
       if (imgTop < CH) {
         ctx.drawImage(bgSprite, 0, imgTop, CW, imgH);
       }
       // When image ends: Earth shows gradient+stars, Phobos stays on last frame
-      if (world === 1 && imgTop >= CH) {
+      if ((world === 1 || world === 2) && imgTop >= CH) {
         // Show the top portion of the image (Phobos surface with crater) pinned
         ctx.drawImage(bgSprite, 0, 0, CW, CH, 0, 0, CW, CH);
       }
@@ -1142,19 +1142,7 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     case 1: { // Phobos - bg image handles everything
       break;
     }
-    case 2: { // Mars surface
-      // Terrain lines
-      ctx.strokeStyle = `rgba(255,100,0,0.08)`;
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 5; i++) {
-        const y = CH * 0.6 + i * 30 + Math.sin(frame * 0.003 + i) * 10;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        for (let x = 0; x <= CW; x += 40) {
-          ctx.lineTo(x, y + Math.sin(x * 0.02 + frame * 0.002) * 15);
-        }
-        ctx.stroke();
-      }
+    case 2: { // Mars surface - bg image handles it
       break;
     }
     case 3: { // Asteroid belt
@@ -3347,13 +3335,13 @@ export default function ThreeInvader() {
     // Background
     drawWorldBg(ctx, g.world, g.frame, 0, sp);
 
-    // Stars - fade out near Phobos surface (world 1)
-    if (g.world === 1) {
-      const bgSprite = sp?.bgPhobos;
-      const imgH = (bgSprite && bgSprite.naturalHeight) || 1440;
+    // Stars - fade out near surface for Phobos (1) and Mars (2)
+    if (g.world === 1 || g.world === 2) {
+      const bgKeys = ["bgEarth", "bgPhobos", "bgMars"];
+      const bgSpr = sp?.[bgKeys[g.world]];
+      const imgH = (bgSpr && bgSpr.naturalHeight) || 1440;
       const scrollY = g.frame * 0.15;
-      const imgTop = CH - imgH + scrollY;
-      // Stars fade out in last 25% of image scroll (approaching Phobos surface)
+      // Stars fade out in last 25% of image scroll (approaching surface)
       const fadeStart = imgH * 0.75;
       const starAlpha = scrollY < fadeStart ? 1 : Math.max(0, 1 - (scrollY - fadeStart) / (imgH * 0.25));
       if (starAlpha > 0.01) {
