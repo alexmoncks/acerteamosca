@@ -25,7 +25,7 @@ const PHASES_PER_WORLD = 5;
 const ACCENT = "#00f0ff";
 const MAX_PARTICLES = 150;
 const POWERUP_FALL_SPEED = 1.5;
-const INVULN_TIME = 120; // 2s at 60fps
+const INVULN_TIME = 240; // 4s at 60fps
 const RESPAWN_TIME = 120;
 
 // ── Enemy type constants ───────────────────────────────────────────────
