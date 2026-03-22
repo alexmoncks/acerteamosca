@@ -2300,7 +2300,8 @@ export default function ThreeInvader() {
 
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#4488ff", 30);
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff4444", 20);
-    playSfx(sfxRef.current?.bigExplosion, 0.5);
+    playSfx(sfxRef.current?.smallExplosion, 0.6);
+    playSfx(sfxRef.current?.shockwave, 0.3);
 
     return true;
   }
@@ -2935,34 +2936,56 @@ export default function ThreeInvader() {
     if (g.bossDeathAnim) {
       const bd = g.bossDeathAnim;
       bd.timer++;
-      // Increasing screen shake
-      g.screenShake = Math.min(30, 5 + bd.timer * 0.15);
-      // Spawn random explosions around the boss every 10 frames
-      if (bd.timer % 10 === 0 && bd.timer < 120) {
-        const offX = (Math.random() - 0.5) * bd.w;
-        const offY = (Math.random() - 0.5) * bd.h;
-        spawnExplosion(g, bd.x + offX, bd.y + offY, bd.color, 12);
-        spawnExplosion(g, bd.x + offX, bd.y + offY, "#ffffff", 6);
+
+      // Screen shake: strong during explosions, STOPS at frame 140 for readable text
+      if (bd.timer < 140) {
+        g.screenShake = Math.min(20, 3 + bd.timer * 0.1);
+      } else {
+        g.screenShake = 0; // calm for phase complete text
       }
-      // Timer 60: big central explosion
-      if (bd.timer === 60) {
-        spawnExplosion(g, bd.x, bd.y, bd.color, 30);
-        spawnExplosion(g, bd.x, bd.y, "#ffffff", 20);
-        g.screenShake = 25;
+
+      // Multiple small explosions around the boss every 8 frames (with SFX)
+      if (bd.timer % 8 === 0 && bd.timer < 100) {
+        const offX = (Math.random() - 0.5) * bd.w * 0.8;
+        const offY = (Math.random() - 0.5) * bd.h * 0.8;
+        spawnExplosion(g, bd.x + offX, bd.y + offY, bd.color, 10);
+        spawnExplosion(g, bd.x + offX, bd.y + offY, "#ffffff", 5);
+        playSfx(sfxRef.current?.smallExplosion, 0.3);
       }
-      // Timer 120: massive final explosion
-      if (bd.timer === 120) {
-        spawnExplosion(g, bd.x, bd.y, "#ffffff", 40);
+
+      // Timer 50: medium central explosion
+      if (bd.timer === 50) {
+        spawnExplosion(g, bd.x, bd.y, bd.color, 25);
+        spawnExplosion(g, bd.x, bd.y, "#ffffff", 15);
+        playSfx(sfxRef.current?.smallExplosion, 0.5);
+      }
+
+      // Timer 90: big explosion
+      if (bd.timer === 90) {
         spawnExplosion(g, bd.x, bd.y, bd.color, 30);
         spawnExplosion(g, bd.x, bd.y, "#ffd700", 20);
-        g.screenShake = 30;
-        playSfx(sfxRef.current?.bigExplosion, 0.6);
+        playSfx(sfxRef.current?.smallExplosion, 0.6);
       }
+
+      // Timer 120: massive final explosion (multiple simultaneous)
+      if (bd.timer === 120) {
+        for (let i = 0; i < 5; i++) {
+          const ox = (Math.random() - 0.5) * bd.w * 0.5;
+          const oy = (Math.random() - 0.5) * bd.h * 0.5;
+          spawnExplosion(g, bd.x + ox, bd.y + oy, "#ffffff", 15);
+          spawnExplosion(g, bd.x + ox, bd.y + oy, bd.color, 10);
+        }
+        spawnExplosion(g, bd.x, bd.y, "#ffd700", 30);
+        playSfx(sfxRef.current?.smallExplosion, 0.7);
+        playSfx(sfxRef.current?.shockwave, 0.4);
+      }
+
       // Timer 180: animation complete, advance
       if (bd.timer >= bd.maxTimer) {
         g.bossDeathAnim = null;
         g.boss = null;
         g.phaseBossActive = false;
+        g.screenShake = 0;
         completePhase(g);
       }
     }
@@ -3224,6 +3247,7 @@ export default function ThreeInvader() {
 
   function completePhase(g) {
     g.phaseComplete = true;
+    g.screenShake = 0; // ensure no shake during phase complete text
     playSfx(sfxRef.current?.powerUp, 0.4);
 
     // Phase bonus
