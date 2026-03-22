@@ -3335,13 +3335,13 @@ export default function ThreeInvader() {
     // Background
     drawWorldBg(ctx, g.world, g.frame, 0, sp);
 
-    // Stars - fade out near surface for Phobos (1) and Mars (2)
-    if (g.world === 1 || g.world === 2) {
-      const bgKeys = ["bgEarth", "bgPhobos", "bgMars"];
-      const bgSpr = sp?.[bgKeys[g.world]];
+    // Stars - no stars on Mars surface (world 2), fade out near Phobos (world 1)
+    if (g.world === 2) {
+      // Mars: no stars at all
+    } else if (g.world === 1) {
+      const bgSpr = sp?.bgPhobos;
       const imgH = (bgSpr && bgSpr.naturalHeight) || 1440;
       const scrollY = g.frame * 0.15;
-      // Stars fade out in last 25% of image scroll (approaching surface)
       const fadeStart = imgH * 0.75;
       const starAlpha = scrollY < fadeStart ? 1 : Math.max(0, 1 - (scrollY - fadeStart) / (imgH * 0.25));
       if (starAlpha > 0.01) {
