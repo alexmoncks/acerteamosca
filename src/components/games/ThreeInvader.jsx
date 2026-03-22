@@ -3681,52 +3681,55 @@ export default function ThreeInvader() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Use ref for gameScale so closure always has latest value
+    const scaleRef = { current: gameScale };
+
     const onTouchStart = (e) => {
       if (screenRef.current !== "playing") return;
-      // Don't intercept touches on buttons
-      if (e.target.closest("[data-allow-touch]") && e.target !== canvas) return;
+      // Don't intercept touches on buttons with data-allow-touch
+      if (e.target.closest && e.target.closest("[data-allow-touch]")) return;
       e.preventDefault();
       const t = e.touches[0];
       const g = gameRef.current;
       if (g) {
         touchRef.current = {
           active: true,
-          startClientX: t.clientX,
-          startClientY: t.clientY,
-          playerStartX: g.playerX,
-          playerStartY: g.playerY,
+          lastClientX: t.clientX,
+          lastClientY: t.clientY,
         };
       }
     };
 
     const onTouchMove = (e) => {
-      if (screenRef.current !== "playing") return;
       if (!touchRef.current.active) return;
       e.preventDefault();
       const t = e.touches[0];
       const ref = touchRef.current;
-      const dx = (t.clientX - ref.startClientX) / gameScale;
-      const dy = (t.clientY - ref.startClientY) / gameScale;
+      const scale = scaleRef.current || 1;
+      const dx = (t.clientX - ref.lastClientX) / scale;
+      const dy = (t.clientY - ref.lastClientY) / scale;
+      ref.lastClientX = t.clientX;
+      ref.lastClientY = t.clientY;
       const g = gameRef.current;
       if (g) {
-        g.playerX = clamp(ref.playerStartX + dx, 0, CW - PLAYER_W);
-        g.playerY = clamp(ref.playerStartY + dy, 0, CH - PLAYER_H);
+        g.playerX = clamp(g.playerX + dx, 0, CW - PLAYER_W);
+        g.playerY = clamp(g.playerY + dy, 0, CH - PLAYER_H);
       }
     };
 
-    const onTouchEnd = (e) => {
-      if (touchRef.current.active) e.preventDefault();
+    const onTouchEnd = () => {
       touchRef.current.active = false;
     };
 
-    // Listen on document so touch continues even if finger leaves canvas
-    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    // Listen on document for ALL touch events (not just canvas)
+    // This ensures touch works even over overlays
+    document.addEventListener("touchstart", onTouchStart, { passive: false });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
     document.addEventListener("touchend", onTouchEnd, { passive: false });
     document.addEventListener("touchcancel", onTouchEnd, { passive: false });
 
     return () => {
-      canvas.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchstart", onTouchStart);
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchend", onTouchEnd);
       document.removeEventListener("touchcancel", onTouchEnd);
@@ -3954,12 +3957,12 @@ export default function ThreeInvader() {
         }
       `}</style>
 
-      {/* Top ad - only on non-game screens that have space */}
-      {!isPlaying && screen !== "intro" && screen !== "menu" && (
+      {/* Top ad - only on sub-menu screens that have space */}
+      {!isPlaying && screen !== "intro" && screen !== "menu" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && (
         <AdBanner slot="3invader_top" style={{ marginBottom: 8, maxWidth: CW }} />
       )}
 
-      {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
+      {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
         <>
           <h1
             style={{
