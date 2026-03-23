@@ -42,7 +42,7 @@ const ENEMY_DEFS = [
   { name: "Bomber",  color: "#ff4444", hp: 5.4, w: 32, h: 32, points: 150, shotType: "triple" },
   { name: "Ace",     color: "#a855f7", hp: 1.8, w: 25, h: 25, points: 200, shotType: "aimed" },
   { name: "Carrier", color: "#1e3a5f", hp: 9,   w: 41, h: 41, points: 300, shotType: "none" },
-  { name: "Mine",    color: "#888888", hp: 1.8, w: 23, h: 23, points: 75,  shotType: "none" },
+  { name: "Mine",    color: "#888888", hp: 10, w: 23, h: 23, points: 75,  shotType: "none" },
 ];
 
 // ── Power-up types ─────────────────────────────────────────────────────
@@ -1863,8 +1863,8 @@ export default function ThreeInvader() {
     };
     enemy.baseX = enemy.x;
     enemy.baseY = enemy.y;
-    // Gold fighters in World 5 (phases 21+)
-    if (g.world >= 4 && type === ET_FIGHTER && Math.random() < 0.4) {
+    // Gold fighters from World 4+ (phases 16+)
+    if (g.world >= 3 && type === ET_FIGHTER && Math.random() < 0.35) {
       enemy.isGold = true;
       enemy.hp *= 2;
       enemy.maxHp = enemy.hp;
