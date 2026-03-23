@@ -449,7 +449,62 @@ function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
 
   ctx.save();
 
-  // Try sprite-based rendering for all enemies
+  // Always use canvas drawing for mines and gold fighters (sprites too damaged)
+  if (enemy.type === ET_MINE) {
+    // Metallic sphere with red pulsing core
+    const r = w / 2;
+    ctx.fillStyle = "#556677";
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    // Red core pulsing
+    ctx.fillStyle = `rgba(255,50,50,${0.5 + 0.3 * Math.sin(frame * 0.1)})`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Spikes
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI * 2 / 6) * i + frame * 0.02;
+      ctx.fillStyle = "#778899";
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(a) * r * 0.9, cy + Math.sin(a) * r * 0.9, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    return;
+  }
+
+  if (enemy.isGold) {
+    // Golden armored fighter
+    ctx.fillStyle = "#daa520";
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h / 2);
+    ctx.lineTo(cx + w / 2, cy + h / 3);
+    ctx.lineTo(cx + w / 4, cy + h / 2);
+    ctx.lineTo(cx - w / 4, cy + h / 2);
+    ctx.lineTo(cx - w / 2, cy + h / 3);
+    ctx.closePath();
+    ctx.fill();
+    // Gold shimmer
+    ctx.fillStyle = `rgba(255,215,0,${0.3 + 0.2 * Math.sin(frame * 0.08)})`;
+    ctx.fill();
+    // Shield hexagon
+    ctx.strokeStyle = `rgba(255,215,0,${0.4 + 0.2 * Math.sin(frame * 0.06)})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI * 2 / 6) * i - Math.PI / 2;
+      const px = cx + Math.cos(a) * (w / 2 + 3);
+      const py = cy + Math.sin(a) * (h / 2 + 3);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  // Try sprite-based rendering for other enemies
   let usedSprite = false;
   if (sprites) {
     let sprite = null;
@@ -474,10 +529,6 @@ function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
       case ET_CARRIER:
         sprite = sprites.enemyCarrier;
         sw = 56; sh = 44;
-        break;
-      case ET_MINE:
-        sprite = sprites.enemyMine;
-        sw = 24; sh = 24;
         break;
       default: break;
     }
@@ -578,23 +629,6 @@ function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
           ctx.strokeStyle = "#39ff1444";
           ctx.lineWidth = 1;
           ctx.strokeRect(x, y - 6, w, 3);
-        }
-        break;
-      }
-      case ET_MINE: {
-        const pulse = 0.8 + 0.2 * Math.sin(frame * 0.15);
-        ctx.fillStyle = def.color;
-        ctx.beginPath();
-        ctx.arc(cx, cy, w / 2 * pulse, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#ff4444";
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 8; i++) {
-          const a = (Math.PI * 2 / 8) * i + frame * 0.03;
-          ctx.beginPath();
-          ctx.moveTo(cx + (w / 2 - 2) * Math.cos(a), cy + (h / 2 - 2) * Math.sin(a));
-          ctx.lineTo(cx + (w / 2 + 4) * Math.cos(a), cy + (h / 2 + 4) * Math.sin(a));
-          ctx.stroke();
         }
         break;
       }
@@ -1829,6 +1863,12 @@ export default function ThreeInvader() {
     };
     enemy.baseX = enemy.x;
     enemy.baseY = enemy.y;
+    // Gold fighters in World 5 (phases 21+)
+    if (g.world >= 4 && type === ET_FIGHTER && Math.random() < 0.4) {
+      enemy.isGold = true;
+      enemy.hp *= 2;
+      enemy.maxHp = enemy.hp;
+    }
     g.enemies.push(enemy);
     return enemy;
   }
@@ -2668,7 +2708,17 @@ export default function ThreeInvader() {
             e.x += Math.sin(e.patternTimer * 0.05 + e.sineOffset) * 3;
           }
           if (e.type === ET_MINE) {
-            e.y += 0.3; // Slow float
+            e.y += 0.8; // Float down slowly
+            e.x += Math.sin(e.patternTimer * 0.05) * 0.5; // Horizontal wobble
+            // Magnetic pull toward player when close
+            const mineDx = (g.playerX + PLAYER_W / 2) - (e.x + ENEMY_DEFS[e.type].w / 2);
+            const mineDy = (g.playerY + PLAYER_H / 2) - (e.y + ENEMY_DEFS[e.type].h / 2);
+            const mineDist = Math.sqrt(mineDx * mineDx + mineDy * mineDy);
+            if (mineDist < 80 && mineDist > 0) {
+              const pullStrength = (80 - mineDist) / 80 * 1.5;
+              e.x += (mineDx / mineDist) * pullStrength;
+              e.y += (mineDy / mineDist) * pullStrength;
+            }
           }
           e.shootTimer--;
           if (e.shootTimer <= 0 && def.shotType !== "none") {
@@ -2711,14 +2761,44 @@ export default function ThreeInvader() {
         pair[1].flankSide = 1; // approach from right
         pair[1].flankPhase = 0;
         pair[1].diveTargetX = g.playerX + PLAYER_W / 2;
-      } else {
-        const diveCount = Math.min(1 + Math.floor(g.world * 0.5), 3, normalEnemies.length);
-        for (let d = 0; d < diveCount; d++) {
-          const e = normalEnemies[Math.floor(Math.random() * normalEnemies.length)];
-          if (e) {
+      } else if (normalEnemies.length > 0) {
+        const diveCount = normalEnemies.length === 1 ? 1 : Math.max(2, Math.min(1 + Math.floor(g.world * 0.5), 3, normalEnemies.length));
+        // Group by column to pick from different columns (spread across screen)
+        const byCol = {};
+        for (const e of normalEnemies) {
+          const col = e.gridSlot ? e.gridSlot.col : Math.floor(e.x / 50);
+          if (!byCol[col]) byCol[col] = [];
+          byCol[col].push(e);
+        }
+        const cols = Object.keys(byCol);
+        // Shuffle columns for random spread
+        for (let ci = cols.length - 1; ci > 0; ci--) {
+          const cj = Math.floor(Math.random() * (ci + 1));
+          [cols[ci], cols[cj]] = [cols[cj], cols[ci]];
+        }
+        let picked = 0;
+        let colIdx = 0;
+        while (picked < diveCount && colIdx < cols.length) {
+          const colEnemies = byCol[cols[colIdx]];
+          const e = colEnemies[Math.floor(Math.random() * colEnemies.length)];
+          if (e && !e.diving) {
             e.diving = true;
             e.inGrid = false;
             e.diveTargetX = g.playerX + PLAYER_W / 2;
+            picked++;
+          }
+          colIdx++;
+        }
+        // If not enough columns, pick remaining from any column
+        if (picked < diveCount) {
+          for (const e of normalEnemies) {
+            if (picked >= diveCount) break;
+            if (!e.diving) {
+              e.diving = true;
+              e.inGrid = false;
+              e.diveTargetX = g.playerX + PLAYER_W / 2;
+              picked++;
+            }
           }
         }
       }
@@ -2749,7 +2829,7 @@ export default function ThreeInvader() {
       const e = g.enemies[i];
       if (e.type === ET_MINE) {
         const d = dist(e.x + 10, e.y + 10, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2);
-        if (d < 48) {
+        if (d < 20) {
           // Explode
           spawnExplosion(g, e.x + 10, e.y + 10, "#ff4444", 15);
           g.enemies.splice(i, 1);
@@ -2759,6 +2839,14 @@ export default function ThreeInvader() {
           }
           continue;
         }
+      }
+    }
+
+    // Safety: remove any enemy that escaped the play area
+    for (let i = g.enemies.length - 1; i >= 0; i--) {
+      const e = g.enemies[i];
+      if (e.y > CH + 50 || e.y < -100 || e.x < -80 || e.x > CW + 80) {
+        g.enemies.splice(i, 1);
       }
     }
 
