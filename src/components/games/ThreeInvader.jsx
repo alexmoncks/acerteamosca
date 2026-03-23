@@ -475,31 +475,29 @@ function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
   }
 
   if (enemy.isGold) {
-    // Golden armored fighter
-    ctx.fillStyle = "#daa520";
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - h / 2);
-    ctx.lineTo(cx + w / 2, cy + h / 3);
-    ctx.lineTo(cx + w / 4, cy + h / 2);
-    ctx.lineTo(cx - w / 4, cy + h / 2);
-    ctx.lineTo(cx - w / 2, cy + h / 3);
-    ctx.closePath();
-    ctx.fill();
-    // Gold shimmer
-    ctx.fillStyle = `rgba(255,215,0,${0.3 + 0.2 * Math.sin(frame * 0.08)})`;
-    ctx.fill();
-    // Shield hexagon
-    ctx.strokeStyle = `rgba(255,215,0,${0.4 + 0.2 * Math.sin(frame * 0.06)})`;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const a = (Math.PI * 2 / 6) * i - Math.PI / 2;
-      const px = cx + Math.cos(a) * (w / 2 + 3);
-      const py = cy + Math.sin(a) * (h / 2 + 3);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    // Use enemy-gold.png sprite
+    const goldSprite = sprites?.enemyGold;
+    if (spriteReady(goldSprite)) {
+      ctx.drawImage(goldSprite, enemy.x, enemy.y, w, h);
+    } else {
+      // Fallback canvas
+      ctx.fillStyle = "#daa520";
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - h / 2);
+      ctx.lineTo(cx + w / 2, cy + h / 3);
+      ctx.lineTo(cx + w / 4, cy + h / 2);
+      ctx.lineTo(cx - w / 4, cy + h / 2);
+      ctx.lineTo(cx - w / 2, cy + h / 3);
+      ctx.closePath();
+      ctx.fill();
     }
-    ctx.closePath();
-    ctx.stroke();
+    // Gold shimmer aura overlay
+    ctx.globalAlpha = 0.2 + 0.1 * Math.sin(frame * 0.08);
+    ctx.fillStyle = "#ffd700";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, w / 2 + 4, h / 2 + 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
     ctx.restore();
     return;
   }
