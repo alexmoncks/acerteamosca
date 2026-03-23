@@ -37,12 +37,12 @@ const ET_CARRIER = 4;
 const ET_MINE = 5;
 
 const ENEMY_DEFS = [
-  { name: "Scout",   color: "#39ff14", hp: 1.2, w: 28, h: 28, points: 50,  shotType: "single" },
-  { name: "Fighter", color: "#ffd700", hp: 2.4, w: 30, h: 30, points: 100, shotType: "dual" },
-  { name: "Bomber",  color: "#ff4444", hp: 3.6, w: 32, h: 32, points: 150, shotType: "triple" },
-  { name: "Ace",     color: "#a855f7", hp: 1.2, w: 25, h: 25, points: 200, shotType: "aimed" },
-  { name: "Carrier", color: "#1e3a5f", hp: 6,   w: 41, h: 41, points: 300, shotType: "none" },
-  { name: "Mine",    color: "#888888", hp: 1.2, w: 23, h: 23, points: 75,  shotType: "none" },
+  { name: "Scout",   color: "#39ff14", hp: 1.8, w: 28, h: 28, points: 50,  shotType: "single" },
+  { name: "Fighter", color: "#ffd700", hp: 3.6, w: 30, h: 30, points: 100, shotType: "dual" },
+  { name: "Bomber",  color: "#ff4444", hp: 5.4, w: 32, h: 32, points: 150, shotType: "triple" },
+  { name: "Ace",     color: "#a855f7", hp: 1.8, w: 25, h: 25, points: 200, shotType: "aimed" },
+  { name: "Carrier", color: "#1e3a5f", hp: 9,   w: 41, h: 41, points: 300, shotType: "none" },
+  { name: "Mine",    color: "#888888", hp: 1.8, w: 23, h: 23, points: 75,  shotType: "none" },
 ];
 
 // ── Power-up types ─────────────────────────────────────────────────────
@@ -2502,7 +2502,7 @@ export default function ThreeInvader() {
       // Damage enemies in laser path
       for (let i = g.enemies.length - 1; i >= 0; i--) {
         const e = g.enemies[i];
-        if (e.entering || (e.inGrid && !e.diving)) continue; // only vulnerable when diving/attacking
+        if (e.entering) continue; // invulnerable during entry only
         const eDef = ENEMY_DEFS[e.type];
         if (Math.abs((e.x + eDef.w / 2) - laserX) < 10 && e.y < g.playerY) {
           e.hp -= 0.15;
@@ -2996,7 +2996,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
-        if (e.entering || (e.inGrid && !e.diving)) continue; // only vulnerable when diving/attacking
+        if (e.entering) continue; // invulnerable during entry only
         const def = ENEMY_DEFS[e.type];
         if (aabb(b, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -3067,7 +3067,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
-        if (e.entering || (e.inGrid && !e.diving)) continue; // only vulnerable when diving/attacking
+        if (e.entering) continue; // invulnerable during entry only
         const def = ENEMY_DEFS[e.type];
         if (aabb(m, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
