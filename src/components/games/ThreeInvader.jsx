@@ -4878,12 +4878,6 @@ export default function ThreeInvader() {
                         key={p}
                         onClick={() => {
                           initAudio();
-                          if (!user) {
-                            pendingModeRef.current = "test-phase";
-                            pendingModeRef.current_phase = p;
-                            setScreen("register");
-                            return;
-                          }
                           initGame(p, 3, 0, 5, 3);
                           setScreen("playing");
                         }}
