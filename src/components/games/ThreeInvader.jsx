@@ -1117,22 +1117,21 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     ctx.save();
     ctx.globalAlpha = 0.7;
 
-    if (world === 0 || world === 1 || world === 2) {
-      // Earth & Phobos: no tiling. Scroll from bottom to top.
+    if (world === 3) {
+      // Asteroids: tile seamlessly
+      const tiledY = scrollY % imgH;
+      ctx.drawImage(bgSprite, 0, tiledY - imgH, CW, imgH);
+      ctx.drawImage(bgSprite, 0, tiledY, CW, imgH);
+    } else {
+      // All other worlds: no tiling, scroll from bottom to top, stop at end
       const imgTop = CH - imgH + scrollY;
       if (imgTop < CH) {
         ctx.drawImage(bgSprite, 0, imgTop, CW, imgH);
       }
-      // When image ends: Earth shows gradient+stars, Phobos stays on last frame
-      if ((world === 1 || world === 2) && imgTop >= CH) {
-        // Show the top portion of the image (Phobos surface with crater) pinned
+      // When bg ends: pin to show top of image (surface/planet)
+      if (imgTop >= CH && world !== 0) {
         ctx.drawImage(bgSprite, 0, 0, CW, CH, 0, 0, CW, CH);
       }
-    } else {
-      // Other worlds: tile seamlessly
-      const tiledY = scrollY % imgH;
-      ctx.drawImage(bgSprite, 0, tiledY - imgH, CW, imgH);
-      ctx.drawImage(bgSprite, 0, tiledY, CW, imgH);
     }
     ctx.restore();
   }
@@ -1148,41 +1147,10 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     case 2: { // Mars surface - bg image handles it
       break;
     }
-    case 3: { // Asteroid belt
-      // Jupiter in background
-      ctx.fillStyle = `rgba(200,150,80,0.1)`;
-      ctx.beginPath();
-      ctx.arc(CW * 0.5, CH + 100 + Math.sin(frame * 0.003) * 10, 250, 0, Math.PI * 2);
-      ctx.fill();
-      // Bands
-      ctx.strokeStyle = `rgba(180,130,60,0.06)`;
-      ctx.lineWidth = 8;
-      for (let i = 0; i < 4; i++) {
-        ctx.beginPath();
-        ctx.arc(CW * 0.5, CH + 100, 230 + i * 20, Math.PI * 1.1, Math.PI * 1.9);
-        ctx.stroke();
-      }
+    case 3: { // Asteroid belt - bg image handles it
       break;
     }
-    case 4: { // Jupiter
-      // Jupiter takes 60% of screen
-      ctx.fillStyle = `rgba(200,150,80,0.15)`;
-      ctx.beginPath();
-      ctx.arc(CW * 0.5, CH * 0.6, CH * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      // Bands
-      ctx.strokeStyle = `rgba(180,120,50,0.1)`;
-      ctx.lineWidth = 12;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.arc(CW * 0.5, CH * 0.6, CH * 0.3 + i * 25, Math.PI * 1.05, Math.PI * 1.95);
-        ctx.stroke();
-      }
-      // Great Red Spot
-      ctx.fillStyle = `rgba(200,80,40,0.12)`;
-      ctx.beginPath();
-      ctx.ellipse(CW * 0.35, CH * 0.55, 30, 18, 0.1, 0, Math.PI * 2);
-      ctx.fill();
+    case 4: { // Jupiter - bg image handles it
       break;
     }
     default: break;
@@ -3400,9 +3368,9 @@ export default function ThreeInvader() {
     // Background
     drawWorldBg(ctx, g.world, g.frame, 0, sp);
 
-    // Stars - no stars on Mars surface (world 2), fade out near Phobos (world 1)
-    if (g.world === 2) {
-      // Mars: no stars at all
+    // Stars: none on Mars(2) or Jupiter(4), fade out near Phobos(1) surface
+    if (g.world === 2 || g.world === 4) {
+      // No stars on Mars surface or Jupiter (bg image has everything)
     } else if (g.world === 1) {
       const bgSpr = sp?.bgPhobos;
       const imgH = (bgSpr && bgSpr.naturalHeight) || 1440;
