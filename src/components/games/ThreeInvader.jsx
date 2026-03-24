@@ -259,59 +259,59 @@ function getPhaseConfig(phase) {
   switch (phase) {
     // ── WORLD 1: EARTH ORBIT ──
     case 1:
-      enemyTypes = [ET_SCOUT]; waveCount = 6; waveSize = 16; break;
+      enemyTypes = [ET_SCOUT]; waveCount = 6; waveSize = 32; break;
     case 2:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 22; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 32; break;
     case 3:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE]; waveCount = 7; waveSize = 20; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE]; waveCount = 7; waveSize = 32; break;
     case 4:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE, ET_MINE]; waveCount = 8; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_ACE, ET_MINE]; waveCount = 8; waveSize = 32; break;
     case 5: break; // Boss
 
     // ── WORLD 2: PHOBOS ──
     case 6:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 7; waveSize = 22; invaderGrid = true; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 7; waveSize = 32; invaderGrid = true; break;
     case 7:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 22; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 32; break;
     case 8:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER]; waveCount = 7; waveSize = 18; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER]; waveCount = 7; waveSize = 32; break;
     case 9:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER]; waveCount = 9; waveSize = 26; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER]; waveCount = 9; waveSize = 32; break;
     case 10: break; // Boss
 
     // ── WORLD 3: MARS SURFACE ──
     case 11:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 8; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 8; waveSize = 32; break;
     case 12:
-      enemyTypes = [ET_CARRIER, ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 20; break;
+      enemyTypes = [ET_CARRIER, ET_SCOUT, ET_FIGHTER]; waveCount = 7; waveSize = 32; break;
     case 13:
-      enemyTypes = [ET_MINE, ET_ACE, ET_FIGHTER]; waveCount = 8; waveSize = 22; break;
+      enemyTypes = [ET_MINE, ET_ACE, ET_FIGHTER]; waveCount = 8; waveSize = 32; break;
     case 14:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 9; waveSize = 30; invaderGrid = true; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE]; waveCount = 9; waveSize = 40; invaderGrid = true; break;
     case 15: break; // Boss
 
     // ── WORLD 4: ASTEROID BELT ──
     case 16:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_MINE]; waveCount = 8; waveSize = 22; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_MINE]; waveCount = 8; waveSize = 32; break;
     case 17:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 8; waveSize = 24; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER]; waveCount = 8; waveSize = 32; break;
     case 18:
-      enemyTypes = [ET_MINE, ET_SCOUT, ET_ACE]; waveCount = 7; waveSize = 20; break;
+      enemyTypes = [ET_MINE, ET_SCOUT, ET_ACE]; waveCount = 7; waveSize = 32; break;
     case 19:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER, ET_MINE]; waveCount = 9; waveSize = 26; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_CARRIER, ET_MINE]; waveCount = 9; waveSize = 40; break;
     case 20: break; // Boss
 
     // ── WORLD 5: JUPITER ──
     case 21:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 8; waveSize = 30; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 8; waveSize = 40; break;
     case 22:
-      enemyTypes = [ET_FIGHTER, ET_ACE]; waveCount = 8; waveSize = 22; break;
+      enemyTypes = [ET_FIGHTER, ET_ACE]; waveCount = 8; waveSize = 32; break;
     case 23:
-      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 9; waveSize = 28; break;
+      enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_CARRIER, ET_MINE]; waveCount = 9; waveSize = 40; break;
     case 24:
       enemyTypes = [ET_SCOUT, ET_FIGHTER, ET_BOMBER, ET_ACE, ET_MINE]; survivalMode = true; survivalDuration = 7200; break; // 120s
     case 25: break; // Boss
-    default: enemyTypes = [ET_SCOUT]; waveCount = 6; waveSize = 16;
+    default: enemyTypes = [ET_SCOUT]; waveCount = 6; waveSize = 32;
   }
 
   return { world, localPhase, isBoss, enemyTypes, waveCount, waveSize, invaderGrid, survivalMode, survivalDuration };
@@ -2209,9 +2209,9 @@ export default function ThreeInvader() {
     for (let i = 0; i < count; i++) {
       const type = types[Math.floor(Math.random() * types.length)];
       const pattern = (cfg.invaderGrid && type === ET_BOMBER) ? "invader" : "galaga";
-      const GRID_COLS = 6;
-      const GRID_SPACING_X = 65;
-      const GRID_SPACING_Y = 38;
+      const GRID_COLS = 8;
+      const GRID_SPACING_X = 52;
+      const GRID_SPACING_Y = 36;
       const GRID_OFFSET_X = (CW - (GRID_COLS - 1) * GRID_SPACING_X) / 2;
       const x = GRID_OFFSET_X + (i % GRID_COLS) * GRID_SPACING_X + Math.random() * 15;
       const y = -30 - Math.floor(i / GRID_COLS) * 40 - Math.random() * 20;
