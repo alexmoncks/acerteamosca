@@ -2645,14 +2645,14 @@ export default function ThreeInvader() {
             e.enterPhase++;
             const targetX = e.baseX;
             const targetY = e.baseY;
-            e.x = lerp(e.x, targetX + Math.sin(e.enterAngle + e.enterPhase * 0.1) * 30, 0.04);
-            e.y = lerp(e.y, targetY, 0.03);
+            e.x = lerp(e.x, targetX + Math.sin(e.enterAngle + e.enterPhase * 0.1) * 30, 0.06);
+            e.y = lerp(e.y, targetY, 0.05);
           } else if (!e.diving) {
             e.inGrid = true;
             e.entering = false;
-            // Formation movement with swarm oscillation
-            const gridX = 40 + (e.gridSlot?.col || 0) * 50;
-            const gridY = 50 + (e.gridSlot?.row || 0) * 40;
+            // Formation movement with swarm oscillation — use baseX/baseY from spawn
+            const gridX = e.baseGridX || e.baseX;
+            const gridY = e.baseGridY || e.baseY;
             // Save base grid position for return from dive
             e.baseGridX = gridX;
             e.baseGridY = gridY;
