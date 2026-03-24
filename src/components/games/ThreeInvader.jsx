@@ -2873,7 +2873,7 @@ export default function ThreeInvader() {
     // Safety: remove any enemy that escaped the play area
     for (let i = g.enemies.length - 1; i >= 0; i--) {
       const e = g.enemies[i];
-      if (e.y > CH + 50 || e.y < -100 || e.x < -80 || e.x > CW + 80) {
+      if (e.y > CH + 50 || e.y < -300 || e.x < -80 || e.x > CW + 80) {
         g.enemies.splice(i, 1);
       }
     }
