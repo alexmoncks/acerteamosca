@@ -1252,7 +1252,8 @@ function drawHUD(ctx, g) {
   ctx.fillStyle = "#4a5568";
   ctx.font = "6px monospace";
   ctx.textAlign = "right";
-  ctx.fillText(`LV${g.shotLevel}`, slBarX - 4, slBarY + 5);
+  const ammoText = g.shotLevel > 1 && g.shotAmmo > 0 ? `LV${g.shotLevel} ${g.shotAmmo}` : `LV${g.shotLevel}`;
+  ctx.fillText(ammoText, slBarX - 4, slBarY + 5);
 
   // Active power-up timers
   let puY = 44;
@@ -1685,6 +1686,7 @@ export default function ThreeInvader() {
       lives,
       bombs,
       shotLevel: 1,
+      shotAmmo: 0, // shots remaining at current level (0 = unlimited for level 1)
       score,
       combo: 1,
       comboKills: 0,
@@ -2207,26 +2209,30 @@ export default function ThreeInvader() {
     for (let i = 0; i < count; i++) {
       const type = types[Math.floor(Math.random() * types.length)];
       const pattern = (cfg.invaderGrid && type === ET_BOMBER) ? "invader" : "galaga";
-      const x = 20 + (i % 8) * 50 + Math.random() * 20;
-      const y = -30 - Math.floor(i / 8) * 40 - Math.random() * 20;
+      const GRID_COLS = 6;
+      const GRID_SPACING_X = 65;
+      const GRID_SPACING_Y = 38;
+      const GRID_OFFSET_X = (CW - (GRID_COLS - 1) * GRID_SPACING_X) / 2;
+      const x = GRID_OFFSET_X + (i % GRID_COLS) * GRID_SPACING_X + Math.random() * 15;
+      const y = -30 - Math.floor(i / GRID_COLS) * 40 - Math.random() * 20;
       const e = spawnEnemy(g, type, x, y, pattern);
 
       if (pattern === "galaga") {
-        const gridCol = i % 8;
-        const gridRow = Math.floor(i / 8);
+        const gridCol = i % GRID_COLS;
+        const gridRow = Math.floor(i / GRID_COLS);
         e.gridSlot = { col: gridCol, row: gridRow };
-        e.baseX = 40 + gridCol * 50;
-        e.baseY = 50 + gridRow * 40;
+        e.baseX = GRID_OFFSET_X + gridCol * GRID_SPACING_X;
+        e.baseY = 50 + gridRow * GRID_SPACING_Y;
         e.baseGridX = e.baseX;
         e.baseGridY = e.baseY;
       } else if (pattern === "invader") {
-        const gridCol = i % 8;
-        const gridRow = Math.floor(i / 8);
+        const gridCol = i % GRID_COLS;
+        const gridRow = Math.floor(i / GRID_COLS);
         e.gridSlot = { col: gridCol, row: gridRow };
         e.inGrid = true;
         e.entering = false; // placed directly in grid
-        e.x = 20 + gridCol * 50;
-        e.y = 30 + gridRow * 35;
+        e.x = GRID_OFFSET_X + gridCol * GRID_SPACING_X;
+        e.y = 30 + gridRow * GRID_SPACING_Y;
         e.baseGridX = e.x;
         e.baseGridY = e.y;
       }
@@ -2253,8 +2259,13 @@ export default function ThreeInvader() {
   function applyPowerUp(g, type) {
     switch (type) {
       case PU_P:
-        if (g.shotLevel < SHOT_LEVEL_MAX) g.shotLevel++;
-        else g.score += 500;
+        if (g.shotLevel < SHOT_LEVEL_MAX) {
+          g.shotLevel++;
+          g.shotAmmo = 300; // 300 shots at this level
+        } else {
+          g.shotAmmo = 300; // renew ammo at max level
+          g.score += 500;
+        }
         break;
       case PU_B:
         if (g.bombs < BOMB_MAX) g.bombs++;
@@ -2315,6 +2326,8 @@ export default function ThreeInvader() {
   // ── Use bomb ───────────────────────────────────────────────────
   function useBomb(g) {
     if (g.bombs <= 0 || g.dead || g.bombEffect.active) return;
+    // Play sound FIRST for instant feedback
+    playSfx(sfxRef.current?.shockwave, 0.5);
     g.bombs--;
     g.phaseBombUsed = true;
     g.bombEffect.active = true;
@@ -2347,7 +2360,6 @@ export default function ThreeInvader() {
       }
     }
 
-    playSfx(sfxRef.current?.shockwave, 0.5);
   }
 
   // ── Game loop ──────────────────────────────────────────────────
@@ -2487,6 +2499,14 @@ export default function ThreeInvader() {
       if (wantShoot && g.frame % SHOT_COOLDOWN === 0) {
         if (g.laserTimer <= 0) {
           firePlayerShot(g);
+          // Decrement shot ammo (level 1 has unlimited)
+          if (g.shotLevel > 1 && g.shotAmmo > 0) {
+            g.shotAmmo--;
+            if (g.shotAmmo <= 0) {
+              g.shotLevel = Math.max(1, g.shotLevel - 1);
+              g.shotAmmo = g.shotLevel > 1 ? 300 : 0; // previous level keeps its ammo
+            }
+          }
           if (g.shotLevel >= 4) {
             playSfx(sfxRef.current?.plasmaCannon, 0.2);
           } else {
