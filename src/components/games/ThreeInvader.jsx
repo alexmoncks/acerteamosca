@@ -1304,9 +1304,10 @@ export default function ThreeInvader() {
     function calc() {
       const maxW = window.innerWidth - 24;
       const maxH = window.innerHeight - 48 - 70; // navbar(48) + controls+padding(70)
-      const scaleW = maxW < CW ? maxW / CW : 1;
-      const scaleH = maxH < CH ? maxH / CH : 1;
-      setGameScale(Math.min(scaleW, scaleH));
+      const scaleW = maxW / CW;
+      const scaleH = maxH / CH;
+      // Scale up on PC (max 2x to avoid blurriness), scale down on mobile
+      setGameScale(Math.min(scaleW, scaleH, 2));
     }
     calc();
     window.addEventListener("resize", calc);
