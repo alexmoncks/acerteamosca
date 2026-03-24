@@ -1303,7 +1303,7 @@ export default function ThreeInvader() {
   useEffect(() => {
     function calc() {
       const maxW = window.innerWidth - 24;
-      const maxH = window.innerHeight - 48 - 70; // navbar(48) + controls+padding(70)
+      const maxH = window.innerHeight - 48 - 90; // navbar(48) + controls+padding(90)
       const scaleW = maxW / CW;
       const scaleH = maxH / CH;
       // Scale up on PC (max 2x to avoid blurriness), scale down on mobile
@@ -4051,7 +4051,7 @@ export default function ThreeInvader() {
         alignItems: "center",
         justifyContent: screen === "menu" || isPlaying || screen === "intro" || screen === "gameover" || screen === "victory" || screen === "phaseselect" ? "flex-start" : "center",
         fontFamily: "'Fira Code', monospace",
-        overflow: "hidden",
+        overflow: "visible",
         padding: "2px 12px 0",
       }}
     >
