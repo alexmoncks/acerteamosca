@@ -125,10 +125,10 @@ function getRank(score, completed) {
 
 // ── Intro text ─────────────────────────────────────────────────────────
 const INTRO_SCREENS = [
-  "2186. Observatorios detectaram objeto anomalo na Nuvem de Oort.\nTrajetoria: sistema solar interior.\nVelocidade: 0.4c, desacelerando.\nCometas nao desaceleram.",
-  "Sob a camada de gelo e poeira havia uma ESTRUTURA.\nUma nave. Colossal. Viva.\nDesignacao: 3I/ATLAS.\nOrigem: desconhecida.\nIntencao: hostil.",
-  "Europa: silencio.\nGanimedes: 'ELES ESTAO DENTRO'.\nCalisto: transmissao interrompida.\nIo: convertida em forja de guerra.\nAs luas de Jupiter cairam em 72 horas.",
-  "Voce pilota o ARROW-7, ultimo cacaestelar classe Aleste.\nMissao: da orbita terrestre ate Jupiter.\nObjetivo: destruir 3I/ATLAS.\n\n    /\\\n   /  \\\n  / () \\\n /______\\\n  ||  ||\n  /    \\\n\nA humanidade depende de voce.\n\nPRESSIONE PARA INICIAR",
+  "2186. Observatorios detectaram objeto anomalo na Nuvem de Oort.\nTrajetória: sistema solar interior.\nVelocidade: 0.4c, desacelerando.\nCometas nao desaceleram.",
+  "De acordo com a sua estrutura química, este mesmo objeto foi detectado no ano de 2025 e designado com o nome 3I/Atlas, sob a camada de gelo e poeira havia uma ESTRUTURA.\nUma nave. Colossal. Viva.\nOrigem: desconhecida.\nIntencao: hostil.",
+  "Europa: silencio.\nGanimedes: 'ELES INVADIRAM A INSTALAÇÃO'.\nCalisto: transmissao interrompida.\nIo: convertida em uma forja de guerra.\nAs luas de Jupiter cairam em 72 horas.",
+  "Voce pilota o ARROW-7, único caça estelar experimental da classe Aleste que conseguiu decolar.\nMissão: da orbita terrestre ate Júpiter.\nObjetivo: destruir o invasor 3I/ATLAS.\n\n\nA humanidade depende de voce.\n\nPRESSIONE ESPAÇO OU CLICK PARA INICIAR",
 ];
 
 // ── Audio Engine ───────────────────────────────────────────────────────
