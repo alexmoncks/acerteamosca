@@ -1944,7 +1944,7 @@ export default function ThreeInvader() {
     const topY = g.playerY;
     const bw = 3;
     const bh = 12;
-    const dmg = 1 + (g.shotLevel - 1) * 0.25;
+    const dmg = 0.6 + (g.shotLevel - 1) * 0.1; // Lv1=0.6, Lv2=0.7, Lv3=0.8, Lv4=0.9, Lv5=1.0
 
     switch (g.shotLevel) {
       case 1:
