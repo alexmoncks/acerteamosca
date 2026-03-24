@@ -1207,7 +1207,7 @@ function drawHUD(ctx, g) {
   }
 
   // Phase number
-  ctx.fillStyle = "#4a5568";
+  ctx.fillStyle = "#ffd700";
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
@@ -1237,7 +1237,7 @@ function drawHUD(ctx, g) {
     ctx.fillText("\u25C6", CW - 12 - i * 14, 12);
   }
 
-  // Shot level bar
+  // Shot level bar (top right)
   const slBarW = 80;
   const slBarH = 6;
   const slBarX = CW - 12 - slBarW;
@@ -1249,11 +1249,20 @@ function drawHUD(ctx, g) {
   ctx.strokeStyle = "#00eeff44";
   ctx.lineWidth = 1;
   ctx.strokeRect(slBarX, slBarY, slBarW, slBarH);
-  ctx.fillStyle = "#4a5568";
+  ctx.fillStyle = "#8899aa";
   ctx.font = "6px monospace";
   ctx.textAlign = "right";
-  const ammoText = g.shotLevel > 1 && g.shotAmmo > 0 ? `LV${g.shotLevel} ${g.shotAmmo}` : `LV${g.shotLevel}`;
-  ctx.fillText(ammoText, slBarX - 4, slBarY + 5);
+  ctx.fillText(`LV${g.shotLevel}`, slBarX - 4, slBarY + 5);
+
+  // Shot ammo percentage (centered, below score)
+  if (g.shotLevel > 1 && g.shotAmmo > 0) {
+    const pct = Math.round((g.shotAmmo / 300) * 100);
+    const pctColor = pct > 50 ? "#00eeff" : pct > 20 ? "#ffd700" : "#ff4444";
+    ctx.fillStyle = pctColor;
+    ctx.font = "bold 9px 'Press Start 2P', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(`${pct}%`, CW / 2, 40);
+  }
 
   // Active power-up timers
   let puY = 44;
