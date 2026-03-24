@@ -2523,7 +2523,16 @@ export default function ThreeInvader() {
             // Carrier spawns scouts
             if (e.type === ET_CARRIER) {
               for (let s = 0; s < 3; s++) {
-                spawnEnemy(g, ET_SCOUT, e.x + (s - 1) * 20, e.y, "galaga");
+                const sx = 40 + Math.random() * (CW - 80);
+                const sy = -20 - s * 30;
+                const sc = spawnEnemy(g, ET_SCOUT, sx, sy, "galaga");
+                const col = Math.floor(Math.random() * 8);
+                const row = Math.floor(Math.random() * 3);
+                sc.gridSlot = { col, row };
+                sc.baseX = 40 + col * 50;
+                sc.baseY = 50 + row * 40;
+                sc.baseGridX = sc.baseX;
+                sc.baseGridY = sc.baseY;
               }
             }
             g.enemies.splice(i, 1);
@@ -3066,7 +3075,16 @@ export default function ThreeInvader() {
             // Carrier spawns scouts on death
             if (e.type === ET_CARRIER) {
               for (let s = 0; s < 3; s++) {
-                spawnEnemy(g, ET_SCOUT, e.x + (s - 1) * 20, e.y, "galaga");
+                const sx = 40 + Math.random() * (CW - 80);
+                const sy = -20 - s * 30;
+                const sc = spawnEnemy(g, ET_SCOUT, sx, sy, "galaga");
+                const col = Math.floor(Math.random() * 8);
+                const row = Math.floor(Math.random() * 3);
+                sc.gridSlot = { col, row };
+                sc.baseX = 40 + col * 50;
+                sc.baseY = 50 + row * 40;
+                sc.baseGridX = sc.baseX;
+                sc.baseGridY = sc.baseY;
               }
             }
             g.enemies.splice(ei, 1);
@@ -3136,7 +3154,16 @@ export default function ThreeInvader() {
             if (e.hasPowerUp) dropPowerUp(g, e.x + def.w / 2, e.y + def.h / 2);
             if (e.type === ET_CARRIER) {
               for (let s = 0; s < 3; s++) {
-                spawnEnemy(g, ET_SCOUT, e.x + (s - 1) * 20, e.y, "galaga");
+                const sx = 40 + Math.random() * (CW - 80);
+                const sy = -20 - s * 30;
+                const sc = spawnEnemy(g, ET_SCOUT, sx, sy, "galaga");
+                const col = Math.floor(Math.random() * 8);
+                const row = Math.floor(Math.random() * 3);
+                sc.gridSlot = { col, row };
+                sc.baseX = 40 + col * 50;
+                sc.baseY = 50 + row * 40;
+                sc.baseGridX = sc.baseX;
+                sc.baseGridY = sc.baseY;
               }
             }
             g.enemies.splice(ei, 1);
