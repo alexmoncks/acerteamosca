@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    browsersListForSwc: true,
-  },
   async headers() {
     return [
       {
