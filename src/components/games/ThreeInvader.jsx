@@ -683,9 +683,28 @@ function drawBoss(ctx, boss, frame, sprites) {
       case 1: // HIVE-01: alternate closed/open based on frame cycle
         bossSprite = (Math.floor(frame / 60) % 2 === 0) ? sprites.bossHive01Closed : sprites.bossHive01Open;
         break;
-      case 2: // GOLIATH: anchored sprite, rotated in chargePhase
-        bossSprite = sprites.bossGoliathAnchored;
+      case 2: { // GOLIATH: directional sprite based on movement
+        const goliathDirs = sprites.bossGoliathDirs;
+        const goliathAnim = sprites.bossGoliathAnim;
+        if (boss.chargePhase && spriteReady(goliathAnim)) {
+          // Animated south-facing charge: 8 frames at 10fps (every 6 ticks)
+          const animFrame = Math.floor(frame / 6) % 8;
+          if (damageFlash) ctx.globalAlpha = 0.7;
+          ctx.drawImage(goliathAnim, animFrame * 160, 0, 160, 160, x, y, w, h);
+          if (damageFlash) ctx.globalAlpha = 1;
+          bossSprite = null; // skip normal draw
+        } else if (spriteReady(goliathDirs)) {
+          // Static directional frame: S=0, SE=1, E=2, NE=3, N=4, NW=5, W=6, SW=7
+          const dirIdx = boss.dirIndex || 0;
+          if (damageFlash) ctx.globalAlpha = 0.7;
+          ctx.drawImage(goliathDirs, dirIdx * 160, 0, 160, 160, x, y, w, h);
+          if (damageFlash) ctx.globalAlpha = 1;
+          bossSprite = null; // skip normal draw
+        } else {
+          bossSprite = sprites.bossGoliathAnchored; // fallback
+        }
         break;
+      }
       case 3: // CHARYBDIS: eye open/closed
         bossSprite = boss.eyeOpen ? sprites.bossCharybdisOpen : sprites.bossCharybdisClosed;
         break;
@@ -703,17 +722,7 @@ function drawBoss(ctx, boss, frame, sprites) {
     if (damageFlash) {
       ctx.globalAlpha = 0.7;
     }
-    // Goliath chargePhase rotation
-    if (boss.bossIndex === 2 && boss.chargePhase) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(Math.PI);
-      ctx.translate(-cx, -cy);
-      ctx.drawImage(bossSprite, x, y, w, h);
-      ctx.restore();
-    } else {
-      ctx.drawImage(bossSprite, x, y, w, h);
-    }
+    ctx.drawImage(bossSprite, x, y, w, h);
     if (damageFlash) {
       ctx.globalAlpha = 1;
     }
@@ -1471,6 +1480,8 @@ export default function ThreeInvader() {
       bossHive01Closed: "/images/3invader/boss-hive01-closed.png",
       bossHive01Open: "/images/3invader/boss-hive01-open.png",
       bossGoliathAnchored: "/images/3invader/boss-goliath-anchored.png",
+      bossGoliathDirs: "/images/3invader/boss-goliath-directions.png",
+      bossGoliathAnim: "/images/3invader/boss-goliath-anim.png",
       bossCharybdisClosed: "/images/3invader/boss-charybdis-closed.png",
       bossCharybdisOpen: "/images/3invader/boss-charybdis-open.png",
       bossAtlasPhase1: "/images/3invader/boss-atlas-phase1.png",
@@ -1936,6 +1947,10 @@ export default function ThreeInvader() {
       tentacles: bossIndex === 3 ? 2 : 0,
       chargePhase: false,
       chargeTarget: 0,
+      // Goliath direction tracking
+      dirIndex: 0, // 0=S, 1=SE, 2=E, 3=NE, 4=N, 5=NW, 6=W, 7=SW
+      prevX: CW / 2 - def.w / 2,
+      prevY: -def.h - 20,
     };
     g.phaseBossActive = true;
   }
@@ -2912,6 +2927,19 @@ export default function ThreeInvader() {
     if (g.boss && g.boss.alive) {
       const boss = g.boss;
       boss.phaseTimer++;
+
+      // Goliath: compute direction index from velocity (before movement for prevX/prevY init)
+      if (boss.bossIndex === 2) {
+        const vx = boss.x - boss.prevX;
+        const vy = boss.y - boss.prevY;
+        if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+          const angle = Math.atan2(vy, vx);
+          let idx = Math.round((Math.PI / 2 - angle) / (Math.PI / 4));
+          boss.dirIndex = ((idx % 8) + 8) % 8;
+        }
+        boss.prevX = boss.x;
+        boss.prevY = boss.y;
+      }
 
       if (boss.entering) {
         boss.y = lerp(boss.y, boss.targetY, 0.02);
