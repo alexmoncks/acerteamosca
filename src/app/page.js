@@ -1,5 +1,7 @@
 import Link from "next/link";
 import AdBanner from "@/components/AdBanner";
+import AdsTerraPopunder from "@/components/AdsTerraPopunder";
+import AdsTerraBanner from "@/components/AdsTerraBanner";
 
 const jogos = [
   {
@@ -14,7 +16,7 @@ const jogos = [
     slug: "pong",
     nome: "Pong",
     emoji: "🏓",
-    desc: "Classico dos classicos! Jogue contra o CPU, um amigo local ou online.",
+    desc: "Clássico dos clássicos! Jogue contra o CPU, um amigo local ou online.",
     cor: "#b026ff",
     destaque: false,
   },
@@ -46,7 +48,7 @@ const jogos = [
     slug: "2048",
     nome: "2048",
     emoji: "🔢",
-    desc: "Deslize os blocos e some ate chegar no 2048! Jogue online.",
+    desc: "Deslize os blocos e some até chegar no 2048! Jogue online.",
     cor: "#f59e0b",
     destaque: false,
   },
@@ -62,15 +64,15 @@ const jogos = [
     slug: "deepattack",
     nome: "Deep Attack",
     emoji: "🚀",
-    desc: "Pilote sua nave, destrua aliens e sobreviva no espaco!",
+    desc: "Pilote sua nave, destrua aliens e sobreviva no espaço!",
     cor: "#22d3ee",
     destaque: false,
   },
   {
     slug: "jacare",
-    nome: "Jogo do Jacare",
+    nome: "Jogo do Jacaré",
     emoji: "🐊",
-    desc: "Atravesse a rua e o rio com o jacare! Estilo Frogger classico.",
+    desc: "Atravesse a rua e o rio com o jacaré! Estilo Frogger clássico.",
     cor: "#39ff14",
     destaque: false,
   },
@@ -94,19 +96,19 @@ const jogos = [
     slug: "brickbreaker",
     nome: "Brick Breaker",
     emoji: "🧱",
-    desc: "Destrua todos os blocos em 25 fases! Power-ups, inimigos e 5 mundos epicos.",
+    desc: "Destrua todos os blocos em 25 fases! Power-ups, inimigos e 5 mundos épicos.",
     cor: "#00f0ff",
     destaque: false,
   },
 ];
 
 const faqs = [
-  { q: "O que e o Acerte a Mosca?", a: "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador. Oferecemos 12 jogos incluindo Wordle em portugues, 2048, Jogo da Memoria, Batalha Naval, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacare, Tiro ao Alvo e Brick Breaker. Nao precisa baixar nada!" },
-  { q: "Quais jogos estao disponiveis?", a: "Temos 12 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memoria com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (classico com multiplayer), Ships (batalha de naves com multiplayer), Jogo do Jacare (estilo Frogger), Tiro ao Alvo (reflexo), Batalha Naval (estrategia com multiplayer online) e Brick Breaker (arcade estilo Arkanoid)." },
-  { q: "Preciso baixar alguma coisa para jogar?", a: "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e comecar a jogar." },
-  { q: "Os jogos funcionam no celular?", a: "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack tem botoes de controle dedicados para telas touch." },
+  { q: "O que é o Acerte a Mosca?", a: "Acerte a Mosca é uma plataforma de jogos online grátis que funciona direto no navegador. Oferecemos 12 jogos incluindo Wordle em português, 2048, Jogo da Memória, Batalha Naval, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo e Brick Breaker. Não precisa baixar nada!" },
+  { q: "Quais jogos estão disponíveis?", a: "Temos 12 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memória com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (clássico com multiplayer), Ships (batalha de naves com multiplayer), Jogo do Jacaré (estilo Frogger), Tiro ao Alvo (reflexo), Batalha Naval (estratégia com multiplayer online) e Brick Breaker (arcade estilo Arkanoid)." },
+  { q: "Preciso baixar alguma coisa para jogar?", a: "Não! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e começar a jogar." },
+  { q: "Os jogos funcionam no celular?", a: "Sim! Todos os jogos são responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack têm botões de controle dedicados para telas touch." },
   { q: "Posso jogar com amigos online?", a: "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
-  { q: "Os jogos sao realmente gratis?", a: "Sim, todos os jogos sao 100% gratis. Basta se cadastrar com nome e email para comecar a jogar." },
+  { q: "Os jogos são realmente grátis?", a: "Sim, todos os jogos são 100% grátis. Basta se cadastrar com nome e email para começar a jogar." },
 ];
 
 export default function Home() {
@@ -128,12 +130,12 @@ export default function Home() {
             "@context": "https://schema.org",
             "@type": "FAQPage",
             "mainEntity": [
-              { "@type": "Question", "name": "O que e o Acerte a Mosca?", "acceptedAnswer": { "@type": "Answer", "text": "Acerte a Mosca e uma plataforma de jogos online gratis que funciona direto no navegador..." } },
-              { "@type": "Question", "name": "Quais jogos estao disponiveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 12 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacare, Tiro ao Alvo, Batalha Naval e Brick Breaker." } },
-              { "@type": "Question", "name": "Preciso baixar alguma coisa?", "acceptedAnswer": { "@type": "Answer", "text": "Nao! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador." } },
-              { "@type": "Question", "name": "Os jogos funcionam no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Todos os jogos sao responsivos e possuem controles touch otimizados para celular." } },
+              { "@type": "Question", "name": "O que é o Acerte a Mosca?", "acceptedAnswer": { "@type": "Answer", "text": "Acerte a Mosca é uma plataforma de jogos online grátis que funciona direto no navegador." } },
+              { "@type": "Question", "name": "Quais jogos estão disponíveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 12 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo, Batalha Naval e Brick Breaker." } },
+              { "@type": "Question", "name": "Preciso baixar alguma coisa?", "acceptedAnswer": { "@type": "Answer", "text": "Não! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador." } },
+              { "@type": "Question", "name": "Os jogos funcionam no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Todos os jogos são responsivos e possuem controles touch otimizados para celular." } },
               { "@type": "Question", "name": "Posso jogar com amigos online?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online." } },
-              { "@type": "Question", "name": "Os jogos sao gratis?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, todos os jogos sao 100% gratis." } },
+              { "@type": "Question", "name": "Os jogos são grátis?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, todos os jogos são 100% grátis." } },
             ]
           })
         }}
@@ -144,8 +146,8 @@ export default function Home() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "ItemList",
-            "name": "Jogos Online Gratis",
-            "description": "Lista de jogos online gratis no Acerte a Mosca",
+            "name": "Jogos Online Grátis",
+            "description": "Lista de jogos online grátis no Acerte a Mosca",
             "numberOfItems": 12,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "url": "https://acerteamosca.com.br/jogos/acerteamosca", "name": "Acerte a Mosca" },
@@ -156,7 +158,7 @@ export default function Home() {
               { "@type": "ListItem", "position": 6, "url": "https://acerteamosca.com.br/jogos/2048", "name": "2048" },
               { "@type": "ListItem", "position": 7, "url": "https://acerteamosca.com.br/jogos/bubbleshooter", "name": "Bubble Shooter" },
               { "@type": "ListItem", "position": 8, "url": "https://acerteamosca.com.br/jogos/deepattack", "name": "Deep Attack" },
-              { "@type": "ListItem", "position": 9, "url": "https://acerteamosca.com.br/jogos/jacare", "name": "Jogo do Jacare" },
+              { "@type": "ListItem", "position": 9, "url": "https://acerteamosca.com.br/jogos/jacare", "name": "Jogo do Jacaré" },
               { "@type": "ListItem", "position": 10, "url": "https://acerteamosca.com.br/jogos/tiroaoalvo", "name": "Tiro ao Alvo" },
               { "@type": "ListItem", "position": 11, "url": "https://acerteamosca.com.br/jogos/batalha-naval", "name": "Batalha Naval" },
               { "@type": "ListItem", "position": 12, "url": "https://acerteamosca.com.br/jogos/brickbreaker", "name": "Brick Breaker" },
@@ -165,6 +167,7 @@ export default function Home() {
         }}
       />
 
+      <AdsTerraPopunder />
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
         style={{
@@ -189,10 +192,11 @@ export default function Home() {
           marginBottom: 12,
         }}
       >
-        JOGOS ONLINE GRATIS
+        JOGOS ONLINE GRÁTIS
       </p>
 
       <AdBanner slot="home_top" style={{ marginBottom: 20, maxWidth: 900, width: "100%" }} />
+      <AdsTerraBanner style={{ marginBottom: 20, maxWidth: 900 }} />
 
       <div
         style={{
@@ -286,6 +290,8 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      <AdsTerraBanner style={{ marginTop: 30, maxWidth: 900 }} />
 
       <p
         style={{
