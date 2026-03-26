@@ -2,17 +2,18 @@ import "./globals.css";
 import Script from "next/script";
 import Navbar from "@/components/Navbar";
 import InstallPrompt from "@/components/InstallPrompt";
+import AdsTerraSocialBar from "@/components/AdsTerraSocialBar";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
 
 export const metadata = {
   title: {
-    default: "Acerte a Mosca - Jogos Online Gratis",
+    default: "Acerte a Mosca - Jogos Online Grátis | Jogue Agora!",
     template: "%s | Acerte a Mosca",
   },
-  description: "Jogos online gratis no navegador! Wordle em portugues, 2048, Jogo da Memoria, Bubble Shooter, Deep Attack e mais. Sem download, jogue agora no celular ou computador!",
-  keywords: ["jogos online gratis", "jogos no navegador", "jogos sem download", "wordle portugues", "2048 online", "jogo da memoria online", "bubble shooter online", "jogos gratis", "jogos mobile", "jogos browser"],
+  description: "Jogos online grátis no navegador! Wordle em português, 2048, Jogo da Memória, Bubble Shooter, Deep Attack e mais. Jogue agora no celular ou PC sem download!",
+  keywords: ["jogos online grátis", "jogos no navegador", "jogos sem download", "wordle português", "2048 online", "jogo da memória online", "bubble shooter online", "jogos grátis", "jogos mobile", "jogos browser"],
   authors: [{ name: "Acerte a Mosca" }],
   creator: "Acerte a Mosca",
   publisher: "Acerte a Mosca",
@@ -23,21 +24,21 @@ export const metadata = {
     locale: "pt_BR",
     url: "https://acerteamosca.com.br",
     siteName: "Acerte a Mosca",
-    title: "Acerte a Mosca - Jogos Online Gratis",
-    description: "Jogos online gratis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais. Sem download!",
+    title: "Acerte a Mosca - Jogos Online Grátis | Jogue Agora!",
+    description: "Jogos online grátis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais. Sem download!",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Acerte a Mosca - Jogos Online Gratis",
+        alt: "Acerte a Mosca - Jogos Online Grátis",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Acerte a Mosca - Jogos Online Gratis",
-    description: "Jogos online gratis no navegador! Sem download, jogue agora!",
+    title: "Acerte a Mosca - Jogos Online Grátis | Jogue Agora!",
+    description: "Jogos online grátis no navegador! Sem download, jogue agora!",
   },
   robots: {
     index: true,
@@ -76,7 +77,7 @@ export default function RootLayout({ children }) {
               "@type": "WebSite",
               "name": "Acerte a Mosca",
               "url": "https://acerteamosca.com.br",
-              "description": "Jogos online gratis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais.",
+              "description": "Jogos online grátis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais.",
               "publisher": {
                 "@type": "Organization",
                 "name": "Acerte a Mosca"
@@ -111,6 +112,7 @@ export default function RootLayout({ children }) {
         <Navbar />
         <InstallPrompt />
         <main style={{ paddingTop: 48 }}>{children}</main>
+        <AdsTerraSocialBar />
       </body>
     </html>
   );
