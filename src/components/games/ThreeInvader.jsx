@@ -726,7 +726,7 @@ function drawBoss(ctx, boss, frame, sprites) {
     if (damageFlash) {
       ctx.globalAlpha = 1;
     }
-  } else {
+  } else if (bossSprite !== null) {
   // Fallback: original canvas drawing
   switch (boss.bossIndex) {
     case 0: { // ORION-9 satellite
