@@ -2,7 +2,7 @@ export const adsConfig = {
   adsterra: {
     popunder: {
       enabled: true,
-      src: "https://pl28985691.profitablecpmratenetwork.com/e8/af/5e/e8af5e1ef8758093ed62d268ab3de5e7.js",
+      src: "https://turnstilesocially.com/e8/af/5e/e8af5e1ef8758093ed62d268ab3de5e7.js",
       frequency: "daily",
     },
     socialBar: {
