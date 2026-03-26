@@ -508,10 +508,30 @@ function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
     let sprite = null;
     let sw = w, sh = h;
     switch (enemy.type) {
-      case ET_SCOUT:
-        sprite = sprites.enemyScout;
-        sw = 32; sh = 29;
+      case ET_SCOUT: {
+        // Animated spritesheet: 16 frames, 32x32, 10fps (every 6 game ticks)
+        const scoutAnim = sprites.enemyScoutAnim;
+        if (spriteReady(scoutAnim)) {
+          const animFrame = Math.floor(frame / 6) % 16;
+          const drawX = cx - 16;
+          const drawY = cy - 16;
+          ctx.drawImage(scoutAnim, animFrame * 32, 0, 32, 32, drawX, drawY, 32, 32);
+          // HP bar for scouts if damaged
+          if (enemy.hp < def.hp) {
+            const pct = enemy.hp / def.hp;
+            ctx.fillStyle = "#39ff1488";
+            ctx.fillRect(x, y - 6, w * pct, 3);
+            ctx.strokeStyle = "#39ff1444";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y - 6, w, 3);
+          }
+          usedSprite = true;
+        } else {
+          sprite = sprites.enemyScout;
+          sw = 32; sh = 29;
+        }
         break;
+      }
       case ET_FIGHTER:
         sprite = sprites.enemyFighter;
         sw = 40; sh = 32;
@@ -1438,6 +1458,7 @@ export default function ThreeInvader() {
       // Enemies
       enemyFighter: "/images/3invader/enemy-fighter.png",
       enemyScout: "/images/3invader/enemy-scout.png",
+      enemyScoutAnim: "/images/3invader/enemy-scout-anim.png",
       enemyAce: "/images/3invader/enemy-ace.png",
       enemyBomber: "/images/3invader/enemy-bomber.png",
       enemyCarrier: "/images/3invader/enemy-carrier.png",
