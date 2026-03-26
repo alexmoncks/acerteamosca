@@ -206,6 +206,16 @@ function clamp(v, min, max) {
   return v < min ? min : v > max ? max : v;
 }
 
+function bossHitbox(boss) {
+  // Goliath: tight hitbox centered on the visible tank (~55% of bounding box)
+  if (boss.bossIndex === 2) {
+    const hw = boss.w * 0.5;
+    const hh = boss.h * 0.5;
+    return { x: boss.x + (boss.w - hw) / 2, y: boss.y + (boss.h - hh) / 2, w: hw, h: hh };
+  }
+  return { x: boss.x, y: boss.y, w: boss.w, h: boss.h };
+}
+
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
@@ -1951,6 +1961,10 @@ export default function ThreeInvader() {
       dirIndex: 0, // 0=S, 1=SE, 2=E, 3=NE, 4=N, 5=NW, 6=W, 7=SW
       prevX: CW / 2 - def.w / 2,
       prevY: -def.h - 20,
+      // Goliath patrol movement
+      patrolAngle: Math.PI / 4, // current movement angle
+      patrolTimer: 0,
+      patrolPhase: 0, // 0=diagonal sweep, 1=circular, 2=aggressive zigzag
     };
     g.phaseBossActive = true;
   }
@@ -2976,6 +2990,62 @@ export default function ThreeInvader() {
             // Add micro-oscillation for organic feel
             boss.x += Math.sin(boss.phaseTimer * 0.08) * 0.8;
             boss.y += Math.cos(boss.phaseTimer * 0.06) * 0.4;
+          } else if (boss.bossIndex === 2) {
+            // GOLIATH: diagonal patrol with 360° sweeps
+            boss.patrolTimer++;
+            const bcx = boss.x + boss.w / 2;
+            const bcy = boss.y + boss.h / 2;
+
+            // Determine patrol phase from HP
+            if (hpPct > 0.6) boss.patrolPhase = 0;
+            else if (hpPct > 0.3) boss.patrolPhase = 1;
+            else boss.patrolPhase = 2;
+
+            if (boss.patrolPhase === 0) {
+              // Phase 1: diagonal sweeps - move at 45° angles, bounce off edges
+              const spd = isRage ? 3 : 1.6;
+              boss.x += Math.cos(boss.patrolAngle) * spd;
+              boss.y += Math.sin(boss.patrolAngle) * spd;
+              // Bounce off boundaries
+              const minX = -boss.w * 0.1;
+              const maxX = CW - boss.w * 0.9;
+              const minY = 15;
+              const maxY = CH * 0.35;
+              if (boss.x < minX || boss.x > maxX) {
+                boss.patrolAngle = Math.PI - boss.patrolAngle;
+                boss.x = clamp(boss.x, minX, maxX);
+              }
+              if (boss.y < minY || boss.y > maxY) {
+                boss.patrolAngle = -boss.patrolAngle;
+                boss.y = clamp(boss.y, minY, maxY);
+              }
+            } else if (boss.patrolPhase === 1) {
+              // Phase 2: elliptical 360° patrol around the arena
+              const spd = isRage ? 2.8 : 1.8;
+              const centerX = CW / 2 - boss.w / 2;
+              const centerY = CH * 0.2;
+              const radiusX = CW * 0.35;
+              const radiusY = CH * 0.12;
+              const orbitalSpeed = isRage ? 0.025 : 0.015;
+              boss.patrolAngle += orbitalSpeed;
+              const targetX = centerX + Math.cos(boss.patrolAngle) * radiusX;
+              const targetY = centerY + Math.sin(boss.patrolAngle) * radiusY;
+              boss.x = lerp(boss.x, targetX, 0.04);
+              boss.y = lerp(boss.y, targetY, 0.04);
+            } else {
+              // Phase 3: aggressive zigzag - quick diagonal dashes toward player
+              const spd = isRage ? 3.5 : 2.2;
+              // Change direction every ~90 frames or when near edge
+              if (boss.patrolTimer % 90 === 0 || bcx < 30 || bcx > CW - 30 || bcy < 20 || bcy > CH * 0.4) {
+                // Aim diagonally toward player's X with random offset
+                const targetAngle = angleTo(bcx, bcy, g.playerX + 16, CH * 0.15);
+                boss.patrolAngle = targetAngle + (Math.random() - 0.5) * 1.2;
+              }
+              boss.x += Math.cos(boss.patrolAngle) * spd;
+              boss.y += Math.sin(boss.patrolAngle) * spd;
+            }
+            boss.x = clamp(boss.x, -boss.w * 0.15, CW - boss.w * 0.85);
+            boss.y = clamp(boss.y, 10, Math.min(CH * 0.4, CH - boss.h - 200));
           } else {
             // Other bosses: sinusoidal movement
             const moveSpeed = isRage ? 3.5 : 1.5;
@@ -3177,7 +3247,7 @@ export default function ThreeInvader() {
 
       // Bullet vs boss
       if (!hit && g.boss && g.boss.alive && !g.boss.entering && g.boss.invulnTimer >= 120) {
-        if (aabb(b, { x: g.boss.x, y: g.boss.y, w: g.boss.w, h: g.boss.h })) {
+        if (aabb(b, bossHitbox(g.boss))) {
           hit = true;
           let dmgMult = 0.25; // 4x less damage to bosses
           // Weak points (still apply multiplier ON TOP of reduced base)
@@ -3251,7 +3321,7 @@ export default function ThreeInvader() {
       }
 
       if (!hit && g.boss && g.boss.alive && !g.boss.entering && g.boss.invulnTimer >= 120) {
-        if (aabb(m, { x: g.boss.x, y: g.boss.y, w: g.boss.w, h: g.boss.h })) {
+        if (aabb(m, bossHitbox(g.boss))) {
           hit = true;
           g.boss.hp -= m.dmg * 0.25;
           g.boss.damageFlash = 5;
@@ -3322,7 +3392,7 @@ export default function ThreeInvader() {
         y: g.playerY + (PLAYER_H - HIT_H) / 2,
         w: HIT_W, h: HIT_H,
       };
-      if (aabb(hitBox, { x: g.boss.x, y: g.boss.y, w: g.boss.w, h: g.boss.h })) {
+      if (aabb(hitBox, bossHitbox(g.boss))) {
         playerDie(g);
       }
     }
