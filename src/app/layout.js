@@ -3,6 +3,7 @@ import Script from "next/script";
 import Navbar from "@/components/Navbar";
 import InstallPrompt from "@/components/InstallPrompt";
 import AdsTerraSocialBar from "@/components/AdsTerraSocialBar";
+import CookieConsent from "@/components/CookieConsent";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
@@ -113,6 +114,7 @@ export default function RootLayout({ children }) {
         <InstallPrompt />
         <main style={{ paddingTop: 48 }}>{children}</main>
         <AdsTerraSocialBar />
+        <CookieConsent />
       </body>
     </html>
   );

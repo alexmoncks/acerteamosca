@@ -208,7 +208,7 @@ export default function Home() {
         }}
       >
         {jogos.map((jogo) => (
-          <Link key={jogo.slug} href={`/jogos/${jogo.slug}`}>
+          <Link key={jogo.slug} href={`/jogos/${jogo.slug}`} style={{ display: "flex" }}>
             <div
               style={{
                 background: "#0a0a1a",
@@ -220,6 +220,9 @@ export default function Home() {
                 boxShadow: jogo.destaque
                   ? `0 0 20px ${jogo.cor}33`
                   : "none",
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
               }}
             >
               <div style={{ fontSize: 40, marginBottom: 12 }}>
@@ -240,6 +243,7 @@ export default function Home() {
                   color: "#8892b0",
                   fontSize: 12,
                   lineHeight: 1.6,
+                  flex: 1,
                 }}
               >
                 {jogo.desc}
