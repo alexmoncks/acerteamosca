@@ -685,11 +685,42 @@ function drawBoss(ctx, boss, frame, sprites) {
   let bossSprite = null;
   if (sprites) {
     switch (boss.bossIndex) {
-      case 0: // ORION-9: phase 1=open, phase 2=closed, phase 3=critical
-        if (hpPct > 0.7) bossSprite = sprites.bossOrion9Open;
-        else if (hpPct > 0.3) bossSprite = sprites.bossOrion9Closed;
-        else bossSprite = sprites.bossOrion9Critical;
+      case 0: { // ORION-9: animated spritesheet with forward-pause-reverse-pause cycle
+        const orionSheet = sprites.bossOrion9Anim;
+        if (spriteReady(orionSheet)) {
+          // Animation cycle: forward 48 frames → pause 3s → reverse 48 frames → pause 3s
+          // At 15fps (every 4 game ticks): forward=192 ticks, pause=180, reverse=192, pause=180
+          const FPS_TICKS = 4;
+          const TOTAL_FRAMES = 48;
+          const FORWARD_TICKS = TOTAL_FRAMES * FPS_TICKS; // 192
+          const PAUSE_TICKS = 180; // 3 seconds
+          const CYCLE = FORWARD_TICKS + PAUSE_TICKS + FORWARD_TICKS + PAUSE_TICKS; // 744
+          const t = boss.orionAnimTimer % CYCLE;
+          let animFrame;
+          if (t < FORWARD_TICKS) {
+            animFrame = Math.floor(t / FPS_TICKS);
+          } else if (t < FORWARD_TICKS + PAUSE_TICKS) {
+            animFrame = TOTAL_FRAMES - 1;
+          } else if (t < FORWARD_TICKS + PAUSE_TICKS + FORWARD_TICKS) {
+            animFrame = TOTAL_FRAMES - 1 - Math.floor((t - FORWARD_TICKS - PAUSE_TICKS) / FPS_TICKS);
+          } else {
+            animFrame = 0;
+          }
+          animFrame = clamp(animFrame, 0, TOTAL_FRAMES - 1);
+          const col = animFrame % 8;
+          const row = Math.floor(animFrame / 8);
+          if (damageFlash) ctx.globalAlpha = 0.7;
+          ctx.drawImage(orionSheet, col * 320, row * 180, 320, 180, x, y, w, h);
+          if (damageFlash) ctx.globalAlpha = 1;
+          bossSprite = null;
+        } else {
+          // Fallback to static sprites
+          if (hpPct > 0.7) bossSprite = sprites.bossOrion9Open;
+          else if (hpPct > 0.3) bossSprite = sprites.bossOrion9Closed;
+          else bossSprite = sprites.bossOrion9Critical;
+        }
         break;
+      }
       case 1: // HIVE-01: alternate closed/open based on frame cycle
         bossSprite = (Math.floor(frame / 60) % 2 === 0) ? sprites.bossHive01Closed : sprites.bossHive01Open;
         break;
@@ -1487,6 +1518,7 @@ export default function ThreeInvader() {
       bossOrion9Open: "/images/3invader/boss-orion9-open.png",
       bossOrion9Closed: "/images/3invader/boss-orion9-closed-sm.png",
       bossOrion9Critical: "/images/3invader/boss-orion9-critical-sm.png",
+      bossOrion9Anim: "/images/3invader/boss-orion9-anim.png",
       bossHive01Closed: "/images/3invader/boss-hive01-closed.png",
       bossHive01Open: "/images/3invader/boss-hive01-open.png",
       bossGoliathAnchored: "/images/3invader/boss-goliath-anchored.png",
@@ -1957,6 +1989,8 @@ export default function ThreeInvader() {
       tentacles: bossIndex === 3 ? 2 : 0,
       chargePhase: false,
       chargeTarget: 0,
+      // Orion-9 animation timer
+      orionAnimTimer: 0,
       // Goliath direction tracking
       dirIndex: 0, // 0=S, 1=SE, 2=E, 3=NE, 4=N, 5=NW, 6=W, 7=SW
       prevX: CW / 2 - def.w / 2,
@@ -2941,6 +2975,7 @@ export default function ThreeInvader() {
     if (g.boss && g.boss.alive) {
       const boss = g.boss;
       boss.phaseTimer++;
+      if (boss.bossIndex === 0) boss.orionAnimTimer++;
 
       // Goliath: compute direction index from velocity (before movement for prevX/prevY init)
       if (boss.bossIndex === 2) {
@@ -3132,8 +3167,11 @@ export default function ThreeInvader() {
       g.enemyBullets = [];
       // Start cinematic death animation (3 seconds = 180 frames)
       g.bossDeathAnim = {
+        bossIndex: g.boss.bossIndex,
         x: g.boss.x + g.boss.w / 2,
         y: g.boss.y + g.boss.h / 2,
+        bossX: g.boss.x,
+        bossY: g.boss.y,
         w: g.boss.w,
         h: g.boss.h,
         timer: 0,
@@ -3162,6 +3200,27 @@ export default function ThreeInvader() {
         spawnExplosion(g, bd.x + offX, bd.y + offY, bd.color, 10);
         spawnExplosion(g, bd.x + offX, bd.y + offY, "#ffffff", 5);
         playSfx(sfxRef.current?.smallExplosion, 0.3);
+      }
+
+      // ORION-9: extra explosions on solar panels, antenna, and body
+      if (bd.bossIndex === 0 && bd.timer % 6 === 0 && bd.timer < 110) {
+        // Left solar panel
+        spawnExplosion(g, bd.bossX + bd.w * 0.1, bd.y + (Math.random() - 0.5) * bd.h * 0.4, "#00c8ff", 6);
+        // Right solar panel
+        spawnExplosion(g, bd.bossX + bd.w * 0.9, bd.y + (Math.random() - 0.5) * bd.h * 0.4, "#00c8ff", 6);
+        // Body sparks
+        spawnExplosion(g, bd.x + (Math.random() - 0.5) * bd.w * 0.3, bd.y + (Math.random() - 0.5) * bd.h * 0.3, "#ff4444", 4);
+      }
+      // Antenna explosion at timer 40
+      if (bd.bossIndex === 0 && bd.timer === 40) {
+        spawnExplosion(g, bd.x, bd.bossY + bd.h * 0.05, "#ff4444", 12);
+        spawnExplosion(g, bd.x, bd.bossY + bd.h * 0.05, "#ffffff", 8);
+      }
+      // Solar panels detach explosion at timer 70
+      if (bd.bossIndex === 0 && bd.timer === 70) {
+        spawnExplosion(g, bd.bossX + bd.w * 0.08, bd.y, "#00c8ff", 20);
+        spawnExplosion(g, bd.bossX + bd.w * 0.92, bd.y, "#00c8ff", 20);
+        playSfx(sfxRef.current?.smallExplosion, 0.5);
       }
 
       // Timer 50: medium central explosion
