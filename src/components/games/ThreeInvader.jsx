@@ -1221,7 +1221,7 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
   if (spriteReady(bgSprite)) {
     const imgH = bgSprite.naturalHeight || 1440;
     const scrollSpeed = 0.15;
-    const scrollY = frame * scrollSpeed;
+    const scrollY = frame * scrollSpeed + parallaxOffset;
     ctx.save();
     ctx.globalAlpha = 0.7;
 
@@ -1849,6 +1849,13 @@ export default function ThreeInvader() {
       // Boss warning
       bossWarning: 0,
 
+      // Background boss scroll boost
+      bgBossScrollOffset: 0,
+      bgBossScrollTarget: 0,
+      bgBossScrollStart: 0,
+      bgBossScrollTimer: 0,
+      bgBossScrollActive: false,
+
       // Boss death animation
       bossDeathAnim: null,
 
@@ -1902,6 +1909,21 @@ export default function ThreeInvader() {
 
     if (g.phaseConfig.isBoss) {
       g.bossWarning = 180; // 3s warning
+
+      // Start background scroll boost to reach top of image before boss
+      const bgKeys = ["bgEarth", "bgPhobos", "bgMars", "bgAsteroids", "bgJupiter"];
+      const bgSpr = spritesRef.current?.[bgKeys[g.world]];
+      if (bgSpr && g.world !== 3) { // not asteroids (tiled)
+        const imgH = bgSpr.naturalHeight || 1440;
+        const currentScroll = g.frame * 0.15 + g.bgBossScrollOffset;
+        const remaining = imgH - currentScroll;
+        if (remaining > 0) {
+          g.bgBossScrollTarget = remaining;
+          g.bgBossScrollStart = g.bgBossScrollOffset;
+          g.bgBossScrollTimer = 0;
+          g.bgBossScrollActive = true;
+        }
+      }
     }
 
     // Switch music if track changed for new phase
@@ -2475,6 +2497,16 @@ export default function ThreeInvader() {
 
     const keys = keysRef.current;
     g.frame++;
+
+    // ---- Background boss scroll boost (ease-out cubic) ----
+    if (g.bgBossScrollActive) {
+      g.bgBossScrollTimer++;
+      const duration = 300; // 5 seconds at 60fps
+      const t = Math.min(g.bgBossScrollTimer / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out: fast start, slow end
+      g.bgBossScrollOffset = g.bgBossScrollStart + g.bgBossScrollTarget * eased;
+      if (t >= 1) g.bgBossScrollActive = false;
+    }
 
     // ---- Phase transition timers ----
     if (g.phaseTransitionTimer > 0) {
@@ -3705,7 +3737,7 @@ export default function ThreeInvader() {
     const sp = spritesRef.current;
 
     // Background
-    drawWorldBg(ctx, g.world, g.frame, 0, sp);
+    drawWorldBg(ctx, g.world, g.frame, g.bgBossScrollOffset || 0, sp);
 
     // Stars: none on Mars(2) or Jupiter(4), fade out near Phobos(1) surface
     if (g.world === 2 || g.world === 4) {
