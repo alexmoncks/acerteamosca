@@ -1998,7 +1998,9 @@ export default function ThreeInvader() {
       // Orion-9 animation timer
       orionAnimTimer: 0,
       // Goliath direction tracking
-      dirIndex: 0, // 0=S, 1=SE, 2=E, 3=NE, 4=N, 5=NW, 6=W, 7=SW
+      dirIndex: 0, // visual direction: 0=S, 1=SE, 2=E, 3=NE, 4=N, 5=NW, 6=W, 7=SW
+      dirTarget: 0, // target direction from velocity
+      dirTimer: 0, // ticks since last rotation step
       prevX: CW / 2 - def.w / 2,
       prevY: -def.h - 20,
       // Goliath patrol movement
@@ -2983,14 +2985,24 @@ export default function ThreeInvader() {
       boss.phaseTimer++;
       if (boss.bossIndex === 0) boss.orionAnimTimer++;
 
-      // Goliath: compute direction index from velocity (before movement for prevX/prevY init)
+      // Goliath: compute target direction from velocity, then smooth-step visual direction
       if (boss.bossIndex === 2) {
         const vx = boss.x - boss.prevX;
         const vy = boss.y - boss.prevY;
         if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
           const angle = Math.atan2(vy, vx);
           let idx = Math.round((Math.PI / 2 - angle) / (Math.PI / 4));
-          boss.dirIndex = ((idx % 8) + 8) % 8;
+          boss.dirTarget = ((idx % 8) + 8) % 8;
+        }
+        // Smooth rotation: step one direction every 6 ticks via shortest path
+        boss.dirTimer++;
+        if (boss.dirTimer >= 6 && boss.dirIndex !== boss.dirTarget) {
+          boss.dirTimer = 0;
+          // Shortest path around the 8-direction circle
+          let diff = boss.dirTarget - boss.dirIndex;
+          if (diff > 4) diff -= 8;
+          if (diff < -4) diff += 8;
+          boss.dirIndex = ((boss.dirIndex + (diff > 0 ? 1 : -1)) % 8 + 8) % 8;
         }
         boss.prevX = boss.x;
         boss.prevY = boss.y;
