@@ -727,8 +727,8 @@ function drawBoss(ctx, boss, frame, sprites) {
         }
         break;
       }
-      case 1: // HIVE-01: alternate closed/open based on frame cycle
-        bossSprite = (Math.floor(frame / 60) % 2 === 0) ? sprites.bossHive01Closed : sprites.bossHive01Open;
+      case 1: // HIVE-01: open during hangar release, closed otherwise
+        bossSprite = (boss.hangarOpen > 0) ? sprites.bossHive01Open : sprites.bossHive01Closed;
         break;
       case 2: { // GOLIATH: directional sprite based on movement
         const goliathDirs = sprites.bossGoliathDirs;
@@ -2014,6 +2014,7 @@ export default function ThreeInvader() {
       turretHpR: bossIndex === 1 ? 15 : 0,
       eyeOpen: false,
       eyeTimer: 0,
+      hangarOpen: 0,
       tentacles: bossIndex === 3 ? 2 : 0,
       chargePhase: false,
       chargeTarget: 0,
@@ -3057,24 +3058,8 @@ export default function ThreeInvader() {
 
         if (!boss.chargePhase) {
           if (boss.bossIndex === 1) {
-            // HIVE-01: erratic random movement like a living organism
-            // Change direction randomly every 60-120 frames
-            if (!boss.moveDir) boss.moveDir = { vx: 0, vy: 0, timer: 0, maxTimer: 90 };
-            boss.moveDir.timer++;
-            if (boss.moveDir.timer >= boss.moveDir.maxTimer) {
-              boss.moveDir.timer = 0;
-              boss.moveDir.maxTimer = 60 + Math.floor(Math.random() * 60);
-              const angle = Math.random() * Math.PI * 2;
-              const speed = (isRage ? 3 : 1.2) + Math.random() * (isRage ? 2 : 0.8);
-              boss.moveDir.vx = Math.cos(angle) * speed;
-              boss.moveDir.vy = Math.sin(angle) * speed * 0.5;
-            }
-            // Smooth lerp toward desired velocity
-            boss.x += boss.moveDir.vx;
-            boss.y += boss.moveDir.vy;
-            // Add micro-oscillation for organic feel
-            boss.x += Math.sin(boss.phaseTimer * 0.08) * 0.8;
-            boss.y += Math.cos(boss.phaseTimer * 0.06) * 0.4;
+            // HIVE-01: stationary base with slow horizontal drift
+            boss.x += Math.sin(boss.phaseTimer * 0.008) * 0.4;
           } else if (boss.bossIndex === 2) {
             // GOLIATH: diagonal patrol with 360° sweeps
             boss.patrolTimer++;
@@ -3169,11 +3154,29 @@ export default function ThreeInvader() {
 
         // Boss spawn enemies
         boss.spawnTimer++;
-        if (boss.spawnTimer >= 480 && boss.bossIndex !== 2) { // Every 8s
-          boss.spawnTimer = 0;
-          if (boss.phase >= 1) {
-            spawnEnemy(g, ET_SCOUT, boss.x + 20, boss.y + boss.h, "galaga");
-            spawnEnemy(g, ET_SCOUT, boss.x + boss.w - 40, boss.y + boss.h, "galaga");
+        if (boss.bossIndex === 1) {
+          // HIVE-01: hangar doors open every 4s, release 3 scouts
+          const hangarInterval = isRage ? 120 : 240;
+          if (boss.spawnTimer >= hangarInterval) {
+            boss.spawnTimer = 0;
+            boss.hangarOpen = 60; // doors open for 1 second
+            const cx1 = boss.x + boss.w * 0.35;
+            const cx2 = boss.x + boss.w * 0.5;
+            const cx3 = boss.x + boss.w * 0.65;
+            const sy = boss.y + boss.h;
+            spawnEnemy(g, ET_SCOUT, cx1 - 10, sy, "galaga");
+            spawnEnemy(g, ET_SCOUT, cx2 - 10, sy, "galaga");
+            spawnEnemy(g, ET_SCOUT, cx3 - 10, sy, "galaga");
+          }
+          if (boss.hangarOpen > 0) boss.hangarOpen--;
+        } else if (boss.bossIndex !== 2) {
+          // Other bosses (not Goliath): spawn 2 scouts every 8s
+          if (boss.spawnTimer >= 480) {
+            boss.spawnTimer = 0;
+            if (boss.phase >= 1) {
+              spawnEnemy(g, ET_SCOUT, boss.x + 20, boss.y + boss.h, "galaga");
+              spawnEnemy(g, ET_SCOUT, boss.x + boss.w - 40, boss.y + boss.h, "galaga");
+            }
           }
         }
 
