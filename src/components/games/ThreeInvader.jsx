@@ -207,7 +207,13 @@ function clamp(v, min, max) {
 }
 
 function bossHitbox(boss) {
-  // Goliath: tight hitbox centered on the visible tank (~55% of bounding box)
+  // Orion-9: tight hitbox on satellite body (~60% w, 55% h)
+  if (boss.bossIndex === 0) {
+    const hw = boss.w * 0.6;
+    const hh = boss.h * 0.55;
+    return { x: boss.x + (boss.w - hw) / 2, y: boss.y + (boss.h - hh) / 2, w: hw, h: hh };
+  }
+  // Goliath: tight hitbox centered on the visible tank (~50% of bounding box)
   if (boss.bossIndex === 2) {
     const hw = boss.w * 0.5;
     const hh = boss.h * 0.5;
