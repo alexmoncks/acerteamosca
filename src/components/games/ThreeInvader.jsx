@@ -1240,11 +1240,11 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     ctx.globalAlpha = 0.7;
 
     if (world === 3) {
-      // Asteroids: tile seamlessly, maintain aspect ratio
-      const imgW = bgSprite.naturalWidth || 938;
+      // Asteroids: tile seamlessly, maintain aspect ratio, start from bottom of image
+      const imgW = bgSprite.naturalWidth || 1173;
       const scale = CW / imgW;
       const drawH = imgH * scale;
-      const tiledY = scrollY % drawH;
+      const tiledY = (scrollY + CH) % drawH;
       ctx.drawImage(bgSprite, 0, tiledY - drawH, CW, drawH);
       ctx.drawImage(bgSprite, 0, tiledY, CW, drawH);
     } else {
