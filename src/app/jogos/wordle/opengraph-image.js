@@ -48,7 +48,7 @@ export default function Image() {
             marginTop: 24,
           }}
         >
-          Jogue gratis em acerteamosca.com.br
+          Jogue grátis em acerteamosca.com.br
         </div>
         <div
           style={{

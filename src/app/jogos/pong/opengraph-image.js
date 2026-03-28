@@ -39,7 +39,7 @@ export default function Image() {
             marginBottom: 8,
           }}
         >
-          Classico dos classicos! Multiplayer online.
+          Clássico dos clássicos! Multiplayer online.
         </div>
         <div
           style={{
@@ -48,7 +48,7 @@ export default function Image() {
             marginTop: 24,
           }}
         >
-          Jogue gratis em acerteamosca.com.br
+          Jogue grátis em acerteamosca.com.br
         </div>
         <div
           style={{

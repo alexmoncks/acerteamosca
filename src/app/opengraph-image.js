@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Acerte a Mosca - Jogos Online Gratis";
+export const alt = "Acerte a Mosca - Jogos Online Grátis";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -39,7 +39,7 @@ export default function Image() {
             marginBottom: 32,
           }}
         >
-          Jogos Online Gratis no Navegador
+          Jogos Online Grátis no Navegador
         </div>
         <div style={{ display: "flex", gap: 16 }}>
           {["🦟", "🏓", "🚀", "🔤", "🧠", "🔢", "🫧", "🐊", "🎯"].map((e, i) => (

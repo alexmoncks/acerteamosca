@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Jogo do Jacare - Acerte a Mosca";
+export const alt = "Jogo do Jacaré - Acerte a Mosca";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -30,7 +30,7 @@ export default function Image() {
             marginBottom: 12,
           }}
         >
-          JOGO DO JACARE
+          JOGO DO JACARÉ
         </div>
         <div
           style={{
@@ -48,7 +48,7 @@ export default function Image() {
             marginTop: 24,
           }}
         >
-          Jogue gratis em acerteamosca.com.br
+          Jogue grátis em acerteamosca.com.br
         </div>
         <div
           style={{
