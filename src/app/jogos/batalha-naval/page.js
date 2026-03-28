@@ -3,12 +3,12 @@ import dynamic from "next/dynamic";
 const BatalhaNaval = dynamic(() => import("@/components/games/BatalhaNaval"), { ssr: false });
 
 export const metadata = {
-  title: "Batalha Naval - Jogue Online Gratis",
-  description: "Jogo de Batalha Naval online gratis! Posicione seus navios e afunde a frota inimiga. 3 niveis de dificuldade. Jogue no celular ou computador!",
-  keywords: ["batalha naval", "battleship online", "jogo de batalha naval", "jogo de estrategia", "jogo de tabuleiro online"],
+  title: "Batalha Naval - Jogue Online Grátis",
+  description: "Jogo de Batalha Naval online grátis! Posicione seus navios e afunde a frota inimiga. 3 níveis de dificuldade. Jogue no celular ou computador!",
+  keywords: ["batalha naval", "battleship online", "jogo de batalha naval", "jogo de estratégia", "jogo de tabuleiro online"],
   alternates: { canonical: "/jogos/batalha-naval" },
   openGraph: {
-    title: "Batalha Naval - Jogue Online Gratis",
+    title: "Batalha Naval - Jogue Online Grátis",
     description: "Posicione seus navios e afunde a frota inimiga!",
     url: "https://acerteamosca.com.br/jogos/batalha-naval",
   },

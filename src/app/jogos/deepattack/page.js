@@ -3,12 +3,12 @@ const DeepAttack = dynamic(() => import("@/components/games/DeepAttack"), { ssr:
 
 export const metadata = {
   title: "Deep Attack - Jogo de Nave Espacial Online",
-  description: "Pilote sua nave pelo espaco, destrua aliens e sobreviva no corredor espacial! Jogo estilo River Raid online gratis sem download.",
+  description: "Pilote sua nave pelo espaço, destrua aliens e sobreviva no corredor espacial! Jogo estilo River Raid online grátis sem download.",
   keywords: ["jogo de nave", "space shooter", "deep attack", "river raid online", "jogo espacial", "nave online"],
   alternates: { canonical: "/jogos/deepattack" },
   openGraph: {
     title: "Deep Attack - Jogo de Nave Espacial Online",
-    description: "Pilote sua nave pelo espaco, destrua aliens e sobreviva no corredor espacial!",
+    description: "Pilote sua nave pelo espaço, destrua aliens e sobreviva no corredor espacial!",
     url: "https://acerteamosca.com.br/jogos/deepattack",
   },
 };
@@ -17,7 +17,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Deep Attack",
-  "description": "Pilote sua nave pelo espaco, destrua aliens e sobreviva no corredor espacial!",
+  "description": "Pilote sua nave pelo espaço, destrua aliens e sobreviva no corredor espacial!",
   "url": "https://acerteamosca.com.br/jogos/deepattack",
   "genre": ["Arcade", "Shooter"],
   "gamePlatform": "Web Browser",

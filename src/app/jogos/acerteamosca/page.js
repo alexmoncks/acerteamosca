@@ -3,12 +3,12 @@ const AcerteAMosca = dynamic(() => import("@/components/games/AcerteAMosca"), { 
 
 export const metadata = {
   title: "Acerte a Mosca - Mate o Mosquito!",
-  description: "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online gratis. Quanto mais rapido, mais pontos!",
-  keywords: ["acerte a mosca", "matar mosquito", "jogo de reflexo", "whack a mole", "jogo rapido online"],
+  description: "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online grátis. Quanto mais rápido, mais pontos!",
+  keywords: ["acerte a mosca", "matar mosquito", "jogo de reflexo", "whack a mole", "jogo rápido online"],
   alternates: { canonical: "/jogos/acerteamosca" },
   openGraph: {
     title: "Acerte a Mosca - Mate o Mosquito!",
-    description: "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online gratis.",
+    description: "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online grátis.",
     url: "https://acerteamosca.com.br/jogos/acerteamosca",
   },
 };
@@ -17,7 +17,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Acerte a Mosca",
-  "description": "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online gratis.",
+  "description": "Acerte a mosca com o chinelo antes que o tempo acabe! Jogo de reflexo online grátis.",
   "url": "https://acerteamosca.com.br/jogos/acerteamosca",
   "genre": ["Arcade", "Action"],
   "gamePlatform": "Web Browser",

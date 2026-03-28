@@ -3,13 +3,13 @@ import dynamic from "next/dynamic";
 const JogoDoJacare = dynamic(() => import("@/components/games/JogoDoJacare"), { ssr: false });
 
 export const metadata = {
-  title: "Jogo do Jacare - Frogger Online Gratis",
-  description: "Atravesse a rua e o rio com o jacare! Jogo estilo Frogger online gratis. Desvie de carros, pule em troncos e alcance as casinhas!",
-  keywords: ["jogo do jacare", "frogger online", "frogger gratis", "jogo de atravessar rua", "jogos retro online"],
+  title: "Jogo do Jacaré - Frogger Online Grátis",
+  description: "Atravesse a rua e o rio com o jacaré! Jogo estilo Frogger online grátis. Desvie de carros, pule em troncos e alcance as casinhas!",
+  keywords: ["jogo do jacaré", "frogger online", "frogger grátis", "jogo de atravessar rua", "jogos retro online"],
   alternates: { canonical: "/jogos/jacare" },
   openGraph: {
-    title: "Jogo do Jacare - Frogger Online Gratis",
-    description: "Atravesse a rua e o rio com o jacare! Desvie de carros, pule em troncos!",
+    title: "Jogo do Jacaré - Frogger Online Grátis",
+    description: "Atravesse a rua e o rio com o jacaré! Desvie de carros, pule em troncos!",
     url: "https://acerteamosca.com.br/jogos/jacare",
   },
 };
@@ -17,8 +17,8 @@ export const metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
-  "name": "Jogo do Jacare",
-  "description": "Jogo estilo Frogger. Atravesse a rua movimentada e o rio perigoso com o jacare!",
+  "name": "Jogo do Jacaré",
+  "description": "Jogo estilo Frogger. Atravesse a rua movimentada e o rio perigoso com o jacaré!",
   "url": "https://acerteamosca.com.br/jogos/jacare",
   "genre": ["Arcade", "Action"],
   "gamePlatform": "Web Browser",

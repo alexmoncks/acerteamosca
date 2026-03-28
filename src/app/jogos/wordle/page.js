@@ -2,13 +2,13 @@ import dynamic from "next/dynamic";
 const WordleBR = dynamic(() => import("@/components/games/WordleBR"), { ssr: false });
 
 export const metadata = {
-  title: "Wordle em Portugues - Jogue Gratis Online",
-  description: "Jogue Wordle em portugues! Adivinhe a palavra de 5 letras em 6 tentativas. Jogo online gratis sem download, funciona no celular e computador.",
-  keywords: ["wordle portugues", "wordle brasileiro", "wordle online", "jogo de palavras", "adivinhar palavra"],
+  title: "Wordle em Português - Jogue Grátis Online",
+  description: "Jogue Wordle em português! Adivinhe a palavra de 5 letras em 6 tentativas. Jogo online grátis sem download, funciona no celular e computador.",
+  keywords: ["wordle português", "wordle brasileiro", "wordle online", "jogo de palavras", "adivinhar palavra"],
   alternates: { canonical: "/jogos/wordle" },
   openGraph: {
-    title: "Wordle em Portugues - Jogue Gratis",
-    description: "Adivinhe a palavra de 5 letras em 6 tentativas! Jogo online gratis.",
+    title: "Wordle em Português - Jogue Grátis",
+    description: "Adivinhe a palavra de 5 letras em 6 tentativas! Jogo online grátis.",
     url: "https://acerteamosca.com.br/jogos/wordle",
   },
 };
@@ -17,7 +17,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Wordle BR",
-  "description": "Jogue Wordle em portugues! Adivinhe a palavra de 5 letras em 6 tentativas.",
+  "description": "Jogue Wordle em português! Adivinhe a palavra de 5 letras em 6 tentativas.",
   "url": "https://acerteamosca.com.br/jogos/wordle",
   "genre": ["Puzzle", "Word Game"],
   "gamePlatform": "Web Browser",

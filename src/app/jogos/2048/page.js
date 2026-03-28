@@ -2,13 +2,13 @@ import dynamic from "next/dynamic";
 const Game2048 = dynamic(() => import("@/components/games/Game2048"), { ssr: false });
 
 export const metadata = {
-  title: "2048 Online - Jogue Gratis Multiplayer",
-  description: "Jogue 2048 online gratis! Deslize os blocos e some ate chegar no 2048. Modo solo e corrida multiplayer online. Sem download.",
-  keywords: ["2048 online", "2048 gratis", "jogo 2048", "2048 multiplayer", "puzzle online"],
+  title: "2048 Online - Jogue Grátis Multiplayer",
+  description: "Jogue 2048 online grátis! Deslize os blocos e some até chegar no 2048. Modo solo e corrida multiplayer online. Sem download.",
+  keywords: ["2048 online", "2048 grátis", "jogo 2048", "2048 multiplayer", "puzzle online"],
   alternates: { canonical: "/jogos/2048" },
   openGraph: {
-    title: "2048 Online - Jogue Gratis Multiplayer",
-    description: "Jogue 2048 online gratis! Deslize os blocos e some ate chegar no 2048.",
+    title: "2048 Online - Jogue Grátis Multiplayer",
+    description: "Jogue 2048 online grátis! Deslize os blocos e some até chegar no 2048.",
     url: "https://acerteamosca.com.br/jogos/2048",
   },
 };
@@ -17,7 +17,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "2048",
-  "description": "Jogue 2048 online gratis! Deslize os blocos e some ate chegar no 2048.",
+  "description": "Jogue 2048 online grátis! Deslize os blocos e some até chegar no 2048.",
   "url": "https://acerteamosca.com.br/jogos/2048",
   "genre": ["Puzzle", "Strategy"],
   "gamePlatform": "Web Browser",

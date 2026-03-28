@@ -3,12 +3,12 @@ const Ships = dynamic(() => import("@/components/games/Ships"), { ssr: false });
 
 export const metadata = {
   title: "Ships - Batalha de Naves Online",
-  description: "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo de naves multiplayer online gratis.",
+  description: "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo de naves multiplayer online grátis.",
   keywords: ["jogo de naves", "ships online", "batalha de naves", "naves multiplayer", "jogo de tiro online"],
   alternates: { canonical: "/jogos/ships" },
   openGraph: {
     title: "Ships - Batalha de Naves Online",
-    description: "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo multiplayer online gratis.",
+    description: "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo multiplayer online grátis.",
     url: "https://acerteamosca.com.br/jogos/ships",
   },
 };
@@ -17,7 +17,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Ships",
-  "description": "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo multiplayer online gratis.",
+  "description": "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga! Jogo multiplayer online grátis.",
   "url": "https://acerteamosca.com.br/jogos/ships",
   "genre": ["Arcade", "Shooter"],
   "gamePlatform": "Web Browser",

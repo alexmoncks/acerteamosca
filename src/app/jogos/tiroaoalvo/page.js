@@ -3,13 +3,13 @@ import dynamic from "next/dynamic";
 const TiroAoAlvo = dynamic(() => import("@/components/games/TiroAoAlvo"), { ssr: false });
 
 export const metadata = {
-  title: "Tiro ao Alvo - Skeet Shooting Online Gratis",
-  description: "Jogo de tiro ao alvo estilo Skeet Shooting online gratis! Acerte os pratos de argila com timing perfeito. Dois botoes, reflexo puro!",
+  title: "Tiro ao Alvo - Skeet Shooting Online Grátis",
+  description: "Jogo de tiro ao alvo estilo Skeet Shooting online grátis! Acerte os pratos de argila com timing perfeito. Dois botões, reflexo puro!",
   keywords: ["tiro ao alvo", "skeet shooting", "clay pigeon", "jogo de tiro", "hyper sports", "jogo de reflexo"],
   alternates: { canonical: "/jogos/tiroaoalvo" },
   openGraph: {
     title: "Tiro ao Alvo - Skeet Shooting Online",
-    description: "Acerte os pratos de argila! Jogo de reflexo online gratis.",
+    description: "Acerte os pratos de argila! Jogo de reflexo online grátis.",
     url: "https://acerteamosca.com.br/jogos/tiroaoalvo",
   },
 };

@@ -2,13 +2,13 @@ import dynamic from "next/dynamic";
 const MemoryGame = dynamic(() => import("@/components/games/MemoryGame"), { ssr: false });
 
 export const metadata = {
-  title: "Jogo da Memoria Online - Gratis Multiplayer",
-  description: "Jogo da memoria online gratis! 3 niveis de dificuldade, desafio por tempo de 60 segundos e multiplayer online. Jogue no celular ou computador sem download.",
-  keywords: ["jogo da memoria", "memory game online", "jogo da memoria online", "jogo de pares", "memoria gratis"],
+  title: "Jogo da Memória Online - Grátis Multiplayer",
+  description: "Jogo da memória online grátis! 3 níveis de dificuldade, desafio por tempo de 60 segundos e multiplayer online. Jogue no celular ou computador sem download.",
+  keywords: ["jogo da memória", "memory game online", "jogo da memória online", "jogo de pares", "memória grátis"],
   alternates: { canonical: "/jogos/memory" },
   openGraph: {
-    title: "Jogo da Memoria Online - Gratis Multiplayer",
-    description: "Jogo da memoria online gratis! 3 niveis de dificuldade e multiplayer online.",
+    title: "Jogo da Memória Online - Grátis Multiplayer",
+    description: "Jogo da memória online grátis! 3 níveis de dificuldade e multiplayer online.",
     url: "https://acerteamosca.com.br/jogos/memory",
   },
 };
@@ -17,7 +17,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Memory Game",
-  "description": "Jogo da memoria online gratis! 3 niveis de dificuldade, desafio por tempo e multiplayer online.",
+  "description": "Jogo da memória online grátis! 3 níveis de dificuldade, desafio por tempo e multiplayer online.",
   "url": "https://acerteamosca.com.br/jogos/memory",
   "genre": ["Puzzle", "Card Game"],
   "gamePlatform": "Web Browser",
