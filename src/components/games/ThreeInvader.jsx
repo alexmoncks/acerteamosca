@@ -1246,9 +1246,9 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
       ctx.drawImage(bgSprite, 0, tiledY, CW, imgH);
     } else {
       // All other worlds: no tiling, scroll from bottom to top, stop at end
-      // Phobos stops at -150 so moon is fully visible
-      const stopY = world === 1 ? -150 : 0;
-      const clampedScrollY = Math.min(scrollY, imgH - CH + Math.abs(stopY));
+      // Phobos stops at imgTop=-150 so moon is fully visible
+      const stopOffset = world === 1 ? 150 : 0;
+      const clampedScrollY = Math.min(scrollY, imgH - CH - stopOffset);
       const imgTop = CH - imgH + clampedScrollY;
       if (imgTop < CH) {
         ctx.drawImage(bgSprite, 0, imgTop, CW, imgH);
@@ -1936,7 +1936,7 @@ export default function ThreeInvader() {
         const currentScroll = g.frame * 0.15 + g.bgBossScrollOffset;
         // Target: imgTop = -150 for Phobos (moon visible), 0 for others
         const stopOffset = g.world === 1 ? 150 : 0;
-        const remaining = (imgH - CH + stopOffset) - currentScroll;
+        const remaining = (imgH - CH - stopOffset) - currentScroll;
         if (remaining > 0) {
           g.bgBossScrollTarget = remaining;
           g.bgBossScrollStart = g.bgBossScrollOffset;
@@ -3067,24 +3067,22 @@ export default function ThreeInvader() {
       }
 
       if (boss.entering) {
-        if (boss.bossIndex === 1 && g.bgBossScrollActive) {
+        if (boss.bossIndex === 1) {
           // HIVE-01: follow background scroll as if planted on Phobos
           const bgSpr = spritesRef.current?.bgPhobos;
           const imgH = bgSpr?.naturalHeight || 8000;
           const scrollY = g.frame * 0.15 + g.bgBossScrollOffset;
-          const imgTop = CH - imgH + scrollY;
-          // Hive planted at 170px from image top → screen Y = imgTop + 170
+          const maxScroll = imgH - CH - 150;
+          const clampedScroll = Math.min(scrollY, maxScroll);
+          const imgTop = CH - imgH + clampedScroll;
+          // Hive planted at 170px from image top
           boss.y = imgTop + 170;
           boss.x = 0;
           if (!g.bgBossScrollActive) {
             boss.entering = false;
             boss.invulnTimer = 0;
+            boss.targetY = boss.y; // lock final position
           }
-        } else if (boss.bossIndex === 1 && !g.bgBossScrollActive) {
-          // Scroll finished, snap to final position
-          boss.y = boss.targetY;
-          boss.entering = false;
-          boss.invulnTimer = 0;
         } else {
           boss.y = lerp(boss.y, boss.targetY, 0.02);
           if (Math.abs(boss.y - boss.targetY) < 2) {
@@ -3209,7 +3207,7 @@ export default function ThreeInvader() {
             if (cycleCount % spawnEvery === 0) {
               // 4 gate positions matching the sprite hatches
               const gates = [0.22, 0.38, 0.62, 0.78];
-              const sy = boss.y + boss.h * 0.75;
+              const sy = boss.y + boss.h * 0.45; // gate center on sprite
               if (isRage) {
                 // Rage: 9 scouts — 2-3 per gate staggered
                 const rageGates = [0.22, 0.22, 0.35, 0.38, 0.50, 0.62, 0.62, 0.78, 0.78];
