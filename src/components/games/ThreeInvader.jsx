@@ -1907,6 +1907,11 @@ export default function ThreeInvader() {
     g.boss = null;
     g.bossWarning = 0;
     g.bossDeathAnim = null;
+    g.bgBossScrollOffset = 0;
+    g.bgBossScrollTarget = 0;
+    g.bgBossScrollStart = 0;
+    g.bgBossScrollTimer = 0;
+    g.bgBossScrollActive = false;
     g.phaseTransitionTimer = 0;
     g.worldTransitionTimer = 0;
     g.showingWorldBriefing = false;
