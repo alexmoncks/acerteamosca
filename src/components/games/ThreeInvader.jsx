@@ -219,6 +219,12 @@ function bossHitbox(boss) {
     const hh = boss.h * 0.5;
     return { x: boss.x + (boss.w - hw) / 2, y: boss.y + (boss.h - hh) / 2, w: hw, h: hh };
   }
+  // 3I/ATLAS: triangular shape - narrower hitbox (~55% w, 65% h)
+  if (boss.bossIndex === 4) {
+    const hw = boss.w * 0.55;
+    const hh = boss.h * 0.65;
+    return { x: boss.x + (boss.w - hw) / 2, y: boss.y + (boss.h - hh) / 2, w: hw, h: hh };
+  }
   return { x: boss.x, y: boss.y, w: boss.w, h: boss.h };
 }
 
@@ -769,11 +775,25 @@ function drawBoss(ctx, boss, frame, sprites) {
       case 3: // CHARYBDIS: eye open/closed
         bossSprite = boss.eyeOpen ? sprites.bossCharybdisOpen : sprites.bossCharybdisClosed;
         break;
-      case 4: // 3I/ATLAS: phase 1/2/3
-        if (hpPct > 0.7) bossSprite = sprites.bossAtlasPhase1;
-        else if (hpPct > 0.3) bossSprite = sprites.bossAtlasPhase2;
-        else bossSprite = sprites.bossAtlasPhase3;
+      case 4: { // 3I/ATLAS: 144-frame animated spritesheet (6 cols x 24 rows, 400x364)
+        const atlasSheet = sprites.bossAtlasAnim;
+        if (spriteReady(atlasSheet)) {
+          // 144 frames at ~12fps (every 5 ticks) = 12s full cycle
+          const totalFrames = 144;
+          const animFrame = Math.floor(frame / 5) % totalFrames;
+          const col = animFrame % 6;
+          const row = Math.floor(animFrame / 6);
+          if (damageFlash) ctx.globalAlpha = 0.7;
+          ctx.drawImage(atlasSheet, col * 400, row * 364, 400, 364, x, y, w, h);
+          if (damageFlash) ctx.globalAlpha = 1;
+          bossSprite = null;
+        } else {
+          if (hpPct > 0.7) bossSprite = sprites.bossAtlasPhase1;
+          else if (hpPct > 0.3) bossSprite = sprites.bossAtlasPhase2;
+          else bossSprite = sprites.bossAtlasPhase3;
+        }
         break;
+      }
       default: break;
     }
   }
@@ -1556,6 +1576,7 @@ export default function ThreeInvader() {
       bossAtlasPhase1: "/images/3invader/boss-atlas-phase1.png",
       bossAtlasPhase2: "/images/3invader/boss-atlas-phase2.png",
       bossAtlasPhase3: "/images/3invader/boss-atlas-phase3.png",
+      bossAtlasAnim: "/images/3invader/boss-atlas-anim.png",
       // Projectiles
       bulletPlayer: "/images/3invader/bullet-player.png",
       bulletPlayerHeavy: "/images/3invader/bullet-player-heavy.png",
