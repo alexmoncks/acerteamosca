@@ -86,8 +86,8 @@ const BOSS_DEFS = [
 
 // ── Difficulty configs ──────────────────────────────────────────────────
 const DIFFICULTIES = [
-  { id: "novato",     label: "Novato",       enemyHpMult: 0.5,  bossHpMult: 1.3,  enemyShotFreq: 0.5,  powerUpRate: 2.0,  color: "#4ade80", desc: "Inimigos fracos, muitos power-ups. Ideal para conhecer o jogo." },
-  { id: "medio",      label: "Medio",        enemyHpMult: 1.0,  bossHpMult: 2.6,  enemyShotFreq: 1.0,  powerUpRate: 0.5,  color: "#fbbf24", desc: "Equilibrado. A experiencia padrao do 3INVADER." },
+  { id: "novato",     label: "Novato",       enemyHpMult: 0.5,  bossHpMult: 1.3,  enemyShotFreq: 0.5,  powerUpRate: 1.0,  color: "#4ade80", desc: "Inimigos fracos, muitos power-ups. Ideal para conhecer o jogo." },
+  { id: "medio",      label: "Medio",        enemyHpMult: 1.0,  bossHpMult: 2.6,  enemyShotFreq: 1.0,  powerUpRate: 0.25, color: "#fbbf24", desc: "Equilibrado. A experiencia padrao do 3INVADER." },
   { id: "experiente", label: "Experiente",    enemyHpMult: 2.0,  bossHpMult: 5.2,  enemyShotFreq: 1.5,  powerUpRate: 0.33, color: "#f97316", desc: "Inimigos resistentes, poucos power-ups. Para pilotos veteranos." },
   { id: "maluco",     label: "Ta Maluco?",    enemyHpMult: 4.0,  bossHpMult: 10.4, enemyShotFreq: 2.5,  powerUpRate: 0.25, color: "#ef4444", desc: "Sobrevivencia extrema. Voce foi avisado." },
 ];
@@ -2493,6 +2493,16 @@ export default function ThreeInvader() {
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#4488ff", 30);
     spawnExplosion(g, g.playerX + PLAYER_W / 2, g.playerY + PLAYER_H / 2, "#ff4444", 20);
     playSfx(sfxRef.current?.bigExplosion, 0.5);
+
+    // Drop power-ups from destroyed ship to help on respawn
+    const cx = g.playerX + PLAYER_W / 2;
+    const cy = g.playerY + PLAYER_H / 2;
+    const drops = [PU_P, PU_P, PU_V, PU_S];
+    const spread = 30;
+    drops.forEach((type, i) => {
+      const offsetX = (i - (drops.length - 1) / 2) * spread;
+      g.powerUps.push({ x: cx + offsetX - 10, y: cy, w: 20, h: 20, type });
+    });
 
     return true;
   }
