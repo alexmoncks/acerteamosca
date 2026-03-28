@@ -727,9 +727,20 @@ function drawBoss(ctx, boss, frame, sprites) {
         }
         break;
       }
-      case 1: // HIVE-01: open during hangar release, closed otherwise
-        bossSprite = (boss.hangarOpen > 0) ? sprites.bossHive01Open : sprites.bossHive01Closed;
+      case 1: { // HIVE-01: 16-frame animated spritesheet
+        const hiveSheet = sprites.bossHive01Anim;
+        if (spriteReady(hiveSheet)) {
+          // 16 frames at ~4fps (every 15 ticks) = 4s per cycle
+          const animFrame = Math.floor(frame / 15) % 16;
+          if (damageFlash) ctx.globalAlpha = 0.7;
+          ctx.drawImage(hiveSheet, animFrame * 512, 0, 512, 286, x, y, w, h);
+          if (damageFlash) ctx.globalAlpha = 1;
+          bossSprite = null;
+        } else {
+          bossSprite = (boss.hangarOpen > 0) ? sprites.bossHive01Open : sprites.bossHive01Closed;
+        }
         break;
+      }
       case 2: { // GOLIATH: directional sprite based on movement
         const goliathDirs = sprites.bossGoliathDirs;
         const goliathAnim = sprites.bossGoliathAnim;
@@ -1527,6 +1538,7 @@ export default function ThreeInvader() {
       bossOrion9Anim: "/images/3invader/boss-orion9-anim.png",
       bossHive01Closed: "/images/3invader/boss-hive01-closed.png",
       bossHive01Open: "/images/3invader/boss-hive01-open.png",
+      bossHive01Anim: "/images/3invader/boss-hive01-anim.png",
       bossGoliathAnchored: "/images/3invader/boss-goliath-anchored.png",
       bossGoliathDirs: "/images/3invader/boss-goliath-directions.png",
       bossGoliathAnim: "/images/3invader/boss-goliath-anim.png",
@@ -1916,7 +1928,7 @@ export default function ThreeInvader() {
       if (bgSpr && g.world !== 3) { // not asteroids (tiled)
         const imgH = bgSpr.naturalHeight || 1440;
         const currentScroll = g.frame * 0.15 + g.bgBossScrollOffset;
-        const remaining = imgH - currentScroll;
+        const remaining = (imgH - CH) - currentScroll;
         if (remaining > 0) {
           g.bgBossScrollTarget = remaining;
           g.bgBossScrollStart = g.bgBossScrollOffset;
@@ -2015,6 +2027,7 @@ export default function ThreeInvader() {
       eyeOpen: false,
       eyeTimer: 0,
       hangarOpen: 0,
+      hiveSpawnedThisCycle: false,
       tentacles: bossIndex === 3 ? 2 : 0,
       chargePhase: false,
       chargeTarget: 0,
@@ -3155,20 +3168,25 @@ export default function ThreeInvader() {
         // Boss spawn enemies
         boss.spawnTimer++;
         if (boss.bossIndex === 1) {
-          // HIVE-01: hangar doors open every 4s, release 3 scouts
-          const hangarInterval = isRage ? 120 : 240;
-          if (boss.spawnTimer >= hangarInterval) {
-            boss.spawnTimer = 0;
-            boss.hangarOpen = 60; // doors open for 1 second
-            const cx1 = boss.x + boss.w * 0.35;
-            const cx2 = boss.x + boss.w * 0.5;
-            const cx3 = boss.x + boss.w * 0.65;
-            const sy = boss.y + boss.h;
-            spawnEnemy(g, ET_SCOUT, cx1 - 10, sy, "galaga");
-            spawnEnemy(g, ET_SCOUT, cx2 - 10, sy, "galaga");
-            spawnEnemy(g, ET_SCOUT, cx3 - 10, sy, "galaga");
+          // HIVE-01: spawn 3 scouts at animation midpoint (frame 8 of 16)
+          // Animation cycle: 16 frames * 15 ticks = 240 ticks = 4s
+          // Spawn every other cycle (8s normal, 4s rage)
+          const animFrame = Math.floor(g.frame / 15) % 16;
+          const cycleCount = Math.floor(g.frame / (16 * 15));
+          const spawnEvery = isRage ? 1 : 2; // every cycle in rage, every 2 normally
+          if (animFrame === 8 && !boss.hiveSpawnedThisCycle) {
+            if (cycleCount % spawnEvery === 0) {
+              const cx1 = boss.x + boss.w * 0.35;
+              const cx2 = boss.x + boss.w * 0.5;
+              const cx3 = boss.x + boss.w * 0.65;
+              const sy = boss.y + boss.h;
+              spawnEnemy(g, ET_SCOUT, cx1 - 10, sy, "galaga");
+              spawnEnemy(g, ET_SCOUT, cx2 - 10, sy, "galaga");
+              spawnEnemy(g, ET_SCOUT, cx3 - 10, sy, "galaga");
+            }
+            boss.hiveSpawnedThisCycle = true;
           }
-          if (boss.hangarOpen > 0) boss.hangarOpen--;
+          if (animFrame === 0) boss.hiveSpawnedThisCycle = false;
         } else if (boss.bossIndex !== 2) {
           // Other bosses (not Goliath): spawn 2 scouts every 8s
           if (boss.spawnTimer >= 480) {
