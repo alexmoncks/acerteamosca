@@ -775,16 +775,16 @@ function drawBoss(ctx, boss, frame, sprites) {
       case 3: // CHARYBDIS: eye open/closed
         bossSprite = boss.eyeOpen ? sprites.bossCharybdisOpen : sprites.bossCharybdisClosed;
         break;
-      case 4: { // 3I/ATLAS: 144-frame animated spritesheet (6 cols x 24 rows, 400x364)
+      case 4: { // 3I/ATLAS: 80-frame animated spritesheet (5 cols x 16 rows, 480x546)
         const atlasSheet = sprites.bossAtlasAnim;
         if (spriteReady(atlasSheet)) {
-          // 144 frames at ~12fps (every 5 ticks) = 12s full cycle
-          const totalFrames = 144;
-          const animFrame = Math.floor(frame / 5) % totalFrames;
-          const col = animFrame % 6;
-          const row = Math.floor(animFrame / 6);
+          // 80 frames at ~10fps (every 6 ticks) = 8s full cycle
+          const totalFrames = 80;
+          const animFrame = Math.floor(frame / 6) % totalFrames;
+          const col = animFrame % 5;
+          const row = Math.floor(animFrame / 5);
           if (damageFlash) ctx.globalAlpha = 0.7;
-          ctx.drawImage(atlasSheet, col * 400, row * 364, 400, 364, x, y, w, h);
+          ctx.drawImage(atlasSheet, col * 480, row * 546, 480, 546, x, y, w, h);
           if (damageFlash) ctx.globalAlpha = 1;
           bossSprite = null;
         } else {
