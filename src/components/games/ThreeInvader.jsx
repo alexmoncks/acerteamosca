@@ -2684,7 +2684,7 @@ export default function ThreeInvader() {
       // Damage enemies in laser path
       for (let i = g.enemies.length - 1; i >= 0; i--) {
         const e = g.enemies[i];
-        if (e.entering) continue; // invulnerable during entry only
+        if (e.entering || (e.growScale !== undefined && e.growScale < 1)) continue; // invulnerable during entry/growth
         const eDef = ENEMY_DEFS[e.type];
         if (Math.abs((e.x + eDef.w / 2) - laserX) < 10 && e.y < g.playerY) {
           e.hp -= 0.15;
@@ -3199,20 +3199,31 @@ export default function ThreeInvader() {
         // Boss spawn enemies
         boss.spawnTimer++;
         if (boss.bossIndex === 1) {
-          // HIVE-01: spawn 3 scouts at animation midpoint (frame 8 of 16)
-          // Animation cycle: 16 frames * 15 ticks = 240 ticks = 4s
-          // Spawn every other cycle (8s normal, 4s rage)
+          // HIVE-01: spawn scouts synced with gate opening animation
+          // Animation: 16 frames at 15 ticks each = 240 ticks = 4s per cycle
+          // Gates open: frames 6-10, spawn at frame 7
           const animFrame = Math.floor(g.frame / 15) % 16;
           const cycleCount = Math.floor(g.frame / (16 * 15));
-          const spawnEvery = isRage ? 1 : 2; // every cycle in rage, every 2 normally
-          if (animFrame === 8 && !boss.hiveSpawnedThisCycle) {
+          const spawnEvery = isRage ? 1 : 2;
+          if (animFrame === 7 && !boss.hiveSpawnedThisCycle) {
             if (cycleCount % spawnEvery === 0) {
-              // Spawn from hangar gate positions on the Hive sprite
-              const gatePositions = [0.28, 0.5, 0.72];
-              const sy = boss.y + boss.h * 0.85;
-              for (const gx of gatePositions) {
-                const e = spawnEnemy(g, ET_SCOUT, boss.x + boss.w * gx - 10, sy, "galaga");
-                if (e) e.growScale = 0.25; // start small, grow to 1.0
+              // 4 gate positions matching the sprite hatches
+              const gates = [0.22, 0.38, 0.62, 0.78];
+              const sy = boss.y + boss.h * 0.75;
+              if (isRage) {
+                // Rage: 9 scouts — 2-3 per gate staggered
+                const rageGates = [0.22, 0.22, 0.35, 0.38, 0.50, 0.62, 0.62, 0.78, 0.78];
+                for (const gx of rageGates) {
+                  const e = spawnEnemy(g, ET_SCOUT, boss.x + boss.w * gx - 10, sy, "galaga");
+                  if (e) e.growScale = 0.2;
+                }
+              } else {
+                // Normal: 3 scouts from left, center, right gates
+                const normalGates = [gates[0], 0.5, gates[3]];
+                for (const gx of normalGates) {
+                  const e = spawnEnemy(g, ET_SCOUT, boss.x + boss.w * gx - 10, sy, "galaga");
+                  if (e) e.growScale = 0.2;
+                }
               }
             }
             boss.hiveSpawnedThisCycle = true;
@@ -3369,7 +3380,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
-        if (e.entering) continue; // invulnerable during entry only
+        if (e.entering || (e.growScale !== undefined && e.growScale < 1)) continue; // invulnerable during entry/growth
         const def = ENEMY_DEFS[e.type];
         if (aabb(b, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -3449,7 +3460,7 @@ export default function ThreeInvader() {
 
       for (let ei = g.enemies.length - 1; ei >= 0; ei--) {
         const e = g.enemies[ei];
-        if (e.entering) continue; // invulnerable during entry only
+        if (e.entering || (e.growScale !== undefined && e.growScale < 1)) continue; // invulnerable during entry/growth
         const def = ENEMY_DEFS[e.type];
         if (aabb(m, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           hit = true;
@@ -3538,6 +3549,7 @@ export default function ThreeInvader() {
       };
       for (let i = 0; i < g.enemies.length; i++) {
         const e = g.enemies[i];
+        if (e.growScale !== undefined && e.growScale < 1) continue; // invulnerable while growing
         const def = ENEMY_DEFS[e.type];
         if (aabb(hitBox, { x: e.x, y: e.y, w: def.w, h: def.h })) {
           playerDie(g);
