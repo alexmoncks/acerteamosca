@@ -3199,11 +3199,11 @@ export default function ThreeInvader() {
         if (boss.bossIndex === 1) {
           // HIVE-01: spawn scouts synced with gate opening animation
           // Animation: 16 frames at 15 ticks each = 240 ticks = 4s per cycle
-          // Gates open: frames 6-10, spawn at frame 7
+          // Gates open: frames 6-10, scouts appear after frame 8
           const animFrame = Math.floor(g.frame / 15) % 16;
           const cycleCount = Math.floor(g.frame / (16 * 15));
           const spawnEvery = isRage ? 1 : 2;
-          if (animFrame === 7 && !boss.hiveSpawnedThisCycle) {
+          if (animFrame === 9 && !boss.hiveSpawnedThisCycle) {
             if (cycleCount % spawnEvery === 0) {
               // 4 gate positions matching the sprite hatches
               const gates = [0.22, 0.38, 0.62, 0.78];
@@ -3825,17 +3825,30 @@ export default function ThreeInvader() {
       drawPowerUp(ctx, g.powerUps[i], g.frame);
     }
 
+    // Boss drawn BEFORE enemies for Hive (scouts emerge on top)
+    // Other bosses drawn AFTER enemies (boss on top)
+    const hiveFirst = g.boss && g.boss.bossIndex === 1;
+    if (hiveFirst) {
+      if (g.boss.alive) {
+        drawBoss(ctx, g.boss, g.frame, sp);
+      } else if (g.bossDeathAnim && g.bossDeathAnim.timer < 120) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - g.bossDeathAnim.timer / 120);
+        drawBoss(ctx, g.boss, g.frame, sp);
+        ctx.restore();
+      }
+    }
+
     // Enemies
     for (let i = 0; i < g.enemies.length; i++) {
       drawEnemy(ctx, g.enemies[i], g.frame, sp, g.swarmAngle);
     }
 
-    // Boss (draw during death animation too, with fading)
-    if (g.boss) {
+    // Boss (draw after enemies for non-Hive bosses)
+    if (!hiveFirst && g.boss) {
       if (g.boss.alive) {
         drawBoss(ctx, g.boss, g.frame, sp);
       } else if (g.bossDeathAnim && g.bossDeathAnim.timer < 120) {
-        // Boss visible but fading during death animation
         ctx.save();
         ctx.globalAlpha = Math.max(0, 1 - g.bossDeathAnim.timer / 120);
         drawBoss(ctx, g.boss, g.frame, sp);
