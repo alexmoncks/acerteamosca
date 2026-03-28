@@ -1933,10 +1933,10 @@ export default function ThreeInvader() {
     if (g.phaseConfig.isBoss) {
       g.bossWarning = 180; // 3s warning
 
-      // Start background scroll boost to reach top of image before boss
+      // Phobos only: scroll boost to reach moon surface before boss
       const bgKeys = ["bgEarth", "bgPhobos", "bgMars", "bgAsteroids", "bgJupiter"];
       const bgSpr = spritesRef.current?.[bgKeys[g.world]];
-      if (bgSpr && g.world !== 3) { // not asteroids (tiled)
+      if (bgSpr && g.world === 1) { // Phobos only
         const imgH = bgSpr.naturalHeight || 1440;
         const currentScroll = g.frame * 0.15 + g.bgBossScrollOffset;
         // Target: imgTop = -150 for Phobos (moon visible), 0 for others
