@@ -78,7 +78,7 @@ const WORLD_TAGS = [
 // ── Boss configs ───────────────────────────────────────────────────────
 const BOSS_DEFS = [
   { name: "ORION-9",   hp: 65,  w: 288, h: 240, points: 2000,  color: "#00c8ff" },
-  { name: "HIVE-01",   hp: 104, w: 320, h: 128, points: 5000,  color: "#b026ff" },
+  { name: "HIVE-01",   hp: 104, w: 480, h: 168, points: 5000,  color: "#b026ff" },
   { name: "GOLIATH",   hp: 130, w: 288, h: 216, points: 8000,  color: "#ff6600" },
   { name: "CHARYBDIS", hp: 156, w: 288, h: 288, points: 12000, color: "#4a90d9" },
   { name: "3I/ATLAS",  hp: 260, w: 300, h: 380, points: 25000, color: "#ffd700" },
@@ -529,9 +529,12 @@ function drawEnemy(ctx, enemy, frame, sprites, swarmAngle) {
         const scoutAnim = sprites.enemyScoutAnim;
         if (spriteReady(scoutAnim)) {
           const animFrame = Math.floor(frame / 6) % 16;
-          const drawX = cx - 16;
-          const drawY = cy - 16;
-          ctx.drawImage(scoutAnim, animFrame * 32, 0, 32, 32, drawX, drawY, 32, 32);
+          // growScale: scouts spawned from Hive start small and grow
+          const gs = enemy.growScale || 1;
+          const drawSize = 32 * gs;
+          const drawX = cx - drawSize / 2;
+          const drawY = cy - drawSize / 2;
+          ctx.drawImage(scoutAnim, animFrame * 32, 0, 32, 32, drawX, drawY, drawSize, drawSize);
           // HP bar for scouts if damaged
           if (enemy.hp < def.hp) {
             const pct = enemy.hp / def.hp;
@@ -1243,7 +1246,10 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
       ctx.drawImage(bgSprite, 0, tiledY, CW, imgH);
     } else {
       // All other worlds: no tiling, scroll from bottom to top, stop at end
-      const imgTop = CH - imgH + scrollY;
+      // Phobos stops at -150 so moon is fully visible
+      const stopY = world === 1 ? -150 : 0;
+      const clampedScrollY = Math.min(scrollY, imgH - CH + Math.abs(stopY));
+      const imgTop = CH - imgH + clampedScrollY;
       if (imgTop < CH) {
         ctx.drawImage(bgSprite, 0, imgTop, CW, imgH);
       }
@@ -1928,7 +1934,9 @@ export default function ThreeInvader() {
       if (bgSpr && g.world !== 3) { // not asteroids (tiled)
         const imgH = bgSpr.naturalHeight || 1440;
         const currentScroll = g.frame * 0.15 + g.bgBossScrollOffset;
-        const remaining = (imgH - CH) - currentScroll;
+        // Target: imgTop = -150 for Phobos (moon visible), 0 for others
+        const stopOffset = g.world === 1 ? 150 : 0;
+        const remaining = (imgH - CH + stopOffset) - currentScroll;
         if (remaining > 0) {
           g.bgBossScrollTarget = remaining;
           g.bgBossScrollStart = g.bgBossScrollOffset;
@@ -2005,9 +2013,9 @@ export default function ThreeInvader() {
     const scaledHp = def.hp * diff.bossHpMult;
     g.boss = {
       bossIndex,
-      x: CW / 2 - def.w / 2,
+      x: bossIndex === 1 ? 0 : CW / 2 - def.w / 2,
       y: -def.h - 20,
-      targetY: 20,
+      targetY: bossIndex === 1 ? -10 : 20,
       w: def.w,
       h: def.h,
       hp: scaledHp,
@@ -2784,6 +2792,10 @@ export default function ThreeInvader() {
       const e = g.enemies[i];
       const def = ENEMY_DEFS[e.type];
       e.patternTimer++;
+      // Grow scale animation for Hive-spawned scouts
+      if (e.growScale !== undefined && e.growScale < 1) {
+        e.growScale = Math.min(1, e.growScale + 0.015);
+      }
 
       switch (e.pattern) {
         case "galaga": {
@@ -3055,11 +3067,31 @@ export default function ThreeInvader() {
       }
 
       if (boss.entering) {
-        boss.y = lerp(boss.y, boss.targetY, 0.02);
-        if (Math.abs(boss.y - boss.targetY) < 2) {
+        if (boss.bossIndex === 1 && g.bgBossScrollActive) {
+          // HIVE-01: follow background scroll as if planted on Phobos
+          const bgSpr = spritesRef.current?.bgPhobos;
+          const imgH = bgSpr?.naturalHeight || 8000;
+          const scrollY = g.frame * 0.15 + g.bgBossScrollOffset;
+          const imgTop = CH - imgH + scrollY;
+          // Hive planted at 170px from image top → screen Y = imgTop + 170
+          boss.y = imgTop + 170;
+          boss.x = 0;
+          if (!g.bgBossScrollActive) {
+            boss.entering = false;
+            boss.invulnTimer = 0;
+          }
+        } else if (boss.bossIndex === 1 && !g.bgBossScrollActive) {
+          // Scroll finished, snap to final position
+          boss.y = boss.targetY;
           boss.entering = false;
           boss.invulnTimer = 0;
-          boss.y = boss.targetY;
+        } else {
+          boss.y = lerp(boss.y, boss.targetY, 0.02);
+          if (Math.abs(boss.y - boss.targetY) < 2) {
+            boss.entering = false;
+            boss.invulnTimer = 0;
+            boss.y = boss.targetY;
+          }
         }
       } else if (boss.invulnTimer < 120) {
         // 2s presentation: boss visible but invulnerable, no shooting yet
@@ -3071,8 +3103,7 @@ export default function ThreeInvader() {
 
         if (!boss.chargePhase) {
           if (boss.bossIndex === 1) {
-            // HIVE-01: stationary base with slow horizontal drift
-            boss.x += Math.sin(boss.phaseTimer * 0.008) * 0.4;
+            // HIVE-01: stationary base - no movement at all
           } else if (boss.bossIndex === 2) {
             // GOLIATH: diagonal patrol with 360° sweeps
             boss.patrolTimer++;
@@ -3176,13 +3207,13 @@ export default function ThreeInvader() {
           const spawnEvery = isRage ? 1 : 2; // every cycle in rage, every 2 normally
           if (animFrame === 8 && !boss.hiveSpawnedThisCycle) {
             if (cycleCount % spawnEvery === 0) {
-              const cx1 = boss.x + boss.w * 0.35;
-              const cx2 = boss.x + boss.w * 0.5;
-              const cx3 = boss.x + boss.w * 0.65;
-              const sy = boss.y + boss.h;
-              spawnEnemy(g, ET_SCOUT, cx1 - 10, sy, "galaga");
-              spawnEnemy(g, ET_SCOUT, cx2 - 10, sy, "galaga");
-              spawnEnemy(g, ET_SCOUT, cx3 - 10, sy, "galaga");
+              // Spawn from hangar gate positions on the Hive sprite
+              const gatePositions = [0.28, 0.5, 0.72];
+              const sy = boss.y + boss.h * 0.85;
+              for (const gx of gatePositions) {
+                const e = spawnEnemy(g, ET_SCOUT, boss.x + boss.w * gx - 10, sy, "galaga");
+                if (e) e.growScale = 0.25; // start small, grow to 1.0
+              }
             }
             boss.hiveSpawnedThisCycle = true;
           }
