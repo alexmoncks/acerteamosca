@@ -1240,10 +1240,13 @@ function drawWorldBg(ctx, world, frame, parallaxOffset, sprites) {
     ctx.globalAlpha = 0.7;
 
     if (world === 3) {
-      // Asteroids: tile seamlessly
-      const tiledY = scrollY % imgH;
-      ctx.drawImage(bgSprite, 0, tiledY - imgH, CW, imgH);
-      ctx.drawImage(bgSprite, 0, tiledY, CW, imgH);
+      // Asteroids: tile seamlessly, maintain aspect ratio
+      const imgW = bgSprite.naturalWidth || 938;
+      const scale = CW / imgW;
+      const drawH = imgH * scale;
+      const tiledY = scrollY % drawH;
+      ctx.drawImage(bgSprite, 0, tiledY - drawH, CW, drawH);
+      ctx.drawImage(bgSprite, 0, tiledY, CW, drawH);
     } else {
       // All other worlds: no tiling, scroll from bottom to top, stop at end
       // Phobos stops at imgTop=-150 so moon is fully visible
