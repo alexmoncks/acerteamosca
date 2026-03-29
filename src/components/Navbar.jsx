@@ -1,11 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
 export default function Navbar() {
+  const t = useTranslations("navbar");
+  const locale = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
   const isHome = pathname === "/";
+
+  const switchLocale = () => {
+    const next = locale === "pt" ? "en" : "pt";
+    router.replace(pathname, { locale: next });
+  };
 
   return (
     <nav style={{
@@ -37,29 +45,51 @@ export default function Navbar() {
           textShadow: "0 0 8px rgba(0,240,255,0.4)",
           letterSpacing: 2,
         }}>
-          ACERTE A MOSCA
+          {t("brand")}
         </span>
       </Link>
 
-      {!isHome && (
-        <Link href="/" style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "6px 14px",
-          background: "rgba(0,240,255,0.08)",
-          border: "1px solid rgba(0,240,255,0.2)",
-          borderRadius: 6,
-          color: "#00f0ff",
-          fontFamily: "'Press Start 2P', monospace",
-          fontSize: 8,
-          letterSpacing: 1,
-          textDecoration: "none",
-          transition: "all 0.2s",
-        }}>
-          ← JOGOS
-        </Link>
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {!isHome && (
+          <Link href="/" style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 14px",
+            background: "rgba(0,240,255,0.08)",
+            border: "1px solid rgba(0,240,255,0.2)",
+            borderRadius: 6,
+            color: "#00f0ff",
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 8,
+            letterSpacing: 1,
+            textDecoration: "none",
+            transition: "all 0.2s",
+          }}>
+            ← {t("games")}
+          </Link>
+        )}
+
+        <button
+          onClick={switchLocale}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "6px 10px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 6,
+            color: "#ccd6f6",
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 7,
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          {locale === "pt" ? "EN" : "PT"}
+        </button>
+      </div>
     </nav>
   );
 }
