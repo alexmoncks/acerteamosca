@@ -100,11 +100,19 @@ const jogos = [
     cor: "#00f0ff",
     destaque: false,
   },
+  {
+    slug: "3invader",
+    nome: "3INVADER",
+    emoji: "👾",
+    desc: "Pilote o ARROW-7 contra a invasão alienígena 3I/ATLAS! 25 fases, 5 mundos, 5 bosses épicos.",
+    cor: "#9a50d0",
+    destaque: false,
+  },
 ];
 
 const faqs = [
-  { q: "O que é o Acerte a Mosca?", a: "Acerte a Mosca é uma plataforma de jogos online grátis que funciona direto no navegador. Oferecemos 12 jogos incluindo Wordle em português, 2048, Jogo da Memória, Batalha Naval, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo e Brick Breaker. Não precisa baixar nada!" },
-  { q: "Quais jogos estão disponíveis?", a: "Temos 12 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memória com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (clássico com multiplayer), Ships (batalha de naves com multiplayer), Jogo do Jacaré (estilo Frogger), Tiro ao Alvo (reflexo), Batalha Naval (estratégia com multiplayer online) e Brick Breaker (arcade estilo Arkanoid)." },
+  { q: "O que é o Acerte a Mosca?", a: "Acerte a Mosca é uma plataforma de jogos online grátis que funciona direto no navegador. Oferecemos 13 jogos incluindo Wordle em português, 2048, Jogo da Memória, Batalha Naval, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo, Brick Breaker e 3INVADER. Não precisa baixar nada!" },
+  { q: "Quais jogos estão disponíveis?", a: "Temos 13 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memória com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (clássico com multiplayer), Ships (batalha de naves com multiplayer), Jogo do Jacaré (estilo Frogger), Tiro ao Alvo (reflexo), Batalha Naval (estratégia com multiplayer online), Brick Breaker (arcade estilo Arkanoid) e 3INVADER (shoot em up espacial)." },
   { q: "Preciso baixar alguma coisa para jogar?", a: "Não! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e começar a jogar." },
   { q: "Os jogos funcionam no celular?", a: "Sim! Todos os jogos são responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack têm botões de controle dedicados para telas touch." },
   { q: "Posso jogar com amigos online?", a: "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
@@ -131,7 +139,7 @@ export default function Home() {
             "@type": "FAQPage",
             "mainEntity": [
               { "@type": "Question", "name": "O que é o Acerte a Mosca?", "acceptedAnswer": { "@type": "Answer", "text": "Acerte a Mosca é uma plataforma de jogos online grátis que funciona direto no navegador." } },
-              { "@type": "Question", "name": "Quais jogos estão disponíveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 12 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo, Batalha Naval e Brick Breaker." } },
+              { "@type": "Question", "name": "Quais jogos estão disponíveis?", "acceptedAnswer": { "@type": "Answer", "text": "Temos 13 jogos: Acerte a Mosca, Wordle BR, Memory Game, 2048, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo, Batalha Naval, Brick Breaker e 3INVADER." } },
               { "@type": "Question", "name": "Preciso baixar alguma coisa?", "acceptedAnswer": { "@type": "Answer", "text": "Não! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador." } },
               { "@type": "Question", "name": "Os jogos funcionam no celular?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Todos os jogos são responsivos e possuem controles touch otimizados para celular." } },
               { "@type": "Question", "name": "Posso jogar com amigos online?", "acceptedAnswer": { "@type": "Answer", "text": "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online." } },
@@ -148,7 +156,7 @@ export default function Home() {
             "@type": "ItemList",
             "name": "Jogos Online Grátis",
             "description": "Lista de jogos online grátis no Acerte a Mosca",
-            "numberOfItems": 12,
+            "numberOfItems": 13,
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "url": "https://acerteamosca.com.br/jogos/acerteamosca", "name": "Acerte a Mosca" },
               { "@type": "ListItem", "position": 2, "url": "https://acerteamosca.com.br/jogos/pong", "name": "Pong" },
@@ -162,6 +170,7 @@ export default function Home() {
               { "@type": "ListItem", "position": 10, "url": "https://acerteamosca.com.br/jogos/tiroaoalvo", "name": "Tiro ao Alvo" },
               { "@type": "ListItem", "position": 11, "url": "https://acerteamosca.com.br/jogos/batalha-naval", "name": "Batalha Naval" },
               { "@type": "ListItem", "position": 12, "url": "https://acerteamosca.com.br/jogos/brickbreaker", "name": "Brick Breaker" },
+              { "@type": "ListItem", "position": 13, "url": "https://acerteamosca.com.br/jogos/3invader", "name": "3INVADER" },
             ]
           })
         }}
@@ -194,6 +203,119 @@ export default function Home() {
       >
         JOGOS ONLINE GRÁTIS
       </p>
+
+      {/* 3INVADER Cinematic Banner */}
+      <Link href="/jogos/3invader" style={{ textDecoration: "none", maxWidth: 900, width: "100%", marginBottom: 20 }}>
+        <div
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 12,
+            border: "2px solid #9a50d0",
+            boxShadow: "0 0 30px rgba(154,80,208,0.3)",
+            background: "#0a0a1a",
+            minHeight: 180,
+          }}
+        >
+          {/* Background image */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: "url(/images/3invader/intro-4.jpg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          {/* Gradient overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to right, rgba(5,5,16,0.92), rgba(5,5,16,0.4))",
+            }}
+          />
+          {/* Content */}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "24px 32px",
+              minHeight: 180,
+            }}
+          >
+            {/* Text left */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 22,
+                  color: "#d4a0e8",
+                  textShadow: "0 0 20px rgba(154,80,208,0.5)",
+                  marginBottom: 8,
+                  letterSpacing: 3,
+                }}
+              >
+                3INVADER
+              </h2>
+              <p
+                style={{
+                  fontFamily: "'Fira Code', monospace",
+                  fontSize: 12,
+                  color: "#ccd6f6",
+                  lineHeight: 1.8,
+                  marginBottom: 16,
+                  maxWidth: 400,
+                }}
+              >
+                Pilote o ARROW-7 e enfrente a invasão alienígena 3I/ATLAS.
+                <br />
+                25 fases. 5 mundos. 5 bosses épicos.
+                <br />
+                A humanidade depende de você.
+              </p>
+              <span
+                style={{
+                  display: "inline-block",
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 9,
+                  color: "#020824",
+                  background: "#9a50d0",
+                  borderRadius: 6,
+                  padding: "8px 20px",
+                  letterSpacing: 2,
+                  boxShadow: "0 0 15px rgba(154,80,208,0.4)",
+                }}
+              >
+                JOGAR AGORA &gt;&gt;
+              </span>
+            </div>
+            {/* Ship floating right */}
+            <div style={{ marginLeft: 24, flexShrink: 0 }}>
+              <img
+                src="/images/3invader/ship.png"
+                alt="ARROW-7"
+                width={96}
+                height={72}
+                style={{
+                  imageRendering: "pixelated",
+                  filter: "drop-shadow(0 0 12px rgba(0,240,255,0.5))",
+                  animation: "invBannerFloat 3s ease-in-out infinite",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      <style>{`
+        @keyframes invBannerFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+      `}</style>
 
       <AdBanner slot="home_top" style={{ marginBottom: 20, maxWidth: 900, width: "100%" }} />
       <AdsTerraBanner style={{ marginBottom: 20, maxWidth: 900 }} />
