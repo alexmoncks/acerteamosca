@@ -13,12 +13,18 @@ export default function sitemap() {
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1.0,
+      alternates: {
+        languages: { en: `${baseUrl}/en` },
+      },
     },
     ...jogos.map((slug) => ({
       url: `${baseUrl}/jogos/${slug}`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
+      alternates: {
+        languages: { en: `${baseUrl}/en/jogos/${slug}` },
+      },
     })),
   ];
 }
