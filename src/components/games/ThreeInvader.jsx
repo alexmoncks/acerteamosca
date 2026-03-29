@@ -4628,30 +4628,17 @@ export default function ThreeInvader() {
                 zIndex: 100,
               }}
             >
-              <h1
+              <img
+                src="/images/3invader/logo.svg"
+                alt="3INVADER"
                 style={{
-                  fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 28,
-                  color: ACCENT,
+                  width: 280,
+                  maxWidth: "80%",
+                  height: "auto",
                   animation: "invPulse 2s ease-in-out infinite",
-                  marginBottom: 4,
-                  textAlign: "center",
-                  lineHeight: 1.3,
-                  letterSpacing: 4,
-                }}
-              >
-                3INVADER
-              </h1>
-              <p
-                style={{
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: 10,
-                  color: "#7a8baa",
                   marginBottom: 20,
                 }}
-              >
-                ARROW-7 vs 3I/ATLAS
-              </p>
+              />
 
               {/* Ship icon */}
               <div style={{ animation: "menuFloat 2s ease-in-out infinite", marginBottom: 24 }}>
