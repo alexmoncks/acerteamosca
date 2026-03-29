@@ -6,6 +6,7 @@ import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 import useLockScroll from "@/hooks/useLockScroll";
+import { adsConfig } from "@/config/ads";
 
 // ── Constants ──────────────────────────────────────────────────────────
 const CW = 480;
@@ -27,6 +28,8 @@ const MAX_PARTICLES = 150;
 const POWERUP_FALL_SPEED = 1.5;
 const INVULN_TIME = 240; // 4s at 60fps
 const RESPAWN_TIME = 120;
+const SPONSOR_STORAGE_KEY = "3invader_sponsor_last";
+const SPONSOR_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 // ── Enemy type constants ───────────────────────────────────────────────
 const ET_SCOUT = 0;
@@ -4320,6 +4323,22 @@ export default function ThreeInvader() {
   };
 
   const handleMenuStart = () => {
+    // Check sponsor gate (once per day)
+    let sponsorSeen = false;
+    try {
+      const last = localStorage.getItem(SPONSOR_STORAGE_KEY);
+      if (last && Date.now() - Number(last) < SPONSOR_COOLDOWN_MS) sponsorSeen = true;
+    } catch {}
+
+    if (!sponsorSeen) {
+      setScreen("sponsor");
+      return;
+    }
+
+    proceedAfterSponsor();
+  };
+
+  const proceedAfterSponsor = () => {
     if (user) {
       // Check if intro has been seen
       let introSeen = false;
@@ -4340,6 +4359,19 @@ export default function ThreeInvader() {
     } else {
       setScreen("register");
     }
+  };
+
+  const handleSponsorContinue = () => {
+    // Mark sponsor as seen
+    try { localStorage.setItem(SPONSOR_STORAGE_KEY, String(Date.now())); } catch {}
+    // Inject popunder script
+    try {
+      const s = document.createElement("script");
+      s.src = adsConfig.adsterra.popunder.src;
+      document.body.appendChild(s);
+    } catch {}
+    // Proceed
+    proceedAfterSponsor();
   };
 
   const handleRegister = async (userData) => {
@@ -4611,6 +4643,67 @@ export default function ThreeInvader() {
               >
                 TOQUE OU PRESSIONE PARA CONTINUAR
               </div>
+            </div>
+          )}
+
+          {screen === "sponsor" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(2,8,36,0.95)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 100,
+              }}
+            >
+              <div style={{ fontSize: 48, marginBottom: 20 }}>🚀</div>
+              <h2
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 14,
+                  color: "#00f0ff",
+                  textAlign: "center",
+                  lineHeight: 2,
+                  marginBottom: 8,
+                }}
+              >
+                MISSÃO PATROCINADA
+              </h2>
+              <p
+                style={{
+                  fontFamily: "'Fira Code', monospace",
+                  fontSize: 11,
+                  color: "#8892b0",
+                  textAlign: "center",
+                  lineHeight: 1.8,
+                  maxWidth: 320,
+                  marginBottom: 24,
+                }}
+              >
+                Nosso patrocinador mantém o jogo gratuito.
+                <br />
+                Clique para continuar e iniciar sua missão.
+              </p>
+              <button
+                onClick={handleSponsorContinue}
+                style={{
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 13,
+                  color: "#020824",
+                  background: "#00f0ff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "14px 36px",
+                  cursor: "pointer",
+                  boxShadow: "0 0 20px rgba(0,240,255,0.4)",
+                  letterSpacing: 2,
+                }}
+              >
+                CONTINUAR
+              </button>
             </div>
           )}
 
