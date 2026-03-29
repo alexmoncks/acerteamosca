@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "title": "Acerte a Mosca - Free Online Games | Play Now!",
+    "titleTemplate": "%s | Acerte a Mosca",
+    "description": "Free online browser games! Wordle, 2048, Memory Game, Bubble Shooter, Deep Attack and more. Play now on mobile or PC, no download required!",
+    "ogDescription": "Free online browser games! Wordle, 2048, Memory, Bubble Shooter and more. No download!"
+  },
+  "navbar": {
+    "brand": "ACERTE A MOSCA",
+    "games": "GAMES"
+  },
+  "home": {
+    "subtitle": "FREE ONLINE GAMES",
+    "banner3invader": {
+      "title": "3INVADER",
+      "line1": "Pilot the ARROW-7 and face the alien invasion 3I/ATLAS.",
+      "line2": "25 stages. 5 worlds. 5 epic bosses.",
+      "line3": "Humanity depends on you.",
+      "cta": "PLAY NOW"
+    },
+    "games": {
+      "acerteamosca": { "name": "Swat the Fly", "desc": "Swat the mosquito with the slipper before time runs out!" },
+      "pong": { "name": "Pong", "desc": "The classic of classics! Play against CPU, a local friend, or online." },
+      "ships": { "name": "Ships", "desc": "Navigate mazes, ricochet shots, and destroy the enemy ship!" },
+      "wordle": { "name": "Wordle", "desc": "Guess the 5-letter word in 6 attempts!" },
+      "memory": { "name": "Memory Game", "desc": "Find the pairs and challenge friends online!" },
+      "2048": { "name": "2048", "desc": "Slide the blocks and add up to 2048! Play online." },
+      "bubbleshooter": { "name": "Bubble Shooter", "desc": "Aim, shoot, and pop bubbles of the same color!" },
+      "deepattack": { "name": "Deep Attack", "desc": "Pilot your ship, destroy aliens, and survive in space!" },
+      "jacare": { "name": "Croc Crossing", "desc": "Cross the road and river with the crocodile! Classic Frogger style." },
+      "tiroaoalvo": { "name": "Target Shooting", "desc": "Hit the clay targets at the right time! Pure reflex." },
+      "batalha-naval": { "name": "Battleship", "desc": "Position your ships and sink the enemy fleet! VS CPU or online." },
+      "brickbreaker": { "name": "Brick Breaker", "desc": "Destroy all blocks in 25 stages! Power-ups, enemies, and 5 epic worlds." },
+      "3invader": { "name": "3INVADER", "desc": "Pilot the ARROW-7 against the alien invasion 3I/ATLAS! 25 stages, 5 worlds, 5 epic bosses." }
+    },
+    "faq": {
+      "title": "FREQUENTLY ASKED QUESTIONS",
+      "items": [
+        { "q": "What is Acerte a Mosca?", "a": "Acerte a Mosca is a free online gaming platform that works right in your browser. We offer 13 games including Wordle, 2048, Memory Game, Battleship, Bubble Shooter, Deep Attack, Pong, Ships, Croc Crossing, Target Shooting, Brick Breaker, and 3INVADER. No download needed!" },
+        { "q": "What games are available?", "a": "We have 13 games: Swat the Fly (reflex), Wordle (words), Memory Game (memory with multiplayer), 2048 (puzzle with multiplayer), Bubble Shooter (arcade), Deep Attack (space ship), Pong (classic with multiplayer), Ships (ship battle with multiplayer), Croc Crossing (Frogger style), Target Shooting (reflex), Battleship (strategy with online multiplayer), Brick Breaker (Arkanoid-style arcade), and 3INVADER (space shoot em up)." },
+        { "q": "Do I need to download anything to play?", "a": "No! All games work right in the browser, on both mobile and desktop. Just visit acerteamosca.com.br and start playing." },
+        { "q": "Do the games work on mobile?", "a": "Yes! All games are responsive with touch controls optimized for mobile. Canvas games like Bubble Shooter and Deep Attack have dedicated touch control buttons." },
+        { "q": "Can I play with friends online?", "a": "Yes! Memory Game, 2048, Pong, Ships, and Battleship have online multiplayer mode. Just create a room and share the link with your friend to play together in real time." },
+        { "q": "Are the games really free?", "a": "Yes, all games are 100% free. Just register with your name and email to start playing." }
+      ]
+    }
+  },
+  "common": {
+    "playFree": "Play free at acerteamosca.com.br",
+    "mainGame": "FEATURED GAME",
+    "footer": "v1.0 - powered by slipper slaps"
+  }
+}

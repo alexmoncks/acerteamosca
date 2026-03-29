@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "title": "Acerte a Mosca - Jogos Online Grátis | Jogue Agora!",
+    "titleTemplate": "%s | Acerte a Mosca",
+    "description": "Jogos online grátis no navegador! Wordle em português, 2048, Jogo da Memória, Bubble Shooter, Deep Attack e mais. Jogue agora no celular ou PC sem download!",
+    "ogDescription": "Jogos online grátis no navegador! Wordle, 2048, Memory, Bubble Shooter e mais. Sem download!"
+  },
+  "navbar": {
+    "brand": "ACERTE A MOSCA",
+    "games": "JOGOS"
+  },
+  "home": {
+    "subtitle": "JOGOS ONLINE GRÁTIS",
+    "banner3invader": {
+      "title": "3INVADER",
+      "line1": "Pilote o ARROW-7 e enfrente a invasão alienígena 3I/ATLAS.",
+      "line2": "25 fases. 5 mundos. 5 bosses épicos.",
+      "line3": "A humanidade depende de você.",
+      "cta": "JOGAR AGORA"
+    },
+    "games": {
+      "acerteamosca": { "name": "Acerte a Mosca", "desc": "Mate o mosquito com o chinelo antes que o tempo acabe!" },
+      "pong": { "name": "Pong", "desc": "Clássico dos clássicos! Jogue contra o CPU, um amigo local ou online." },
+      "ships": { "name": "Ships", "desc": "Navegue por labirintos, ricocheteie tiros e destrua a nave inimiga!" },
+      "wordle": { "name": "Wordle BR", "desc": "Adivinhe a palavra de 5 letras em 6 tentativas!" },
+      "memory": { "name": "Memory Game", "desc": "Encontre os pares e desafie amigos online!" },
+      "2048": { "name": "2048", "desc": "Deslize os blocos e some até chegar no 2048! Jogue online." },
+      "bubbleshooter": { "name": "Bubble Shooter", "desc": "Mire, atire e estoure bolhas da mesma cor!" },
+      "deepattack": { "name": "Deep Attack", "desc": "Pilote sua nave, destrua aliens e sobreviva no espaço!" },
+      "jacare": { "name": "Jogo do Jacaré", "desc": "Atravesse a rua e o rio com o jacaré! Estilo Frogger clássico." },
+      "tiroaoalvo": { "name": "Tiro ao Alvo", "desc": "Acerte os pratos de argila no timing certo! Reflexo puro." },
+      "batalha-naval": { "name": "Batalha Naval", "desc": "Posicione seus navios e afunde a frota inimiga! VS CPU ou online." },
+      "brickbreaker": { "name": "Brick Breaker", "desc": "Destrua todos os blocos em 25 fases! Power-ups, inimigos e 5 mundos épicos." },
+      "3invader": { "name": "3INVADER", "desc": "Pilote o ARROW-7 contra a invasão alienígena 3I/ATLAS! 25 fases, 5 mundos, 5 bosses épicos." }
+    },
+    "faq": {
+      "title": "PERGUNTAS FREQUENTES",
+      "items": [
+        { "q": "O que é o Acerte a Mosca?", "a": "Acerte a Mosca é uma plataforma de jogos online grátis que funciona direto no navegador. Oferecemos 13 jogos incluindo Wordle em português, 2048, Jogo da Memória, Batalha Naval, Bubble Shooter, Deep Attack, Pong, Ships, Jogo do Jacaré, Tiro ao Alvo, Brick Breaker e 3INVADER. Não precisa baixar nada!" },
+        { "q": "Quais jogos estão disponíveis?", "a": "Temos 13 jogos: Acerte a Mosca (reflexo), Wordle BR (palavras), Memory Game (memória com multiplayer), 2048 (puzzle com multiplayer), Bubble Shooter (arcade), Deep Attack (nave espacial), Pong (clássico com multiplayer), Ships (batalha de naves com multiplayer), Jogo do Jacaré (estilo Frogger), Tiro ao Alvo (reflexo), Batalha Naval (estratégia com multiplayer online), Brick Breaker (arcade estilo Arkanoid) e 3INVADER (shoot em up espacial)." },
+        { "q": "Preciso baixar alguma coisa para jogar?", "a": "Não! Todos os jogos funcionam direto no navegador, tanto no celular quanto no computador. Basta acessar acerteamosca.com.br e começar a jogar." },
+        { "q": "Os jogos funcionam no celular?", "a": "Sim! Todos os jogos são responsivos e possuem controles touch otimizados para celular. Jogos de canvas como Bubble Shooter e Deep Attack têm botões de controle dedicados para telas touch." },
+        { "q": "Posso jogar com amigos online?", "a": "Sim! Memory Game, 2048, Pong, Ships e Batalha Naval possuem modo multiplayer online. Basta criar uma sala e compartilhar o link com seu amigo para jogar juntos em tempo real." },
+        { "q": "Os jogos são realmente grátis?", "a": "Sim, todos os jogos são 100% grátis. Basta se cadastrar com nome e email para começar a jogar." }
+      ]
+    }
+  },
+  "common": {
+    "playFree": "Jogue grátis em acerteamosca.com.br",
+    "mainGame": "JOGO PRINCIPAL",
+    "footer": "v1.0 - powered by chineladas"
+  }
+}
