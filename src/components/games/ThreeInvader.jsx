@@ -4650,56 +4650,44 @@ export default function ThreeInvader() {
             <div
               style={{
                 position: "absolute",
-                inset: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
                 background: "rgba(2,8,36,0.95)",
+                borderTop: "1px solid #00f0ff44",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: 16,
+                padding: "12px 16px",
                 zIndex: 100,
               }}
             >
-              <div style={{ fontSize: 48, marginBottom: 20 }}>🚀</div>
-              <h2
-                style={{
-                  fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 14,
-                  color: "#00f0ff",
-                  textAlign: "center",
-                  lineHeight: 2,
-                  marginBottom: 8,
-                }}
-              >
-                MISSÃO PATROCINADA
-              </h2>
               <p
                 style={{
                   fontFamily: "'Fira Code', monospace",
-                  fontSize: 11,
+                  fontSize: 10,
                   color: "#8892b0",
                   textAlign: "center",
-                  lineHeight: 1.8,
-                  maxWidth: 320,
-                  marginBottom: 24,
+                  margin: 0,
                 }}
               >
-                Nosso patrocinador mantém o jogo gratuito.
-                <br />
-                Clique para continuar e iniciar sua missão.
+                Nosso patrocinador mantém o jogo gratuito
               </p>
               <button
                 onClick={handleSponsorContinue}
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 13,
+                  fontSize: 9,
                   color: "#020824",
                   background: "#00f0ff",
                   border: "none",
-                  borderRadius: 8,
-                  padding: "14px 36px",
+                  borderRadius: 6,
+                  padding: "8px 16px",
                   cursor: "pointer",
-                  boxShadow: "0 0 20px rgba(0,240,255,0.4)",
-                  letterSpacing: 2,
+                  boxShadow: "0 0 10px rgba(0,240,255,0.3)",
+                  letterSpacing: 1,
+                  flexShrink: 0,
                 }}
               >
                 CONTINUAR
