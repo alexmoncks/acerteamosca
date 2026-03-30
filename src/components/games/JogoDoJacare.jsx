@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -970,6 +971,7 @@ function drawTimerBar(ctx, x, y, w, h, pct, phase) {
 // MAIN COMPONENT
 // ============================================================
 export default function JogoDoJacare() {
+  const t = useTranslations("games.jacare");
   const { user, checkedCookie, registering, register } = useJogador("jacare");
   const gameScale = useGameScale(CANVAS_W);
   const mobile = useMobile();
@@ -1519,7 +1521,7 @@ export default function JogoDoJacare() {
     // Score
     ctx.font = "bold 10px 'Press Start 2P', monospace";
     ctx.fillStyle = "#555";
-    ctx.fillText("SCORE", 8, 14);
+    ctx.fillText(t("hudScore"), 8, 14);
     ctx.font = "bold 14px 'Press Start 2P', monospace";
     ctx.fillStyle = ACCENT;
     ctx.shadowColor = ACCENT;
@@ -1530,7 +1532,7 @@ export default function JogoDoJacare() {
     // Phase
     ctx.font = "bold 10px 'Press Start 2P', monospace";
     ctx.fillStyle = "#555";
-    const phaseText = `FASE ${gs.phase}`;
+    const phaseText = t("hudPhase", { phase: gs.phase });
     const phaseWidth = ctx.measureText(phaseText).width;
     ctx.fillText(phaseText, CANVAS_W / 2 - phaseWidth / 2, 14);
 
@@ -1547,7 +1549,7 @@ export default function JogoDoJacare() {
       ctx.globalAlpha = 0.3 + Math.sin(time * 6) * 0.2;
       ctx.fillStyle = "#f1c40f";
       ctx.font = "bold 18px 'Press Start 2P', monospace";
-      const mmText = "MODO MESTRE!";
+      const mmText = t("masterMode");
       const mmWidth = ctx.measureText(mmText).width;
       ctx.fillText(mmText, CANVAS_W / 2 - mmWidth / 2, CANVAS_H / 2);
       ctx.restore();
@@ -1853,7 +1855,7 @@ export default function JogoDoJacare() {
         letterSpacing: 3,
         textAlign: "center",
       }}>
-        JOGO DO JACARE
+        {t("title")}
       </h1>
 
       {!isPlaying && (
@@ -1864,7 +1866,7 @@ export default function JogoDoJacare() {
           fontFamily: "'Press Start 2P', monospace",
           textAlign: "center",
         }}>
-          ATRAVESSE A RUA E O RIO!
+          {t("subtitle")}
         </p>
       )}
 
@@ -1923,7 +1925,7 @@ export default function JogoDoJacare() {
                   boxShadow: `0 0 20px rgba(57,255,20,0.4)`,
                 }}
               >
-                JOGAR
+                {t("playButton")}
               </button>
               <div style={{ height: 20 }} />
               {!mobile && (
@@ -1934,8 +1936,8 @@ export default function JogoDoJacare() {
                   textAlign: "center",
                   lineHeight: 2,
                 }}>
-                  <div>SETAS: mover</div>
-                  <div>P: pausar</div>
+                  <div>{t("keyboardArrows")}</div>
+                  <div>{t("keyboardPause")}</div>
                 </div>
               )}
               {mobile && (
@@ -1945,7 +1947,7 @@ export default function JogoDoJacare() {
                   fontFamily: "'Press Start 2P', monospace",
                   textAlign: "center",
                 }}>
-                  USE O JOYSTICK PARA MOVER
+                  {t("mobileHint")}
                 </div>
               )}
             </div>
@@ -1956,7 +1958,7 @@ export default function JogoDoJacare() {
             <RegisterModal
               onRegister={handleRegister}
               loading={registering}
-              jogoNome="JOGO DO JACARE"
+              jogoNome={t("title")}
               accentColor={ACCENT}
             />
           )}
@@ -1978,7 +1980,7 @@ export default function JogoDoJacare() {
                 textShadow: `0 0 20px ${ACCENT}`,
                 marginBottom: 30,
               }}>
-                PAUSADO
+                {t("paused")}
               </div>
               <button
                 onClick={handleResume}
@@ -1992,7 +1994,7 @@ export default function JogoDoJacare() {
                   fontWeight: 900, marginBottom: 12,
                 }}
               >
-                CONTINUAR
+                {t("resumeButton")}
               </button>
               <button
                 onClick={handleBackToMenu}
@@ -2006,7 +2008,7 @@ export default function JogoDoJacare() {
                   fontSize: 10, cursor: "pointer",
                 }}
               >
-                SAIR
+                {t("quitButton")}
               </button>
             </div>
           )}
@@ -2028,7 +2030,7 @@ export default function JogoDoJacare() {
                 marginBottom: 20,
                 textAlign: "center",
               }}>
-                FASE {phaseCompleteData.phase} COMPLETA!
+                {t("phaseComplete", { phase: phaseCompleteData.phase })}
               </div>
               {/* 5 mini crocs in homes doing thumbs up */}
               <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
@@ -2042,14 +2044,14 @@ export default function JogoDoJacare() {
                 color: "#ccc",
                 marginBottom: 8,
               }}>
-                Pontuacao: {phaseCompleteData.score}
+                {t("score")}: {phaseCompleteData.score}
               </div>
               <div style={{
                 fontFamily: "'Fira Code', monospace",
                 fontSize: 11,
                 color: "#888",
               }}>
-                Avancando em 3s...
+                {t("advancing")}
               </div>
             </div>
           )}
@@ -2072,11 +2074,11 @@ export default function JogoDoJacare() {
                 textAlign: "center",
                 lineHeight: 2,
               }}>
-                <div>Pontuacao: <span style={{ color: ACCENT }}>{gameOverData.score}</span></div>
-                <div>Fase: {gameOverData.phase}</div>
-                <div>Casinhas: {gameOverData.homesFilled}</div>
+                <div>{t("score")}: <span style={{ color: ACCENT }}>{gameOverData.score}</span></div>
+                <div>{t("phase")}: {gameOverData.phase}</div>
+                <div>{t("homes")}: {gameOverData.homesFilled}</div>
                 <div style={{ color: "#f1c40f" }}>
-                  Recorde: {gameOverData.highScore}
+                  {t("highScore")}: {gameOverData.highScore}
                 </div>
               </div>
               <div style={{ height: 20 }} />
@@ -2092,7 +2094,7 @@ export default function JogoDoJacare() {
                   fontWeight: 900, marginBottom: 12,
                 }}
               >
-                JOGAR DE NOVO
+                {t("playAgainButton")}
               </button>
               <button
                 onClick={handleBackToMenu}
@@ -2106,7 +2108,7 @@ export default function JogoDoJacare() {
                   fontSize: 10, cursor: "pointer",
                 }}
               >
-                MENU
+                {t("menuButton")}
               </button>
 
               <AdBanner slot="jacare_between" style={{ marginTop: 16, maxWidth: CANVAS_W - 40 }} />
@@ -2135,7 +2137,7 @@ export default function JogoDoJacare() {
                 zIndex: 80,
                 padding: 0,
               }}
-              title={muted ? "Ativar som" : "Silenciar"}
+              title={muted ? t("unmuteTitle") : t("muteTitle")}
             >
               {muted ? "\u2716" : "\u266B"}
             </button>
@@ -2283,7 +2285,7 @@ export default function JogoDoJacare() {
           marginTop: 10,
           textAlign: "center",
         }}>
-          SETAS: mover | P: pausar
+          {t("keyboardHints")}
         </div>
       )}
 
@@ -2300,7 +2302,7 @@ export default function JogoDoJacare() {
             {user.nome}
           </span>
           <span style={{ color: "#4a5568", fontSize: 10, fontFamily: "'Fira Code', monospace" }}>
-            Fase {displayPhase} | {displayLives} vidas
+            {t("userInfo", { phase: displayPhase, lives: displayLives })}
           </span>
         </div>
       )}
@@ -2465,6 +2467,7 @@ function PhaseCompleteCroc({ delay }) {
 }
 
 function GameOverTitle() {
+  const t = useTranslations("games.jacare");
   const [shake, setShake] = useState(true);
 
   useEffect(() => {
@@ -2487,7 +2490,7 @@ function GameOverTitle() {
           75% { transform: translateX(4px); }
         }
       `}</style>
-      GAME OVER
+      {t("gameOver")}
     </div>
   );
 }

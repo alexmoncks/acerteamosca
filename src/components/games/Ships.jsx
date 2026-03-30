@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { ShipsMobileControls } from "@/components/MobileControls";
@@ -242,7 +243,7 @@ function ShipSVG({ color, size }) {
 }
 
 // ---- Menu ----
-function ShipsMenu({ onSelect }) {
+function ShipsMenu({ onSelect, t }) {
   const [sub, setSub] = useState(null);
   const [joinId, setJoinId] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -261,36 +262,36 @@ function ShipsMenu({ onSelect }) {
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
       <div style={{ fontSize: 50, marginBottom: 10 }}>🚀</div>
       <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 28, color: "#39ff14", textShadow: "0 0 30px #39ff14", letterSpacing: 6, marginBottom: 6, position: "relative" }}>SHIPS</h1>
-      <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#ff2d95", letterSpacing: 2, textShadow: "0 0 10px #ff2d95", marginBottom: 40 }}>NAVEGUE, ATIRE, SOBREVIVA!</p>
+      <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#ff2d95", letterSpacing: 2, textShadow: "0 0 10px #ff2d95", marginBottom: 40 }}>{t("subtitle")}</p>
 
       <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 12, position: "relative", zIndex: 1 }}>
         {!sub && <>
-          {btn("🤖  VS COMPUTADOR", () => setSub("cpu"))}
-          {!isMobile && btn("👥  LOCAL (2 JOGADORES)", () => onSelect("local"), "#39ff14")}
-          {btn("🌐  ONLINE", () => setSub("online"), "#b026ff")}
+          {btn(`🤖  ${t("vsCpu")}`, () => setSub("cpu"))}
+          {!isMobile && btn(`👥  ${t("local2p")}`, () => onSelect("local"), "#39ff14")}
+          {btn(`🌐  ${t("online")}`, () => setSub("online"), "#b026ff")}
         </>}
         {sub === "cpu" && <>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", textAlign: "center", marginBottom: 4 }}>DIFICULDADE</p>
-          {btn("😌  FACIL", () => onSelect("cpu-easy"), "#39ff14")}
-          {btn("😐  MEDIO", () => onSelect("cpu-medium"), "#ffe600")}
-          {btn("😈  DIFICIL", () => onSelect("cpu-hard"), "#ff2d95")}
-          {btn("← VOLTAR", () => setSub(null), "#555")}
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", textAlign: "center", marginBottom: 4 }}>{t("difficulty")}</p>
+          {btn(`😌  ${t("easy")}`, () => onSelect("cpu-easy"), "#39ff14")}
+          {btn(`😐  ${t("medium")}`, () => onSelect("cpu-medium"), "#ffe600")}
+          {btn(`😈  ${t("hard")}`, () => onSelect("cpu-hard"), "#ff2d95")}
+          {btn(`← ${t("back")}`, () => setSub(null), "#555")}
         </>}
         {sub === "online" && <>
-          {btn("🏠  CRIAR SALA", () => onSelect("remote-host"), "#b026ff")}
+          {btn(`🏠  ${t("createRoom")}`, () => onSelect("remote-host"), "#b026ff")}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <input value={joinId} onChange={e => setJoinId(e.target.value.toUpperCase())} placeholder="CODIGO" maxLength={6}
+            <input value={joinId} onChange={e => setJoinId(e.target.value.toUpperCase())} placeholder={t("codePlaceholder")} maxLength={6}
               style={{ width: "100%", padding: "10px 12px", background: "#111127", border: "1px solid #2a2a4a", borderRadius: 6, color: "#e0e0ff", fontSize: 14, fontFamily: "'Press Start 2P', monospace", textAlign: "center", letterSpacing: 4, outline: "none", boxSizing: "border-box" }}
               onFocus={e => e.target.style.borderColor = "#b026ff"} onBlur={e => e.target.style.borderColor = "#2a2a4a"} />
             <button onClick={() => joinId.length >= 4 && onSelect("remote-join", joinId)} disabled={joinId.length < 4}
-              style={{ width: "100%", padding: "10px 16px", background: joinId.length >= 4 ? "#b026ff" : "#2a2a4a", border: "none", borderRadius: 6, color: joinId.length >= 4 ? "#fff" : "#555", fontFamily: "'Press Start 2P', monospace", fontSize: 9, cursor: joinId.length >= 4 ? "pointer" : "not-allowed" }}>ENTRAR</button>
+              style={{ width: "100%", padding: "10px 16px", background: joinId.length >= 4 ? "#b026ff" : "#2a2a4a", border: "none", borderRadius: 6, color: joinId.length >= 4 ? "#fff" : "#555", fontFamily: "'Press Start 2P', monospace", fontSize: 9, cursor: joinId.length >= 4 ? "pointer" : "not-allowed" }}>{t("join")}</button>
           </div>
-          {btn("← VOLTAR", () => setSub(null), "#555")}
+          {btn(`← ${t("back")}`, () => setSub(null), "#555")}
         </>}
       </div>
       {!isMobile && (
         <div style={{ position: "absolute", bottom: 20, textAlign: "center" }}>
-          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>P1: WASD + Space &nbsp;|&nbsp; P2: Setas + Enter</p>
+          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>{t("controlsHintMenu")}</p>
         </div>
       )}
     </div>
@@ -298,7 +299,7 @@ function ShipsMenu({ onSelect }) {
 }
 
 // ---- Lobby ----
-function ShipsLobby({ sessionId, status, onCancel }) {
+function ShipsLobby({ sessionId, status, onCancel, t }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = async () => {
@@ -313,28 +314,28 @@ function ShipsLobby({ sessionId, status, onCancel }) {
     <div style={{ position: "absolute", inset: 0, background: "rgba(5,5,16,0.95)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 300 }}>
       <div style={{ fontSize: 40, marginBottom: 16 }}>🌐</div>
       {status === "waiting" && <>
-        <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff", marginBottom: 20 }}>AGUARDANDO OPONENTE</p>
+        <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff", marginBottom: 20 }}>{t("waitingOpponent")}</p>
         <div onClick={handleCopyLink} style={{
           background: "#111127", border: `2px solid ${copied ? "#39ff14" : "#b026ff"}`, borderRadius: 10,
           padding: "16px 28px", marginBottom: 16, cursor: "pointer", transition: "border-color 0.3s",
         }}>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 8 }}>CODIGO DA SALA</p>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 8 }}>{t("roomCode")}</p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 28, color: "#b026ff", textShadow: "0 0 15px #b026ff", letterSpacing: 8 }}>{sessionId}</p>
         </div>
         <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: copied ? "#39ff14" : "#666", transition: "color 0.3s" }}>
-          {copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}
+          {copied ? t("linkCopied") : t("tapToCopyLink")}
         </p>
       </>}
-      {status === "joining" && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff" }}>ENTRANDO...</p>}
-      {status === "creating" && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff" }}>CONECTANDO...</p>}
-      {status === "error" && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#ff2d95" }}>SALA NAO ENCONTRADA</p>}
-      <button onClick={onCancel} style={{ marginTop: 20, padding: "10px 24px", background: "transparent", border: "1px solid #555", borderRadius: 6, color: "#555", fontFamily: "'Press Start 2P', monospace", fontSize: 9, cursor: "pointer" }}>CANCELAR</button>
+      {status === "joining" && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff" }}>{t("joining")}</p>}
+      {status === "creating" && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff" }}>{t("connecting")}</p>}
+      {status === "error" && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#ff2d95" }}>{t("roomNotFound")}</p>}
+      <button onClick={onCancel} style={{ marginTop: 20, padding: "10px 24px", background: "transparent", border: "1px solid #555", borderRadius: 6, color: "#555", fontFamily: "'Press Start 2P', monospace", fontSize: 9, cursor: "pointer" }}>{t("cancel")}</button>
     </div>
   );
 }
 
 // ---- Game Over ----
-function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remoteReq }) {
+function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remoteReq, t }) {
   const isRemote = mode?.startsWith("remote");
   const youWon = isRemote ? winner === playerNum : null;
   const sentRestart = remoteReq === "sent";
@@ -344,10 +345,10 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 60, marginBottom: 12 }}>{isRemote ? (youWon ? "🏆" : "💥") : "🏆"}</div>
         <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: winner === 1 ? rgbStr(P1_COLOR) : rgbStr(P2_COLOR), textShadow: `0 0 15px ${winner === 1 ? rgbStr(P1_COLOR) : rgbStr(P2_COLOR)}`, marginBottom: 8 }}>
-          {isRemote ? (youWon ? "VOCE VENCEU!" : "VOCE PERDEU!") : `JOGADOR ${winner} VENCE!`}
+          {isRemote ? (youWon ? t("youWon") : t("youLost")) : t("playerWins", { n: winner })}
         </h2>
         <div style={{ display: "flex", gap: 20, justifyContent: "center", marginBottom: 24 }}>
-          {[{ l: isRemote && playerNum === 1 ? "VOCE" : "P1", v: s1, c: P1_COLOR }, { l: isRemote && playerNum === 2 ? "VOCE" : mode?.startsWith("cpu") ? "CPU" : "P2", v: s2, c: P2_COLOR }].map(s => (
+          {[{ l: isRemote && playerNum === 1 ? t("you") : "P1", v: s1, c: P1_COLOR }, { l: isRemote && playerNum === 2 ? t("you") : mode?.startsWith("cpu") ? "CPU" : "P2", v: s2, c: P2_COLOR }].map(s => (
             <div key={s.l} style={{ textAlign: "center" }}>
               <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", marginBottom: 4 }}>{s.l}</div>
               <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 32, color: rgbStr(s.c), textShadow: `0 0 10px ${rgbStr(s.c)}` }}>{s.v}</div>
@@ -356,11 +357,11 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button onClick={onRestart} disabled={sentRestart && !opponentWants} style={{ padding: "12px 28px", background: sentRestart && !opponentWants ? "#2a2a4a" : "linear-gradient(135deg, #00f0ff, #39ff14)", border: "none", borderRadius: 8, color: sentRestart && !opponentWants ? "#888" : "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: sentRestart && !opponentWants ? "default" : "pointer", fontWeight: 900 }}>
-            {isRemote ? (opponentWants ? "ACEITAR REVANCHE" : sentRestart ? "AGUARDANDO..." : "REVANCHE") : "JOGAR DE NOVO"}
+            {isRemote ? (opponentWants ? t("acceptRematch") : sentRestart ? t("waitingRematch") : t("rematch")) : t("playAgain")}
           </button>
-          <button onClick={onMenu} style={{ padding: "12px 28px", background: "transparent", border: "1px solid #555", borderRadius: 8, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>MENU</button>
+          <button onClick={onMenu} style={{ padding: "12px 28px", background: "transparent", border: "1px solid #555", borderRadius: 8, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>{t("menu")}</button>
         </div>
-        {isRemote && opponentWants && <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>Oponente quer revanche!</p>}
+        {isRemote && opponentWants && <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>{t("opponentWantsRematch")}</p>}
         <AdBanner slot="ships_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
@@ -369,6 +370,7 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
 
 // ---- MAIN GAME ----
 export default function Ships() {
+  const t = useTranslations("games.ships");
   const { user, checkedCookie, registering, register } = useJogador("ships");
   const [screen, setScreen] = useState("menu");
   const [mode, setMode] = useState(null);
@@ -876,8 +878,8 @@ export default function Ships() {
   const gameScale = useGameScale(CANVAS_W);
   useLockScroll(screen === "playing");
 
-  const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : "P1";
-  const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";
+  const p1Label = mode?.startsWith("remote") && playerNum === 1 ? t("you") : mode?.startsWith("remote") ? t("rival") : "P1";
+  const p2Label = mode?.startsWith("remote") && playerNum === 2 ? t("you") : mode?.startsWith("remote") ? t("rival") : mode?.startsWith("cpu") ? "CPU" : "P2";
 
   return (
     <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
@@ -895,7 +897,7 @@ export default function Ships() {
       {screen !== "menu" && screen !== "lobby" && <>
         <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h1>
         <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 4, fontFamily: "'Press Start 2P', monospace" }}>
-          {mode?.startsWith("cpu") ? `VS CPU (${mode.replace("cpu-", "").toUpperCase()})` : mode === "local" ? "LOCAL - 2 JOGADORES" : mode?.startsWith("remote") ? `ONLINE - ${sessionId}` : ""}
+          {mode?.startsWith("cpu") ? `VS CPU (${mode.replace("cpu-", "").toUpperCase()})` : mode === "local" ? t("local2pMode") : mode?.startsWith("remote") ? `ONLINE - ${sessionId}` : ""}
         </p>
       </>}
 
@@ -986,25 +988,25 @@ export default function Ships() {
           {/* Disconnected */}
           {disconnected && (
             <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
-              <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ff2d95", marginBottom: 16 }}>OPONENTE DESCONECTOU</p>
-              <button onClick={handleMenu} style={{ padding: "10px 24px", background: "transparent", border: "1px solid #555", borderRadius: 6, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>MENU</button>
+              <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ff2d95", marginBottom: 16 }}>{t("opponentDisconnected")}</p>
+              <button onClick={handleMenu} style={{ padding: "10px 24px", background: "transparent", border: "1px solid #555", borderRadius: 6, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>{t("menu")}</button>
             </div>
           )}
         </>}
 
-        {screen === "menu" && <ShipsMenu onSelect={handleSelectMode} />}
+        {screen === "menu" && <ShipsMenu onSelect={handleSelectMode} t={t} />}
         {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome="SHIPS" accentColor="#39ff14" />}
-        {screen === "lobby" && <ShipsLobby sessionId={sessionId} status={lobbyStatus} onCancel={handleMenu} />}
-        {screen === "gameover" && <ShipsGameOver s1={s1} s2={s2} winner={winner} playerNum={playerNum} mode={mode} onRestart={handleRestart} onMenu={handleMenu} remoteReq={remoteReq} />}
+        {screen === "lobby" && <ShipsLobby sessionId={sessionId} status={lobbyStatus} onCancel={handleMenu} t={t} />}
+        {screen === "gameover" && <ShipsGameOver s1={s1} s2={s2} winner={winner} playerNum={playerNum} mode={mode} onRestart={handleRestart} onMenu={handleMenu} remoteReq={remoteReq} t={t} />}
       </div>
       </div>
 
       {screen === "playing" && !isMobile && (
         <div style={{ width: CANVAS_W, display: "flex", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>
           <span style={{ color: rgbaStr(P1_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>
-            {mode?.startsWith("remote") ? "WASD ou ←→↑↓ + Space/Enter" : "P1: WASD + Space"}
+            {mode?.startsWith("remote") ? t("controlsRemote") : t("controlsP1")}
           </span>
-          {mode === "local" && <span style={{ color: rgbaStr(P2_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>P2: Setas + Enter</span>}
+          {mode === "local" && <span style={{ color: rgbaStr(P2_COLOR, 0.4), fontSize: 9, fontFamily: "'Fira Code', monospace" }}>{t("controlsP2")}</span>}
         </div>
       )}
       {screen === "playing" && (

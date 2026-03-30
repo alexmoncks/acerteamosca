@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -58,15 +59,9 @@ const ENEMY_HP = [1, 1, 2, 1];
 const ENEMY_PTS = [50, 75, 100, 60];
 const ENEMY_COLORS = ["#22d3ee", "#a855f7", "#6b7280", "#ef4444"];
 
-// World configs
-const WORLD_NAMES = ["INICIO", "INVASAO", "ARSENAL", "CAOS", "FINAL"];
-const WORLD_TAGS = [
-  "Aprenda os controles",
-  "Os inimigos chegaram",
-  "Poder de fogo total",
-  "Sobreviva ao caos",
-  "O desafio final"
-];
+// World configs (keys for i18n)
+const WORLD_NAME_KEYS = ["worldName0", "worldName1", "worldName2", "worldName3", "worldName4"];
+const WORLD_TAG_KEYS = ["worldTag0", "worldTag1", "worldTag2", "worldTag3", "worldTag4"];
 const WORLD_BG = [
   ["#050520", "#0a1a3a", "#00f0ff"],
   ["#100520", "#2a0a3a", "#b026ff"],
@@ -590,6 +585,7 @@ function ballBrickSide(bx, by, br, rx, ry, rw, rh) {
 
 // ── Main Component ──────────────────────────────────────────────────
 export default function BrickBreaker() {
+  const t = useTranslations("games.brickbreaker");
   const { user, checkedCookie, registering, register } = useJogador("brickbreaker");
   const gameScale = useGameScale(CW);
   const canvasRef = useRef(null);
@@ -1353,8 +1349,8 @@ export default function BrickBreaker() {
             score: g.score,
             phase: g.phase,
             world: g.world,
-            worldName: WORLD_NAMES[g.world],
-            tag: WORLD_TAGS[g.world],
+            worldName: t(WORLD_NAME_KEYS[g.world]),
+            tag: t(WORLD_TAG_KEYS[g.world]),
             bonus: 2000 * g.world,
             phaseBonus: 1000 * (g.phase - 1),
           });
@@ -1875,7 +1871,7 @@ export default function BrickBreaker() {
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#4a5568";
     ctx.font = "7px 'Press Start 2P', monospace";
-    ctx.fillText("PONTOS", 12, 24);
+    ctx.fillText(t("points"), 12, 24);
 
     // Lives
     for (let i = 0; i < g.lives; i++) {
@@ -1901,11 +1897,11 @@ export default function BrickBreaker() {
     ctx.shadowBlur = 4;
     ctx.font = "8px 'Press Start 2P', monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`FASE ${g.phase}`, CW / 2, 8);
+    ctx.fillText(t("phaseLabel", { phase: g.phase }), CW / 2, 8);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#4a5568";
     ctx.font = "6px 'Press Start 2P', monospace";
-    ctx.fillText(WORLD_NAMES[g.world], CW / 2, 20);
+    ctx.fillText(t(WORLD_NAME_KEYS[g.world]), CW / 2, 20);
 
     // Combo
     if (g.combo >= 3) {
@@ -1915,7 +1911,7 @@ export default function BrickBreaker() {
       ctx.shadowBlur = 6;
       ctx.font = "10px 'Press Start 2P', monospace";
       ctx.textAlign = "center";
-      ctx.fillText(`x${mult} COMBO`, CW / 2, 34);
+      ctx.fillText(t("combo", { mult }), CW / 2, 34);
       ctx.shadowBlur = 0;
     }
 
@@ -1937,7 +1933,7 @@ export default function BrickBreaker() {
       ctx.fillStyle = "#666";
       ctx.font = "8px 'Press Start 2P', monospace";
       ctx.textAlign = "right";
-      ctx.fillText("MUTE", CW - 12, CH - 8);
+      ctx.fillText(t("mute"), CW - 12, CH - 8);
     }
 
     ctx.restore();
@@ -2279,7 +2275,7 @@ export default function BrickBreaker() {
               fontFamily: "'Press Start 2P', monospace",
             }}
           >
-            DESTRUA TODOS OS BLOCOS
+            {t("subtitle")}
           </p>
         </>
       )}
@@ -2359,7 +2355,7 @@ export default function BrickBreaker() {
                   color: "#ffd700",
                   marginBottom: 16,
                 }}>
-                  RECORDE: {getHighScore().toLocaleString()}
+                  {t("highScore", { score: getHighScore().toLocaleString() })}
                 </div>
               )}
 
@@ -2379,7 +2375,7 @@ export default function BrickBreaker() {
                   marginBottom: 10,
                 }}
               >
-                JOGAR
+                {t("play")}
               </button>
 
               {getMaxPhase() > 1 && (
@@ -2398,7 +2394,7 @@ export default function BrickBreaker() {
                     marginBottom: 10,
                   }}
                 >
-                  SELECIONAR MUNDO
+                  {t("selectWorld")}
                 </button>
               )}
 
@@ -2416,7 +2412,7 @@ export default function BrickBreaker() {
                   letterSpacing: 1,
                 }}
               >
-                {"❓ COMO JOGAR"}
+                {"❓ "}{t("howToPlay")}
               </button>
 
               <div
@@ -2429,9 +2425,9 @@ export default function BrickBreaker() {
                   lineHeight: 2.2,
                 }}
               >
-                <div>MOUSE/TOUCH: MOVER</div>
-                <div>ESPACO/TAP: LANCAR</div>
-                <div>P/ESC: PAUSAR | M: MUTE</div>
+                <div>{t("controlsMove")}</div>
+                <div>{t("controlsLaunch")}</div>
+                <div>{t("controlsPause")}</div>
               </div>
             </div>
           )}
@@ -2457,10 +2453,10 @@ export default function BrickBreaker() {
                 color: ACCENT,
                 marginBottom: 20,
               }}>
-                SELECIONAR MUNDO
+                {t("selectWorld")}
               </h2>
 
-              {WORLD_NAMES.map((name, idx) => {
+              {WORLD_NAME_KEYS.map((nameKey, idx) => {
                 const startPhase = idx * 5 + 1;
                 const unlocked = idx <= getUnlockedWorld();
                 return (
@@ -2487,9 +2483,9 @@ export default function BrickBreaker() {
                       opacity: unlocked ? 1 : 0.4,
                     }}
                   >
-                    {unlocked ? "" : "🔒 "}{name}
+                    {unlocked ? "" : "🔒 "}{t(nameKey)}
                     <span style={{ fontSize: 7, color: "#666", marginLeft: 8 }}>
-                      FASES {startPhase}-{startPhase + 4}
+                      {t("phasesRange", { start: startPhase, end: startPhase + 4 })}
                     </span>
                   </button>
                 );
@@ -2509,7 +2505,7 @@ export default function BrickBreaker() {
                   marginTop: 12,
                 }}
               >
-                VOLTAR
+                {t("back")}
               </button>
             </div>
           )}
@@ -2548,18 +2544,18 @@ export default function BrickBreaker() {
                   textAlign: "center",
                   textShadow: `0 0 20px rgba(0,240,255,0.5)`,
                 }}>
-                  COMO JOGAR
+                  {t("howToPlay")}
                 </h2>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {[
-                    { emoji: "\uD83D\uDDB1\uFE0F", text: "Mova o mouse para controlar o batedor", label: "Desktop" },
-                    { emoji: "\uD83D\uDCF1", text: "Arraste o dedo para mover o batedor", label: "Mobile" },
-                    { emoji: "\u2328\uFE0F", text: "ESPA\u00C7O ou toque para lan\u00E7ar a bola" },
-                    { emoji: "\uD83E\uDDF1", text: "Destrua todos os tijolos para avan\u00E7ar" },
-                    { emoji: "\uD83D\uDC8A", text: "Colete power-ups que caem dos tijolos" },
-                    { emoji: "\uD83D\uDC7E", text: "Cuidado com os inimigos a partir da Fase 3" },
-                    { emoji: "\u2764\uFE0F", text: "Voc\u00EA come\u00E7a com 3 vidas" },
+                    { emoji: "\uD83D\uDDB1\uFE0F", text: t("instrMouse"), label: t("instrDesktop") },
+                    { emoji: "\uD83D\uDCF1", text: t("instrTouch"), label: t("instrMobile") },
+                    { emoji: "\u2328\uFE0F", text: t("instrLaunch") },
+                    { emoji: "\uD83E\uDDF1", text: t("instrBricks") },
+                    { emoji: "\uD83D\uDC8A", text: t("instrPowerups") },
+                    { emoji: "\uD83D\uDC7E", text: t("instrEnemies") },
+                    { emoji: "\u2764\uFE0F", text: t("instrLives") },
                   ].map((item, i) => (
                     <div key={i} style={{
                       display: "flex",
@@ -2608,7 +2604,7 @@ export default function BrickBreaker() {
                     marginRight: "auto",
                   }}
                 >
-                  VOLTAR
+                  {t("back")}
                 </button>
               </div>
             </div>
@@ -2648,18 +2644,18 @@ export default function BrickBreaker() {
                   textAlign: "center",
                   textShadow: `0 0 20px rgba(0,240,255,0.5)`,
                 }}>
-                  COMO JOGAR
+                  {t("howToPlay")}
                 </h2>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {[
-                    { emoji: "\uD83D\uDDB1\uFE0F", text: "Mova o mouse para controlar o batedor", label: "Desktop" },
-                    { emoji: "\uD83D\uDCF1", text: "Arraste o dedo para mover o batedor", label: "Mobile" },
-                    { emoji: "\u2328\uFE0F", text: "ESPA\u00C7O ou toque para lan\u00E7ar a bola" },
-                    { emoji: "\uD83E\uDDF1", text: "Destrua todos os tijolos para avan\u00E7ar" },
-                    { emoji: "\uD83D\uDC8A", text: "Colete power-ups que caem dos tijolos" },
-                    { emoji: "\uD83D\uDC7E", text: "Cuidado com os inimigos a partir da Fase 3" },
-                    { emoji: "\u2764\uFE0F", text: "Voc\u00EA come\u00E7a com 3 vidas" },
+                    { emoji: "\uD83D\uDDB1\uFE0F", text: t("instrMouse"), label: t("instrDesktop") },
+                    { emoji: "\uD83D\uDCF1", text: t("instrTouch"), label: t("instrMobile") },
+                    { emoji: "\u2328\uFE0F", text: t("instrLaunch") },
+                    { emoji: "\uD83E\uDDF1", text: t("instrBricks") },
+                    { emoji: "\uD83D\uDC8A", text: t("instrPowerups") },
+                    { emoji: "\uD83D\uDC7E", text: t("instrEnemies") },
+                    { emoji: "\u2764\uFE0F", text: t("instrLives") },
                   ].map((item, i) => (
                     <div key={i} style={{
                       display: "flex",
@@ -2715,7 +2711,7 @@ export default function BrickBreaker() {
                     fontSize: 10,
                     color: "#8892b0",
                   }}>
-                    {"N\u00E3o mostrar novamente"}
+                    {t("dontShowAgain")}
                   </span>
                 </label>
 
@@ -2738,7 +2734,7 @@ export default function BrickBreaker() {
                     marginRight: "auto",
                   }}
                 >
-                  {"JOGAR!"}
+                  {t("playNow")}
                 </button>
               </div>
             </div>
@@ -2776,7 +2772,7 @@ export default function BrickBreaker() {
                 marginBottom: 30,
                 textShadow: `0 0 20px rgba(0,240,255,0.5)`,
               }}>
-                PAUSADO
+                {t("paused")}
               </h2>
 
               <button
@@ -2795,7 +2791,7 @@ export default function BrickBreaker() {
                   marginBottom: 12,
                 }}
               >
-                CONTINUAR
+                {t("resume")}
               </button>
 
               <button
@@ -2813,7 +2809,7 @@ export default function BrickBreaker() {
                   marginBottom: 8,
                 }}
               >
-                REINICIAR
+                {t("restart")}
               </button>
 
               <button
@@ -2833,7 +2829,7 @@ export default function BrickBreaker() {
                   letterSpacing: 1,
                 }}
               >
-                MENU
+                {t("menu")}
               </button>
 
               <button
@@ -2850,7 +2846,7 @@ export default function BrickBreaker() {
                   marginTop: 16,
                 }}
               >
-                SOM: {muted ? "OFF" : "ON"}
+                {t("sound")}: {muted ? "OFF" : "ON"}
               </button>
             </div>
           )}
@@ -2909,7 +2905,7 @@ export default function BrickBreaker() {
                 textShadow: "0 0 20px rgba(34,197,94,0.5)",
                 marginBottom: 16,
               }}>
-                FASE {finalStats.phase} COMPLETA!
+                {t("phaseComplete", { phase: finalStats.phase })}
               </h2>
 
               <div style={{
@@ -2918,7 +2914,7 @@ export default function BrickBreaker() {
                 color: ACCENT,
                 marginBottom: 8,
               }}>
-                BONUS: +{finalStats.phaseBonus?.toLocaleString()}
+                {t("bonus", { amount: finalStats.phaseBonus?.toLocaleString() })}
               </div>
 
               {finalStats.perfect && (
@@ -2928,7 +2924,7 @@ export default function BrickBreaker() {
                   color: "#ffd700",
                   marginBottom: 8,
                 }}>
-                  PERFEITO! +500
+                  {t("perfect")}
                 </div>
               )}
 
@@ -2938,7 +2934,7 @@ export default function BrickBreaker() {
                 color: "#4a5568",
                 marginTop: 16,
               }}>
-                PROXIMA FASE EM 3S...
+                {t("nextPhase")}
               </div>
             </div>
           )}
@@ -2964,7 +2960,7 @@ export default function BrickBreaker() {
                 color: "#4a5568",
                 marginBottom: 8,
               }}>
-                MUNDO {finalStats.world + 1}
+                {t("worldLabel", { world: finalStats.world + 1 })}
               </div>
 
               <h2 style={{
@@ -2991,7 +2987,7 @@ export default function BrickBreaker() {
                 fontSize: 10,
                 color: "#ffd700",
               }}>
-                BONUS: +{finalStats.bonus?.toLocaleString()}
+                {t("bonus", { amount: finalStats.bonus?.toLocaleString() })}
               </div>
             </div>
           )}
@@ -3021,7 +3017,7 @@ export default function BrickBreaker() {
                   animation: "glitch 0.5s ease-in-out 3",
                 }}
               >
-                GAME OVER
+                {t("gameOver")}
               </h2>
 
               <div style={{
@@ -3033,7 +3029,7 @@ export default function BrickBreaker() {
               }}>
                 <div style={{ textAlign: "center", animation: "scoreCount 0.5s ease-out" }}>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                    PONTOS
+                    {t("points")}
                   </div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: ACCENT, textShadow: `0 0 10px rgba(0,240,255,0.5)` }}>
                     {finalStats.score.toLocaleString()}
@@ -3043,7 +3039,7 @@ export default function BrickBreaker() {
                 <div style={{ display: "flex", gap: 24 }}>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                      FASE
+                      {t("phase")}
                     </div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#39ff14" }}>
                       {finalStats.phase}
@@ -3051,7 +3047,7 @@ export default function BrickBreaker() {
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                      BLOCOS
+                      {t("bricks")}
                     </div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ffaa00" }}>
                       {finalStats.bricks}
@@ -3059,7 +3055,7 @@ export default function BrickBreaker() {
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                      INIMIGOS
+                      {t("enemies")}
                     </div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ef4444" }}>
                       {finalStats.enemies}
@@ -3069,7 +3065,7 @@ export default function BrickBreaker() {
 
                 <div style={{ textAlign: "center", marginTop: 4 }}>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                    MELHOR PONTUACAO
+                    {t("bestScore")}
                   </div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: "#e879f9", textShadow: "0 0 8px rgba(232,121,249,0.4)" }}>
                     {finalStats.best.toLocaleString()}
@@ -3093,7 +3089,7 @@ export default function BrickBreaker() {
                   marginBottom: 8,
                 }}
               >
-                JOGAR NOVAMENTE
+                {t("playAgain")}
               </button>
 
               <button
@@ -3110,7 +3106,7 @@ export default function BrickBreaker() {
                   marginTop: 4,
                 }}
               >
-                MENU
+                {t("menu")}
               </button>
 
               <AdBanner slot="brickbreaker_between" style={{ marginTop: 12, maxWidth: 300 }} />
@@ -3142,7 +3138,7 @@ export default function BrickBreaker() {
                   animation: "bbPulse 1.5s ease-in-out infinite",
                 }}
               >
-                VITORIA!
+                {t("victory")}
               </h2>
 
               <div style={{
@@ -3151,12 +3147,12 @@ export default function BrickBreaker() {
                 color: "#ffd700",
                 marginBottom: 20,
               }}>
-                TODAS AS 25 FASES COMPLETAS!
+                {t("allPhasesComplete")}
               </div>
 
               <div style={{ textAlign: "center", animation: "scoreCount 0.5s ease-out" }}>
                 <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                  PONTUACAO FINAL
+                  {t("finalScore")}
                 </div>
                 <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 24, color: "#ffd700", textShadow: "0 0 15px rgba(255,215,0,0.5)" }}>
                   {finalStats.score.toLocaleString()}
@@ -3165,11 +3161,11 @@ export default function BrickBreaker() {
 
               <div style={{ display: "flex", gap: 20, marginTop: 16, marginBottom: 24 }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>BLOCOS</div>
+                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("bricks")}</div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ffaa00" }}>{finalStats.bricks}</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>INIMIGOS</div>
+                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("enemies")}</div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ef4444" }}>{finalStats.enemies}</div>
                 </div>
               </div>
@@ -3180,7 +3176,7 @@ export default function BrickBreaker() {
                 color: "#a855f7",
                 marginBottom: 20,
               }}>
-                +50,000 BONUS FINAL
+                {t("finalBonus")}
               </div>
 
               <button
@@ -3199,7 +3195,7 @@ export default function BrickBreaker() {
                   marginBottom: 8,
                 }}
               >
-                JOGAR NOVAMENTE
+                {t("playAgain")}
               </button>
 
               <button
@@ -3215,7 +3211,7 @@ export default function BrickBreaker() {
                   cursor: "pointer",
                 }}
               >
-                MENU
+                {t("menu")}
               </button>
             </div>
           )}

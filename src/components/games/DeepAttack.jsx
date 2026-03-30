@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { DeepAttackMobileControls } from "@/components/MobileControls";
@@ -371,7 +372,7 @@ function drawCorridor(ctx, segments, scrollOffset) {
   ctx.restore();
 }
 
-function drawHUD(ctx, score, energy, frame) {
+function drawHUD(ctx, score, energy, frame, labels) {
   ctx.save();
   // Score top-left
   ctx.fillStyle = "#ffffff";
@@ -384,7 +385,7 @@ function drawHUD(ctx, score, energy, frame) {
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#4a5568";
   ctx.font = "7px 'Press Start 2P', monospace";
-  ctx.fillText("SCORE", 12, 30);
+  ctx.fillText(labels.score, 12, 30);
 
   // Energy bar top-right
   const barW = 100;
@@ -414,12 +415,13 @@ function drawHUD(ctx, score, energy, frame) {
   ctx.fillStyle = "#4a5568";
   ctx.font = "7px 'Press Start 2P', monospace";
   ctx.textAlign = "right";
-  ctx.fillText("ENERGY", CANVAS_W - 12, 26);
+  ctx.fillText(labels.energy, CANVAS_W - 12, 26);
   ctx.restore();
 }
 
 // ── Main Component ─────────────────────────────────────────────────────
 export default function DeepAttack() {
+  const t = useTranslations("games.deepattack");
   const { user, checkedCookie, registering, register } = useJogador("deepattack");
   const gameScale = useGameScale(CANVAS_W);
   const canvasRef = useRef(null);
@@ -852,7 +854,7 @@ export default function DeepAttack() {
     }
 
     // 9. HUD
-    drawHUD(ctx, g.score, g.energy, g.frame);
+    drawHUD(ctx, g.score, g.energy, g.frame, { score: t("hudScore"), energy: t("hudEnergy") });
 
     // Distance indicator (bottom center)
     ctx.save();
@@ -860,9 +862,9 @@ export default function DeepAttack() {
     ctx.font = "7px 'Press Start 2P', monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    ctx.fillText(`DIST: ${Math.floor(g.distance)}`, CANVAS_W / 2, CANVAS_H - 8);
+    ctx.fillText(`${t("hudDist")}: ${Math.floor(g.distance)}`, CANVAS_W / 2, CANVAS_H - 8);
     ctx.restore();
-  }, [spawnEnemy, spawnPowerUp, spawnExplosion]);
+  }, [spawnEnemy, spawnPowerUp, spawnExplosion, t]);
 
   // ── End game ───────────────────────────────────────────────────────
   const endGame = useCallback((g) => {
@@ -1096,7 +1098,7 @@ export default function DeepAttack() {
               fontFamily: "'Press Start 2P', monospace",
             }}
           >
-            DESTRUA OS INIMIGOS NO CORREDOR
+            {t("subtitle")}
           </p>
         </>
       )}
@@ -1181,7 +1183,7 @@ export default function DeepAttack() {
                   letterSpacing: 2,
                 }}
               >
-                JOGAR
+                {t("play")}
               </button>
 
               <div
@@ -1194,8 +1196,8 @@ export default function DeepAttack() {
                   lineHeight: 2,
                 }}
               >
-                <div>SETAS: MOVER</div>
-                <div>ESPACO: ATIRAR</div>
+                <div>{t("controlsMove")}</div>
+                <div>{t("controlsFire")}</div>
               </div>
             </div>
           )}
@@ -1234,7 +1236,7 @@ export default function DeepAttack() {
                   marginBottom: 24,
                 }}
               >
-                GAME OVER
+                {t("gameOver")}
               </h2>
 
               <div
@@ -1248,7 +1250,7 @@ export default function DeepAttack() {
               >
                 <div style={{ textAlign: "center", animation: "scoreCount 0.5s ease-out" }}>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                    PONTOS
+                    {t("labelScore")}
                   </div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#22d3ee", textShadow: "0 0 10px rgba(34,211,238,0.5)" }}>
                     {finalStats.score.toLocaleString()}
@@ -1258,7 +1260,7 @@ export default function DeepAttack() {
                 <div style={{ display: "flex", gap: 24 }}>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                      DISTANCIA
+                      {t("labelDistance")}
                     </div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#39ff14" }}>
                       {finalStats.distance.toLocaleString()}
@@ -1266,7 +1268,7 @@ export default function DeepAttack() {
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                      INIMIGOS
+                      {t("labelEnemies")}
                     </div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ffaa00" }}>
                       {finalStats.enemies}
@@ -1276,7 +1278,7 @@ export default function DeepAttack() {
 
                 <div style={{ textAlign: "center", marginTop: 4 }}>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                    MELHOR PONTUACAO
+                    {t("labelBest")}
                   </div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: "#e879f9", textShadow: "0 0 8px rgba(232,121,249,0.4)" }}>
                     {finalStats.best.toLocaleString()}
@@ -1299,7 +1301,7 @@ export default function DeepAttack() {
                   letterSpacing: 2,
                 }}
               >
-                JOGAR NOVAMENTE
+                {t("playAgain")}
               </button>
               <AdBanner slot="deepattack_between" style={{ marginTop: 12, maxWidth: 300 }} />
             </div>

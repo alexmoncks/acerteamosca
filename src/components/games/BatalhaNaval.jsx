@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -18,10 +19,10 @@ const COLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const GAME_W = 400;
 
 const FLEET = [
-  { id: "carrier", name: "Porta-avioes", size: 5, count: 1, color: "#6366f1" },
-  { id: "battleship", name: "Navio de Guerra", size: 4, count: 1, color: "#8b5cf6" },
-  { id: "cruiser", name: "Cruzador", size: 3, count: 2, color: "#06b6d4" },
-  { id: "submarine", name: "Submarino", size: 2, count: 3, color: "#22c55e" },
+  { id: "carrier", nameKey: "shipCarrier", size: 5, count: 1, color: "#6366f1" },
+  { id: "battleship", nameKey: "shipBattleship", size: 4, count: 1, color: "#8b5cf6" },
+  { id: "cruiser", nameKey: "shipCruiser", size: 3, count: 2, color: "#06b6d4" },
+  { id: "submarine", nameKey: "shipSubmarine", size: 2, count: 3, color: "#22c55e" },
 ];
 
 const TOTAL_SHIP_CELLS = 24; // 5 + 4 + 3*2 + 2*3
@@ -275,7 +276,7 @@ function placeShipsRandomly() {
         ships.push({
           id: def.instanceId,
           defId: def.id,
-          name: def.name,
+          nameKey: def.nameKey,
           size: def.size,
           color: def.color,
           cells,
@@ -621,11 +622,11 @@ function injectStyles() {
 // ============================================================
 
 // ----------- Menu Screen -----------
-function MenuScreen({ onStart, onOnline, difficulty, setDifficulty }) {
+function MenuScreen({ onStart, onOnline, difficulty, setDifficulty, t }) {
   const difficulties = [
-    { key: "easy", label: "Marinheiro", icon: "⚓", desc: "Ataques aleatorios", color: "#22c55e" },
-    { key: "medium", label: "Capitao", icon: "🎖️", desc: "IA com estrategia", color: "#eab308" },
-    { key: "hard", label: "Almirante", icon: "⭐", desc: "IA calculista", color: "#ef4444" },
+    { key: "easy", label: t("difficultyEasy"), icon: "⚓", desc: t("difficultyEasyDesc"), color: "#22c55e" },
+    { key: "medium", label: t("difficultyMedium"), icon: "🎖️", desc: t("difficultyMediumDesc"), color: "#eab308" },
+    { key: "hard", label: t("difficultyHard"), icon: "⭐", desc: t("difficultyHardDesc"), color: "#ef4444" },
   ];
 
   return (
@@ -638,11 +639,11 @@ function MenuScreen({ onStart, onOnline, difficulty, setDifficulty }) {
         fontFamily: "'Press Start 2P', monospace", fontSize: 20,
         color: ACCENT, textShadow: `0 0 20px ${ACCENT}80`,
         marginBottom: 6, textAlign: "center",
-      }}>BATALHA NAVAL</h1>
+      }}>{t("title")}</h1>
       <p style={{
         fontFamily: "'Fira Code', monospace", fontSize: 11,
         color: "#64748b", marginBottom: 32,
-      }}>Posicione seus navios e afunde a frota inimiga!</p>
+      }}>{t("subtitle")}</p>
 
       <button
         onClick={onStart}
@@ -655,7 +656,7 @@ function MenuScreen({ onStart, onOnline, difficulty, setDifficulty }) {
         }}
         onMouseEnter={e => { e.target.style.background = "#15803d"; e.target.style.transform = "scale(1.05)"; }}
         onMouseLeave={e => { e.target.style.background = "#16a34a"; e.target.style.transform = "scale(1)"; }}
-      >VS COMPUTADOR</button>
+      >{t("vsComputer")}</button>
 
       <button
         onClick={onOnline}
@@ -670,12 +671,12 @@ function MenuScreen({ onStart, onOnline, difficulty, setDifficulty }) {
         }}
         onMouseEnter={e => { e.target.style.transform = "scale(1.05)"; }}
         onMouseLeave={e => { e.target.style.transform = "scale(1)"; }}
-      >VS ONLINE</button>
+      >{t("vsOnline")}</button>
 
       <p style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 9,
         color: "#94a3b8", marginBottom: 12,
-      }}>DIFICULDADE</p>
+      }}>{t("difficulty")}</p>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
         {difficulties.map(d => (
@@ -809,7 +810,7 @@ function PlacementGrid({
 // ----------- Battle Grid (Opponent) -----------
 function BattleGridOpponent({
   trackingGrid, sunkShips, onCellClick, onCellHover, onCellLeave,
-  hoverCell, cellSize, disabled, animatingCell, lastSunkShip,
+  hoverCell, cellSize, disabled, animatingCell, lastSunkShip, t,
 }) {
   function getCellStyle(r, c) {
     const state = trackingGrid[r][c];
@@ -938,7 +939,7 @@ function BattleGridOpponent({
               color: "#ff4444", textShadow: "0 0 10px #ff0000",
               animation: "bn-floatUp 1.5s ease forwards",
               pointerEvents: "none", whiteSpace: "nowrap", zIndex: 10,
-            }}>AFUNDOU!</div>
+            }}>{t("sunk")}</div>
           )}
         </div>
       </div>
@@ -1036,7 +1037,7 @@ function BattleGridPlayer({ playerShips, incomingAttacks, cellSize }) {
 function SetupScreen({
   playerShips, selectedShipDef, horizontal, onSelectShipDef,
   onToggleRotation, onCellClick, onCellHover, onCellLeave,
-  onRandom, onClear, onReady, hoverCell, cellSize,
+  onRandom, onClear, onReady, hoverCell, cellSize, t,
 }) {
   const placedCounts = useMemo(() => {
     const counts = {};
@@ -1055,7 +1056,7 @@ function SetupScreen({
       <p style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 11,
         color: ACCENT, marginBottom: 12, textAlign: "center",
-      }}>POSICIONE SEUS NAVIOS</p>
+      }}>{t("setupTitle")}</p>
 
       <PlacementGrid
         grid={null}
@@ -1103,7 +1104,7 @@ function SetupScreen({
               <span style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 10,
                 color: canPlace ? "#e2e8f0" : "#475569", flex: 1, textAlign: "left",
-              }}>{def.name}</span>
+              }}>{t(def.nameKey)}</span>
               <span style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 10,
                 color: remaining > 0 ? def.color : "#334155",
@@ -1125,7 +1126,7 @@ function SetupScreen({
             color: "#94a3b8", border: "1px solid #334155",
             borderRadius: 6, cursor: "pointer",
           }}
-        >GIRAR (R) {horizontal ? "↔" : "↕"}</button>
+        >{t("btnRotate")} {horizontal ? "↔" : "↕"}</button>
         <button
           onClick={onRandom}
           style={{
@@ -1134,7 +1135,7 @@ function SetupScreen({
             color: "#94a3b8", border: "1px solid #334155",
             borderRadius: 6, cursor: "pointer",
           }}
-        >ALEATORIO</button>
+        >{t("btnRandom")}</button>
         <button
           onClick={onClear}
           style={{
@@ -1143,7 +1144,7 @@ function SetupScreen({
             color: "#94a3b8", border: "1px solid #334155",
             borderRadius: 6, cursor: "pointer",
           }}
-        >LIMPAR</button>
+        >{t("btnClear")}</button>
       </div>
 
       <button
@@ -1159,7 +1160,7 @@ function SetupScreen({
           cursor: allPlaced ? "pointer" : "not-allowed",
           transition: "all 0.2s",
         }}
-      >PRONTO!</button>
+      >{t("btnReady")}</button>
     </div>
   );
 }
@@ -1167,7 +1168,7 @@ function SetupScreen({
 // ----------- Game Over Screen -----------
 function GameOverScreen({
   won, stats, playerShips, aiShips, playerTracking, aiTracking,
-  onRestart, onMenu, cellSize,
+  onRestart, onMenu, cellSize, t,
 }) {
   const miniCell = Math.max(14, Math.floor(cellSize * 0.5));
 
@@ -1185,7 +1186,7 @@ function GameOverScreen({
         color: won ? "#22c55e" : "#ef4444",
         textShadow: `0 0 20px ${won ? "#22c55e" : "#ef4444"}80`,
         marginBottom: 16,
-      }}>{won ? "VITORIA!" : "DERROTA"}</h2>
+      }}>{won ? t("victory") : t("defeat")}</h2>
 
       {/* Stats */}
       <div style={{
@@ -1194,12 +1195,12 @@ function GameOverScreen({
         width: "100%", maxWidth: 300,
       }}>
         {[
-          ["Tiros", stats.totalShots],
-          ["Acertos", stats.hits],
-          ["Precisao", `${stats.accuracy}%`],
-          ["Navios afundados", `${stats.shipsSunk}/${TOTAL_SHIPS}`],
-          ["Maior sequencia", stats.maxStreak],
-          ["Tempo", `${Math.floor(stats.time / 60)}:${String(stats.time % 60).padStart(2, "0")}`],
+          [t("statShots"), stats.totalShots],
+          [t("statHits"), stats.hits],
+          [t("statAccuracy"), `${stats.accuracy}%`],
+          [t("statShipsSunk"), `${stats.shipsSunk}/${TOTAL_SHIPS}`],
+          [t("statBestStreak"), stats.maxStreak],
+          [t("statTime"), `${Math.floor(stats.time / 60)}:${String(stats.time % 60).padStart(2, "0")}`],
         ].map(([label, value]) => (
           <div key={label} style={{
             display: "flex", justifyContent: "space-between",
@@ -1220,14 +1221,14 @@ function GameOverScreen({
           <p style={{
             fontFamily: "'Fira Code', monospace", fontSize: 9,
             color: "#64748b", textAlign: "center", marginBottom: 4,
-          }}>SEU TABULEIRO</p>
+          }}>{t("yourBoard")}</p>
           <RevealedGrid ships={playerShips} attacks={aiTracking} cellSize={miniCell} />
         </div>
         <div>
           <p style={{
             fontFamily: "'Fira Code', monospace", fontSize: 9,
             color: "#64748b", textAlign: "center", marginBottom: 4,
-          }}>TABULEIRO INIMIGO</p>
+          }}>{t("enemyBoard")}</p>
           <RevealedGrid ships={aiShips} attacks={playerTracking} cellSize={miniCell} />
         </div>
       </div>
@@ -1242,7 +1243,7 @@ function GameOverScreen({
             padding: "12px 20px", background: "#16a34a", color: "#fff",
             border: "2px solid #22c55e", borderRadius: 8, cursor: "pointer",
           }}
-        >JOGAR NOVAMENTE</button>
+        >{t("btnPlayAgain")}</button>
         <button
           onClick={onMenu}
           style={{
@@ -1250,7 +1251,7 @@ function GameOverScreen({
             padding: "12px 20px", background: "#1e293b", color: "#94a3b8",
             border: "1px solid #334155", borderRadius: 8, cursor: "pointer",
           }}
-        >MENU</button>
+        >{t("btnMenu")}</button>
       </div>
     </div>
   );
@@ -1317,7 +1318,7 @@ function RevealedGrid({ ships, attacks, cellSize }) {
 }
 
 // ----------- Pause Overlay -----------
-function PauseOverlay({ onContinue, onExit }) {
+function PauseOverlay({ onContinue, onExit, t }) {
   return (
     <div style={{
       position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
@@ -1328,7 +1329,7 @@ function PauseOverlay({ onContinue, onExit }) {
       <p style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 18,
         color: ACCENT, marginBottom: 24,
-      }}>PAUSADO</p>
+      }}>{t("paused")}</p>
       <button
         onClick={onContinue}
         style={{
@@ -1337,7 +1338,7 @@ function PauseOverlay({ onContinue, onExit }) {
           border: "2px solid #22c55e", borderRadius: 8, cursor: "pointer",
           marginBottom: 10,
         }}
-      >CONTINUAR</button>
+      >{t("btnContinue")}</button>
       <button
         onClick={onExit}
         style={{
@@ -1345,7 +1346,7 @@ function PauseOverlay({ onContinue, onExit }) {
           padding: "10px 24px", background: "#1e293b", color: "#94a3b8",
           border: "1px solid #334155", borderRadius: 8, cursor: "pointer",
         }}
-      >SAIR</button>
+      >{t("btnExit")}</button>
     </div>
   );
 }
@@ -1388,7 +1389,7 @@ function ConfettiOverlay() {
 }
 
 // ----------- Online Lobby -----------
-function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onCancel }) {
+function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onCancel, t }) {
   const [copied, setCopied] = useState(false);
   const [joinCode, setJoinCode] = useState("");
 
@@ -1413,7 +1414,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
             fontFamily: "'Press Start 2P', monospace", fontSize: 12,
             color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
             marginBottom: 24,
-          }}>ONLINE</p>
+          }}>{t("onlineTitle")}</p>
 
           <button
             onClick={onCreate}
@@ -1428,18 +1429,18 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
             }}
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
-          >{"\u{1F3E0}"}  Criar Sala</button>
+          >{"\u{1F3E0}"}  {t("btnCreateRoom")}</button>
 
           <div style={{ width: 200, height: 1, background: "#2a2a4a", marginBottom: 16 }} />
 
           <p style={{
             fontFamily: "'Press Start 2P', monospace", fontSize: 8,
             color: "#8892b0", marginBottom: 10,
-          }}>ENTRAR EM SALA</p>
+          }}>{t("joinRoom")}</p>
           <input
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="CODIGO"
+            placeholder={t("roomCodePlaceholder")}
             maxLength={6}
             style={{
               width: 200, padding: "10px 12px",
@@ -1464,7 +1465,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
               cursor: joinCode.length >= 4 ? "pointer" : "not-allowed",
               marginBottom: 16,
             }}
-          >ENTRAR</button>
+          >{t("btnJoin")}</button>
         </>
       )}
 
@@ -1472,7 +1473,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
         <p style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 10,
           color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
-        }}>CONECTANDO...</p>
+        }}>{t("connecting")}</p>
       )}
 
       {lobbyStatus === "waiting" && (
@@ -1481,7 +1482,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
             fontFamily: "'Press Start 2P', monospace", fontSize: 10,
             color: ONLINE_ACCENT, marginBottom: 20,
             textShadow: `0 0 10px ${ONLINE_ACCENT}`,
-          }}>AGUARDANDO OPONENTE...</p>
+          }}>{t("waitingOpponent")}</p>
           <div
             onClick={handleCopyLink}
             style={{
@@ -1495,7 +1496,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
             <p style={{
               fontFamily: "'Press Start 2P', monospace", fontSize: 7,
               color: "#555", marginBottom: 8,
-            }}>CODIGO DA SALA</p>
+            }}>{t("roomCode")}</p>
             <p style={{
               fontFamily: "'Press Start 2P', monospace", fontSize: 28,
               color: ONLINE_ACCENT,
@@ -1507,7 +1508,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
             fontFamily: "'Fira Code', monospace", fontSize: 10,
             color: copied ? NEON_GREEN : "#666",
             transition: "color 0.3s",
-          }}>{copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}</p>
+          }}>{copied ? t("linkCopied") : t("tapToCopy")}</p>
         </>
       )}
 
@@ -1515,14 +1516,14 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
         <p style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 10,
           color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
-        }}>ENTRANDO NA SALA...</p>
+        }}>{t("joiningRoom")}</p>
       )}
 
       {lobbyStatus === "error" && (
         <p style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 10,
           color: "#ff2d95", marginBottom: 12,
-        }}>SALA NAO ENCONTRADA</p>
+        }}>{t("roomNotFound")}</p>
       )}
 
       <button
@@ -1534,7 +1535,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
           fontFamily: "'Press Start 2P', monospace", fontSize: 9,
           cursor: "pointer",
         }}
-      >CANCELAR</button>
+      >{t("btnCancel")}</button>
     </div>
   );
 }
@@ -1542,7 +1543,7 @@ function OnlineLobby({ roomId, lobbyStatus, opponentReady, onCreate, onJoin, onC
 // ----------- Online Game Over Screen -----------
 function OnlineGameOverScreen({
   won, stats, playerShips, opponentShips, playerTracking, opponentTracking,
-  onRematch, onMenu, waitingRematch, cellSize, disconnected,
+  onRematch, onMenu, waitingRematch, cellSize, disconnected, t,
 }) {
   const miniCell = Math.max(14, Math.floor(cellSize * 0.5));
 
@@ -1560,13 +1561,13 @@ function OnlineGameOverScreen({
         color: won ? "#22c55e" : "#ef4444",
         textShadow: `0 0 20px ${won ? "#22c55e" : "#ef4444"}80`,
         marginBottom: 8,
-      }}>{won ? "VITORIA!" : disconnected ? "OPONENTE SAIU" : "DERROTA"}</h2>
+      }}>{won ? t("victory") : disconnected ? t("opponentLeft") : t("defeat")}</h2>
 
       {disconnected && (
         <p style={{
           fontFamily: "'Fira Code', monospace", fontSize: 10,
           color: "#94a3b8", marginBottom: 16,
-        }}>O oponente desconectou. Voce venceu!</p>
+        }}>{t("opponentDisconnected")}</p>
       )}
 
       {/* Stats */}
@@ -1577,10 +1578,10 @@ function OnlineGameOverScreen({
           width: "100%", maxWidth: 300,
         }}>
           {[
-            ["Tiros", stats.totalShots],
-            ["Acertos", stats.hits],
-            ["Precisao", `${stats.accuracy}%`],
-            ["Navios afundados", `${stats.shipsSunk}/${TOTAL_SHIPS}`],
+            [t("statShots"), stats.totalShots],
+            [t("statHits"), stats.hits],
+            [t("statAccuracy"), `${stats.accuracy}%`],
+            [t("statShipsSunk"), `${stats.shipsSunk}/${TOTAL_SHIPS}`],
           ].map(([label, value]) => (
             <div key={label} style={{
               display: "flex", justifyContent: "space-between",
@@ -1603,14 +1604,14 @@ function OnlineGameOverScreen({
             <p style={{
               fontFamily: "'Fira Code', monospace", fontSize: 9,
               color: "#64748b", textAlign: "center", marginBottom: 4,
-            }}>SEU TABULEIRO</p>
+            }}>{t("yourBoard")}</p>
             <RevealedGrid ships={playerShips} attacks={opponentTracking || []} cellSize={miniCell} />
           </div>
           <div>
             <p style={{
               fontFamily: "'Fira Code', monospace", fontSize: 9,
               color: "#64748b", textAlign: "center", marginBottom: 4,
-            }}>TABULEIRO INIMIGO</p>
+            }}>{t("enemyBoard")}</p>
             <RevealedGrid ships={opponentShips} attacks={playerTracking} cellSize={miniCell} />
           </div>
         </div>
@@ -1630,7 +1631,7 @@ function OnlineGameOverScreen({
               borderRadius: 8,
               cursor: waitingRematch ? "default" : "pointer",
             }}
-          >{waitingRematch ? "AGUARDANDO..." : "REVANCHE"}</button>
+          >{waitingRematch ? t("waitingRematch") : t("btnRematch")}</button>
         )}
         <button
           onClick={onMenu}
@@ -1639,7 +1640,7 @@ function OnlineGameOverScreen({
             padding: "12px 20px", background: "#1e293b", color: "#94a3b8",
             border: "1px solid #334155", borderRadius: 8, cursor: "pointer",
           }}
-        >MENU</button>
+        >{t("btnMenu")}</button>
       </div>
     </div>
   );
@@ -1650,6 +1651,7 @@ function OnlineGameOverScreen({
 // ============================================================
 export default function BatalhaNaval() {
   // ---- Hooks ----
+  const t = useTranslations("games.batalhanaval");
   const { user, checkedCookie, registering, register } = useJogador("batalha-naval");
   const gameScale = useGameScale(GAME_W);
   const [screen, setScreen] = useState("menu");
@@ -1678,7 +1680,7 @@ export default function BatalhaNaval() {
   const [sunkShipsOpponent, setSunkShipsOpponent] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [swappedGrids, setSwappedGrids] = useState(false);
-  const [lastMoveLog, setLastMoveLog] = useState("");
+  const [lastMoveLog, setLastMoveLog] = useState(null); // { key, params } or null
   const [aiTurnTrigger, setAiTurnTrigger] = useState(0); // incremented to trigger AI turn
 
   // Refs
@@ -1838,7 +1840,7 @@ export default function BatalhaNaval() {
           setMobileConfirm(null);
           setBattleShake(false);
           setSwappedGrids(false);
-          setLastMoveLog("");
+          setLastMoveLog(null);
           onlineStatsRef.current = { totalShots: 0, hits: 0, shipsSunk: 0 };
           setScreen("online-battle");
           if (!audioRef.current) audioRef.current = createAudioEngine();
@@ -1871,27 +1873,27 @@ export default function BatalhaNaval() {
 
             if (result === "miss") {
               audioRef.current?.splash();
-              setLastMoveLog(`Agua em ${cellLabel(row, col)}`);
+              setLastMoveLog({ key: "logMiss", params: { cell: cellLabel(row, col) } });
             } else if (result === "hit") {
               audioRef.current?.hit();
               onlineStatsRef.current.hits++;
-              setLastMoveLog(`Acertou em ${cellLabel(row, col)}!`);
+              setLastMoveLog({ key: "logHit", params: { cell: cellLabel(row, col) } });
             } else if (result === "sunk") {
               audioRef.current?.sunk();
               onlineStatsRef.current.hits++;
               onlineStatsRef.current.shipsSunk++;
               setBattleShake(true);
               setTimeout(() => setBattleShake(false), 1500);
-              setLastSunkShip({ name: shipName });
+              setLastSunkShip({ nameKey: shipName });
               setTimeout(() => setLastSunkShip(null), 1500);
               if (shipCells) {
                 setOnlineSunkOpponent(prev => [...prev, {
-                  name: shipName,
+                  nameKey: shipName,
                   cells: shipCells,
                   color: "#ef4444",
                 }]);
               }
-              setLastMoveLog(`Voce afundou o ${shipName}!`);
+              setLastMoveLog({ key: "logYouSunk", params: { ship: t(shipName) } });
             }
             onlineStatsRef.current.totalShots++;
           } else {
@@ -1915,20 +1917,20 @@ export default function BatalhaNaval() {
 
             if (result === "miss") {
               audioRef.current?.splash();
-              setLastMoveLog(`Inimigo errou em ${cellLabel(row, col)}`);
+              setLastMoveLog({ key: "logEnemyMiss", params: { cell: cellLabel(row, col) } });
             } else if (result === "hit") {
               audioRef.current?.hit();
               setBattleShake(true);
               setTimeout(() => setBattleShake(false), 500);
-              setLastMoveLog(`Inimigo acertou em ${cellLabel(row, col)}!`);
+              setLastMoveLog({ key: "logEnemyHit", params: { cell: cellLabel(row, col) } });
             } else if (result === "sunk") {
               audioRef.current?.sunk();
               setBattleShake(true);
               setTimeout(() => setBattleShake(false), 500);
-              setLastMoveLog(`Inimigo afundou seu ${shipName}!`);
+              setLastMoveLog({ key: "logEnemySunk", params: { ship: t(shipName) } });
               // Mark the ship as sunk in playerShips
               setPlayerShips(prev => prev.map(s => {
-                if (s.name === shipName && !s.sunk) {
+                if (s.nameKey === shipName && !s.sunk) {
                   return { ...s, sunk: true };
                 }
                 return s;
@@ -2006,7 +2008,7 @@ export default function BatalhaNaval() {
         if (screen === "online-lobby") setLobbyStatus("idle");
       }, 2000);
     };
-  }, [closeWS, playerNum, screen]);
+  }, [closeWS, playerNum, screen, t]);
 
   // ---- Handle online button ----
   const handleOnlineClick = useCallback(() => {
@@ -2066,7 +2068,7 @@ export default function BatalhaNaval() {
     const shipsData = playerShips.map(s => ({
       id: s.id,
       defId: s.defId,
-      name: s.name,
+      name: s.nameKey,
       size: s.size,
       color: s.color,
       cells: s.cells,
@@ -2182,7 +2184,7 @@ export default function BatalhaNaval() {
     const newShip = {
       id: instanceId,
       defId: selectedShipDef.id,
-      name: selectedShipDef.name,
+      nameKey: selectedShipDef.nameKey,
       size: selectedShipDef.size,
       color: selectedShipDef.color,
       cells,
@@ -2240,7 +2242,7 @@ export default function BatalhaNaval() {
     setSunkShipsOpponent([]);
     setSwappedGrids(false);
     setShowConfetti(false);
-    setLastMoveLog("");
+    setLastMoveLog(null);
     turnLockRef.current = false;
     scoreSubmittedRef.current = false;
 
@@ -2332,7 +2334,7 @@ export default function BatalhaNaval() {
           setLastSunkShip(targetShip);
           setBattleShake(true);
           setTimeout(() => { setBattleShake(false); setLastSunkShip(null); }, 1500);
-          setLastMoveLog(`Voce afundou o ${targetShip.name}!`);
+          setLastMoveLog({ key: "logYouSunk", params: { ship: t(targetShip.nameKey) } });
 
           // Check win
           if (allShipsSunk(aiShips)) {
@@ -2343,7 +2345,7 @@ export default function BatalhaNaval() {
           }
         } else {
           newTracking[r][c] = "hit";
-          setLastMoveLog(`Acertou em ${cellLabel(r, c)}!`);
+          setLastMoveLog({ key: "logHit", params: { cell: cellLabel(r, c) } });
         }
 
         setPlayerTracking(newTracking);
@@ -2355,14 +2357,14 @@ export default function BatalhaNaval() {
         newTracking[r][c] = "miss";
         statsRef.current.currentStreak = 0;
         setPlayerTracking(newTracking);
-        setLastMoveLog(`Agua em ${cellLabel(r, c)}`);
+        setLastMoveLog({ key: "logMiss", params: { cell: cellLabel(r, c) } });
 
         // AI's turn
         setTurn("ai");
         turnLockRef.current = false;
       }
     }, 400);
-  }, [turn, playerTracking, aiShips, mobileConfirm]);
+  }, [turn, playerTracking, aiShips, mobileConfirm, t]);
 
   // ---- AI turn ----
   useEffect(() => {
@@ -2427,7 +2429,7 @@ export default function BatalhaNaval() {
           audioRef.current?.sunk();
           setBattleShake(true);
           setTimeout(() => setBattleShake(false), 500);
-          setLastMoveLog(`Inimigo afundou seu ${targetShip.name}!`);
+          setLastMoveLog({ key: "logEnemySunk", params: { ship: t(targetShip.nameKey) } });
 
           // Build tracking grid for AI report
           const tGrid = createTrackingGrid();
@@ -2459,11 +2461,11 @@ export default function BatalhaNaval() {
           aiRef.current?.reportHit(r, c, tGrid, false);
           setAiTracking(prev => [...prev, { r, c, result: "hit" }]);
           setPlayerShips([...curShips]);
-          setLastMoveLog(`Inimigo acertou em ${cellLabel(r, c)}!`);
+          setLastMoveLog({ key: "logEnemyHit", params: { cell: cellLabel(r, c) } });
         }
 
         // AI goes again on hit — use trigger to re-fire effect
-        setAiTurnTrigger(t => t + 1);
+        setAiTurnTrigger(trig => trig + 1);
       } else {
         audioRef.current?.splash();
         const tGrid = createTrackingGrid();
@@ -2472,14 +2474,14 @@ export default function BatalhaNaval() {
         }
         aiRef.current?.reportMiss(r, c, tGrid);
         setAiTracking(prev => [...prev, { r, c, result: "miss" }]);
-        setLastMoveLog(`Inimigo errou em ${cellLabel(r, c)}`);
+        setLastMoveLog({ key: "logEnemyMiss", params: { cell: cellLabel(r, c) } });
 
         // Player's turn
         setTurn("player");
         audioRef.current?.sonarPing();
       }
     }, 400);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- Game End ----
   const handleGameEnd = useCallback((result) => {
@@ -2628,6 +2630,7 @@ export default function BatalhaNaval() {
             onOnline={handleOnlineClick}
             difficulty={difficulty}
             setDifficulty={setDifficulty}
+            t={t}
           />
         )}
 
@@ -2657,6 +2660,7 @@ export default function BatalhaNaval() {
             onReady={handleReady}
             hoverCell={hoverCell}
             cellSize={mainCellSize}
+            t={t}
           />
         )}
 
@@ -2684,7 +2688,7 @@ export default function BatalhaNaval() {
                   display: "inline-block",
                   animation: turn === "player" ? "bn-pulse 1s infinite" : "none",
                 }} />
-                {turn === "player" ? "SUA VEZ" : "VEZ DO OPONENTE"}
+                {turn === "player" ? t("yourTurn") : t("opponentTurn")}
               </div>
 
               {/* Pause button */}
@@ -2707,11 +2711,11 @@ export default function BatalhaNaval() {
               <span style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 9,
                 color: "#64748b",
-              }}>Seus: <span style={{ color: "#22c55e" }}>{playerRemaining}/{TOTAL_SHIPS}</span></span>
+              }}>{t("yours")} <span style={{ color: "#22c55e" }}>{playerRemaining}/{TOTAL_SHIPS}</span></span>
               <span style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 9,
                 color: "#64748b",
-              }}>Inimigo: <span style={{ color: "#ef4444" }}>{aiRemaining}/{TOTAL_SHIPS}</span></span>
+              }}>{t("enemy")} <span style={{ color: "#ef4444" }}>{aiRemaining}/{TOTAL_SHIPS}</span></span>
             </div>
 
             {/* AI thinking indicator */}
@@ -2721,7 +2725,7 @@ export default function BatalhaNaval() {
                 color: "#94a3b8", marginBottom: 6,
                 display: "flex", alignItems: "center", gap: 6,
               }}>
-                <span>Oponente pensando</span>
+                <span>{t("opponentThinking")}</span>
                 <span style={{ display: "flex", gap: 3 }}>
                   {[0, 1, 2].map(i => (
                     <span key={i} style={{
@@ -2742,7 +2746,7 @@ export default function BatalhaNaval() {
                   <p style={{
                     fontFamily: "'Fira Code', monospace", fontSize: 9,
                     color: "#ef4444", textAlign: "center", marginBottom: 4,
-                  }}>TABULEIRO INIMIGO</p>
+                  }}>{t("enemyBoard")}</p>
                   <BattleGridOpponent
                     trackingGrid={playerTracking}
                     sunkShips={sunkShipsOpponent}
@@ -2754,6 +2758,7 @@ export default function BatalhaNaval() {
                     disabled={turn !== "player" || !!gameResult}
                     animatingCell={animatingCell && !animatingCell.isAi ? animatingCell : null}
                     lastSunkShip={lastSunkShip}
+                    t={t}
                   />
                 </div>
 
@@ -2768,7 +2773,7 @@ export default function BatalhaNaval() {
                     <span style={{
                       fontFamily: "'Fira Code', monospace", fontSize: 10,
                       color: "#e2e8f0",
-                    }}>{cellLabel(mobileConfirm.r, mobileConfirm.c)} — Atacar?</span>
+                    }}>{cellLabel(mobileConfirm.r, mobileConfirm.c)} {t("attackConfirm")}</span>
                     <button
                       onClick={() => handlePlayerAttack(mobileConfirm.r, mobileConfirm.c)}
                       style={{
@@ -2777,7 +2782,7 @@ export default function BatalhaNaval() {
                         color: "#fff", border: "none", borderRadius: 4,
                         cursor: "pointer",
                       }}
-                    >FOGO!</button>
+                    >{t("btnFire")}</button>
                   </div>
                 )}
 
@@ -2790,7 +2795,7 @@ export default function BatalhaNaval() {
                     <p style={{
                       fontFamily: "'Fira Code', monospace", fontSize: 8,
                       color: "#64748b",
-                    }}>SEU TABULEIRO</p>
+                    }}>{t("yourBoard")}</p>
                     <button
                       onClick={() => setSwappedGrids(true)}
                       style={{
@@ -2799,7 +2804,7 @@ export default function BatalhaNaval() {
                         color: "#64748b", border: "1px solid #1e293b",
                         borderRadius: 3, cursor: "pointer",
                       }}
-                    >AMPLIAR</button>
+                    >{t("btnEnlarge")}</button>
                   </div>
                   <BattleGridPlayer
                     playerShips={playerShips}
@@ -2815,7 +2820,7 @@ export default function BatalhaNaval() {
                   <p style={{
                     fontFamily: "'Fira Code', monospace", fontSize: 9,
                     color: "#22c55e", textAlign: "center", marginBottom: 4,
-                  }}>SEU TABULEIRO</p>
+                  }}>{t("yourBoard")}</p>
                   <BattleGridPlayer
                     playerShips={playerShips}
                     incomingAttacks={aiTracking}
@@ -2832,7 +2837,7 @@ export default function BatalhaNaval() {
                     <p style={{
                       fontFamily: "'Fira Code', monospace", fontSize: 8,
                       color: "#64748b",
-                    }}>TABULEIRO INIMIGO</p>
+                    }}>{t("enemyBoard")}</p>
                     <button
                       onClick={() => setSwappedGrids(false)}
                       style={{
@@ -2841,7 +2846,7 @@ export default function BatalhaNaval() {
                         color: "#64748b", border: "1px solid #1e293b",
                         borderRadius: 3, cursor: "pointer",
                       }}
-                    >AMPLIAR</button>
+                    >{t("btnEnlarge")}</button>
                   </div>
                   <BattleGridOpponent
                     trackingGrid={playerTracking}
@@ -2854,6 +2859,7 @@ export default function BatalhaNaval() {
                     disabled={turn !== "player" || !!gameResult}
                     animatingCell={null}
                     lastSunkShip={null}
+                    t={t}
                   />
                 </div>
               </>
@@ -2863,11 +2869,11 @@ export default function BatalhaNaval() {
             {lastMoveLog && (
               <p style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 9,
-                color: lastMoveLog.includes("afundou") ? "#ef4444"
-                  : lastMoveLog.includes("Acertou") || lastMoveLog.includes("acertou") ? "#f59e0b"
+                color: lastMoveLog.key === "logYouSunk" || lastMoveLog.key === "logEnemySunk" ? "#ef4444"
+                  : lastMoveLog.key === "logHit" || lastMoveLog.key === "logEnemyHit" ? "#f59e0b"
                   : "#64748b",
                 marginTop: 8, textAlign: "center",
-              }}>{lastMoveLog}</p>
+              }}>{t(lastMoveLog.key, lastMoveLog.params)}</p>
             )}
 
             {/* Confetti on pending win */}
@@ -2878,7 +2884,7 @@ export default function BatalhaNaval() {
         {/* ============ PAUSED ============ */}
         {screen === "paused" && (
           <div style={{ position: "relative", minHeight: 300 }}>
-            <PauseOverlay onContinue={handleContinue} onExit={handleMenu} />
+            <PauseOverlay onContinue={handleContinue} onExit={handleMenu} t={t} />
           </div>
         )}
 
@@ -2896,6 +2902,7 @@ export default function BatalhaNaval() {
               onRestart={handleRestart}
               onMenu={handleMenu}
               cellSize={mainCellSize}
+              t={t}
             />
           </>
         )}
@@ -2909,6 +2916,7 @@ export default function BatalhaNaval() {
             onCreate={handleCreateRoom}
             onJoin={handleJoinRoom}
             onCancel={handleOnlineMenu}
+            t={t}
           />
         )}
 
@@ -2928,6 +2936,7 @@ export default function BatalhaNaval() {
             onReady={handleOnlineReady}
             hoverCell={hoverCell}
             cellSize={mainCellSize}
+            t={t}
           />
         )}
 
@@ -2942,12 +2951,12 @@ export default function BatalhaNaval() {
               fontFamily: "'Press Start 2P', monospace", fontSize: 11,
               color: ONLINE_ACCENT, textShadow: `0 0 10px ${ONLINE_ACCENT}`,
               marginBottom: 16, textAlign: "center",
-            }}>NAVIOS POSICIONADOS!</p>
+            }}>{t("shipsPlaced")}</p>
             <p style={{
               fontFamily: "'Fira Code', monospace", fontSize: 10,
               color: "#94a3b8", textAlign: "center",
               animation: "bn-pulse 1.5s infinite",
-            }}>Aguardando oponente posicionar...</p>
+            }}>{t("waitingOpponentPlace")}</p>
           </div>
         )}
 
@@ -2974,12 +2983,12 @@ export default function BatalhaNaval() {
                   display: "inline-block",
                   animation: onlineTurn === playerNum ? "bn-pulse 1s infinite" : "none",
                 }} />
-                {onlineTurn === playerNum ? "SUA VEZ" : "VEZ DO OPONENTE"}
+                {onlineTurn === playerNum ? t("yourTurn") : t("opponentTurn")}
               </div>
               <span style={{
                 fontFamily: "'Press Start 2P', monospace", fontSize: 7,
                 color: ONLINE_ACCENT, textShadow: `0 0 6px ${ONLINE_ACCENT}`,
-              }}>ONLINE</span>
+              }}>{t("onlineBadge")}</span>
             </div>
 
             {/* Ships remaining */}
@@ -2990,11 +2999,11 @@ export default function BatalhaNaval() {
               <span style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 9,
                 color: "#64748b",
-              }}>Seus: <span style={{ color: "#22c55e" }}>{playerShips.filter(s => !s.sunk).length}/{TOTAL_SHIPS}</span></span>
+              }}>{t("yours")} <span style={{ color: "#22c55e" }}>{playerShips.filter(s => !s.sunk).length}/{TOTAL_SHIPS}</span></span>
               <span style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 9,
                 color: "#64748b",
-              }}>Inimigo: <span style={{ color: "#ef4444" }}>{TOTAL_SHIPS - onlineSunkOpponent.length}/{TOTAL_SHIPS}</span></span>
+              }}>{t("enemy")} <span style={{ color: "#ef4444" }}>{TOTAL_SHIPS - onlineSunkOpponent.length}/{TOTAL_SHIPS}</span></span>
             </div>
 
             {/* Waiting for opponent indicator */}
@@ -3004,7 +3013,7 @@ export default function BatalhaNaval() {
                 color: "#94a3b8", marginBottom: 6,
                 display: "flex", alignItems: "center", gap: 6,
               }}>
-                <span>Oponente pensando</span>
+                <span>{t("opponentThinking")}</span>
                 <span style={{ display: "flex", gap: 3 }}>
                   {[0, 1, 2].map(i => (
                     <span key={i} style={{
@@ -3024,7 +3033,7 @@ export default function BatalhaNaval() {
                   <p style={{
                     fontFamily: "'Fira Code', monospace", fontSize: 9,
                     color: "#ef4444", textAlign: "center", marginBottom: 4,
-                  }}>TABULEIRO INIMIGO</p>
+                  }}>{t("enemyBoard")}</p>
                   <BattleGridOpponent
                     trackingGrid={onlineTracking}
                     sunkShips={onlineSunkOpponent}
@@ -3036,6 +3045,7 @@ export default function BatalhaNaval() {
                     disabled={onlineTurn !== playerNum || !!onlineGameResult}
                     animatingCell={animatingCell && !animatingCell.isAi ? animatingCell : null}
                     lastSunkShip={lastSunkShip}
+                    t={t}
                   />
                 </div>
 
@@ -3050,7 +3060,7 @@ export default function BatalhaNaval() {
                     <span style={{
                       fontFamily: "'Fira Code', monospace", fontSize: 10,
                       color: "#e2e8f0",
-                    }}>{cellLabel(mobileConfirm.r, mobileConfirm.c)} — Atacar?</span>
+                    }}>{cellLabel(mobileConfirm.r, mobileConfirm.c)} {t("attackConfirm")}</span>
                     <button
                       onClick={() => handleOnlineAttack(mobileConfirm.r, mobileConfirm.c)}
                       style={{
@@ -3059,7 +3069,7 @@ export default function BatalhaNaval() {
                         color: "#fff", border: "none", borderRadius: 4,
                         cursor: "pointer",
                       }}
-                    >FOGO!</button>
+                    >{t("btnFire")}</button>
                   </div>
                 )}
 
@@ -3071,7 +3081,7 @@ export default function BatalhaNaval() {
                     <p style={{
                       fontFamily: "'Fira Code', monospace", fontSize: 8,
                       color: "#64748b",
-                    }}>SEU TABULEIRO</p>
+                    }}>{t("yourBoard")}</p>
                     <button
                       onClick={() => setSwappedGrids(true)}
                       style={{
@@ -3080,7 +3090,7 @@ export default function BatalhaNaval() {
                         color: "#64748b", border: "1px solid #1e293b",
                         borderRadius: 3, cursor: "pointer",
                       }}
-                    >AMPLIAR</button>
+                    >{t("btnEnlarge")}</button>
                   </div>
                   <BattleGridPlayer
                     playerShips={playerShips}
@@ -3095,7 +3105,7 @@ export default function BatalhaNaval() {
                   <p style={{
                     fontFamily: "'Fira Code', monospace", fontSize: 9,
                     color: "#22c55e", textAlign: "center", marginBottom: 4,
-                  }}>SEU TABULEIRO</p>
+                  }}>{t("yourBoard")}</p>
                   <BattleGridPlayer
                     playerShips={playerShips}
                     incomingAttacks={onlineIncoming}
@@ -3111,7 +3121,7 @@ export default function BatalhaNaval() {
                     <p style={{
                       fontFamily: "'Fira Code', monospace", fontSize: 8,
                       color: "#64748b",
-                    }}>TABULEIRO INIMIGO</p>
+                    }}>{t("enemyBoard")}</p>
                     <button
                       onClick={() => setSwappedGrids(false)}
                       style={{
@@ -3120,7 +3130,7 @@ export default function BatalhaNaval() {
                         color: "#64748b", border: "1px solid #1e293b",
                         borderRadius: 3, cursor: "pointer",
                       }}
-                    >AMPLIAR</button>
+                    >{t("btnEnlarge")}</button>
                   </div>
                   <BattleGridOpponent
                     trackingGrid={onlineTracking}
@@ -3133,6 +3143,7 @@ export default function BatalhaNaval() {
                     disabled={onlineTurn !== playerNum || !!onlineGameResult}
                     animatingCell={null}
                     lastSunkShip={null}
+                    t={t}
                   />
                 </div>
               </>
@@ -3142,11 +3153,11 @@ export default function BatalhaNaval() {
             {lastMoveLog && (
               <p style={{
                 fontFamily: "'Fira Code', monospace", fontSize: 9,
-                color: lastMoveLog.includes("afundou") ? "#ef4444"
-                  : lastMoveLog.includes("Acertou") || lastMoveLog.includes("acertou") ? "#f59e0b"
+                color: lastMoveLog.key === "logYouSunk" || lastMoveLog.key === "logEnemySunk" ? "#ef4444"
+                  : lastMoveLog.key === "logHit" || lastMoveLog.key === "logEnemyHit" ? "#f59e0b"
                   : "#64748b",
                 marginTop: 8, textAlign: "center",
-              }}>{lastMoveLog}</p>
+              }}>{t(lastMoveLog.key, lastMoveLog.params)}</p>
             )}
 
             {showConfetti && <ConfettiOverlay />}
@@ -3175,6 +3186,7 @@ export default function BatalhaNaval() {
               waitingRematch={waitingRematch}
               cellSize={mainCellSize}
               disconnected={onlineDisconnected}
+              t={t}
             />
           </>
         )}
