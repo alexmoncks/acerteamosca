@@ -2,13 +2,22 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 
-function maskPhone(value) {
+function maskPhoneBR(value) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length === 0) return "";
   if (digits.length <= 2) return `(${digits}`;
   if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function maskPhoneIntl(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 15);
+  if (digits.length === 0) return "";
+  if (digits.length <= 3) return `+${digits}`;
+  if (digits.length <= 6) return `+${digits.slice(0, 3)} ${digits.slice(3)}`;
+  return `+${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
 function isValidEmail(email) {
@@ -17,6 +26,8 @@ function isValidEmail(email) {
 
 export default function RegisterModal({ onRegister, loading, jogoNome, accentColor = "#00f0ff" }) {
   const t = useTranslations("register");
+  const locale = useLocale();
+  const maskPhone = locale === "pt" ? maskPhoneBR : maskPhoneIntl;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");

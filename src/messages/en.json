@@ -53,8 +53,8 @@
     "emailLabel": "EMAIL",
     "emailPlaceholder": "your@email.com",
     "emailError": "Invalid email",
-    "whatsappLabel": "WHATSAPP",
-    "whatsappPlaceholder": "(00) 00000-0000",
+    "whatsappLabel": "PHONE",
+    "whatsappPlaceholder": "+1 555 1234567",
     "consent": "I agree to the collection of my data to participate in the promotion in accordance with LGPD.",
     "registering": "REGISTERING...",
     "play": "PLAY!"
