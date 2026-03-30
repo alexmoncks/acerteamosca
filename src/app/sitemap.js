@@ -1,5 +1,6 @@
 export default function sitemap() {
-  const baseUrl = "https://acerteamosca.com.br";
+  const ptBase = "https://acerteamosca.com.br";
+  const enBase = "https://nailedthefly.com";
 
   const jogos = [
     "acerteamosca", "pong", "ships", "wordle", "memory",
@@ -9,21 +10,29 @@ export default function sitemap() {
 
   return [
     {
-      url: baseUrl,
+      url: ptBase,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1.0,
       alternates: {
-        languages: { en: `${baseUrl}/en` },
+        languages: {
+          "pt-BR": ptBase,
+          en: enBase,
+          "x-default": ptBase,
+        },
       },
     },
     ...jogos.map((slug) => ({
-      url: `${baseUrl}/jogos/${slug}`,
+      url: `${ptBase}/jogos/${slug}`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
       alternates: {
-        languages: { en: `${baseUrl}/en/jogos/${slug}` },
+        languages: {
+          "pt-BR": `${ptBase}/jogos/${slug}`,
+          en: `${enBase}/jogos/${slug}`,
+          "x-default": `${ptBase}/jogos/${slug}`,
+        },
       },
     })),
   ];

@@ -30,7 +30,14 @@ export async function generateMetadata({ params }) {
     creator: "Acerte a Mosca",
     publisher: "Acerte a Mosca",
     metadataBase: new URL("https://acerteamosca.com.br"),
-    alternates: { canonical: "/" },
+    alternates: {
+      canonical: "/",
+      languages: {
+        "pt-BR": "https://acerteamosca.com.br",
+        "en": "https://nailedthefly.com",
+        "x-default": "https://acerteamosca.com.br",
+      },
+    },
     openGraph: {
       type: "website",
       locale: locale === "pt" ? "pt_BR" : "en_US",
