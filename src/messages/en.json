@@ -19,7 +19,7 @@
       "cta": "PLAY NOW"
     },
     "games": {
-      "acerteamosca": { "name": "Swat the Fly", "desc": "Swat the mosquito with the slipper before time runs out!" },
+      "acerteamosca": { "name": "Nailed the Fly", "desc": "Swat the mosquito with the slipper before time runs out!" },
       "pong": { "name": "Pong", "desc": "The classic of classics! Play against CPU, a local friend, or online." },
       "ships": { "name": "Ships", "desc": "Navigate mazes, ricochet shots, and destroy the enemy ship!" },
       "wordle": { "name": "Wordle", "desc": "Guess the 5-letter word in 6 attempts!" },
