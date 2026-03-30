@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 import useLockScroll from "@/hooks/useLockScroll";
 import { adsConfig } from "@/config/ads";
+
+// ── i18n ref (set inside component, used by canvas drawing functions) ──
+let _t = (k) => k;
 
 // ── Constants ──────────────────────────────────────────────────────────
 const CW = 480;
@@ -62,20 +66,14 @@ const PU_LABELS = ["P", "B", "S", "V", "L", "\u2605", "1UP"];
 const PU_DURATIONS = [0, 0, 600, 720, 480, 300, 0]; // frames
 
 // ── World configs ──────────────────────────────────────────────────────
-const WORLD_NAMES = ["ORBITA TERRESTRE", "PHOBOS", "SUPERFICIE MARTE", "CINTURAO ASTEROIDES", "JUPITER"];
+const WORLD_NAME_KEYS = ["worldName0", "worldName1", "worldName2", "worldName3", "worldName4"];
+const WORLD_TAG_KEYS = ["worldTag0", "worldTag1", "worldTag2", "worldTag3", "worldTag4"];
 const WORLD_BG_COLORS = [
   ["#020824", "#0a2040", "#00c8ff"],
   ["#180828", "#2a0a40", "#b026ff"],
   ["#281008", "#401a0a", "#ff6600"],
   ["#080808", "#1a1a2e", "#4a90d9"],
   ["#000000", "#0a0a1a", "#ffd700"],
-];
-const WORLD_TAGS = [
-  "Defenda a orbita terrestre",
-  "Atravesse o campo de Phobos",
-  "Avance pela superficie marciana",
-  "Navegue pelo cinturao de asteroides",
-  "Confronto final em Jupiter",
 ];
 
 // ── Boss configs ───────────────────────────────────────────────────────
@@ -89,50 +87,45 @@ const BOSS_DEFS = [
 
 // ── Difficulty configs ──────────────────────────────────────────────────
 const DIFFICULTIES = [
-  { id: "novato",     label: "Novato",       enemyHpMult: 0.5,  bossHpMult: 1.3,  enemyShotFreq: 0.5,  powerUpRate: 1.0,  color: "#4ade80", desc: "Inimigos fracos, muitos power-ups. Ideal para conhecer o jogo." },
-  { id: "medio",      label: "Medio",        enemyHpMult: 1.0,  bossHpMult: 2.6,  enemyShotFreq: 1.0,  powerUpRate: 0.25, color: "#fbbf24", desc: "Equilibrado. A experiencia padrao do 3INVADER." },
-  { id: "experiente", label: "Experiente",    enemyHpMult: 2.0,  bossHpMult: 5.2,  enemyShotFreq: 1.5,  powerUpRate: 0.33, color: "#f97316", desc: "Inimigos resistentes, poucos power-ups. Para pilotos veteranos." },
-  { id: "maluco",     label: "Ta Maluco?",    enemyHpMult: 4.0,  bossHpMult: 10.4, enemyShotFreq: 2.5,  powerUpRate: 0.25, color: "#ef4444", desc: "Sobrevivencia extrema. Voce foi avisado." },
+  { id: "novato",     labelKey: "diffNovato",     enemyHpMult: 0.5,  bossHpMult: 1.3,  enemyShotFreq: 0.5,  powerUpRate: 1.0,  color: "#4ade80", descKey: "diffNovatoDesc" },
+  { id: "medio",      labelKey: "diffMedio",       enemyHpMult: 1.0,  bossHpMult: 2.6,  enemyShotFreq: 1.0,  powerUpRate: 0.25, color: "#fbbf24", descKey: "diffMedioDesc" },
+  { id: "experiente", labelKey: "diffExperiente",  enemyHpMult: 2.0,  bossHpMult: 5.2,  enemyShotFreq: 1.5,  powerUpRate: 0.33, color: "#f97316", descKey: "diffExperienteDesc" },
+  { id: "maluco",     labelKey: "diffMaluco",      enemyHpMult: 4.0,  bossHpMult: 10.4, enemyShotFreq: 2.5,  powerUpRate: 0.25, color: "#ef4444", descKey: "diffMalucoDesc" },
 ];
 
 // ── Jukebox tracks ─────────────────────────────────────────────────────
 const JUKEBOX_TRACKS = [
-  { path: "/audio/3invader/Starfire Overture.mp3",       name: "Starfire Overture",       tag: "Historia" },
-  { path: "/audio/3invader/Orbit On Repeat.mp3",         name: "Orbit On Repeat",         tag: "Mundo 1" },
-  { path: "/audio/3invader/Lead to Phobos.mp3",          name: "Lead to Phobos",          tag: "Mundo 2" },
-  { path: "/audio/3invader/Breach Mars.mp3",             name: "Breach Mars",             tag: "Mundo 3" },
-  { path: "/audio/3invader/Asteroids.mp3",               name: "Asteroids",               tag: "Mundo 4" },
-  { path: "/audio/3invader/Singularity Countdown.mp3",   name: "Singularity Countdown",   tag: "Mundo 5" },
-  { path: "/audio/3invader/Boss Stage.mp3",              name: "Boss Stage",              tag: "Chefes" },
-  { path: "/audio/3invader/Final Boss.mp3",              name: "Final Boss",              tag: "Chefe Final" },
-  { path: "/audio/3invader/Starfire Final.mp3",          name: "Starfire Final",          tag: "Vitoria" },
-  { path: "/audio/3invader/Falling Past the Stars.mp3",  name: "Falling Past the Stars",  tag: "Game Over" },
+  { path: "/audio/3invader/Starfire Overture.mp3",       name: "Starfire Overture",       tagKey: "jukeboxTagHistoria" },
+  { path: "/audio/3invader/Orbit On Repeat.mp3",         name: "Orbit On Repeat",         tagKey: "jukeboxTagMundo1" },
+  { path: "/audio/3invader/Lead to Phobos.mp3",          name: "Lead to Phobos",          tagKey: "jukeboxTagMundo2" },
+  { path: "/audio/3invader/Breach Mars.mp3",             name: "Breach Mars",             tagKey: "jukeboxTagMundo3" },
+  { path: "/audio/3invader/Asteroids.mp3",               name: "Asteroids",               tagKey: "jukeboxTagMundo4" },
+  { path: "/audio/3invader/Singularity Countdown.mp3",   name: "Singularity Countdown",   tagKey: "jukeboxTagMundo5" },
+  { path: "/audio/3invader/Boss Stage.mp3",              name: "Boss Stage",              tagKey: "jukeboxTagChefes" },
+  { path: "/audio/3invader/Final Boss.mp3",              name: "Final Boss",              tagKey: "jukeboxTagChefeFinal" },
+  { path: "/audio/3invader/Starfire Final.mp3",          name: "Starfire Final",          tagKey: "jukeboxTagVitoria" },
+  { path: "/audio/3invader/Falling Past the Stars.mp3",  name: "Falling Past the Stars",  tagKey: "jukeboxTagGameOver" },
 ];
 
 // ── Scoring ────────────────────────────────────────────────────────────
 const RANK_THRESHOLDS = [
-  { min: 0,      label: "Cadete" },
-  { min: 10000,  label: "Tenente" },
-  { min: 50000,  label: "Capitao" },
-  { min: 150000, label: "Comandante" },
-  { min: 300000, label: "Almirante" },
+  { min: 0,      labelKey: "rankCadete" },
+  { min: 10000,  labelKey: "rankTenente" },
+  { min: 50000,  labelKey: "rankCapitao" },
+  { min: 150000, labelKey: "rankComandante" },
+  { min: 300000, labelKey: "rankAlmirante" },
 ];
 
 function getRank(score, completed) {
-  if (completed) return "Heroi da Humanidade";
+  if (completed) return _t("rankHeroi");
   for (let i = RANK_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (score >= RANK_THRESHOLDS[i].min) return RANK_THRESHOLDS[i].label;
+    if (score >= RANK_THRESHOLDS[i].min) return _t(RANK_THRESHOLDS[i].labelKey);
   }
-  return "Cadete";
+  return _t("rankCadete");
 }
 
-// ── Intro text ─────────────────────────────────────────────────────────
-const INTRO_SCREENS = [
-  "2186. Observatorios detectaram objeto anomalo na Nuvem de Oort.\nTrajetória: sistema solar interior.\nVelocidade: 0.4c, desacelerando.\nCometas nao desaceleram.",
-  "De acordo com a sua estrutura química, este mesmo objeto foi detectado no ano de 2025 e designado com o nome 3I/Atlas, sob a camada de gelo e poeira havia uma ESTRUTURA.\nUma nave. Colossal. Viva.\nOrigem: desconhecida.\nIntencao: hostil.",
-  "Europa: silencio.\nGanimedes: 'ELES INVADIRAM A INSTALAÇÃO'.\nCalisto: transmissao interrompida.\nIo: convertida em uma forja de guerra.\nAs luas de Jupiter cairam em 72 horas.",
-  "Voce pilota o ARROW-7, único caça estelar experimental da classe Aleste que conseguiu decolar.\nMissão: da orbita terrestre ate Júpiter.\nObjetivo: destruir o invasor 3I/ATLAS.\n\n\nA humanidade depende de voce.\n\nPRESSIONE ESPAÇO OU CLICK PARA INICIAR",
-];
+// ── Intro text keys ────────────────────────────────────────────────────
+const INTRO_SCREEN_KEYS = ["introScreen0", "introScreen1", "introScreen2", "introScreen3"];
 
 // ── Audio Engine ───────────────────────────────────────────────────────
 const SFX_MULTIPLIER = 2.5; // boost SFX volume
@@ -1330,7 +1323,7 @@ function drawHUD(ctx, g) {
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillText(`FASE ${g.phase}`, 12, 30);
+  ctx.fillText(`${_t("hudPhase")} ${g.phase}`, 12, 30);
 
   // Score
   ctx.fillStyle = "#ffffff";
@@ -1389,28 +1382,28 @@ function drawHUD(ctx, g) {
     ctx.fillStyle = "#22c55e";
     ctx.font = "7px 'Press Start 2P', monospace";
     ctx.textAlign = "right";
-    ctx.fillText(`SHIELD ${Math.ceil(g.shieldTimer / 60)}s`, CW - 12, puY);
+    ctx.fillText(`${_t("hudShield")} ${Math.ceil(g.shieldTimer / 60)}s`, CW - 12, puY);
     puY += 12;
   }
   if (g.speedTimer > 0) {
     ctx.fillStyle = "#eab308";
     ctx.font = "7px 'Press Start 2P', monospace";
     ctx.textAlign = "right";
-    ctx.fillText(`SPEED ${Math.ceil(g.speedTimer / 60)}s`, CW - 12, puY);
+    ctx.fillText(`${_t("hudSpeed")} ${Math.ceil(g.speedTimer / 60)}s`, CW - 12, puY);
     puY += 12;
   }
   if (g.laserTimer > 0) {
     ctx.fillStyle = "#a855f7";
     ctx.font = "7px 'Press Start 2P', monospace";
     ctx.textAlign = "right";
-    ctx.fillText(`LASER ${Math.ceil(g.laserTimer / 60)}s`, CW - 12, puY);
+    ctx.fillText(`${_t("hudLaser")} ${Math.ceil(g.laserTimer / 60)}s`, CW - 12, puY);
     puY += 12;
   }
   if (g.starTimer > 0) {
     ctx.fillStyle = "#ffd700";
     ctx.font = "7px 'Press Start 2P', monospace";
     ctx.textAlign = "right";
-    ctx.fillText(`STAR ${Math.ceil(g.starTimer / 60)}s`, CW - 12, puY);
+    ctx.fillText(`${_t("hudStar")} ${Math.ceil(g.starTimer / 60)}s`, CW - 12, puY);
     puY += 12;
   }
 
@@ -1421,6 +1414,13 @@ function drawHUD(ctx, g) {
 // ── Main Component ──────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════
 export default function ThreeInvader() {
+  const t = useTranslations("games.threeinvader");
+  // Set module-level _t so canvas drawing functions can access translations
+  _t = t;
+
+  // Intro screens built from translation keys (must be inside component to use t)
+  const INTRO_SCREENS = INTRO_SCREEN_KEYS.map((key) => t(key));
+
   // Test mode: ?tst=t enables phase selector
   const [testMode] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("tst") === "t"; } catch { return false; }
@@ -4028,7 +4028,7 @@ export default function ThreeInvader() {
         ctx.textBaseline = "middle";
         ctx.shadowColor = "#ff0000";
         ctx.shadowBlur = 20;
-        ctx.fillText("ALERTA: INIMIGO DETECTADO", CW / 2, CH / 2 - 20);
+        ctx.fillText(_t("bossWarningText"), CW / 2, CH / 2 - 20);
         ctx.font = "10px 'Press Start 2P', monospace";
         ctx.fillText(BOSS_DEFS[g.world]?.name || "BOSS", CW / 2, CH / 2 + 10);
         ctx.restore();
@@ -4050,11 +4050,11 @@ export default function ThreeInvader() {
       ctx.textBaseline = "middle";
       ctx.shadowColor = "#22c55e";
       ctx.shadowBlur = 15;
-      ctx.fillText(`FASE ${g.phase} COMPLETA!`, CW / 2, CH / 2 - 20);
+      ctx.fillText(`${_t("phaseComplete")} ${g.phase}!`, CW / 2, CH / 2 - 20);
       ctx.fillStyle = "#ffd700";
       ctx.font = "10px 'Press Start 2P', monospace";
       const bonus = g.phaseDeathCount === 0 ? 1000 * g.phase : 500 * g.phase;
-      ctx.fillText(`BONUS: +${bonus.toLocaleString()}`, CW / 2, CH / 2 + 10);
+      ctx.fillText(`${_t("phaseBonus")}: +${bonus.toLocaleString()}`, CW / 2, CH / 2 + 10);
       ctx.restore();
     }
 
@@ -4067,16 +4067,16 @@ export default function ThreeInvader() {
       ctx.fillStyle = "#4a5568";
       ctx.font = "8px 'Press Start 2P', monospace";
       ctx.textAlign = "center";
-      ctx.fillText(`MUNDO ${g.world + 1}`, CW / 2, CH / 2 - 50);
+      ctx.fillText(`${_t("hudWorld")} ${g.world + 1}`, CW / 2, CH / 2 - 50);
       ctx.fillStyle = wColors?.[2] || ACCENT;
       ctx.font = "bold 16px 'Press Start 2P', monospace";
       ctx.shadowColor = wColors?.[2] || ACCENT;
       ctx.shadowBlur = 20;
-      ctx.fillText(WORLD_NAMES[g.world] || "???", CW / 2, CH / 2 - 20);
+      ctx.fillText(_t(WORLD_NAME_KEYS[g.world]) || "???", CW / 2, CH / 2 - 20);
       ctx.shadowBlur = 0;
       ctx.fillStyle = "#8892b0";
       ctx.font = "10px 'Fira Code', monospace";
-      ctx.fillText(WORLD_TAGS[g.world] || "", CW / 2, CH / 2 + 15);
+      ctx.fillText(_t(WORLD_TAG_KEYS[g.world]) || "", CW / 2, CH / 2 + 15);
       ctx.restore();
     }
 
@@ -4097,9 +4097,9 @@ export default function ThreeInvader() {
       const tutAlpha = Math.max(0, 1 - g.phaseTimer / 600);
       ctx.textAlign = "center";
       let tutText = "";
-      if (g.phaseTimer < 200) tutText = "SETAS/WASD: MOVER";
-      else if (g.phaseTimer < 400) tutText = "N/ESPACO: ATIRAR";
-      else tutText = "M: BOMBA NOVA";
+      if (g.phaseTimer < 200) tutText = _t("tutorialMove");
+      else if (g.phaseTimer < 400) tutText = _t("tutorialShoot");
+      else tutText = _t("tutorialBomb");
       // Background box
       ctx.font = "11px 'Press Start 2P', monospace";
       const tw = ctx.measureText(tutText).width;
@@ -4518,7 +4518,7 @@ export default function ThreeInvader() {
               fontFamily: "'Press Start 2P', monospace",
             }}
           >
-            DEFENDA A HUMANIDADE
+            {t("tagline")}
           </p>
         </>
       )}
@@ -4641,7 +4641,7 @@ export default function ThreeInvader() {
                   color: "#4a5568",
                 }}
               >
-                TOQUE OU PRESSIONE PARA CONTINUAR
+                {t("introContinueHint")}
               </div>
             </div>
           )}
@@ -4672,7 +4672,7 @@ export default function ThreeInvader() {
                   margin: 0,
                 }}
               >
-                Nosso patrocinador mantém o jogo gratuito
+                {t("sponsorMessage")}
               </p>
               <button
                 onClick={handleSponsorContinue}
@@ -4690,7 +4690,7 @@ export default function ThreeInvader() {
                   flexShrink: 0,
                 }}
               >
-                CONTINUAR
+                {t("sponsorContinue")}
               </button>
             </div>
           )}
@@ -4759,7 +4759,7 @@ export default function ThreeInvader() {
                   marginBottom: 12,
                 }}
               >
-                INICIAR MISSAO
+                {t("menuStart")}
               </button>
 
               <button
@@ -4776,7 +4776,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                INSTRUCOES
+                {t("menuInstructions")}
               </button>
 
               <button
@@ -4793,7 +4793,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                HISTORIA
+                {t("menuStory")}
               </button>
 
               <button
@@ -4810,7 +4810,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                DIFICULDADE
+                {t("menuDifficulty")}
               </button>
 
               <button
@@ -4827,7 +4827,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                SOM
+                {t("menuSound")}
               </button>
 
               <button
@@ -4844,7 +4844,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                JUKEBOX
+                {t("menuJukebox")}
               </button>
 
               <button
@@ -4861,7 +4861,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                HIGH SCORES
+                {t("menuHighScores")}
               </button>
 
               {/* Phase selector (test mode only: ?tst=t) */}
@@ -4880,7 +4880,7 @@ export default function ThreeInvader() {
                     marginBottom: 8,
                   }}
                 >
-                  SELECIONAR FASE [TEST]
+                  {t("menuPhaseSelect")}
                 </button>
               )}
 
@@ -4892,11 +4892,11 @@ export default function ThreeInvader() {
                   <div style={{ textAlign: "center" }}>
                     {best > 0 && (
                       <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                        MELHOR: {best.toLocaleString()}
+                        {t("menuBest")}: {best.toLocaleString()}
                       </div>
                     )}
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: difficulty.color }}>
-                      DIFICULDADE: {difficulty.label}
+                      {t("menuDifficulty")}: {t(difficulty.labelKey)}
                     </div>
                   </div>
                 );
@@ -4914,7 +4914,7 @@ export default function ThreeInvader() {
                 borderRadius: 4,
                 border: "1px solid rgba(0,240,255,0.2)",
               }}>
-                SETAS/WASD: MOVER | N: ATIRAR | M: BOMBA
+                {t("menuControlsHint")}
               </div>
             </div>
           )}
@@ -4946,34 +4946,34 @@ export default function ThreeInvader() {
               }}
             >
               <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 16 }}>
-                INSTRUCOES
+                {t("howToPlayTitle")}
               </h2>
 
               <div style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: "#8892b0", lineHeight: 1.8, maxWidth: 420 }}>
-                <div style={{ color: "#ffd700", fontWeight: "bold", marginBottom: 4 }}>CONTROLES (TECLADO)</div>
-                <div>Setas / WASD: Mover a nave</div>
-                <div>N / Espaco: Atirar (segurar)</div>
-                <div>M: Bomba NOVA</div>
-                <div>P / ESC: Pausar</div>
+                <div style={{ color: "#ffd700", fontWeight: "bold", marginBottom: 4 }}>{t("howToPlayKeyboardTitle")}</div>
+                <div>{t("howToPlayMove")}</div>
+                <div>{t("howToPlayShoot")}</div>
+                <div>{t("howToPlayBomb")}</div>
+                <div>{t("howToPlayPause")}</div>
 
-                <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12, marginBottom: 4 }}>CONTROLES (MOBILE)</div>
-                <div>Arrastar: Mover (auto-tiro)</div>
-                <div>Botao BOMBA: Bomba NOVA</div>
+                <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12, marginBottom: 4 }}>{t("howToPlayMobileTitle")}</div>
+                <div>{t("howToPlayMobileDrag")}</div>
+                <div>{t("howToPlayMobileBomb")}</div>
 
-                <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12, marginBottom: 4 }}>POWER-UPS</div>
-                <div><span style={{ color: "#ef4444" }}>P</span>: +1 nivel de tiro (max 5)</div>
-                <div><span style={{ color: "#3b82f6" }}>B</span>: +1 bomba (max 9)</div>
-                <div><span style={{ color: "#22c55e" }}>S</span>: Escudo (10s)</div>
-                <div><span style={{ color: "#eab308" }}>V</span>: Velocidade +50% (12s)</div>
-                <div><span style={{ color: "#a855f7" }}>L</span>: Laser penetrante (8s)</div>
-                <div><span style={{ color: "#ffd700" }}>{"\u2605"}</span>: Invencibilidade (5s)</div>
-                <div><span style={{ color: "#ec4899" }}>1UP</span>: Vida extra</div>
+                <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12, marginBottom: 4 }}>{t("howToPlayPowerUpsTitle")}</div>
+                <div><span style={{ color: "#ef4444" }}>P</span>: {t("howToPlayPuP")}</div>
+                <div><span style={{ color: "#3b82f6" }}>B</span>: {t("howToPlayPuB")}</div>
+                <div><span style={{ color: "#22c55e" }}>S</span>: {t("howToPlayPuS")}</div>
+                <div><span style={{ color: "#eab308" }}>V</span>: {t("howToPlayPuV")}</div>
+                <div><span style={{ color: "#a855f7" }}>L</span>: {t("howToPlayPuL")}</div>
+                <div><span style={{ color: "#ffd700" }}>{"\u2605"}</span>: {t("howToPlayPuStar")}</div>
+                <div><span style={{ color: "#ec4899" }}>1UP</span>: {t("howToPlayPu1UP")}</div>
 
-                <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12, marginBottom: 4 }}>MISSAO</div>
-                <div>25 fases em 5 mundos</div>
-                <div>Cada mundo termina com um BOSS</div>
-                <div>Da orbita terrestre ate Jupiter</div>
-                <div>Destrua 3I/ATLAS para salvar a humanidade!</div>
+                <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12, marginBottom: 4 }}>{t("howToPlayMissionTitle")}</div>
+                <div>{t("howToPlayMission1")}</div>
+                <div>{t("howToPlayMission2")}</div>
+                <div>{t("howToPlayMission3")}</div>
+                <div>{t("howToPlayMission4")}</div>
               </div>
 
               <button
@@ -4990,7 +4990,7 @@ export default function ThreeInvader() {
                   marginTop: 20,
                 }}
               >
-                VOLTAR
+                {t("btnBack")}
               </button>
             </div>
           )}
@@ -5010,7 +5010,7 @@ export default function ThreeInvader() {
               }}
             >
               <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 20 }}>
-                HIGH SCORES
+                {t("highScoresTitle")}
               </h2>
 
               {(() => {
@@ -5019,7 +5019,7 @@ export default function ThreeInvader() {
                 return (
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#4a5568", marginBottom: 8 }}>
-                      SUA MELHOR PONTUACAO
+                      {t("highScoresBestScore")}
                     </div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 24, color: "#ffd700", textShadow: "0 0 10px rgba(255,215,0,0.5)", marginBottom: 12 }}>
                       {best.toLocaleString()}
@@ -5032,13 +5032,13 @@ export default function ThreeInvader() {
               })()}
 
               <div style={{ marginTop: 24, fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#4a5568", textAlign: "center", lineHeight: 2 }}>
-                <div style={{ color: "#ffd700" }}>RANKS:</div>
-                <div>0-10K: Cadete</div>
-                <div>10K-50K: Tenente</div>
-                <div>50K-150K: Capitao</div>
-                <div>150K-300K: Comandante</div>
-                <div>300K+: Almirante</div>
-                <div style={{ color: "#ffd700" }}>Completar: Heroi da Humanidade</div>
+                <div style={{ color: "#ffd700" }}>{t("ranksTitle")}:</div>
+                <div>0-10K: {t("rankCadete")}</div>
+                <div>10K-50K: {t("rankTenente")}</div>
+                <div>50K-150K: {t("rankCapitao")}</div>
+                <div>150K-300K: {t("rankComandante")}</div>
+                <div>300K+: {t("rankAlmirante")}</div>
+                <div style={{ color: "#ffd700" }}>{t("ranksComplete")}: {t("rankHeroi")}</div>
               </div>
 
               <button
@@ -5055,7 +5055,7 @@ export default function ThreeInvader() {
                   marginTop: 20,
                 }}
               >
-                VOLTAR
+                {t("btnBack")}
               </button>
             </div>
           )}
@@ -5077,7 +5077,7 @@ export default function ThreeInvader() {
               }}
             >
               <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 20 }}>
-                DIFICULDADE
+                {t("difficultyTitle")}
               </h2>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 400 }}>
@@ -5099,10 +5099,10 @@ export default function ThreeInvader() {
                     }}
                   >
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, marginBottom: 4 }}>
-                      {difficulty.id === d.id ? "\u25B6 " : "  "}{d.label}
+                      {difficulty.id === d.id ? "\u25B6 " : "  "}{t(d.labelKey)}
                     </div>
                     <div style={{ fontSize: 10, color: "#8892b0", lineHeight: 1.4 }}>
-                      {d.desc}
+                      {t(d.descKey)}
                     </div>
                   </button>
                 ))}
@@ -5122,7 +5122,7 @@ export default function ThreeInvader() {
                   marginTop: 20,
                 }}
               >
-                VOLTAR
+                {t("btnBack")}
               </button>
             </div>
           )}
@@ -5143,14 +5143,14 @@ export default function ThreeInvader() {
               }}
             >
               <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 24 }}>
-                SOM
+                {t("soundTitle")}
               </h2>
 
               <div style={{ width: "100%", maxWidth: 360, marginBottom: 24 }}>
                 {/* Music volume */}
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>MUSICA</span>
+                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>{t("soundMusic")}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: "#8892b0" }}>{Math.round(musicVolume * 100)}%</span>
                       <button
@@ -5166,7 +5166,7 @@ export default function ThreeInvader() {
                           cursor: "pointer",
                         }}
                       >
-                        {musicMuted ? "MUDO" : "ON"}
+                        {musicMuted ? t("soundMuted") : t("soundOn")}
                       </button>
                     </div>
                   </div>
@@ -5188,7 +5188,7 @@ export default function ThreeInvader() {
                 {/* SFX volume */}
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>EFEITOS</span>
+                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700" }}>{t("soundEffects")}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 11, color: "#8892b0" }}>{Math.round(sfxVolume * 100)}%</span>
                       <button
@@ -5204,7 +5204,7 @@ export default function ThreeInvader() {
                           cursor: "pointer",
                         }}
                       >
-                        {sfxMuted ? "MUDO" : "ON"}
+                        {sfxMuted ? t("soundMuted") : t("soundOn")}
                       </button>
                     </div>
                   </div>
@@ -5238,7 +5238,7 @@ export default function ThreeInvader() {
                   marginTop: 8,
                 }}
               >
-                VOLTAR
+                {t("btnBack")}
               </button>
             </div>
           )}
@@ -5260,7 +5260,7 @@ export default function ThreeInvader() {
               }}
             >
               <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: ACCENT, marginBottom: 16 }}>
-                JUKEBOX
+                {t("jukeboxTitle")}
               </h2>
 
               <div style={{ width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -5301,7 +5301,7 @@ export default function ThreeInvader() {
                       <span>
                         {isPlaying ? "\u23F8" : "\u25B6"} {track.name}
                       </span>
-                      <span style={{ fontSize: 9, color: "#4a5568" }}>({track.tag})</span>
+                      <span style={{ fontSize: 9, color: "#4a5568" }}>({t(track.tagKey)})</span>
                     </button>
                   );
                 })}
@@ -5325,7 +5325,7 @@ export default function ThreeInvader() {
                   marginTop: 16,
                 }}
               >
-                VOLTAR
+                {t("btnBack")}
               </button>
             </div>
           )}
@@ -5345,7 +5345,7 @@ export default function ThreeInvader() {
               }}
             >
               <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: ACCENT, marginBottom: 24 }}>
-                PAUSADO
+                {t("pausedTitle")}
               </h2>
               <button
                 onClick={handleResume}
@@ -5363,7 +5363,7 @@ export default function ThreeInvader() {
                   marginBottom: 12,
                 }}
               >
-                CONTINUAR
+                {t("pausedResume")}
               </button>
               <button
                 onClick={() => { setScreen("menu"); }}
@@ -5378,10 +5378,10 @@ export default function ThreeInvader() {
                   cursor: "pointer",
                 }}
               >
-                MENU
+                {t("btnMenu")}
               </button>
               <div style={{ marginTop: 16, fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#4a5568" }}>
-                P / ESC: RETOMAR
+                {t("pausedHint")}
               </div>
             </div>
           )}
@@ -5407,14 +5407,14 @@ export default function ThreeInvader() {
                 fontSize: 14,
                 color: "#ff4444",
                 marginBottom: 16,
-              }}>SELECIONAR FASE</h2>
+              }}>{t("phaseSelectTitle")}</h2>
 
               {[
-                { world: "ORBITA TERRESTRE", color: "#00f0ff", phases: [1,2,3,4,5] },
-                { world: "PHOBOS", color: "#b026ff", phases: [6,7,8,9,10] },
-                { world: "MARTE", color: "#ff6b35", phases: [11,12,13,14,15] },
-                { world: "ASTEROIDES", color: "#888", phases: [16,17,18,19,20] },
-                { world: "JUPITER", color: "#ffd700", phases: [21,22,23,24,25] },
+                { worldKey: "worldName0", color: "#00f0ff", phases: [1,2,3,4,5] },
+                { worldKey: "worldName1", color: "#b026ff", phases: [6,7,8,9,10] },
+                { worldKey: "worldName2", color: "#ff6b35", phases: [11,12,13,14,15] },
+                { worldKey: "worldName3", color: "#888", phases: [16,17,18,19,20] },
+                { worldKey: "worldName4", color: "#ffd700", phases: [21,22,23,24,25] },
               ].map((w, wi) => (
                 <div key={wi} style={{ marginBottom: 12, width: "100%" }}>
                   <div style={{
@@ -5423,7 +5423,7 @@ export default function ThreeInvader() {
                     color: w.color,
                     marginBottom: 6,
                   }}>
-                    MUNDO {wi + 1}: {w.world}
+                    {t("hudWorld")} {wi + 1}: {t(w.worldKey)}
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {w.phases.map(p => (
@@ -5446,7 +5446,7 @@ export default function ThreeInvader() {
                           minWidth: 42,
                         }}
                       >
-                        {p % 5 === 0 ? `BOSS` : `F${p}`}
+                        {p % 5 === 0 ? t("phaseSelectBoss") : `${t("phaseSelectPhasePrefix")}${p}`}
                       </button>
                     ))}
                   </div>
@@ -5467,7 +5467,7 @@ export default function ThreeInvader() {
                   marginTop: 12,
                 }}
               >
-                VOLTAR
+                {t("btnBack")}
               </button>
             </div>
           )}
@@ -5496,13 +5496,13 @@ export default function ThreeInvader() {
                   marginBottom: 20,
                 }}
               >
-                GAME OVER
+                {t("gameOverTitle")}
               </h2>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20, alignItems: "center" }}>
                 <div style={{ textAlign: "center", animation: "scoreCount 0.5s ease-out" }}>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>
-                    PONTOS
+                    {t("statsPoints")}
                   </div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: ACCENT, textShadow: `0 0 10px rgba(0,240,255,0.5)` }}>
                     {finalStats.score.toLocaleString()}
@@ -5511,21 +5511,21 @@ export default function ThreeInvader() {
 
                 <div style={{ display: "flex", gap: 20 }}>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>FASE</div>
+                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("statsPhase")}</div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#39ff14" }}>{finalStats.phase}</div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>INIMIGOS</div>
+                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("statsEnemies")}</div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ffaa00" }}>{finalStats.enemies}</div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>RANK</div>
+                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("statsRank")}</div>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#ffd700" }}>{finalStats.rank}</div>
                   </div>
                 </div>
 
                 <div style={{ textAlign: "center", marginTop: 4 }}>
-                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>MELHOR</div>
+                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("statsBest")}</div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: "#e879f9", textShadow: "0 0 8px rgba(232,121,249,0.4)" }}>
                     {finalStats.best.toLocaleString()}
                   </div>
@@ -5549,7 +5549,7 @@ export default function ThreeInvader() {
                     marginBottom: 8,
                   }}
                 >
-                  CONTINUAR ({continueCount}s)
+                  {t("gameOverContinue")} ({continueCount}s)
                 </button>
               )}
 
@@ -5569,7 +5569,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                REINICIAR
+                {t("btnRestart")}
               </button>
 
               <button
@@ -5585,7 +5585,7 @@ export default function ThreeInvader() {
                   cursor: "pointer",
                 }}
               >
-                MENU
+                {t("btnMenu")}
               </button>
 
               <AdBanner slot="3invader_between" style={{ marginTop: 12, maxWidth: 300 }} />
@@ -5617,18 +5617,18 @@ export default function ThreeInvader() {
                   animation: "invPulse 1.5s ease-in-out infinite",
                 }}
               >
-                VITORIA!
+                {t("victoryTitle")}
               </h2>
 
               <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700", marginBottom: 8 }}>
-                3I/ATLAS DESTRUIDO!
+                {t("victoryAtlasDestroyed")}
               </div>
               <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#22c55e", marginBottom: 16 }}>
-                A HUMANIDADE ESTA SALVA
+                {t("victoryHumanitySaved")}
               </div>
 
               <div style={{ textAlign: "center", animation: "scoreCount 0.5s ease-out", marginBottom: 12 }}>
-                <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>PONTUACAO FINAL</div>
+                <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("victoryFinalScore")}</div>
                 <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 24, color: "#ffd700", textShadow: "0 0 15px rgba(255,215,0,0.5)" }}>
                   {finalStats.score.toLocaleString()}
                 </div>
@@ -5636,17 +5636,17 @@ export default function ThreeInvader() {
 
               <div style={{ display: "flex", gap: 20, marginBottom: 12 }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>INIMIGOS</div>
+                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("statsEnemies")}</div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ffaa00" }}>{finalStats.enemies}</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>RANK</div>
+                  <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#4a5568", marginBottom: 4 }}>{t("statsRank")}</div>
                   <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ffd700" }}>{finalStats.rank}</div>
                 </div>
               </div>
 
               <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#a855f7", marginBottom: 16 }}>
-                +100,000 BONUS FINAL
+                {t("victoryFinalBonus")}
               </div>
 
               <button
@@ -5665,7 +5665,7 @@ export default function ThreeInvader() {
                   marginBottom: 8,
                 }}
               >
-                JOGAR NOVAMENTE
+                {t("btnPlayAgain")}
               </button>
 
               <button
@@ -5681,7 +5681,7 @@ export default function ThreeInvader() {
                   cursor: "pointer",
                 }}
               >
-                MENU
+                {t("btnMenu")}
               </button>
             </div>
           )}
@@ -5726,7 +5726,7 @@ export default function ThreeInvader() {
               minHeight: 48,
             }}
           >
-            💣 BOMBA
+            💣 {t("mobileBomb")}
           </button>
 
           <span style={{

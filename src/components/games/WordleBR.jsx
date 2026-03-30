@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -10,7 +11,7 @@ import useLockScroll from "@/hooks/useLockScroll";
 const GAME_W = 400;
 const GAME_H = 550;
 
-let ANSWERS = [
+let ANSWERS_PT = [
   "GATOS","MUNDO","FESTA","PRAIA","LIVRO","CARRO","PLANO","VERDE","TIGRE","NUVEM",
   "PEDRA","FOLHA","PONTO","TERMO","MUSEU","CAMPO","PORTA","NOITE","FONTE","BRAVO",
   "RITMO","SINAL","BAIXO","NEGRO","CORPO","FRACO","GRADE","LENTO","METRO","NOSSO",
@@ -27,10 +28,10 @@ let ANSWERS = [
   "FELIZ","DIGNO","JUIZO","ALTAR","FUMAR","CESTA","GREVE","RUBOR","LIXAR","BALDE",
   "RELVA","FENDA","PUNHO","GRUTA","APITO","SAFRA","CUNHA","PAVIO","MALHA","TERNO",
 ];
-ANSWERS = ANSWERS.filter(w => w.length === 5);
+ANSWERS_PT = ANSWERS_PT.filter(w => w.length === 5);
 
-let VALID_GUESSES = [
-  ...ANSWERS,
+let VALID_GUESSES_PT = [
+  ...ANSWERS_PT,
   // A
   "ABADE","ABALO","ABATE","ABETO","ABONO","ABRIL","ACASO","ACENO","ACIDO",
   "ACIMA","ACRES","ADEUS","ADOBE","ADORE","AEREA","AFAGO","AFIOU",
@@ -126,7 +127,126 @@ let VALID_GUESSES = [
   // X-Z
   "XAMPU","XEQUE","ZEROS","ZINCO","ZOMBA","ZONAS","ZELAR",
 ];
-VALID_GUESSES = VALID_GUESSES.filter(w => w.length === 5);
+VALID_GUESSES_PT = VALID_GUESSES_PT.filter(w => w.length === 5);
+
+// ---- English word lists ----
+let ANSWERS_EN = [
+  "HOUSE","WORLD","LIGHT","BRAIN","WATER","EARTH","PLANT","STONE","NIGHT","FLAME",
+  "CLOUD","BREAD","DRINK","FIELD","BLOOD","CHAIR","CHEST","CHILD","CLOCK","COAST",
+  "CROWN","DANCE","DEATH","DEPTH","DREAM","DRINK","DRIVE","EARTH","FAITH","FLAIR",
+  "FLESH","FLOAT","FLOOR","FLUTE","FOCUS","FORCE","FORGE","FORTH","FRONT","FRUIT",
+  "GHOST","GIANT","GIVEN","GLASS","GLEAM","GLOOM","GLORY","GLOVE","GRACE","GRADE",
+  "GRAIN","GRAND","GRANT","GRASS","GRAVE","GREAT","GREED","GREEN","GRIEF","GROAN",
+  "GROSS","GROUP","GROVE","GROWN","GUARD","GUIDE","GUILD","GUILE","GUISE","GUSTO",
+  "HABIT","HAPPY","HARSH","HAVEN","HEART","HEAVY","HONOR","HORSE","HOTEL","HOUND",
+  "HUMAN","HUMOR","HURRY","IMAGE","INNER","INPUT","IRONY","IVORY","JEWEL","JUDGE",
+  "KNIFE","KNOCK","LABEL","LANCE","LAPSE","LASER","LAUGH","LAYER","LEARN","LEAVE",
+  "LEVEL","LIGHT","LIMIT","LINEN","LOCAL","LODGE","LOGIC","LOOSE","LOWER","LUCKY",
+  "MAGIC","MANOR","MAPLE","MARCH","MARSH","MATCH","MAYOR","MERCY","MERIT","METAL",
+  "MIGHT","MINOR","MINUS","MIRTH","MIXED","MONEY","MONTH","MORAL","MOUNT","MOUSE",
+  "MUSIC","NAIVE","NAVAL","NERVE","NIGHT","NOISE","NORTH","NOTED","NOVEL","NURSE",
+  "NYMPH","OCEAN","OLIVE","ONSET","OPERA","ORBIT","ORDER","ORGAN","OUTER","OVERT",
+  "OWNER","OXIDE","OZONE","PAGES","PAINT","PANIC","PAPER","PARTY","PEACE","PEARL",
+  "PHASE","PHONE","PHOTO","PIANO","PILOT","PITCH","PIXEL","PIZZA","PLACE","PLAIN",
+  "PLANE","PLANK","PLAZA","PLUCK","PLUME","PLUMP","PLUNGE","POINT","POLAR","POPPY",
+  "POWER","PRESS","PRICE","PRIDE","PRIME","PRINT","PRIOR","PRIZE","PROBE","PRONE",
+  "PROOF","PROSE","PROUD","PROVE","PULSE","PUNCH","PUPIL","PURSE","QUEEN","QUEST",
+  "QUEUE","QUICK","QUIET","QUOTA","QUOTE","RADAR","RADIO","RAISE","RALLY","RANGE",
+  "RAPID","RATIO","REACH","READY","REALM","REBEL","REIGN","RELAX","REMIT","REPAY",
+  "REPEL","REPLY","RESIN","REUSE","RIDER","RIDGE","RIFLE","RIGHT","RISKY","RIVAL",
+  "RIVER","ROBOT","ROCKY","ROGUE","ROUGH","ROUND","ROYAL","RULER","RURAL","RUSTY",
+  "SAINT","SALAD","SALVE","SANDY","SAUCE","SAVVY","SCALD","SCALE","SCALP","SCANT",
+  "SCARE","SCENE","SCORN","SCOUT","SCREW","SENSE","SERVE","SEVEN","SHADE","SHAFT",
+  "SHAKE","SHALL","SHAME","SHAPE","SHARE","SHARK","SHARP","SHAWL","SHEEN","SHEEP",
+  "SHEER","SHELF","SHELL","SHIFT","SHINE","SHIRT","SHOCK","SHORE","SHORT","SHOUT",
+  "SIGHT","SIGMA","SIREN","SIXTH","SIXTY","SKILL","SKIMP","SKULL","SLACK","SLANT",
+  "SLASH","SLATE","SLAVE","SLEEK","SLEEP","SLEET","SLICK","SLIDE","SLIME","SLOPE",
+  "SMART","SMELL","SMILE","SMITE","SMOKE","SNARE","SNEAK","SNOW","SOLAR","SOLID",
+  "SOLVE","SORRY","SOUTH","SPACE","SPARE","SPARK","SPAWN","SPEED","SPELL","SPEND",
+  "SPICE","SPILL","SPINE","SPITE","SPLIT","SPOKE","SPORT","SPRAY","SPRIG","SQUAD",
+  "SQUAB","STAGE","STAIN","STAKE","STALE","STALL","STAMP","STAND","STARE","START",
+  "STATE","STAYS","STEAM","STEEL","STEEP","STEER","STERN","STICK","STIFF","STILL",
+  "STING","STOCK","STOMP","STORE","STORM","STORY","STOUT","STOVE","STRAP","STRAW",
+  "STRAY","STRUT","STUDY","STUMP","STYLE","SUGAR","SUITE","SUNNY","SUPER","SURGE",
+  "SWAMP","SWEAR","SWEAT","SWEEP","SWEET","SWEPT","SWIFT","SWORD","TABLE","TASTE",
+  "TEACH","THEME","THICK","THINK","THIRD","THORN","THOSE","THREE","THREW","THROW",
+  "TIGER","TIGER","TIMER","TIRED","TITLE","TOAST","TODAY","TOKEN","TOPIC","TOUCH",
+  "TOUGH","TOWER","TOXIC","TRACK","TRADE","TRAIL","TRAIN","TRAIT","TRAMP","TRASH",
+  "TREAD","TREAT","TREND","TRIAL","TRIBE","TRICK","TRIED","TROOP","TROTH","TROUT",
+  "TROVE","TRUCK","TRULY","TRUMP","TRUNK","TRUST","TRUTH","TULIP","TUMID","TUNER",
+  "TUNIC","TUPLE","TWEAK","TWICE","TWILL","TWIST","TYING","UDDER","ULTRA","UNCUT",
+  "UNFIT","UNION","UNITE","UNITY","UNTIL","UPPER","UPSET","USAGE","USHER","USUAL",
+  "UTTER","VALID","VALUE","VALVE","VAPOR","VAULT","VENOM","VENUE","VERSE","VIGOR",
+  "VIRAL","VIRUS","VISIT","VISTA","VITAL","VIVID","VOCAL","VOICE","VOTER","VYING",
+  "WASTE","WATCH","WEARY","WEAVE","WEDGE","WEIGH","WEIRD","WHACK","WHALE","WHEAT",
+  "WHEEL","WHERE","WHICH","WHILE","WHITE","WHOLE","WHOSE","WIDEN","WIDOW","WINDY",
+  "WITCH","WOMAN","WOMEN","WORTH","WOULD","WOUND","WRATH","WRITE","WROTE","YOUNG",
+  "YOUTH","ZEBRA","ZONES",
+];
+ANSWERS_EN = ANSWERS_EN.filter(w => w.length === 5);
+
+let VALID_GUESSES_EN = [
+  ...ANSWERS_EN,
+  "ABACK","ABASE","ABASH","ABATE","ABBEY","ABBOT","ABHOR","ABIDE","ABLER","ABODE",
+  "ABORT","ABOUT","ABOVE","ABUSE","ABYSS","ACORN","ACUTE","ADAGE","ADEPT","ADMIT",
+  "ADOBE","ADOPT","ADORE","ADORN","ADULT","AFTER","AGAIN","AGAPE","AGATE","AGILE",
+  "AGING","AGONY","AGREE","AHEAD","AISLE","ALARM","ALBUM","ALLAY","ALLEY","ALLOT",
+  "ALLOW","ALONE","ALONG","ALTER","ANGEL","ANGLE","ANGRY","ANGST","ANIME","ANKLE",
+  "ANNEX","ANTIC","ANVIL","APACE","APHID","ATONE","ATTIC","AVAIL","AWARE","AWFUL",
+  "BADLY","BAGEL","BANDY","BANJO","BARON","BASIC","BASIS","BATHE","BEACH","BEADY",
+  "BEARD","BEAST","BEGAT","BEIGE","BELLE","BERTH","BESET","BEVEL","BEWARE","BINGE",
+  "BIRCH","BISON","BLAZE","BLEAT","BLEED","BLEND","BLESS","BLIND","BLINK","BLISS",
+  "BLOAT","BLOCK","BLOND","BLOOM","BLOWN","BLUNT","BLURB","BLURT","BLUSH","BOAST",
+  "BOGUS","BOOST","BOOTH","BOSSY","BOTCH","BRACE","BRAID","BRAKE","BRAWL","BRAWN",
+  "BRAZE","BRIDLE","BRIEF","BRINE","BRINK","BRISK","BROKE","BROOK","BROTH","BUDGE",
+  "BUGGY","BULGE","BULLY","BUNCH","BUNNY","BUOYANT","BURLY","BURST","BUYER","BYLAW",
+  "CABAL","CACHE","CADET","CAMEL","CANDY","CANON","CARGO","CAROL","CARRY","CARVE",
+  "CAUSE","CEASE","CHAFE","CHAIN","CHALK","CHANT","CHAOS","CHASM","CHECK","CHEEK",
+  "CHEER","CHESS","CHIDE","CHIEF","CHIME","CHUNK","CIVIC","CIVIL","CLAMP","CLANG",
+  "CLASP","CLEAN","CLEAR","CLEAT","CLEFT","CLERK","CLICK","CLIFF","CLING","CLIP",
+  "CLOAK","CLONE","CLOSE","CLOTH","CLUMP","COARSE","COBALT","COMET","COMIC","COMMA",
+  "COUCH","COULD","COVET","CRACK","CRAFT","CRANE","CREAK","CREAM","CREEP","CREST",
+  "CRIMP","CRISP","CROAK","CRONE","CROSS","CRUDE","CRUEL","CRUMB","CRUSE","CRYPT",
+  "CURLY","CURSE","CURVE","DALLY","DATED","DECRY","DELVE","DEMON","DETER","DEXTERITY",
+  "DICEY","DIGIT","DINGY","DISCO","DITCH","DITTY","DODGE","DOING","DOLEFUL","DOPEY",
+  "DOUBT","DOUGH","DOWDY","DOWNY","DOZEN","DRANK","DRAFT","DRAPE","DREAR","DROLL",
+  "DRONE","DROOL","DROVE","DROWN","DRUID","DULCE","DULLY","DUNCE","DUSKY","DUSTY",
+  "EARLY","EERIE","EGRET","ELBOW","ELDER","ELEGY","EMOTE","ENDED","ENJOY","ENTER",
+  "ENVOY","ERUPT","ESTOP","EVADE","EVICT","EXACT","EXCEL","EXIST","EXPEL","EXTRA",
+  "FABLE","FACET","PADDY","FAIRY","FAKER","FANCY","FARCE","FATAL","FAVOR","FEINT",
+  "FENCE","FERAL","FERNY","FETCH","FIEND","FIERY","FILTH","FINCH","FINER","FISHY",
+  "FIXED","FJORD","FLARE","FLASH","FLASK","FLINCH","FLOOD","FLUNG","FLURRY","FOLKS",
+  "FOLLY","FORTH","FOYER","FRAIL","FRANK","FRAUD","FRESH","FRISK","FROTH","FRUGAL",
+  "FULLY","GAUDY","GAUNT","GAUZE","GAVEL","GIDDY","GIRLY","GIRTH","GIVEN","GLAND",
+  "GLAZE","GLOAT","GLOSS","GLINT","GNASH","GORGE","GOUGE","GRASP","GRATE","GRAZE",
+  "GREET","GRIPE","GRUFF","GUILE","GULCH","GULLY","GUMMY","GUSTO",
+  "HAPLESS","HARDY","HAUNT","HAZED","HEADY","HEAVE","HERON","HOARY","HORDE","HUNKY",
+  "IDEAL","INEPT","INFER","INGOT","INNER","INTER","INTRO","IONIC","IRATE","IRONS",
+  "JAGUAR","JANKY","JAZZY","JERKY","JIFFY","JOUST","JUMPY","KABOB","KIOSK","KITTY",
+  "KNACK","KNEEL","KNELT","KNOLL","KNOWN","KUDOS","LARDY","LADEN","LATHE","LATKE",
+  "LEAFY","LEGGY","LEAPT","LEGAL","LEMON","LOFTY","LOOPY","LORDY","LOUSY","LOVER",
+  "LOWLY","LUNAR","LUNGE","LUSTY","LYING","MACHO","MANIC","MANLY","MANOR","MATTE",
+  "MEALY","MEEK","MERCY","MESSY","MICRO","MIDWAY","MILKY","MISER","MISTY","MOLAR",
+  "MOLDY","MOPEY","MOTIF","MOUND","MURKY","MUSHY","MUTED","MURKY","NERDY","NIFTY",
+  "NIPPY","NOBLE","NODAL","NOISY","NORMS","NOTCH","NUTTY","OAKEN","OFTEN","ONYX",
+  "OPTIC","OUTDO","OUTGO","OVOID","PADDY","PAGAN","PALER","PANDA","PANSY","PATSY",
+  "PAULY","PEAKY","PENAL","PETTY","PICKY","PIGGY","PINEY","PITHY","PIXEL","PLAID",
+  "PLEAT","PLUMB","PENAL","PAPAL","PSALM","PUBIC","PUDGY","PUFFY","PUSHY","QUIRK",
+  "REEDY","REGAL","REIGN","RELY","RENEW","REPAY","RESET","RHYME","RISKY","RITZY",
+  "ROCKY","RUDDY","RUGBY","RUGGED","SABER","SALINE","SASSY","SATIN","SAUCE","SAUCY",
+  "SAVVY","SCALD","SCALP","SCAMP","SCONE","SCOOP","SCOPE","SCORE","SHADY","SHAKY",
+  "SHAME","SHAME","SHINY","SHRUB","SHRUG","SIGMA","SILKY","SISSY","SIXTY","SKIMP",
+  "SKUNK","SLIMY","SLUNG","SLYLY","SMALL","SMOKY","SMOKY","SNAKY","SNOBS","SNOOTY",
+  "SOGGY","SONNET","SPANK","SPASM","SPATE","SPECK","SPIED","SPIKY","SPINY","SPOOF",
+  "SPOOK","SPOOL","SPORT","STAB","STAGGER","STATELY","STAYED","STEED","STEEP","STOOD",
+  "STRAP","STRIPED","TACKY","TANGY","TARDY","TAUNT","TAWNY","TEETH","TEPID","TERSE",
+  "THEFT","TIDAL","TIPSY","TODDY","TOFFY","TORSO","TOTAL","TOUCHY","TOXIC","TRYST",
+  "TUBBY","TUMID","TULIP","TUNER","TWERP","TYPED","TYRANT","UNDUE","UNIFY","UNTIE",
+  "UNWED","VAPID","VAULT","VENAL","VERGE","VEXED","VIGIL","VILLAIN","VOGUE","VOILA",
+  "WACKY","WADER","WAGED","WAIST","WALTZ","WARTY","WEEDY","WIMPY","WINCH","WISPY",
+  "WITTY","WOOLY","WORDY","WOOZY","YEARN","YUMMY","ZAPPY","ZESTY","ZIPPY","ZONAL",
+];
+VALID_GUESSES_EN = VALID_GUESSES_EN.filter(w => w.length === 5);
 
 const KEYBOARD_ROWS = [
   ["Q","W","E","R","T","Y","U","I","O","P"],
@@ -173,8 +293,8 @@ class WordleAudio {
   error() { this._tone(200, 0.15, 0.1, "square"); }
 }
 
-function pickWord() {
-  return ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+function pickWord(answers) {
+  return answers[Math.floor(Math.random() * answers.length)];
 }
 
 function evaluateGuess(guess, answer) {
@@ -210,10 +330,15 @@ function getColorForResult(r) {
 
 // ---- MAIN COMPONENT ----
 export default function WordleBR() {
+  const t = useTranslations("games.wordle");
+  const locale = useLocale();
+  const answers = locale === "en" ? ANSWERS_EN : ANSWERS_PT;
+  const validGuesses = locale === "en" ? VALID_GUESSES_EN : VALID_GUESSES_PT;
+
   const { user, checkedCookie, registering, register } = useJogador("wordle");
   const gameScale = useGameScale(GAME_W);
 
-  const [answer, setAnswer] = useState(() => pickWord());
+  const [answer, setAnswer] = useState(() => pickWord(answers));
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [gameStatus, setGameStatus] = useState("playing"); // playing | won | lost
@@ -276,7 +401,15 @@ export default function WordleBR() {
     if (!/^[A-Z]{5}$/.test(guess)) {
       setShakeRow(guesses.length);
       setTimeout(() => setShakeRow(-1), 600);
-      showToast("Digite 5 letras");
+      showToast(t("toastInvalidChars"));
+      audioRef.current?.error();
+      return;
+    }
+
+    if (!validGuesses.includes(guess)) {
+      setShakeRow(guesses.length);
+      setTimeout(() => setShakeRow(-1), 600);
+      showToast(t("toastNotInList"));
       audioRef.current?.error();
       return;
     }
@@ -306,18 +439,18 @@ export default function WordleBR() {
         setBounceRow(rowIdx);
         setGameStatus("won");
         const score = (7 - newGuesses.length) * 100;
-        showToast("Parabens!", 3000);
+        showToast(t("toastWin"), 3000);
         audioRef.current?.correct();
         submitScore(score, newGuesses.length, answer);
         window.gtag?.("event", "game_end", { game_name: "wordle", score });
       } else if (newGuesses.length >= 6) {
         setGameStatus("lost");
-        showToast(`A palavra era: ${answer}`, 4000);
+        showToast(t("toastLose", { answer }), 4000);
         submitScore(0, 6, answer);
         window.gtag?.("event", "game_end", { game_name: "wordle", score: 0 });
       }
     }, 5 * 100 + 500); // wait for all tiles to flip
-  }, [gameStatus, currentGuess, guesses, answer, showToast, updateKeyColors, submitScore]);
+  }, [gameStatus, currentGuess, guesses, answer, validGuesses, showToast, updateKeyColors, submitScore, t]);
 
   const handleKey = useCallback((key) => {
     if (gameStatus !== "playing") return;
@@ -375,7 +508,7 @@ export default function WordleBR() {
   }, [handleKey, showInstructions, showRegister]);
 
   const resetGame = useCallback(() => {
-    setAnswer(pickWord());
+    setAnswer(pickWord(answers));
     setGuesses([]);
     setCurrentGuess("");
     setGameStatus("playing");
@@ -386,18 +519,18 @@ export default function WordleBR() {
     setSelectedCol(null);
     setToast(null);
     firstGuessRef.current = false;
-  }, []);
+  }, [answers]);
 
   const handleShare = useCallback(() => {
     const emojiMap = { correct: "\uD83D\uDFE9", present: "\uD83D\uDFE8", absent: "\u2B1B" };
     const grid = guesses.map(g => g.result.map(r => emojiMap[r]).join("")).join("\n");
-    const text = `Wordle BR ${gameStatus === "won" ? guesses.length : "X"}/6\n\n${grid}`;
+    const text = `${t("shareTitle")} ${gameStatus === "won" ? guesses.length : "X"}/6\n\n${grid}`;
     navigator.clipboard.writeText(text).then(() => {
-      showToast("Copiado!");
+      showToast(t("toastCopied"));
     }).catch(() => {
-      showToast("Erro ao copiar");
+      showToast(t("toastCopyError"));
     });
-  }, [guesses, gameStatus, showToast]);
+  }, [guesses, gameStatus, showToast, t]);
 
   const handleStart = async () => {
     if (!user) {
@@ -472,7 +605,7 @@ export default function WordleBR() {
         <RegisterModal
           onRegister={handleRegister}
           loading={registering}
-          jogoNome="WORDLE BR"
+          jogoNome={t("gameTitle")}
           accentColor={COLOR_CORRECT}
         />
       )}
@@ -488,10 +621,10 @@ export default function WordleBR() {
             textShadow: `0 0 20px ${COLOR_CORRECT}80`, marginBottom: 16, textAlign: "center",
             lineHeight: 1.4,
           }}>
-            WORDLE BR
+            {t("gameTitle")}
           </div>
           <div style={{ color: "#aaa", fontSize: 14, marginBottom: 32, textAlign: "center", maxWidth: 300 }}>
-            Descubra a palavra de 5 letras em 6 tentativas
+            {t("splashSubtitle")}
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 32 }}>
             {["W","O","R","D","L"].map((l, i) => (
@@ -515,7 +648,7 @@ export default function WordleBR() {
             onMouseEnter={e => { e.target.style.background = COLOR_CORRECT; e.target.style.color = "#fff"; }}
             onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = COLOR_CORRECT; }}
           >
-            JOGAR
+            {t("playButton")}
           </button>
         </div>
       )}
@@ -531,26 +664,26 @@ export default function WordleBR() {
             color: "#eee", fontSize: 13, lineHeight: 1.6, animation: "popIn 0.3s both",
           }} onClick={e => e.stopPropagation()}>
             <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: 14, marginBottom: 16, color: COLOR_CORRECT }}>
-              COMO JOGAR
+              {t("instructionsTitle")}
             </div>
-            <p style={{ marginBottom: 12 }}>Descubra a palavra em 6 tentativas. Cada tentativa deve ser uma palavra valida de 5 letras.</p>
-            <p style={{ marginBottom: 12 }}>Apos cada tentativa, as cores das letras mudam para mostrar o quao perto voce esta:</p>
+            <p style={{ marginBottom: 12 }}>{t("instructionsP1")}</p>
+            <p style={{ marginBottom: 12 }}>{t("instructionsP2")}</p>
             <div style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "center" }}>
               <div style={{ width: 36, height: 36, background: COLOR_CORRECT, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 16, color: "#fff" }}>A</div>
-              <span>Letra correta na posicao correta</span>
+              <span>{t("instructionsGreen")}</span>
             </div>
             <div style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "center" }}>
               <div style={{ width: 36, height: 36, background: COLOR_PRESENT, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 16, color: "#fff" }}>B</div>
-              <span>Letra correta na posicao errada</span>
+              <span>{t("instructionsYellow")}</span>
             </div>
             <div style={{ display: "flex", gap: 6, marginBottom: 16, alignItems: "center" }}>
               <div style={{ width: 36, height: 36, background: COLOR_ABSENT, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 16, color: "#fff" }}>C</div>
-              <span>Letra nao esta na palavra</span>
+              <span>{t("instructionsGray")}</span>
             </div>
             <button onClick={() => setShowInstructions(false)} style={{
               width: "100%", padding: "10px 0", background: COLOR_CORRECT, color: "#fff",
               border: "none", borderRadius: 6, fontSize: 14, fontWeight: "bold", cursor: "pointer",
-            }}>ENTENDI</button>
+            }}>{t("instructionsClose")}</button>
           </div>
         </div>
       )}
@@ -567,12 +700,12 @@ export default function WordleBR() {
           textShadow: `0 0 20px ${COLOR_CORRECT}, 0 0 40px ${COLOR_CORRECT}30`,
           marginBottom: 8, letterSpacing: 3, textAlign: "center",
         }}>
-          WORDLE BR
+          {t("gameTitle")}
         </h1>
       )}
       {hasStarted && (
         <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
-          DESCUBRA A PALAVRA DE 5 LETRAS
+          {t("gameSubtitle")}
         </p>
       )}
 
@@ -597,7 +730,7 @@ export default function WordleBR() {
             <button onClick={() => setShowInstructions(true)} style={{
               background: "none", border: "none", color: "#aaa", fontSize: 22, cursor: "pointer",
               width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-            }} aria-label="Instrucoes">?</button>
+            }} aria-label={t("ariaInstructions")}>?</button>
             <div style={{ width: 36 }} />
           </div>
 
@@ -697,12 +830,12 @@ export default function WordleBR() {
                   padding: "8px 18px", background: COLOR_CORRECT, color: "#fff", border: "none",
                   borderRadius: 6, fontSize: 13, fontWeight: "bold", cursor: "pointer",
                   fontFamily: "'Fira Code', monospace",
-                }}>COMPARTILHAR</button>
+                }}>{t("shareButton")}</button>
                 <button onClick={resetGame} style={{
                   padding: "8px 18px", background: "transparent", color: COLOR_CORRECT,
                   border: `2px solid ${COLOR_CORRECT}`, borderRadius: 6, fontSize: 13,
                   fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
-                }}>NOVA PALAVRA</button>
+                }}>{t("newWordButton")}</button>
               </div>
               <AdBanner slot="wordle_between" style={{ marginTop: 4, maxWidth: 300 }} />
             </div>
