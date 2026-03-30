@@ -20,8 +20,36 @@ function maskPhoneIntl(value) {
   return `+${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
+function isRepeatingChars(str) {
+  const clean = str.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  return clean.length >= 2 && new Set(clean.split("")).size === 1;
+}
+
+function isValidName(name) {
+  const trimmed = name.trim();
+  if (trimmed.length < 3) return false;
+  const letters = trimmed.replace(/[^a-zA-ZÀ-ÿ]/g, "");
+  if (letters.length < 3) return false;
+  if (isRepeatingChars(letters)) return false;
+  return true;
+}
+
 function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+  const [local, domain] = email.split("@");
+  if (local.length < 3 || domain.length < 5) return false;
+  const domainParts = domain.split(".");
+  if (domainParts.some(p => p.length < 2)) return false;
+  if (isRepeatingChars(local)) return false;
+  if (isRepeatingChars(domainParts[0])) return false;
+  return true;
+}
+
+function isValidPhone(phone) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 8) return false;
+  if (new Set(digits.split("")).size <= 2) return false;
+  return true;
 }
 
 export default function RegisterModal({ onRegister, loading, jogoNome, accentColor = "#00f0ff" }) {
@@ -35,10 +63,12 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
   const [serverError, setServerError] = useState("");
   const [touched, setTouched] = useState({});
 
-  const nameError = touched.name && name.trim().length < 3 ? t("nameError") : "";
+  const nameError = touched.name && !isValidName(name) ? t("nameError") : "";
   const emailError = touched.email && !isValidEmail(email) ? t("emailError") : "";
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneError = touched.phone && phoneDigits.length > 0 && !isValidPhone(phone) ? t("phoneError") : "";
 
-  const valid = name.trim().length >= 3 && isValidEmail(email) && consent && !loading;
+  const valid = isValidName(name) && isValidEmail(email) && consent && !loading;
 
   async function handleSubmit() {
     if (!valid) return;
@@ -52,7 +82,7 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
   const fields = [
     { label: t("nameLabel"), value: name, set: setName, type: "text", ph: t("namePlaceholder"), key: "name", error: nameError },
     { label: t("emailLabel"), value: email, set: setEmail, type: "email", ph: t("emailPlaceholder"), key: "email", error: emailError },
-    { label: t("whatsappLabel"), value: phone, set: (v) => setPhone(maskPhone(v)), type: "tel", ph: t("whatsappPlaceholder"), key: "phone", error: "" },
+    { label: t("whatsappLabel"), value: phone, set: (v) => setPhone(maskPhone(v)), type: "tel", ph: t("whatsappPlaceholder"), key: "phone", error: phoneError },
   ];
 
   return (
