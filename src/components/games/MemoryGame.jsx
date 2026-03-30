@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -147,7 +148,7 @@ function ConfettiParticle({ index }) {
 }
 
 // ---- Menu Screen ----
-function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStart, onOnline }) {
+function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStart, onOnline, t }) {
   return (
     <div
       style={{
@@ -224,10 +225,10 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
           letterSpacing: 1,
         }}
       >
-        DIFICULDADE
+        {t("difficulty")}
       </p>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {Object.entries(DIFFICULTIES).map(([key, val]) => (
+        {Object.entries(DIFFICULTIES).map(([key]) => (
           <button
             key={key}
             onClick={() => setDifficulty(key)}
@@ -245,7 +246,7 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
               transition: "all 0.2s",
             }}
           >
-            {val.label}
+            {t(key)}
           </button>
         ))}
       </div>
@@ -269,7 +270,7 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
           letterSpacing: 1,
         }}
       >
-        {"\u23F1"} DESAFIO 60s {timedMode ? "ON" : "OFF"}
+        {"\u23F1"} {t("timedChallenge")} {timedMode ? "ON" : "OFF"}
       </button>
 
       <p
@@ -281,7 +282,7 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
         }}
       >
         {DIFFICULTIES[difficulty].cols}x{DIFFICULTIES[difficulty].rows} ={" "}
-        {DIFFICULTIES[difficulty].pairs * 2} cartas ({DIFFICULTIES[difficulty].pairs} pares)
+        {DIFFICULTIES[difficulty].pairs * 2} {t("cards")} ({DIFFICULTIES[difficulty].pairs} {t("pairs")})
         {timedMode ? " - 60s" : ""}
       </p>
 
@@ -311,7 +312,7 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
           e.target.style.boxShadow = `0 0 25px ${ACCENT}40`;
         }}
       >
-        Jogar Solo
+        {t("playSolo")}
       </button>
 
       {/* Online button */}
@@ -339,14 +340,14 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
           e.target.style.boxShadow = `0 0 20px ${ONLINE_ACCENT}40`;
         }}
       >
-        Jogar Online
+        {t("playOnline")}
       </button>
     </div>
   );
 }
 
 // ---- Online Lobby Screen ----
-function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate, onJoin, onCancel }) {
+function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate, onJoin, onCancel, t }) {
   const [copied, setCopied] = useState(false);
   const [joinCode, setJoinCode] = useState("");
 
@@ -397,10 +398,10 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
               letterSpacing: 1,
             }}
           >
-            DIFICULDADE
+            {t("difficulty")}
           </p>
           <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-            {Object.entries(DIFFICULTIES).map(([key, val]) => (
+            {Object.entries(DIFFICULTIES).map(([key]) => (
               <button
                 key={key}
                 onClick={() => setDifficulty(key)}
@@ -418,7 +419,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
                   transition: "all 0.2s",
                 }}
               >
-                {val.label}
+                {t(key)}
               </button>
             ))}
           </div>
@@ -442,7 +443,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >
-            {"\u{1F3E0}"}  Criar Sala
+            {"\u{1F3E0}"}  {t("createRoom")}
           </button>
 
           {/* Divider */}
@@ -464,7 +465,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
               marginBottom: 10,
             }}
           >
-            ENTRAR EM SALA
+            {t("joinRoom")}
           </p>
           <input
             value={joinCode}
@@ -504,7 +505,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
               marginBottom: 16,
             }}
           >
-            ENTRAR
+            {t("enter")}
           </button>
         </>
       )}
@@ -518,7 +519,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
             textShadow: `0 0 10px ${ONLINE_ACCENT}`,
           }}
         >
-          CONECTANDO...
+          {t("connecting")}
         </p>
       )}
 
@@ -533,7 +534,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
               textShadow: `0 0 10px ${ONLINE_ACCENT}`,
             }}
           >
-            AGUARDANDO OPONENTE...
+            {t("waitingOpponent")}
           </p>
           <div
             onClick={handleCopyLink}
@@ -555,7 +556,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
                 marginBottom: 8,
               }}
             >
-              CODIGO DA SALA
+              {t("roomCode")}
             </p>
             <p
               style={{
@@ -577,7 +578,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
               transition: "color 0.3s",
             }}
           >
-            {copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}
+            {copied ? t("linkCopied") : t("tapCodeToCopyLink")}
           </p>
         </>
       )}
@@ -591,7 +592,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
             textShadow: `0 0 10px ${ONLINE_ACCENT}`,
           }}
         >
-          ENTRANDO NA SALA...
+          {t("joiningRoom")}
         </p>
       )}
 
@@ -604,7 +605,7 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
             marginBottom: 12,
           }}
         >
-          SALA NAO ENCONTRADA
+          {t("roomNotFound")}
         </p>
       )}
 
@@ -622,14 +623,14 @@ function OnlineLobby({ roomId, lobbyStatus, difficulty, setDifficulty, onCreate,
           cursor: "pointer",
         }}
       >
-        CANCELAR
+        {t("cancel")}
       </button>
     </div>
   );
 }
 
 // ---- Online Playing Header ----
-function OnlinePlayingHeader({ onlineTurn, playerNum, onlineScores, matchedCount, totalPairs, onBack }) {
+function OnlinePlayingHeader({ onlineTurn, playerNum, onlineScores, matchedCount, totalPairs, onBack, t }) {
   const isMyTurn = onlineTurn === playerNum;
   return (
     <div
@@ -662,7 +663,7 @@ function OnlinePlayingHeader({ onlineTurn, playerNum, onlineScores, matchedCount
             cursor: "pointer",
             padding: "4px 8px",
           }}
-          title="Voltar ao menu"
+          title={t("backToMenu")}
         >
           {"\u2190"}
         </button>
@@ -702,14 +703,14 @@ function OnlinePlayingHeader({ onlineTurn, playerNum, onlineScores, matchedCount
           animation: isMyTurn ? "pulseGlow 1.5s ease-in-out infinite" : "none",
         }}
       >
-        {isMyTurn ? "SUA VEZ!" : "VEZ DO OPONENTE..."}
+        {isMyTurn ? t("yourTurn") : t("opponentTurn")}
       </div>
     </div>
   );
 }
 
 // ---- Playing Header ----
-function PlayingHeader({ moves, timer, matchedCount, totalPairs, onBack, timedMode }) {
+function PlayingHeader({ moves, timer, matchedCount, totalPairs, onBack, timedMode, t }) {
   const isLowTime = timedMode && timer <= 10;
   return (
     <div
@@ -733,7 +734,7 @@ function PlayingHeader({ moves, timer, matchedCount, totalPairs, onBack, timedMo
           cursor: "pointer",
           padding: "4px 8px",
         }}
-        title="Voltar ao menu"
+        title={t("backToMenu")}
       >
         {"\u2190"}
       </button>
@@ -864,7 +865,7 @@ function Card({ card, index, isFlipped, isMatched, onClick, cols, shakeId, match
 }
 
 // ---- Finished Screen (Solo) ----
-function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timedWin, matchedPairs, onRestart, onChangeDifficulty }) {
+function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timedWin, matchedPairs, onRestart, onChangeDifficulty, t }) {
   const won = timedMode ? timedWin : true;
   const stars = won ? getStars(moves, totalPairs) : 0;
   const timeRemaining = timedMode ? timer : 0;
@@ -914,7 +915,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
           animation: "popIn 0.5s ease both",
         }}
       >
-        {won ? "PARABENS!" : "TEMPO ESGOTADO!"}
+        {won ? t("congrats") : t("timeUp")}
       </h2>
 
       {/* Stars (only when won) */}
@@ -964,7 +965,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
               color: "#8892b0",
             }}
           >
-            Dificuldade
+            {t("difficultyLabel")}
           </span>
           <span
             style={{
@@ -973,7 +974,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
               color: "#ccd6f6",
             }}
           >
-            {DIFFICULTIES[difficulty].label}
+            {t(difficulty)}
             {timedMode ? " (60s)" : ""}
           </span>
         </div>
@@ -985,7 +986,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
               color: "#8892b0",
             }}
           >
-            {timedMode ? (won ? "Tempo restante" : "Tempo") : "Tempo"}
+            {timedMode ? (won ? t("timeRemaining") : t("time")) : t("time")}
           </span>
           <span
             style={{
@@ -1007,7 +1008,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
               color: "#8892b0",
             }}
           >
-            Movimentos
+            {t("moves")}
           </span>
           <span
             style={{
@@ -1027,7 +1028,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
               color: "#8892b0",
             }}
           >
-            Pares
+            {t("pairsLabel")}
           </span>
           <span
             style={{
@@ -1048,7 +1049,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
                 color: "#8892b0",
               }}
             >
-              Bonus tempo
+              {t("timeBonus")}
             </span>
             <span
               style={{
@@ -1123,7 +1124,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
             e.target.style.transform = "scale(1)";
           }}
         >
-          Jogar Novamente
+          {t("playAgain")}
         </button>
         <button
           onClick={onChangeDifficulty}
@@ -1148,7 +1149,7 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
             e.target.style.color = "#8892b0";
           }}
         >
-          Mudar Dificuldade
+          {t("changeDifficulty")}
         </button>
       </div>
       <AdBanner slot="memory_between" style={{ marginTop: 12, maxWidth: 300 }} />
@@ -1157,19 +1158,19 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
 }
 
 // ---- Online Finished Screen ----
-function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, onMenu, waitingRematch }) {
+function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, onMenu, waitingRematch, t }) {
   const youWon = winner === playerNum;
   const isDraw = winner === -1;
 
   let title, titleColor;
   if (isDraw) {
-    title = "EMPATE!";
+    title = t("draw");
     titleColor = "#ffe600";
   } else if (youWon) {
-    title = "VOCE VENCEU!";
+    title = t("youWon");
     titleColor = NEON_GREEN;
   } else {
-    title = "VOCE PERDEU";
+    title = t("youLost");
     titleColor = "#ff2d95";
   }
 
@@ -1240,7 +1241,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
               color: playerNum === 0 ? NEON_GREEN : "#8892b0",
             }}
           >
-            {playerNum === 0 ? "VOCE" : "OPONENTE"}
+            {playerNum === 0 ? t("you") : t("opponent")}
           </span>
           <span
             style={{
@@ -1250,7 +1251,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
               textShadow: `0 0 10px ${ONLINE_ACCENT}60`,
             }}
           >
-            {onlineScores[0]} pares
+            {onlineScores[0]} {t("pairsLabel")}
           </span>
         </div>
         <div
@@ -1268,7 +1269,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
               color: playerNum === 1 ? NEON_GREEN : "#8892b0",
             }}
           >
-            {playerNum === 1 ? "VOCE" : "OPONENTE"}
+            {playerNum === 1 ? t("you") : t("opponent")}
           </span>
           <span
             style={{
@@ -1278,7 +1279,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
               textShadow: `0 0 10px ${ACCENT}60`,
             }}
           >
-            {onlineScores[1]} pares
+            {onlineScores[1]} {t("pairsLabel")}
           </span>
         </div>
       </div>
@@ -1313,7 +1314,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
           onMouseEnter={(e) => { if (!waitingRematch) e.target.style.transform = "scale(1.05)"; }}
           onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
         >
-          {waitingRematch ? "Aguardando revanche..." : "Jogar Novamente"}
+          {waitingRematch ? t("waitingRematch") : t("playAgain")}
         </button>
         <button
           onClick={onMenu}
@@ -1338,7 +1339,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
             e.target.style.color = "#8892b0";
           }}
         >
-          Menu Principal
+          {t("mainMenu")}
         </button>
       </div>
       <AdBanner slot="memory_between" style={{ marginTop: 12, maxWidth: 300 }} />
@@ -1348,6 +1349,7 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
 
 // ====== MAIN COMPONENT ======
 export default function MemoryGame() {
+  const t = useTranslations("games.memory");
   const { user, checkedCookie, registering, register } = useJogador("memory");
   const gameScale = useGameScale(GAME_W);
 
@@ -1985,6 +1987,7 @@ export default function MemoryGame() {
               setTimedMode={setTimedMode}
               onStart={handleStartClick}
               onOnline={handleOnlineClick}
+              t={t}
             />
           )}
 
@@ -1998,6 +2001,7 @@ export default function MemoryGame() {
               onCreate={handleCreateRoom}
               onJoin={handleJoinRoom}
               onCancel={handleBackToMenu}
+              t={t}
             />
           )}
 
@@ -2019,6 +2023,7 @@ export default function MemoryGame() {
                 totalPairs={totalPairs}
                 onBack={handleBackToMenu}
                 timedMode={timedMode}
+                t={t}
               />
 
               <div
@@ -2084,6 +2089,7 @@ export default function MemoryGame() {
                 matchedCount={matchedCount}
                 totalPairs={totalPairs}
                 onBack={handleBackToMenu}
+                t={t}
               />
 
               <div
@@ -2144,6 +2150,7 @@ export default function MemoryGame() {
               matchedPairs={matchedCount}
               onRestart={handleRestart}
               onChangeDifficulty={handleChangeDifficulty}
+              t={t}
             />
           )}
 
@@ -2156,6 +2163,7 @@ export default function MemoryGame() {
               onPlayAgain={handleOnlinePlayAgain}
               onMenu={handleBackToMenu}
               waitingRematch={waitingRematch}
+              t={t}
             />
           )}
         </div>

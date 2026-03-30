@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -507,6 +508,7 @@ function drawFloatingText(ctx, texts) {
 
 // ==================== MAIN COMPONENT ====================
 export default function TiroAoAlvo() {
+  const t = useTranslations("games.tiroaoalvo");
   const { user, checkedCookie, registering, register } = useJogador("tiroaoalvo");
   const gameScale = useGameScale(CANVAS_W);
   const [screen, setScreen] = useState("menu");
@@ -770,7 +772,7 @@ export default function TiroAoAlvo() {
       if (isPerfect) {
         pts += TIMING_BONUS;
         audioRef.current?.perfectHit();
-        addFloatingText(gs, "PERFEITO!", plate.x, plate.y - 20, ACCENT, 8, false, false);
+        addFloatingText(gs, t("perfect"), plate.x, plate.y - 20, ACCENT, 8, false, false);
       } else {
         audioRef.current?.hit();
       }
@@ -806,7 +808,7 @@ export default function TiroAoAlvo() {
       }
     }
 
-  }, [ensureAudio, isPlateInReticle, createExplosion, addFloatingText]);
+  }, [ensureAudio, isPlateInReticle, createExplosion, addFloatingText, t]);
 
   // ==================== SHOOT BONUS TARGETS ====================
   const handleShootBonus = useCallback((side) => {
@@ -1096,7 +1098,7 @@ export default function TiroAoAlvo() {
                     gs.plateStatuses[pIdx] = "miss";
                   }
 
-                  addFloatingText(gs, "MISS!", CANVAS_W / 2, CANVAS_H * 0.35, "#ef4444", 12, true, false);
+                  addFloatingText(gs, t("miss"), CANVAS_W / 2, CANVAS_H * 0.35, "#ef4444", 12, true, false);
                   audioRef.current?.miss();
                 }
                 gs.plateActive = false;
@@ -1114,7 +1116,7 @@ export default function TiroAoAlvo() {
             audioRef.current?.roundComplete();
 
             if (gs.roundHits === PLATES_PER_ROUND) {
-              addFloatingText(gs, "PERFECT ROUND!", CANVAS_W / 2, CANVAS_H * 0.3, "#fbbf24", 14, false, true);
+              addFloatingText(gs, t("perfectRound"), CANVAS_W / 2, CANVAS_H * 0.3, "#fbbf24", 14, false, true);
             }
             setScreen("roundEnd");
           }
@@ -1368,7 +1370,7 @@ export default function TiroAoAlvo() {
         if (gs.continueCount > 0) {
           ctx.font = "10px 'Press Start 2P', monospace";
           ctx.fillStyle = ACCENT;
-          ctx.fillText(`+${gs.continueCount * 20}% VELOCIDADE`, 0, 35);
+          ctx.fillText(`+${gs.continueCount * 20}% ${t("speed")}`, 0, 35);
         }
         ctx.restore();
       }
@@ -1381,7 +1383,7 @@ export default function TiroAoAlvo() {
         ctx.font = "12px 'Press Start 2P', monospace";
         ctx.fillStyle = "#ffffff";
         ctx.textAlign = "center";
-        ctx.fillText(`ROUND ${gs.round + 1} COMPLETO`, CANVAS_W / 2, CANVAS_H / 2 - 20);
+        ctx.fillText(`ROUND ${gs.round + 1} ${t("roundComplete")}`, CANVAS_W / 2, CANVAS_H / 2 - 20);
 
         ctx.font = "16px 'Press Start 2P', monospace";
         ctx.fillStyle = "#fbbf24";
@@ -1392,7 +1394,7 @@ export default function TiroAoAlvo() {
           ctx.fillStyle = ACCENT;
           ctx.shadowColor = ACCENT;
           ctx.shadowBlur = 15;
-          ctx.fillText("PERFECT!", CANVAS_W / 2, CANVAS_H / 2 + 45);
+          ctx.fillText(t("perfect"), CANVAS_W / 2, CANVAS_H / 2 + 45);
           ctx.shadowBlur = 0;
         }
       }
@@ -1404,15 +1406,15 @@ export default function TiroAoAlvo() {
         ctx.font = "18px 'Press Start 2P', monospace";
         ctx.fillStyle = "#ffffff";
         ctx.textAlign = "center";
-        ctx.fillText("PAUSADO", CANVAS_W / 2, CANVAS_H / 2 - 20);
+        ctx.fillText(t("paused"), CANVAS_W / 2, CANVAS_H / 2 - 20);
         ctx.font = "9px 'Press Start 2P', monospace";
         ctx.fillStyle = "#888888";
-        ctx.fillText("P para continuar", CANVAS_W / 2, CANVAS_H / 2 + 15);
+        ctx.fillText(t("pPause"), CANVAS_W / 2, CANVAS_H / 2 + 15);
       }
 
       rafRef.current = requestAnimationFrame(gameLoopRef.current);
     };
-  }, [spawnPlate, isPlateInReticle, addFloatingText]);
+  }, [spawnPlate, isPlateInReticle, addFloatingText, t]);
 
   // Actual startGame that uses the ref-based loop
   const startGameActual = useCallback((continueMode = false) => {
@@ -1629,12 +1631,12 @@ export default function TiroAoAlvo() {
       ctx.textAlign = "center";
       ctx.shadowColor = ACCENT;
       ctx.shadowBlur = 20;
-      ctx.fillText("TIRO AO ALVO", CANVAS_W / 2, 130);
+      ctx.fillText(t("title"), CANVAS_W / 2, 130);
       ctx.shadowBlur = 0;
 
       ctx.font = "8px 'Press Start 2P', monospace";
       ctx.fillStyle = "#8892b0";
-      ctx.fillText("SKEET SHOOTING", CANVAS_W / 2, 155);
+      ctx.fillText(t("subtitle"), CANVAS_W / 2, 155);
 
       // Animated clay plate icon
       const plateAngle = (elapsed * 0.004) % (Math.PI * 2);
@@ -1657,19 +1659,19 @@ export default function TiroAoAlvo() {
       const hs = localStorage.getItem("tiroaoalvo_highscore") || "0";
       ctx.font = "8px 'Press Start 2P', monospace";
       ctx.fillStyle = "#fbbf24";
-      ctx.fillText(`RECORDE: ${parseInt(hs).toLocaleString()}`, CANVAS_W / 2, 250);
+      ctx.fillText(`${t("record")}: ${parseInt(hs).toLocaleString()}`, CANVAS_W / 2, 250);
 
       // Controls hint
       if (!isMobile) {
         ctx.font = "7px 'Fira Code', monospace";
         ctx.fillStyle = "#6b7280";
-        ctx.fillText("SETA ESQUERDA = Tiro Esquerdo", CANVAS_W / 2, 350);
-        ctx.fillText("SETA DIREITA = Tiro Direito", CANVAS_W / 2, 368);
-        ctx.fillText("P = Pausar", CANVAS_W / 2, 386);
+        ctx.fillText(t("leftArrowShoot"), CANVAS_W / 2, 350);
+        ctx.fillText(t("rightArrowShoot"), CANVAS_W / 2, 368);
+        ctx.fillText(t("pPause"), CANVAS_W / 2, 386);
       } else {
         ctx.font = "7px 'Fira Code', monospace";
         ctx.fillStyle = "#6b7280";
-        ctx.fillText("Toque nos botoes para atirar!", CANVAS_W / 2, 365);
+        ctx.fillText(t("tapToShoot"), CANVAS_W / 2, 365);
       }
 
       animFrame = requestAnimationFrame(drawMenu);
@@ -1677,7 +1679,7 @@ export default function TiroAoAlvo() {
 
     animFrame = requestAnimationFrame(drawMenu);
     return () => cancelAnimationFrame(animFrame);
-  }, [screen, isMobile]);
+  }, [screen, isMobile, t]);
 
   // ==================== RESULT SCREEN STATE ====================
   const gs = gameRef.current;
@@ -1743,7 +1745,7 @@ export default function TiroAoAlvo() {
             letterSpacing: 2,
             textAlign: "center",
           }}>
-            TIRO AO ALVO
+            {t("title")}
           </h1>
           <p style={{
             color: "#4a5568",
@@ -1752,7 +1754,7 @@ export default function TiroAoAlvo() {
             fontFamily: "'Press Start 2P', monospace",
             textAlign: "center",
           }}>
-            SKEET SHOOTING
+            {t("subtitle")}
           </p>
         </>
       )}
@@ -1834,7 +1836,7 @@ export default function TiroAoAlvo() {
                     boxShadow: `0 0 30px rgba(74,222,128,0.4)`,
                   }}
                 >
-                  JOGAR
+                  {t("play")}
                 </button>
               </div>
             </div>
@@ -1845,7 +1847,7 @@ export default function TiroAoAlvo() {
             <RegisterModal
               onRegister={handleRegister}
               loading={registering}
-              jogoNome="TIRO AO ALVO"
+              jogoNome={t("title")}
               accentColor={ACCENT}
             />
           )}
@@ -1880,7 +1882,7 @@ export default function TiroAoAlvo() {
                 color: finalMedalha === "gold" ? "#fbbf24" : finalMedalha === "silver" ? "#c0c0c0" : finalMedalha === "bronze" ? "#cd7f32" : "#888",
                 marginBottom: 8,
               }}>
-                {finalMedalha === "gold" ? "MEDALHA DE OURO!" : finalMedalha === "silver" ? "MEDALHA DE PRATA!" : finalMedalha === "bronze" ? "MEDALHA DE BRONZE!" : "SEM MEDALHA"}
+                {finalMedalha === "gold" ? t("goldMedal") : finalMedalha === "silver" ? t("silverMedal") : finalMedalha === "bronze" ? t("bronzeMedal") : t("noMedal")}
               </div>
 
               {/* Score */}
@@ -1904,10 +1906,10 @@ export default function TiroAoAlvo() {
                 animation: "fadeSlideUp 0.6s ease-out 0.3s both",
               }}>
                 {[
-                  ["ACERTOS", `${finalHits}/${finalHits + finalMisses}`],
-                  ["PRECISAO", `${accuracy}%`],
-                  ["MAX STREAK", `${finalMaxStreak}`],
-                  ["BONUS", gs?.roundScores ? gs.roundScores.reduce((a, b) => a + b, 0).toLocaleString() : "0"],
+                  [t("hits"), `${finalHits}/${finalHits + finalMisses}`],
+                  [t("accuracy"), `${accuracy}%`],
+                  [t("maxStreak"), `${finalMaxStreak}`],
+                  [t("bonus"), gs?.roundScores ? gs.roundScores.reduce((a, b) => a + b, 0).toLocaleString() : "0"],
                 ].map(([label, value]) => (
                   <div key={label} style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: "#6b7280", marginBottom: 3 }}>{label}</div>
@@ -1955,7 +1957,7 @@ export default function TiroAoAlvo() {
                     letterSpacing: 1,
                   }}
                 >
-                  JOGAR NOVAMENTE
+                  {t("playAgain")}
                 </button>
 
                 {finalMedalha !== "none" && (
@@ -1973,7 +1975,7 @@ export default function TiroAoAlvo() {
                       letterSpacing: 1,
                     }}
                   >
-                    CONTINUAR (+20% VEL)
+                    {t("continueSpeed")}
                   </button>
                 )}
 
@@ -1990,7 +1992,7 @@ export default function TiroAoAlvo() {
                     cursor: "pointer",
                   }}
                 >
-                  Menu
+                  {t("menu")}
                 </button>
               </div>
             </div>
@@ -2030,7 +2032,7 @@ export default function TiroAoAlvo() {
                   marginTop: 50,
                 }}
               >
-                CONTINUAR
+                {t("resume")}
               </button>
               <button
                 onClick={() => {
@@ -2051,7 +2053,7 @@ export default function TiroAoAlvo() {
                   marginTop: 12,
                 }}
               >
-                Sair
+                {t("quit")}
               </button>
             </div>
           )}
@@ -2089,7 +2091,7 @@ export default function TiroAoAlvo() {
               WebkitUserSelect: "none",
             }}
           >
-            ESQUERDA
+            {t("left")}
           </button>
 
           <button
@@ -2129,7 +2131,7 @@ export default function TiroAoAlvo() {
               WebkitUserSelect: "none",
             }}
           >
-            DIREITA
+            {t("right")}
           </button>
         </div>
       )}
@@ -2147,7 +2149,7 @@ export default function TiroAoAlvo() {
             {user.nome}
           </span>
           <span style={{ color: "#4a5568", fontSize: 10, fontFamily: "'Fira Code', monospace" }}>
-            {finalHits} acertos
+            {finalHits} {t("hits")}
           </span>
         </div>
       )}

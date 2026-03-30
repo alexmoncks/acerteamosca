@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 function maskPhone(value) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -15,6 +16,7 @@ function isValidEmail(email) {
 }
 
 export default function RegisterModal({ onRegister, loading, jogoNome, accentColor = "#00f0ff" }) {
+  const t = useTranslations("register");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -22,8 +24,8 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
   const [serverError, setServerError] = useState("");
   const [touched, setTouched] = useState({});
 
-  const nameError = touched.name && name.trim().length < 3 ? "Nome deve ter pelo menos 3 caracteres" : "";
-  const emailError = touched.email && !isValidEmail(email) ? "Email inválido" : "";
+  const nameError = touched.name && name.trim().length < 3 ? t("nameError") : "";
+  const emailError = touched.email && !isValidEmail(email) ? t("emailError") : "";
 
   const valid = name.trim().length >= 3 && isValidEmail(email) && consent && !loading;
 
@@ -37,9 +39,9 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
   }
 
   const fields = [
-    { label: "NOME", value: name, set: setName, type: "text", ph: "Seu nome completo", key: "name", error: nameError },
-    { label: "EMAIL", value: email, set: setEmail, type: "email", ph: "seu@email.com", key: "email", error: emailError },
-    { label: "WHATSAPP", value: phone, set: (v) => setPhone(maskPhone(v)), type: "tel", ph: "(00) 00000-0000", key: "phone", error: "" },
+    { label: t("nameLabel"), value: name, set: setName, type: "text", ph: t("namePlaceholder"), key: "name", error: nameError },
+    { label: t("emailLabel"), value: email, set: setEmail, type: "email", ph: t("emailPlaceholder"), key: "email", error: emailError },
+    { label: t("whatsappLabel"), value: phone, set: (v) => setPhone(maskPhone(v)), type: "tel", ph: t("whatsappPlaceholder"), key: "phone", error: "" },
   ];
 
   return (
@@ -49,7 +51,7 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
           {jogoNome || "ACERTE A MOSCA"}
         </h2>
         <p style={{ color: "#8892b0", fontSize: 12, textAlign: "center", marginBottom: 20, fontFamily: "'Fira Code', monospace" }}>
-          Cadastre-se para jogar e concorrer!
+          {t("subtitle")}
         </p>
 
         {fields.map(f => (
@@ -71,7 +73,7 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
         <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, marginBottom: 18, cursor: "pointer" }}>
           <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} style={{ marginTop: 3, accentColor }} />
           <span style={{ color: "#8892b0", fontSize: 10, fontFamily: "'Fira Code', monospace", lineHeight: 1.5 }}>
-            Concordo com a coleta dos meus dados para participacao na promocao conforme a LGPD.
+            {t("consent")}
           </span>
         </label>
 
@@ -81,7 +83,7 @@ export default function RegisterModal({ onRegister, loading, jogoNome, accentCol
 
         <button onClick={handleSubmit} disabled={!valid}
           style={{ width: "100%", padding: "12px 0", background: valid ? `linear-gradient(135deg, ${accentColor}, #39ff14)` : "#2a2a4a", border: "none", borderRadius: 8, color: valid ? "#000" : "#555", fontFamily: "'Press Start 2P', monospace", fontSize: 11, cursor: valid ? "pointer" : "not-allowed", fontWeight: 900, letterSpacing: 1 }}>
-          {loading ? "REGISTRANDO..." : "JOGAR!"}
+          {loading ? t("registering") : t("play")}
         </button>
       </div>
     </div>

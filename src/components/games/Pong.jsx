@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { PongMobileControls } from "@/components/MobileControls";
@@ -78,6 +79,7 @@ class PongAudio {
 
 // ---- Menu ----
 function PongMenu({ onSelect }) {
+  const t = useTranslations("games.pong");
   const [sub, setSub] = useState(null); // null | 'cpu' | 'online'
   const [joinId, setJoinId] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -113,30 +115,30 @@ function PongMenu({ onSelect }) {
       <p style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#ff2d95",
         letterSpacing: 3, textShadow: "0 0 10px #ff2d95", marginBottom: 40,
-      }}>PRIMEIRO A 10 VENCE!</p>
+      }}>{t("firstTo10Wins")}</p>
 
       <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 12, position: "relative", zIndex: 1 }}>
         {!sub && <>
-          {btn("🤖  VS COMPUTADOR", () => setSub("cpu"))}
-          {!isMobile && btn("👥  LOCAL (2 JOGADORES)", () => onSelect("local"), "#39ff14")}
-          {btn("🌐  ONLINE", () => setSub("online"), "#b026ff")}
+          {btn(`🤖  ${t("vsCpu")}`, () => setSub("cpu"))}
+          {!isMobile && btn(`👥  ${t("local2Players")}`, () => onSelect("local"), "#39ff14")}
+          {btn(`🌐  ${t("online")}`, () => setSub("online"), "#b026ff")}
         </>}
 
         {sub === "cpu" && <>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", textAlign: "center", marginBottom: 4 }}>DIFICULDADE</p>
-          {btn("😌  FACIL",   () => onSelect("cpu-easy"),   "#39ff14")}
-          {btn("😐  MEDIO",   () => onSelect("cpu-medium"), "#ffe600")}
-          {btn("😈  DIFICIL", () => onSelect("cpu-hard"),   "#ff2d95")}
-          {btn("← VOLTAR", () => setSub(null), "#555")}
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", textAlign: "center", marginBottom: 4 }}>{t("difficulty")}</p>
+          {btn(`😌  ${t("easy")}`,   () => onSelect("cpu-easy"),   "#39ff14")}
+          {btn(`😐  ${t("medium")}`,   () => onSelect("cpu-medium"), "#ffe600")}
+          {btn(`😈  ${t("hard")}`, () => onSelect("cpu-hard"),   "#ff2d95")}
+          {btn(`← ${t("back")}`, () => setSub(null), "#555")}
         </>}
 
         {sub === "online" && <>
-          {btn("🏠  CRIAR SALA", () => onSelect("remote-host"), "#b026ff")}
+          {btn(`🏠  ${t("createRoom")}`, () => onSelect("remote-host"), "#b026ff")}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <input
               value={joinId}
               onChange={e => setJoinId(e.target.value.toUpperCase())}
-              placeholder="CODIGO"
+              placeholder={t("roomCode")}
               maxLength={6}
               style={{
                 width: "100%", padding: "10px 12px", background: "#111127",
@@ -155,9 +157,9 @@ function PongMenu({ onSelect }) {
                 border: "none", borderRadius: 6, color: joinId.length >= 4 ? "#fff" : "#555",
                 fontFamily: "'Press Start 2P', monospace", fontSize: 9, cursor: joinId.length >= 4 ? "pointer" : "not-allowed",
               }}
-            >ENTRAR</button>
+            >{t("join")}</button>
           </div>
-          {btn("← VOLTAR", () => setSub(null), "#555")}
+          {btn(`← ${t("back")}`, () => setSub(null), "#555")}
         </>}
       </div>
 
@@ -167,7 +169,7 @@ function PongMenu({ onSelect }) {
           textAlign: "center", lineHeight: 2,
         }}>
           <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#333" }}>
-            P1: A/D + S lancar &nbsp;|&nbsp; P2: ←/→ + ↑ lancar
+            {t("menuControlsHint")}
           </p>
         </div>
       )}
@@ -177,6 +179,7 @@ function PongMenu({ onSelect }) {
 
 // ---- Lobby (waiting for remote opponent) ----
 function RemoteLobby({ sessionId, status, onCancel }) {
+  const t = useTranslations("games.pong");
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = async () => {
@@ -196,49 +199,50 @@ function RemoteLobby({ sessionId, status, onCancel }) {
       <div style={{ fontSize: 40, marginBottom: 16 }}>🌐</div>
       {status === "creating" && <>
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff", marginBottom: 20, textShadow: "0 0 10px #b026ff" }}>
-          CONECTANDO...
+          {t("connecting")}
         </p>
       </>}
       {status === "waiting" && <>
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff", marginBottom: 20, textShadow: "0 0 10px #b026ff" }}>
-          AGUARDANDO OPONENTE
+          {t("waitingOpponent")}
         </p>
         <div onClick={handleCopyLink} style={{
           background: "#111127", border: `2px solid ${copied ? "#39ff14" : "#b026ff"}`, borderRadius: 10,
           padding: "16px 28px", marginBottom: 16, cursor: "pointer",
           transition: "border-color 0.3s",
         }}>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 8 }}>CODIGO DA SALA</p>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 8 }}>{t("roomCodeLabel")}</p>
           <p style={{
             fontFamily: "'Press Start 2P', monospace", fontSize: 28, color: "#b026ff",
             textShadow: "0 0 15px #b026ff", letterSpacing: 8,
           }}>{sessionId}</p>
         </div>
         <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: copied ? "#39ff14" : "#666", transition: "color 0.3s" }}>
-          {copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}
+          {copied ? t("linkCopied") : t("tapToCopyLink")}
         </p>
       </>}
       {status === "joining" && <>
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#b026ff", marginBottom: 12, textShadow: "0 0 10px #b026ff" }}>
-          ENTRANDO NA SALA...
+          {t("joiningRoom")}
         </p>
       </>}
       {status === "error" && <>
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#ff2d95", marginBottom: 12 }}>
-          SALA NAO ENCONTRADA
+          {t("roomNotFound")}
         </p>
       </>}
       <button onClick={onCancel} style={{
         marginTop: 20, padding: "10px 24px", background: "transparent",
         border: "1px solid #555", borderRadius: 6, color: "#555",
         fontFamily: "'Press Start 2P', monospace", fontSize: 9, cursor: "pointer",
-      }}>CANCELAR</button>
+      }}>{t("cancel")}</button>
     </div>
   );
 }
 
 // ---- Game Over ----
 function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remoteRestartReq }) {
+  const t = useTranslations("games.pong");
   const isRemote = mode.startsWith("remote");
   const youWon = isRemote ? winner === playerNum : null;
 
@@ -259,14 +263,14 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
           marginBottom: 8,
         }}>
           {isRemote
-            ? (youWon ? "VOCE VENCEU!" : "VOCE PERDEU!")
-            : `JOGADOR ${winner} VENCE!`}
+            ? (youWon ? t("youWon") : t("youLost"))
+            : t("playerWins", { winner })}
         </h2>
 
         <div style={{ display: "flex", gap: 20, justifyContent: "center", marginBottom: 24 }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", marginBottom: 4 }}>
-              {isRemote && playerNum === 1 ? "VOCE" : "P1"}
+              {isRemote && playerNum === 1 ? t("you") : t("p1")}
             </div>
             <div style={{
               fontFamily: "'Press Start 2P', monospace", fontSize: 32, color: rgbStr(P1_COLOR),
@@ -279,7 +283,7 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
           }}>x</div>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#555", marginBottom: 4 }}>
-              {isRemote && playerNum === 2 ? "VOCE" : mode.startsWith("cpu") ? "CPU" : "P2"}
+              {isRemote && playerNum === 2 ? t("you") : mode.startsWith("cpu") ? t("cpu") : t("p2")}
             </div>
             <div style={{
               fontFamily: "'Press Start 2P', monospace", fontSize: 32, color: rgbStr(P2_COLOR),
@@ -293,16 +297,16 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
             padding: "12px 28px", background: "linear-gradient(135deg, #00f0ff, #39ff14)",
             border: "none", borderRadius: 8, color: "#000",
             fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer", fontWeight: 900,
-          }}>{isRemote ? (remoteRestartReq ? "ACEITAR REVANCHE" : "REVANCHE") : "JOGAR DE NOVO"}</button>
+          }}>{isRemote ? (remoteRestartReq ? t("acceptRematch") : t("rematch")) : t("playAgain")}</button>
           <button onClick={onMenu} style={{
             padding: "12px 28px", background: "transparent",
             border: "1px solid #555", borderRadius: 8, color: "#888",
             fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer",
-          }}>MENU</button>
+          }}>{t("menu")}</button>
         </div>
         {isRemote && remoteRestartReq && (
           <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>
-            Oponente quer revanche!
+            {t("opponentWantsRematch")}
           </p>
         )}
         <AdBanner slot="pong_between" style={{ marginTop: 12, maxWidth: 300 }} />
@@ -313,6 +317,7 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
 
 // ---- MAIN GAME ----
 export default function Pong() {
+  const t = useTranslations("games.pong");
   const { user, checkedCookie, registering, register } = useJogador("pong");
   const [screen, setScreen] = useState("menu"); // menu | register | lobby | playing | gameover
   const [mode, setMode] = useState(null);
@@ -848,22 +853,22 @@ export default function Pong() {
     if (launched || screen !== "playing") return null;
     if (mode?.startsWith("remote")) {
       const isMyServe = serving === (playerNum - 1);
-      if (isMobile) return isMyServe ? "LANCE!" : "OPONENTE SACA...";
-      return isMyServe ? "Pressione ↑ para lancar" : "Oponente saca...";
+      if (isMobile) return isMyServe ? t("serve") : t("opponentServing");
+      return isMyServe ? t("pressUpToServe") : t("opponentServing");
     }
     if (mode?.startsWith("cpu")) {
-      if (isMobile) return serving === 0 ? "LANCE!" : "";
-      return serving === 0 ? "Pressione S para lancar" : "";
+      if (isMobile) return serving === 0 ? t("serve") : "";
+      return serving === 0 ? t("pressSToServe") : "";
     }
     // local
-    return serving === 0 ? "P1: Pressione S" : "P2: Pressione ↑";
+    return serving === 0 ? t("p1PressS") : t("p2PressUp");
   })();
 
   const gameScale = useGameScale(CANVAS_W);
   useLockScroll(screen === "playing");
 
-  const p1Label = mode?.startsWith("remote") && playerNum === 1 ? "VOCE" : mode?.startsWith("remote") && playerNum === 2 ? "RIVAL" : "P1";
-  const p2Label = mode?.startsWith("remote") && playerNum === 2 ? "VOCE" : mode?.startsWith("remote") && playerNum === 1 ? "RIVAL" : mode?.startsWith("cpu") ? "CPU" : "P2";
+  const p1Label = mode?.startsWith("remote") && playerNum === 1 ? t("you") : mode?.startsWith("remote") && playerNum === 2 ? t("rival") : t("p1");
+  const p2Label = mode?.startsWith("remote") && playerNum === 2 ? t("you") : mode?.startsWith("remote") && playerNum === 1 ? t("rival") : mode?.startsWith("cpu") ? t("cpu") : t("p2");
 
   return (
     <div style={{
@@ -902,9 +907,9 @@ export default function Pong() {
             color: "#4a5568", fontSize: 10, marginBottom: 14,
             fontFamily: "'Press Start 2P', monospace",
           }}>
-            {mode?.startsWith("cpu") ? `VS CPU (${mode.replace("cpu-", "").toUpperCase()})` :
-             mode === "local" ? "LOCAL - 2 JOGADORES" :
-             mode?.startsWith("remote") ? `ONLINE - SALA ${sessionId}` : ""}
+            {mode?.startsWith("cpu") ? t("modeCpu", { difficulty: mode.replace("cpu-", "").toUpperCase() }) :
+             mode === "local" ? t("modeLocal") :
+             mode?.startsWith("remote") ? t("modeOnline", { roomId: sessionId }) : ""}
           </p>
         </>
       )}
@@ -1053,13 +1058,13 @@ export default function Pong() {
                 zIndex: 200,
               }}>
                 <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: "#ff2d95", marginBottom: 16 }}>
-                  OPONENTE DESCONECTOU
+                  {t("opponentDisconnected")}
                 </p>
                 <button onClick={handleMenu} style={{
                   padding: "10px 24px", background: "transparent",
                   border: "1px solid #555", borderRadius: 6, color: "#888",
                   fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer",
-                }}>MENU</button>
+                }}>{t("menu")}</button>
               </div>
             )}
           </>
@@ -1100,7 +1105,7 @@ export default function Pong() {
       {screen === "playing" && !isMobile && mode?.startsWith("remote") && (
         <div style={{ marginTop: 10 }}>
           <span style={{ color: "#4a5568", fontSize: 9, fontFamily: "'Fira Code', monospace" }}>
-            ←/→ mover &nbsp;|&nbsp; ↑ lancar
+            {t("remoteControlsHint")}
           </span>
         </div>
       )}

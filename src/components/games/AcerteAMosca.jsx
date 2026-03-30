@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -349,18 +350,18 @@ function Particle({ x, y, color, delay }) {
   );
 }
 
-function ScorePopup({ x, y, points, color }) {
+function ScorePopup({ x, y, points, color, t }) {
   return (
     <div style={{
       position: "absolute", left: x, top: y, color, zIndex: 90,
       fontFamily: "'Press Start 2P', monospace", fontSize: points === 0 ? 10 : 16, fontWeight: 900,
       textShadow: `0 0 10px ${color}`, pointerEvents: "none",
       animation: "floatUp 0.8s ease-out forwards",
-    }}>{points === 0 ? "QUASE!" : `+${points}`}</div>
+    }}>{points === 0 ? t("almostHit") : `+${points}`}</div>
   );
 }
 
-function ComboMeter({ combo, color }) {
+function ComboMeter({ combo, color, t }) {
   if (combo < 2) return null;
   return (
     <div style={{
@@ -368,37 +369,37 @@ function ComboMeter({ combo, color }) {
       fontFamily: "'Press Start 2P', monospace", fontSize: combo > 5 ? 20 : 14,
       color, textShadow: `0 0 15px ${color}, 0 0 30px ${color}`,
       animation: "comboShake 0.2s ease-in-out", zIndex: 80, letterSpacing: 2,
-    }}>{combo}x COMBO!</div>
+    }}>{combo}x {t("combo")}</div>
   );
 }
 
-function SponsorBanner({ sponsor }) {
+function SponsorBanner({ sponsor, t }) {
   return (
     <div style={{
       width: "100%", padding: "10px 16px", background: "rgba(0,0,0,0.6)",
       borderTop: "1px solid rgba(0,240,255,0.1)",
       display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
     }}>
-      <span style={{ color: "#555", fontSize: 10, fontFamily: "'Press Start 2P', monospace", letterSpacing: 1 }}>PATROCINADO POR</span>
+      <span style={{ color: "#555", fontSize: 10, fontFamily: "'Press Start 2P', monospace", letterSpacing: 1 }}>{t("sponsoredBy")}</span>
       <span style={{ color: "#00f0ff", fontSize: 13, fontFamily: "'Press Start 2P', monospace", textShadow: "0 0 8px #00f0ff" }}>{sponsor}</span>
     </div>
   );
 }
 
 // ---- Splash Screen ----
-function SplashScreen({ onStart }) {
+function SplashScreen({ onStart, t }) {
   const [phase, setPhase] = useState(0);
   const [wingP, setWingP] = useState(0);
   const [flyPos, setFlyPos] = useState({ x: -60, y: 200 });
   const [tipIdx, setTipIdx] = useState(0);
 
   const tips = [
-    "🩴 Arma letal: o chinelo da vovo",
-    "🦟 Nenhum mosquito foi poupado nesta producao",
-    "📱 Melhor jogado com raiva acumulada",
-    "🎧 Use fones pra sentir o mosquito NA ORELHA",
-    "⚠️ Pode causar vicio e tapas na mesa",
-    "🏆 Patrocinado pelo seu odio a insetos",
+    t("tip1"),
+    t("tip2"),
+    t("tip3"),
+    t("tip4"),
+    t("tip5"),
+    t("tip6"),
   ];
 
   useEffect(() => {
@@ -450,11 +451,11 @@ function SplashScreen({ onStart }) {
       <div style={{ fontSize: 50, opacity: phase >= 0 ? 1 : 0, transform: phase >= 1 ? "translateY(0) rotate(-15deg)" : "translateY(-40px) rotate(0deg)", transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)", marginBottom: 8, filter: "drop-shadow(0 0 20px rgba(255,100,50,0.3))" }}>🩴</div>
 
       <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 26, color: "#00f0ff", textShadow: "0 0 30px #00f0ff, 0 0 60px rgba(0,240,255,0.3)", letterSpacing: 4, opacity: phase >= 0 ? 1 : 0, transform: phase >= 0 ? "scale(1)" : "scale(0.5)", transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)", textAlign: "center", marginBottom: 4 }}>
-        ACERTE A MOSCA
+        {t("title")}
       </h1>
 
       <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#ff2d95", letterSpacing: 3, opacity: phase >= 1 ? 1 : 0, transform: phase >= 1 ? "translateY(0)" : "translateY(15px)", transition: "all 0.5s ease-out", textShadow: "0 0 10px #ff2d95", marginBottom: 30 }}>
-        A VINGANCA E DOCE... E ESTALA
+        {t("subtitle")}
       </p>
 
       <div style={{ position: "relative", width: CANVAS_W, height: 80, opacity: phase >= 2 ? 1 : 0, transition: "opacity 0.3s" }}>
@@ -472,7 +473,7 @@ function SplashScreen({ onStart }) {
       <div style={{ opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s", marginTop: 10, textAlign: "center" }}>
         <div style={{ fontSize: 14, letterSpacing: 2 }}>⭐⭐⭐⭐⭐</div>
         <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#555", fontStyle: "italic", marginTop: 4 }}>
-          "Melhor que raquete eletrica" - Maria, 67 anos
+          {t("testimonial")}
         </p>
       </div>
 
@@ -488,11 +489,11 @@ function SplashScreen({ onStart }) {
         boxShadow: phase >= 4 ? "0 0 30px rgba(0,240,255,0.3), 0 0 60px rgba(57,255,20,0.15)" : "none",
         position: "relative", zIndex: 10,
       }}>
-        🩴 ENTRAR
+        {t("enterButton")}
       </button>
 
       <p style={{ position: "absolute", bottom: 16, fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#2a2a4a", opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s" }}>
-        v1.0 - powered by chineladas
+        {t("version")}
       </p>
     </div>
   );
@@ -501,19 +502,19 @@ function SplashScreen({ onStart }) {
 // ---- Registration Modal ----
 
 // ---- Game Over Screen ----
-function GameOverScreen({ score, hits, misses, bestCombo, onRestart }) {
+function GameOverScreen({ score, hits, misses, bestCombo, onRestart, t }) {
   const accuracy = hits + misses > 0 ? Math.round((hits / (hits + misses)) * 100) : 0;
   const stats = [
-    { label: "PONTOS", value: score, color: "#00f0ff" },
-    { label: "ACERTOS", value: hits, color: "#39ff14" },
-    { label: "PRECISAO", value: `${accuracy}%`, color: "#ffe600" },
-    { label: "MAX COMBO", value: `${bestCombo}x`, color: "#b026ff" },
+    { label: t("statPoints"), value: score, color: "#00f0ff" },
+    { label: t("statHits"), value: hits, color: "#39ff14" },
+    { label: t("statAccuracy"), value: `${accuracy}%`, color: "#ffe600" },
+    { label: t("statMaxCombo"), value: `${bestCombo}x`, color: "#b026ff" },
   ];
   return (
     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
       <div style={{ textAlign: "center", animation: "winBounce 0.6s ease-out" }}>
         <div style={{ fontSize: 60, marginBottom: 10 }}>⏰</div>
-        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: "#ff2d95", textShadow: "0 0 15px #ff2d95", marginBottom: 20 }}>TEMPO ESGOTADO!</h2>
+        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: "#ff2d95", textShadow: "0 0 15px #ff2d95", marginBottom: 20 }}>{t("timeUp")}</h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24, padding: "0 20px" }}>
           {stats.map(s => (
             <div key={s.label} style={{ background: "#111127", border: `1px solid ${s.color}33`, borderRadius: 8, padding: "12px 8px" }}>
@@ -522,22 +523,22 @@ function GameOverScreen({ score, hits, misses, bestCombo, onRestart }) {
             </div>
           ))}
         </div>
-        <button onClick={onRestart} style={{ padding: "14px 36px", background: "linear-gradient(135deg, #00f0ff, #39ff14)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 12, cursor: "pointer", fontWeight: 900, letterSpacing: 1 }}>TENTAR DE NOVO</button>
+        <button onClick={onRestart} style={{ padding: "14px 36px", background: "linear-gradient(135deg, #00f0ff, #39ff14)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 12, cursor: "pointer", fontWeight: 900, letterSpacing: 1 }}>{t("tryAgain")}</button>
         <AdBanner slot="mosca_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
   );
 }
 
-function WinModal({ prize, onClose }) {
+function WinModal({ prize, onClose, t }) {
   return (
     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
       <div style={{ textAlign: "center", animation: "winBounce 0.6s ease-out" }}>
         <div style={{ fontSize: 80, marginBottom: 16, animation: "winSpin 1s ease-out" }}>🏆</div>
-        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: "#ffe600", textShadow: "0 0 20px #ffe600, 0 0 40px #ff6b35", marginBottom: 12 }}>VOCE GANHOU!</h2>
+        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: "#ffe600", textShadow: "0 0 20px #ffe600, 0 0 40px #ff6b35", marginBottom: 12 }}>{t("youWon")}</h2>
         <p style={{ color: "#00f0ff", fontFamily: "'Fira Code', monospace", fontSize: 16, marginBottom: 8 }}>{prize}</p>
-        <p style={{ color: "#8892b0", fontFamily: "'Fira Code', monospace", fontSize: 12, marginBottom: 24 }}>Verifique seu email para resgatar!</p>
-        <button onClick={onClose} style={{ padding: "12px 32px", background: "linear-gradient(135deg, #ffe600, #ff6b35)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 11, cursor: "pointer", fontWeight: 900 }}>JOGAR DE NOVO</button>
+        <p style={{ color: "#8892b0", fontFamily: "'Fira Code', monospace", fontSize: 12, marginBottom: 24 }}>{t("checkEmail")}</p>
+        <button onClick={onClose} style={{ padding: "12px 32px", background: "linear-gradient(135deg, #ffe600, #ff6b35)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 11, cursor: "pointer", fontWeight: 900 }}>{t("playAgain")}</button>
       </div>
     </div>
   );
@@ -545,6 +546,7 @@ function WinModal({ prize, onClose }) {
 
 // ---- MAIN GAME ----
 export default function AcerteAMosca() {
+  const t = useTranslations("games.acerteamosca");
   const { user, checkedCookie, registering, register } = useJogador("acerteamosca");
   const [screen, setScreen] = useState("splash");
   const [score, setScore] = useState(0);
@@ -922,10 +924,10 @@ export default function AcerteAMosca() {
 
       {screen !== "splash" && <>
         <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: currentColorStr, textShadow: `0 0 20px ${currentColorStr}, 0 0 40px ${rgbaStr(currentColor, 0.3)}`, marginBottom: 8, letterSpacing: 3, textAlign: "center", transition: "color 1s, text-shadow 1s" }}>
-          ACERTE A MOSCA
+          {t("title")}
         </h1>
         <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
-          {audioStarted ? "🎧 AUDIO 3D ATIVADO - USE FONES!" : "MATE O MOSQUITO - GANHE PREMIOS"}
+          {audioStarted ? t("audio3dActive") : t("tagline")}
         </p>
       </>}
 
@@ -966,11 +968,11 @@ export default function AcerteAMosca() {
             display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 70,
           }}>
             <div>
-              <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 2 }}>PONTOS</div>
+              <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 2 }}>{t("hudPoints")}</div>
               <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: currentColorStr, textShadow: `0 0 8px ${currentColorStr}`, transition: "color 1s" }}>{score.toLocaleString()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 2 }}>VELOC.</div>
+              <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 2 }}>{t("hudSpeed")}</div>
               <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
                 {Array.from({ length: 10 }, (_, i) => (
                   <div key={i} style={{ width: 4, height: 12, borderRadius: 1, background: i < Math.ceil(progress * 10) ? currentColorStr : "#1a1a2e", boxShadow: i < Math.ceil(progress * 10) ? `0 0 4px ${currentColorStr}` : "none", transition: "background 0.5s" }} />
@@ -978,7 +980,7 @@ export default function AcerteAMosca() {
               </div>
             </div>
             <div style={{ textAlign: "right", minWidth: 90 }}>
-              <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 4 }}>TEMPO</div>
+              <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#555", marginBottom: 4 }}>{t("hudTime")}</div>
               <div style={{ width: 90, height: 8, background: "#1a1a2e", borderRadius: 4, overflow: "hidden" }}>
                 <div style={{ width: `${timerPct}%`, height: "100%", background: timerColor, boxShadow: `0 0 8px ${timerColor}`, borderRadius: 4, transition: "width 1s linear, background 0.5s" }} />
               </div>
@@ -987,7 +989,7 @@ export default function AcerteAMosca() {
           </div>
         )}
 
-        {screen === "playing" && <ComboMeter combo={combo} color={currentColorStr} />}
+        {screen === "playing" && <ComboMeter combo={combo} color={currentColorStr} t={t} />}
 
         {screen === "playing" && (
           <div style={{ position: "absolute", left: 10, top: 60, bottom: 60, width: 6, background: "#111127", borderRadius: 3, zIndex: 70, overflow: "hidden" }}>
@@ -1023,17 +1025,17 @@ export default function AcerteAMosca() {
         )}
 
         {particles.map(p => <Particle key={p.id} {...p} />)}
-        {scorePopups.map(p => <ScorePopup key={p.id} {...p} />)}
+        {scorePopups.map(p => <ScorePopup key={p.id} {...p} t={t} />)}
 
-        {screen === "splash" && <SplashScreen onStart={handleSplashStart} />}
-        {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome="ACERTE A MOSCA" accentColor="#00f0ff" />}
-        {screen === "gameover" && <GameOverScreen score={score} hits={hits} misses={misses} bestCombo={bestCombo} onRestart={restartGame} />}
-        {screen === "winner" && <WinModal prize="🎉 Cupom de 20% de desconto na Loja XYZ!" onClose={restartGame} />}
+        {screen === "splash" && <SplashScreen onStart={handleSplashStart} t={t} />}
+        {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome={t("title")} accentColor="#00f0ff" />}
+        {screen === "gameover" && <GameOverScreen score={score} hits={hits} misses={misses} bestCombo={bestCombo} onRestart={restartGame} t={t} />}
+        {screen === "winner" && <WinModal prize={t("winPrize")} onClose={restartGame} t={t} />}
       </div>
       </div>
 
       {screen !== "splash" && <div style={{ width: CANVAS_W * gameScale, borderRadius: "0 0 12px 12px", overflow: "hidden", marginTop: -2 }}>
-        <SponsorBanner sponsor="SUA MARCA AQUI" />
+        <SponsorBanner sponsor={t("sponsorName")} t={t} />
       </div>}
 
       {user && screen === "playing" && (

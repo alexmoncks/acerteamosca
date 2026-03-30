@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
@@ -209,6 +210,7 @@ function performMove(grid, direction) {
 
 // ---- Menu Screen ----
 function MenuScreen({ onStart, onOnline }) {
+  const t = useTranslations("games.game2048");
   return (
     <div
       style={{
@@ -244,7 +246,7 @@ function MenuScreen({ onStart, onOnline }) {
           textAlign: "center",
         }}
       >
-        Junte os numeros e chegue ao 2048!
+        {t("subtitle")}
       </p>
 
       {/* Animated tile preview */}
@@ -302,7 +304,7 @@ function MenuScreen({ onStart, onOnline }) {
           e.target.style.boxShadow = `0 0 25px ${ACCENT}40`;
         }}
       >
-        Jogar Solo
+        {t("playSolo")}
       </button>
 
       {/* Online button */}
@@ -330,7 +332,7 @@ function MenuScreen({ onStart, onOnline }) {
           e.target.style.boxShadow = `0 0 20px ${ONLINE_ACCENT}40`;
         }}
       >
-        Jogar Online
+        {t("playOnline")}
       </button>
     </div>
   );
@@ -338,6 +340,7 @@ function MenuScreen({ onStart, onOnline }) {
 
 // ---- Online Lobby Screen ----
 function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
+  const t = useTranslations("games.game2048");
   const [copied, setCopied] = useState(false);
   const [joinCode, setJoinCode] = useState("");
 
@@ -397,7 +400,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >
-            Criar Sala
+            {t("createRoom")}
           </button>
 
           {/* Divider */}
@@ -419,12 +422,12 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
               marginBottom: 10,
             }}
           >
-            ENTRAR EM SALA
+            {t("joinRoom")}
           </p>
           <input
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="CODIGO"
+            placeholder={t("codePlaceholder")}
             maxLength={6}
             style={{
               width: 200,
@@ -459,7 +462,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
               marginBottom: 16,
             }}
           >
-            ENTRAR
+            {t("enter")}
           </button>
         </>
       )}
@@ -473,7 +476,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
             textShadow: `0 0 10px ${ONLINE_ACCENT}`,
           }}
         >
-          CONECTANDO...
+          {t("connecting")}
         </p>
       )}
 
@@ -488,7 +491,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
               textShadow: `0 0 10px ${ONLINE_ACCENT}`,
             }}
           >
-            AGUARDANDO OPONENTE...
+            {t("waitingOpponent")}
           </p>
           <div
             onClick={handleCopyLink}
@@ -510,7 +513,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
                 marginBottom: 8,
               }}
             >
-              CODIGO DA SALA
+              {t("roomCode")}
             </p>
             <p
               style={{
@@ -532,7 +535,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
               transition: "color 0.3s",
             }}
           >
-            {copied ? "LINK COPIADO!" : "Toque no codigo para copiar o link"}
+            {copied ? t("linkCopied") : t("tapToCopy")}
           </p>
         </>
       )}
@@ -546,7 +549,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
             textShadow: `0 0 10px ${ONLINE_ACCENT}`,
           }}
         >
-          ENTRANDO NA SALA...
+          {t("joiningRoom")}
         </p>
       )}
 
@@ -559,7 +562,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
             marginBottom: 12,
           }}
         >
-          SALA NAO ENCONTRADA
+          {t("roomNotFound")}
         </p>
       )}
 
@@ -577,7 +580,7 @@ function OnlineLobby({ roomId, lobbyStatus, onCreate, onJoin, onCancel }) {
           cursor: "pointer",
         }}
       >
-        CANCELAR
+        {t("cancel")}
       </button>
     </div>
   );
@@ -699,6 +702,7 @@ function ArrowPad({ onMove, accent }) {
 
 // ---- Main Component ----
 export default function Game2048() {
+  const t = useTranslations("games.game2048");
   const { user, checkedCookie, registering, register } = useJogador("2048");
   const gameScale = useGameScale(GAME_W);
 
@@ -1416,7 +1420,7 @@ export default function Game2048() {
                     cursor: "pointer",
                     padding: "4px 8px",
                   }}
-                  title="Voltar ao menu"
+                  title={t("backToMenu")}
                 >
                   {"\u2190"}
                 </button>
@@ -1520,7 +1524,7 @@ export default function Game2048() {
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
               >
-                Novo Jogo
+                {t("newGame")}
               </button>
             </div>
 
@@ -1559,7 +1563,7 @@ export default function Game2048() {
                       lineHeight: 1.6,
                     }}
                   >
-                    Voce chegou no 2048!
+                    {t("soloWin")}
                   </p>
                   <p
                     style={{
@@ -1588,7 +1592,7 @@ export default function Game2048() {
                       cursor: "pointer",
                     }}
                   >
-                    Jogar Novamente
+                    {t("playAgain")}
                   </button>
                   <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
@@ -1621,7 +1625,7 @@ export default function Game2048() {
                       lineHeight: 1.6,
                     }}
                   >
-                    Sem movimentos!
+                    {t("noMoves")}
                   </p>
                   <p
                     style={{
@@ -1650,7 +1654,7 @@ export default function Game2048() {
                       cursor: "pointer",
                     }}
                   >
-                    Jogar Novamente
+                    {t("playAgain")}
                   </button>
                   <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
@@ -1694,7 +1698,7 @@ export default function Game2048() {
                     cursor: "pointer",
                     padding: "4px 8px",
                   }}
-                  title="Voltar ao menu"
+                  title={t("backToMenu")}
                 >
                   {"\u2190"}
                 </button>
@@ -1753,7 +1757,7 @@ export default function Game2048() {
                     marginBottom: 4,
                   }}
                 >
-                  VOCE
+                  {t("you")}
                 </p>
                 <p
                   style={{
@@ -1776,7 +1780,7 @@ export default function Game2048() {
                     marginTop: 4,
                   }}
                 >
-                  {countEmptyCells(onlineGrid)} livres
+                  {t("freeCells", { count: countEmptyCells(onlineGrid) })}
                 </p>
               </div>
 
@@ -1822,7 +1826,7 @@ export default function Game2048() {
                     marginBottom: 4,
                   }}
                 >
-                  OPONENTE
+                  {t("opponent")}
                 </p>
                 <p
                   style={{
@@ -1845,7 +1849,7 @@ export default function Game2048() {
                     marginTop: 4,
                   }}
                 >
-                  {opponentEmptyCells} livres
+                  {t("freeCells", { count: opponentEmptyCells })}
                 </p>
               </div>
             </div>
@@ -1884,10 +1888,10 @@ export default function Game2048() {
                 }}
               >
                 {opponentEmptyCells === 0
-                  ? "Oponente sem espaco!"
+                  ? t("opponentNoSpace")
                   : opponentEmptyCells <= 2
-                    ? "Oponente quase perdendo!"
-                    : "Oponente com poucas opcoes!"}
+                    ? t("opponentAlmostLosing")
+                    : t("opponentFewOptions")}
               </div>
             )}
 
@@ -1928,7 +1932,7 @@ export default function Game2048() {
                       lineHeight: 1.6,
                     }}
                   >
-                    {onlineResult === "win" ? "Voce venceu!" : "Voce perdeu!"}
+                    {onlineResult === "win" ? t("onlineWin") : t("onlineLose")}
                   </p>
                   <div
                     style={{
@@ -1946,7 +1950,7 @@ export default function Game2048() {
                           marginBottom: 4,
                         }}
                       >
-                        VOCE
+                        {t("you")}
                       </p>
                       <p
                         style={{
@@ -1967,7 +1971,7 @@ export default function Game2048() {
                           marginBottom: 4,
                         }}
                       >
-                        OPONENTE
+                        {t("opponent")}
                       </p>
                       <p
                         style={{
@@ -1993,7 +1997,7 @@ export default function Game2048() {
                       cursor: "pointer",
                     }}
                   >
-                    Menu
+                    {t("menu")}
                   </button>
                   <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
