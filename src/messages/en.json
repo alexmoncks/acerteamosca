@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "title": "Acerte a Mosca - Free Online Games | Play Now!",
-    "titleTemplate": "%s | Acerte a Mosca",
+    "title": "Nailed the Fly - Free Online Games | Play Now!",
+    "titleTemplate": "%s | Nailed the Fly",
     "description": "Free online browser games! Wordle, 2048, Memory Game, Bubble Shooter, Deep Attack and more. Play now on mobile or PC, no download required!",
     "ogDescription": "Free online browser games! Wordle, 2048, Memory, Bubble Shooter and more. No download!"
   },
   "navbar": {
-    "brand": "ACERTE A MOSCA",
+    "brand": "NAILED THE FLY",
     "games": "GAMES"
   },
   "home": {
@@ -36,7 +36,7 @@
     "faq": {
       "title": "FREQUENTLY ASKED QUESTIONS",
       "items": [
-        { "q": "What is Acerte a Mosca?", "a": "Acerte a Mosca is a free online gaming platform that works right in your browser. We offer 13 games including Wordle, 2048, Memory Game, Battleship, Bubble Shooter, Deep Attack, Pong, Ships, Croc Crossing, Target Shooting, Brick Breaker, and 3INVADER. No download needed!" },
+        { "q": "What is Nailed the Fly?", "a": "Nailed the Fly is a free online gaming platform that works right in your browser. We offer 13 games including Wordle, 2048, Memory Game, Battleship, Bubble Shooter, Deep Attack, Pong, Ships, Croc Crossing, Target Shooting, Brick Breaker, and 3INVADER. No download needed!" },
         { "q": "What games are available?", "a": "We have 13 games: Swat the Fly (reflex), Wordle (words), Memory Game (memory with multiplayer), 2048 (puzzle with multiplayer), Bubble Shooter (arcade), Deep Attack (space ship), Pong (classic with multiplayer), Ships (ship battle with multiplayer), Croc Crossing (Frogger style), Target Shooting (reflex), Battleship (strategy with online multiplayer), Brick Breaker (Arkanoid-style arcade), and 3INVADER (space shoot em up)." },
         { "q": "Do I need to download anything to play?", "a": "No! All games work right in the browser, on both mobile and desktop. Just visit acerteamosca.com.br and start playing." },
         { "q": "Do the games work on mobile?", "a": "Yes! All games are responsive with touch controls optimized for mobile. Canvas games like Bubble Shooter and Deep Attack have dedicated touch control buttons." },
