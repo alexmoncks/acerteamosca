@@ -55,3 +55,12 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* Prevent AdsTerra Social Bar overlays from blocking game interactions */
+body.game-active div[id^="sl_"],
+body.game-active div[class*="pushpad"],
+body.game-active div[id*="push"],
+body.game-active iframe[src*="profitablecpmratenetwork"],
+body.game-active iframe[src*="highperformanceformat"] {
+  pointer-events: none !important;
+}

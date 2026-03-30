@@ -4646,54 +4646,7 @@ export default function ThreeInvader() {
             </div>
           )}
 
-          {screen === "sponsor" && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: "rgba(2,8,36,0.95)",
-                borderTop: "1px solid #00f0ff44",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 16,
-                padding: "12px 16px",
-                zIndex: 100,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "'Fira Code', monospace",
-                  fontSize: 10,
-                  color: "#8892b0",
-                  textAlign: "center",
-                  margin: 0,
-                }}
-              >
-                {t("sponsorMessage")}
-              </p>
-              <button
-                onClick={handleSponsorContinue}
-                style={{
-                  fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 9,
-                  color: "#020824",
-                  background: "#00f0ff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 16px",
-                  cursor: "pointer",
-                  boxShadow: "0 0 10px rgba(0,240,255,0.3)",
-                  letterSpacing: 1,
-                  flexShrink: 0,
-                }}
-              >
-                {t("sponsorContinue")}
-              </button>
-            </div>
-          )}
+          {/* sponsor banner moved outside canvas wrapper */}
 
           {/* ── MENU ───────────────────────────────────── */}
           {screen === "menu" && (
@@ -5781,6 +5734,54 @@ export default function ThreeInvader() {
               ⏸
             </button>
           </div>
+        </div>
+      )}
+
+      {screen === "sponsor" && (
+        <div
+          style={{
+            width: CW * gameScale,
+            background: "rgba(2,8,36,0.95)",
+            borderTop: "1px solid #00f0ff44",
+            border: "1px solid #00f0ff22",
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            padding: "10px 16px",
+            marginTop: 8,
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "'Fira Code', monospace",
+              fontSize: 10,
+              color: "#8892b0",
+              textAlign: "center",
+              margin: 0,
+            }}
+          >
+            {t("sponsorMessage")}
+          </p>
+          <button
+            onClick={handleSponsorContinue}
+            style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 9,
+              color: "#020824",
+              background: "#00f0ff",
+              border: "none",
+              borderRadius: 6,
+              padding: "8px 16px",
+              cursor: "pointer",
+              boxShadow: "0 0 10px rgba(0,240,255,0.3)",
+              letterSpacing: 1,
+              flexShrink: 0,
+            }}
+          >
+            {t("sponsorContinue")}
+          </button>
         </div>
       )}
 
