@@ -31,7 +31,8 @@
       "tiroaoalvo": { "name": "Tiro ao Alvo", "desc": "Acerte os pratos de argila no timing certo! Reflexo puro." },
       "batalha-naval": { "name": "Batalha Naval", "desc": "Posicione seus navios e afunde a frota inimiga! VS CPU ou online." },
       "brickbreaker": { "name": "Brick Breaker", "desc": "Destrua todos os blocos em 25 fases! Power-ups, inimigos e 5 mundos épicos." },
-      "3invader": { "name": "3INVADER", "desc": "Pilote o ARROW-7 contra a invasão alienígena 3I/ATLAS! 25 fases, 5 mundos, 5 bosses épicos." }
+      "3invader": { "name": "3INVADER", "desc": "Pilote o ARROW-7 contra a invasão alienígena 3I/ATLAS! 25 fases, 5 mundos, 5 bosses épicos." },
+      "kungfucastle": { "name": "Kung Fu Castle", "desc": "Enfrente hordas de inimigos e salve a princesa no castelo!" }
     },
     "faq": {
       "title": "PERGUNTAS FREQUENTES",
@@ -620,6 +621,24 @@
       "shareTitle": "Wordle BR",
       "shareButton": "COMPARTILHAR",
       "newWordButton": "NOVA PALAVRA"
+    },
+    "kungfucastle": {
+      "title": "KUNG FU CASTLE",
+      "subtitle": "Enfrente hordas de inimigos e salve a princesa!",
+      "start": "INICIAR",
+      "controlsHint": "SETAS: MOVER | Z: SOCO | X: CHUTE | ESPAÇO: PULAR",
+      "hud": {
+        "score": "PONTOS",
+        "phase": "FASE",
+        "lives": "VIDAS"
+      },
+      "phases": {
+        "1": "Jardim do Castelo",
+        "2": "Portão Principal",
+        "3": "Interior do Castelo",
+        "4": "Torre de Vigia",
+        "5": "Topo do Castelo"
+      }
     }
   },
   "common": {

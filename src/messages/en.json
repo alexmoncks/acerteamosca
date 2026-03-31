@@ -31,7 +31,8 @@
       "tiroaoalvo": { "name": "Target Shooting", "desc": "Hit the clay targets at the right time! Pure reflex." },
       "batalha-naval": { "name": "Battleship", "desc": "Position your ships and sink the enemy fleet! VS CPU or online." },
       "brickbreaker": { "name": "Brick Breaker", "desc": "Destroy all blocks in 25 stages! Power-ups, enemies, and 5 epic worlds." },
-      "3invader": { "name": "3INVADER", "desc": "Pilot the ARROW-7 against the alien invasion 3I/ATLAS! 25 stages, 5 worlds, 5 epic bosses." }
+      "3invader": { "name": "3INVADER", "desc": "Pilot the ARROW-7 against the alien invasion 3I/ATLAS! 25 stages, 5 worlds, 5 epic bosses." },
+      "kungfucastle": { "name": "Kung Fu Castle", "desc": "Fight through hordes of enemies and save the princess in the castle!" }
     },
     "faq": {
       "title": "FREQUENTLY ASKED QUESTIONS",
@@ -620,6 +621,24 @@
       "shareTitle": "Wordle",
       "shareButton": "SHARE",
       "newWordButton": "NEW WORD"
+    },
+    "kungfucastle": {
+      "title": "KUNG FU CASTLE",
+      "subtitle": "Fight through hordes of enemies and save the princess!",
+      "start": "START",
+      "controlsHint": "ARROWS: MOVE | Z: PUNCH | X: KICK | SPACE: JUMP",
+      "hud": {
+        "score": "SCORE",
+        "phase": "STAGE",
+        "lives": "LIVES"
+      },
+      "phases": {
+        "1": "Castle Garden",
+        "2": "Main Gate",
+        "3": "Castle Interior",
+        "4": "Watchtower",
+        "5": "Castle Top"
+      }
     }
   },
   "common": {

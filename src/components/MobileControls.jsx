@@ -257,3 +257,8 @@ export function DeepAttackMobileControls({ keysRef, onToggleAutoFire, autoFire }
     </div>
   );
 }
+
+// Kung Fu Castle: d-pad + attack buttons (stub)
+export function KungFuCastleMobileControls({ keysRef }) {
+  return null;
+}
