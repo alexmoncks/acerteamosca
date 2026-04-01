@@ -54,34 +54,44 @@ async function buildScene(app) {
 
   const { scenery } = textures;
 
-  // -- Sky (solid night color)
+  // -- Starry night sky
   const sky = new Graphics();
   sky.rect(0, 0, LEVEL_WIDTH, CH);
-  sky.fill({ color: 0x0a0a1e });
+  sky.fill({ color: 0x06061a });
+  // Stars — random small dots
+  for (let i = 0; i < 200; i++) {
+    const sx = Math.random() * LEVEL_WIDTH;
+    const sy = Math.random() * (GROUND_Y - 40);
+    const size = Math.random() < 0.15 ? 2 : 1;
+    const brightness = 0.3 + Math.random() * 0.7;
+    sky.rect(sx, sy, size, size);
+    sky.fill({ color: 0xffffff, alpha: brightness });
+  }
   bgLayer.addChild(sky);
 
-  // -- Parallax mountains (bgLayer, parallax 0.15)
-  // Texture is 256×64; tile across LEVEL_WIDTH
+  // -- Parallax mountains (bgLayer) — scaled 1.5x for visibility, higher position
   if (scenery.parallaxMountains) {
-    const mtnW = scenery.parallaxMountains.width;
-    const mtnH = scenery.parallaxMountains.height;
-    const mtnY = GROUND_Y - mtnH;
-    const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 1;
+    const scale = 1.8;
+    const mtnW = scenery.parallaxMountains.width * scale;
+    const mtnH = scenery.parallaxMountains.height * scale;
+    const mtnY = GROUND_Y - mtnH - 20;
+    const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 2;
     for (let i = 0; i < mtnCount; i++) {
       const s = new Sprite(scenery.parallaxMountains);
+      s.scale.set(scale);
       s.x = i * mtnW;
       s.y = mtnY;
+      s.alpha = 0.7;
       bgLayer.addChild(s);
     }
   }
 
-  // -- Parallax trees (midLayer, parallax 0.5)
-  // Texture is 256×80; tile across LEVEL_WIDTH
+  // -- Parallax trees (midLayer) — touching the grass line
   if (scenery.parallaxTrees) {
     const treeW = scenery.parallaxTrees.width;
     const treeH = scenery.parallaxTrees.height;
-    const treeY = GROUND_Y - treeH;
-    const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 1;
+    const treeY = GROUND_Y - treeH + 4; // +4 to overlap slightly into grass
+    const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 2;
     for (let i = 0; i < treeCount; i++) {
       const s = new Sprite(scenery.parallaxTrees);
       s.x = i * treeW;
@@ -90,32 +100,28 @@ async function buildScene(app) {
     }
   }
 
-  // -- Tileset ground (gameLayer)
-  // Ground strip: GROUND_Y to CH = 60px tall → 2 rows of 32px tiles (fits within 60px)
-  // Top row uses grass-edge tiles (index 2/3), fill row uses solid tile (index 5)
+  // -- Ground: grass tiles on top, solid earth color below
   if (scenery.tileset && scenery.tileset.length >= 16) {
     const TILE = 32;
     const tilesAcross = Math.ceil(LEVEL_WIDTH / TILE);
-    const topTiles  = [scenery.tileset[2], scenery.tileset[3]]; // row0 col2/col3 — grass top edge
-    const fillTile  = scenery.tileset[5];                        // row1 col1 — solid path
+    // Tile 12 (row3 col0) = full grass, tile 3 (row0 col3) = grass variant
+    const grassTiles = [scenery.tileset[12], scenery.tileset[3]];
 
-    // Row 0: grass-top edge at GROUND_Y
+    // Single row of grass tiles at ground level
     for (let col = 0; col < tilesAcross; col++) {
-      const s = new Sprite(topTiles[col % topTiles.length]);
+      const s = new Sprite(grassTiles[col % grassTiles.length]);
       s.x = col * TILE;
       s.y = GROUND_Y;
       gameLayer.addChild(s);
     }
-    // Row 1: solid fill below
-    for (let col = 0; col < tilesAcross; col++) {
-      const s = new Sprite(fillTile);
-      s.x = col * TILE;
-      s.y = GROUND_Y + TILE;
-      gameLayer.addChild(s);
-    }
   }
+  // Solid earth fill below tiles
+  const earthFill = new Graphics();
+  earthFill.rect(0, GROUND_Y + 32, LEVEL_WIDTH, CH - GROUND_Y);
+  earthFill.fill({ color: 0x1a2a15 });
+  gameLayer.addChild(earthFill);
 
-  // -- Decorative props (gameLayer, anchor bottom-center at GROUND_Y)
+  // -- Decorative props (anchor bottom-center, sitting ON the grass)
   const PROP_LAYOUT = [
     { asset: "torii-vermelho",       x: 60 },
     { asset: "cerejeira-sakura",     x: 200 },
@@ -141,7 +147,7 @@ async function buildScene(app) {
     const s = new Sprite(tex);
     s.anchor.set(0.5, 1);
     s.x = x;
-    s.y = GROUND_Y;
+    s.y = GROUND_Y + 2; // sit on the grass, slight overlap
     gameLayer.addChild(s);
   }
 
