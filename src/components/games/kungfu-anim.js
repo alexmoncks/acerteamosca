@@ -120,6 +120,17 @@ export class AnimController {
   }
 
   /**
+   * Force-switch animation, ignoring priority. Use for state resets
+   * like landing from a jump where lower-priority idle must take over.
+   * @param {string} name
+   */
+  forcePlay(name) {
+    if (this.anims[name]) {
+      this._applyState(name);
+    }
+  }
+
+  /**
    * Set the horizontal facing direction.
    * @param {number} dir  +1 = right, -1 = left
    */

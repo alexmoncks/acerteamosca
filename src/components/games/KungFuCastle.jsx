@@ -339,9 +339,16 @@ function update(game, keys, dt) {
 
   // ---- Player animation state ----
   if (!player.attacking) {
-    if (!player.grounded) game.playerAnim.play("jump");
-    else if (Math.abs(player.vx) > 0.5) game.playerAnim.play("walk");
-    else game.playerAnim.play("idle");
+    if (!player.grounded) {
+      game.playerAnim.play("jump");
+    } else if (game.playerAnim.state === "jump") {
+      // Just landed — force-reset past jump priority
+      game.playerAnim.forcePlay(Math.abs(player.vx) > 0.5 ? "walk" : "idle");
+    } else if (Math.abs(player.vx) > 0.5) {
+      game.playerAnim.play("walk");
+    } else {
+      game.playerAnim.play("idle");
+    }
   }
   game.playerAnim.setFacing(player.facing);
   game.playerAnim.update(dt);
