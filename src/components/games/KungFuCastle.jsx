@@ -71,11 +71,11 @@ async function buildScene(app) {
 
   // -- Parallax mountains (bgLayer) — just above the tree line
   if (scenery.parallaxMountains) {
-    const scale = 2.0;
+    const scale = 2.2;
     const mtnW = scenery.parallaxMountains.width * scale;
     const mtnH = scenery.parallaxMountains.height * scale;
     // Trees are 80px tall from GROUND_Y, mountains sit just above them
-    const mtnY = GROUND_Y - 10 - mtnH + 20;
+    const mtnY = GROUND_Y - 10 - mtnH + 28;
     const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 2;
     for (let i = 0; i < mtnCount; i++) {
       const s = new Sprite(scenery.parallaxMountains);
@@ -91,7 +91,7 @@ async function buildScene(app) {
   if (scenery.parallaxTrees) {
     const treeW = scenery.parallaxTrees.width;
     const treeH = scenery.parallaxTrees.height;
-    const treeY = GROUND_Y - treeH + 6; // overlap into grass
+    const treeY = GROUND_Y - treeH + 18; // overlap into grass
     const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 2;
     for (let i = 0; i < treeCount; i++) {
       const s = new Sprite(scenery.parallaxTrees);
@@ -115,49 +115,53 @@ async function buildScene(app) {
     const transitionTile = scenery.tileset[3]; // grass top, brick bottom
 
     // Row 0: grass — top of tile aligns with feet (shift up so grass surface = GROUND_Y)
-    const GRASS_OFFSET = 14; // grass surface is ~14px from top of tile
+    const GRASS_OFFSET = 52; // grass surface is ~14px from top of tile
     for (let col = 0; col < tilesAcross; col++) {
       const s = new Sprite(grassTile);
       s.x = col * TILE;
       s.y = GROUND_Y - GRASS_OFFSET;
       gameLayer.addChild(s);
     }
-    // Row 1: transition (grass→brick) below
-    for (let col = 0; col < tilesAcross; col++) {
-      const s = new Sprite(transitionTile);
-      s.x = col * TILE;
-      s.y = GROUND_Y - GRASS_OFFSET + TILE;
-      gameLayer.addChild(s);
+    // Rows below: brick tiles filling to bottom of screen
+    const startY = GROUND_Y - GRASS_OFFSET + TILE;
+    const rowsNeeded = Math.ceil((CH - startY) / TILE) + 1;
+    for (let row = 0; row < rowsNeeded; row++) {
+      for (let col = 0; col < tilesAcross; col++) {
+        const s = new Sprite(transitionTile);
+        s.x = col * TILE;
+        s.y = startY + row * TILE;
+        gameLayer.addChild(s);
+      }
     }
   }
 
   // -- Decorative props (anchor bottom-center, sitting ON the grass)
   const PROP_LAYOUT = [
-    { asset: "torii-vermelho",       x: 60 },
-    { asset: "cerejeira-sakura",     x: 200 },
-    { asset: "lanterna-ishidoro",    x: 350 },
-    { asset: "pedra-decorativa",     x: 500 },
-    { asset: "cerejeira-sakura",     x: 700 },
-    { asset: "komainu",              x: 850 },
-    { asset: "cerca-bambu",          x: 1000 },
-    { asset: "lanterna-ishidoro",    x: 1150 },
-    { asset: "cerejeira-sakura",     x: 1350 },
-    { asset: "pedra-decorativa",     x: 1500 },
-    { asset: "komainu",              x: 1650 },
-    { asset: "lanterna-ishidoro",    x: 1800 },
-    { asset: "cerejeira-sakura",     x: 1950 },
-    { asset: "cerca-bambu",          x: 2100 },
-    { asset: "portao-arco-pedra",    x: 2300 },
-    { asset: "escada-pedra-externa", x: 2370 },
+    { asset: "torii-vermelho",       x: 60  , y: 10},
+    { asset: "cerejeira-sakura",     x: 200 , y: 6},
+    { asset: "lanterna-ishidoro",    x: 350 , y: 2},
+    { asset: "pedra-decorativa",     x: 500 , y: 2},
+    { asset: "cerejeira-sakura",     x: 700 , y: 6},
+    { asset: "komainu",              x: 850 , y: 2},
+    { asset: "cerca-bambu",          x: 1000 , y: 2},
+    { asset: "lanterna-ishidoro",    x: 1150 , y: 2},
+    { asset: "cerejeira-sakura",     x: 1350 , y: 6},
+    { asset: "pedra-decorativa",     x: 1500 , y: 0},
+    { asset: "komainu",              x: 1650 , y: 0},
+    { asset: "lanterna-ishidoro",    x: 1800 , y: 0},
+    { asset: "cerejeira-sakura",     x: 1950 , y: 6},
+    { asset: "cerca-bambu",          x: 2100 , y: 0},
+    { asset: "portao-arco-pedra",    x: 2300 , y: 8},
+    { asset: "escada-pedra-externa", x: 2370 , y: 10},
   ];
 
-  for (const { asset, x } of PROP_LAYOUT) {
+  for (const { asset, x, y } of PROP_LAYOUT) {
     const tex = scenery.props[asset];
     if (!tex) continue;
     const s = new Sprite(tex);
     s.anchor.set(0.5, 1);
     s.x = x;
-    s.y = GROUND_Y + 2; // sit on the grass, slight overlap
+    s.y = GROUND_Y + y; // sit on the grass, slight overlap
     gameLayer.addChild(s);
   }
 
