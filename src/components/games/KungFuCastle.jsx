@@ -113,7 +113,6 @@ async function buildScene(app) {
     // 6  = wang_0  (mixed brick)
     const grassTile = scenery.tileset[12]; // full grass, seamless
     const transitionTile = scenery.tileset[3]; // grass top, brick bottom
-    const brickTile = scenery.tileset[9]; // mostly brick
 
     // Row 0: grass at GROUND_Y (characters walk here)
     for (let col = 0; col < tilesAcross; col++) {
@@ -476,9 +475,7 @@ function update(game, keys, dt) {
   }
 
   // ---- Update enemies ----
-  const playerHb = getHitbox(player);
   const COMBAT_RANGE = 23; // distance to stop and attack (~1px overlap)
-  const ATTACK_REACH = 16; // hitbox extends from sprite edge
 
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     const e = game.enemies[i];
