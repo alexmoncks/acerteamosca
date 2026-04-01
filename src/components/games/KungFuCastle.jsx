@@ -69,28 +69,29 @@ async function buildScene(app) {
   }
   bgLayer.addChild(sky);
 
-  // -- Parallax mountains (bgLayer) — scaled 1.5x for visibility, higher position
+  // -- Parallax mountains (bgLayer) — just above the tree line
   if (scenery.parallaxMountains) {
-    const scale = 1.8;
+    const scale = 1.5;
     const mtnW = scenery.parallaxMountains.width * scale;
     const mtnH = scenery.parallaxMountains.height * scale;
-    const mtnY = GROUND_Y - mtnH - 20;
+    // Trees are 80px tall from GROUND_Y, mountains sit just above them
+    const mtnY = GROUND_Y - 80 - mtnH + 20;
     const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 2;
     for (let i = 0; i < mtnCount; i++) {
       const s = new Sprite(scenery.parallaxMountains);
       s.scale.set(scale);
       s.x = i * mtnW;
       s.y = mtnY;
-      s.alpha = 0.7;
+      s.alpha = 0.6;
       bgLayer.addChild(s);
     }
   }
 
-  // -- Parallax trees (midLayer) — touching the grass line
+  // -- Parallax trees (midLayer) — base touching the grass
   if (scenery.parallaxTrees) {
     const treeW = scenery.parallaxTrees.width;
     const treeH = scenery.parallaxTrees.height;
-    const treeY = GROUND_Y - treeH + 4; // +4 to overlap slightly into grass
+    const treeY = GROUND_Y - treeH + 6; // overlap into grass
     const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 2;
     for (let i = 0; i < treeCount; i++) {
       const s = new Sprite(scenery.parallaxTrees);
@@ -100,26 +101,35 @@ async function buildScene(app) {
     }
   }
 
-  // -- Ground: grass tiles on top, solid earth color below
+  // -- Ground: grass row at feet level + brick wall rows below
   if (scenery.tileset && scenery.tileset.length >= 16) {
     const TILE = 32;
     const tilesAcross = Math.ceil(LEVEL_WIDTH / TILE);
-    // Tile 12 (row3 col0) = full grass, tile 3 (row0 col3) = grass variant
-    const grassTiles = [scenery.tileset[12], scenery.tileset[3]];
 
-    // Single row of grass tiles at ground level
+    // Tile index map (from 4x4 grid):
+    // 12 = wang_15 (all grass, seamless)
+    // 3  = wang_12 (grass top + brick bottom — transition)
+    // 9  = wang_3  (brick top + grass bottom)
+    // 6  = wang_0  (mixed brick)
+    const grassTile = scenery.tileset[12]; // full grass, seamless
+    const transitionTile = scenery.tileset[3]; // grass top, brick bottom
+    const brickTile = scenery.tileset[9]; // mostly brick
+
+    // Row 0: grass at GROUND_Y (characters walk here)
     for (let col = 0; col < tilesAcross; col++) {
-      const s = new Sprite(grassTiles[col % grassTiles.length]);
+      const s = new Sprite(grassTile);
       s.x = col * TILE;
       s.y = GROUND_Y;
       gameLayer.addChild(s);
     }
+    // Row 1: transition (grass→brick) below
+    for (let col = 0; col < tilesAcross; col++) {
+      const s = new Sprite(transitionTile);
+      s.x = col * TILE;
+      s.y = GROUND_Y + TILE;
+      gameLayer.addChild(s);
+    }
   }
-  // Solid earth fill below tiles
-  const earthFill = new Graphics();
-  earthFill.rect(0, GROUND_Y + 32, LEVEL_WIDTH, CH - GROUND_Y);
-  earthFill.fill({ color: 0x1a2a15 });
-  gameLayer.addChild(earthFill);
 
   // -- Decorative props (anchor bottom-center, sitting ON the grass)
   const PROP_LAYOUT = [
