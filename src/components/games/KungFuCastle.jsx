@@ -459,19 +459,29 @@ function update(game, keys, dt) {
     special: { duration: 30, hitStart: 15, hitEnd: 5, reach: 999, hitH: 48, hitOy: 0, dmg: 999, hpCost: 2 },
   };
 
-  // Crouch: hold down
+  // Crouch / Sweep / Special
   const downDown = keys.has("ArrowDown") || keys.has("KeyS");
   const wasDown = player._prevDown || false;
+  const punchKey = keys.has("KeyZ") || keys.has("KeyN");
+  const kickKey = keys.has("KeyX") || keys.has("KeyM");
 
-  // Detect fresh down press for double-tap sweep
+  // SPECIAL: Z+X (punch+kick) simultaneously — costs 2% HP
+  if (punchKey && kickKey && !player.attacking && player.grounded) {
+    player.attacking = true;
+    player.attackType = "special";
+    player.attackTimer = ATTACKS.special.duration;
+    player.hp = Math.max(1, player.hp - ATTACKS.special.hpCost);
+    game.playerAnim.forcePlay("special");
+    spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xffd700, 20);
+  }
+
+  // SWEEP: double-tap down — slides forward
   if (downDown && !wasDown) {
     if (player._downTapTimer > 0 && !player.attacking && player.grounded) {
-      // Double-tap down = SWEEP
       player.attacking = true;
       player.attackType = "sweep";
       player.attackTimer = ATTACKS.sweep.duration;
       game.playerAnim.forcePlay("sweep");
-      player.vx = player.facing * PLAYER_WALK_SPEED * 1.2 * dt;
       player._downTapTimer = 0;
     } else {
       player._downTapTimer = DOUBLE_TAP_WINDOW;
@@ -480,45 +490,18 @@ function update(game, keys, dt) {
   player._prevDown = downDown;
   if (player._downTapTimer > 0) player._downTapTimer -= dt;
 
-  // Crouch (hold down, not attacking)
-  if (downDown && !player.attacking && player.grounded) {
-    player.crouching = true;
-    game.playerAnim.play("crouch");
-  } else {
-    player.crouching = false;
+  // Sweep: continuous slide during animation
+  if (player.attacking && player.attackType === "sweep") {
+    player.vx = player.facing * PLAYER_RUN_SPEED * 1.0 * dt;
+    player.x += player.vx;
   }
 
-  // Special: back → forward → kick (costs 2% HP, kills all in front, 4% to bosses)
-  // Detect: pressing opposite-of-facing then facing then kick
-  if (!player.attacking && player.grounded) {
-    const backKey = player.facing === 1
-      ? (keys.has("ArrowLeft") || keys.has("KeyA"))
-      : (keys.has("ArrowRight") || keys.has("KeyD"));
-    const fwdKey = player.facing === 1
-      ? (keys.has("ArrowRight") || keys.has("KeyD"))
-      : (keys.has("ArrowLeft") || keys.has("KeyA"));
-
-    // Track special input sequence
-    if (backKey && !fwdKey) player._specialStep = 1;
-    if (player._specialStep === 1 && fwdKey && !backKey) player._specialStep = 2;
-    if (player._specialStep === 2 && (keys.has("KeyX") || keys.has("KeyM"))) {
-      // Activate special!
-      player._specialStep = 0;
-      player.attacking = true;
-      player.attackType = "special";
-      player.attackTimer = ATTACKS.special.duration;
-      player.hp = Math.max(1, player.hp - ATTACKS.special.hpCost);
-      game.playerAnim.forcePlay("special");
-      // Screen flash effect
-      spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xffd700, 20);
-    }
-    // Reset if no input for a bit
-    if (!backKey && !fwdKey && !(keys.has("KeyX") || keys.has("KeyM"))) {
-      if (player._specialResetTimer > 0) player._specialResetTimer -= dt;
-      else player._specialStep = 0;
-    } else {
-      player._specialResetTimer = 20;
-    }
+  // CROUCH: hold down (not attacking)
+  if (downDown && !player.attacking && player.grounded) {
+    player.crouching = true;
+    game.playerAnim.forcePlay("crouch");
+  } else if (!downDown) {
+    player.crouching = false;
   }
 
   // Flying kick: jump + kick
@@ -825,10 +808,21 @@ export default function KungFuCastle() {
     };
   }, [screen]);
 
-  // ── Input ──────────────────────────────────────────────────────
+  // ── Input (prevent scroll on game keys) ────────────────────────
   useEffect(() => {
-    const onDown = (e) => keysRef.current.add(e.code);
-    const onUp = (e) => keysRef.current.delete(e.code);
+    const GAME_KEYS = new Set([
+      "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+      "Space", "KeyA", "KeyD", "KeyW", "KeyS",
+      "KeyZ", "KeyX", "KeyN", "KeyM",
+    ]);
+    const onDown = (e) => {
+      if (GAME_KEYS.has(e.code)) e.preventDefault();
+      keysRef.current.add(e.code);
+    };
+    const onUp = (e) => {
+      if (GAME_KEYS.has(e.code)) e.preventDefault();
+      keysRef.current.delete(e.code);
+    };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
     return () => {
@@ -850,7 +844,8 @@ export default function KungFuCastle() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
+        overflow: "hidden",
         background: "#050510",
         display: "flex",
         flexDirection: "column",
