@@ -398,7 +398,7 @@ function update(game, keys, dt) {
     if (e.alive) {
       if (Math.abs(e.vx) > 0.1) eAnim.play("walk");
       else eAnim.play("idle");
-      eAnim.setFacing(dx > 0 ? -1 : 1);
+      eAnim.setFacing(dx > 0 ? 1 : -1);
       eAnim.update(dt);
       eAnim.sprite.x = e.x + FRAME_SIZE / 2;
       eAnim.sprite.y = e.y + FRAME_SIZE;
