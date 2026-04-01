@@ -410,14 +410,14 @@ function update(game, keys, dt) {
 
     const eHb = getHitbox(e);
 
-    // --- Enemy attacks player when in range ---
-    if (dist <= COMBAT_RANGE && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
-      e.attackCooldown = 50 + Math.random() * 30; // cooldown between attacks
+    // --- Enemy attacks player when in range (only if player is on ground) ---
+    const playerInReach = dist <= COMBAT_RANGE && player.grounded;
+    if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
+      e.attackCooldown = 50 + Math.random() * 30;
       const attackAnim = e.type === "capanga-cinza" && Math.random() > 0.5 ? "kick" : "punch";
       eAnim.play(eAnim.anims[attackAnim] ? attackAnim : "punch");
 
-      // Damage player after short windup (only if close enough)
-      if (dist <= COMBAT_RANGE + 5 && !player.attacking) {
+      if (!player.attacking) {
         player.hp -= e.damage;
         game.playerAnim.play("hit");
         spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
