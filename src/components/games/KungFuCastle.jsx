@@ -2,46 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
 import AdBanner from "@/components/AdBanner";
+import { loadAllAssets } from "./kungfu-assets";
+import { AnimController } from "./kungfu-anim";
 
-// ── Asset paths (for future sprite loading) ────────────────────────────
-const ASSET_PATHS = {
-  player: {
-    idle: "/images/kungfucastle/player/idle.png",
-    walk: "/images/kungfucastle/player/walk.png",
-    punch: "/images/kungfucastle/player/punch.png",
-    kick: "/images/kungfucastle/player/kick.png",
-    jump: "/images/kungfucastle/player/jump.png",
-    crouch: "/images/kungfucastle/player/crouch.png",
-    flyKick: "/images/kungfucastle/player/flying-kick.png",
-    sweep: "/images/kungfucastle/player/sweep.png",
-    hit: "/images/kungfucastle/player/hit.png",
-    special: "/images/kungfucastle/player/special.png",
-  },
-  audio: {
-    sfx: {
-      punch: "/audio/kungfucastle/sfx/punch.mp3",
-      kick: "/audio/kungfucastle/sfx/kick.mp3",
-      hit: "/audio/kungfucastle/sfx/hit.mp3",
-      jump: "/audio/kungfucastle/sfx/jump.mp3",
-      enemyDeath: "/audio/kungfucastle/sfx/enemy-death.mp3",
-      powerup: "/audio/kungfucastle/sfx/powerup.mp3",
-      bossAppear: "/audio/kungfucastle/sfx/boss-appear.mp3",
-      victory: "/audio/kungfucastle/sfx/victory.mp3",
-    },
-    bgm: {
-      fase1: "/audio/kungfucastle/bgm/fase1-jardim.mp3",
-      fase2: "/audio/kungfucastle/bgm/fase2-portao.mp3",
-      fase3: "/audio/kungfucastle/bgm/fase3-interior.mp3",
-      fase4: "/audio/kungfucastle/bgm/fase4-torre.mp3",
-      fase5: "/audio/kungfucastle/bgm/fase5-boss.mp3",
-      gameover: "/audio/kungfucastle/bgm/gameover.mp3",
-    },
-  },
-};
-
-// ── Constants ──────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────
 const CW = 480;
 const CH = 320;
 const GROUND_Y = 260;
@@ -52,59 +18,32 @@ const GRAVITY = 0.6;
 const JUMP_FORCE = -10;
 const LEVEL_WIDTH = 2400;
 
-const ENEMY_COLORS = [0x8b5cf6, 0x6366f1, 0xa855f7, 0x7c3aed];
+const FRAME_SIZE = 48;
+
+const ENEMY_STATS = {
+  "capanga-branco": { hp: 1, speed: 1.2, damage: 5,  score: 100 },
+  "capanga-cinza":  { hp: 2, speed: 1.5, damage: 8,  score: 150 },
+  "capanga-rapido": { hp: 1, speed: 3.0, damage: 6,  score: 150 },
+  "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200 },
+  "atirador":       { hp: 2, speed: 0,   damage: 8,  score: 200 },
+  "ninja":          { hp: 3, speed: 2.0, damage: 10, score: 200 },
+  "ninja-espada":   { hp: 4, speed: 1.8, damage: 15, score: 250 },
+  "samurai":        { hp: 5, speed: 1.0, damage: 18, score: 300 },
+  "kunoichi":       { hp: 3, speed: 3.5, damage: 12, score: 250 },
+  "lancador-bomba": { hp: 3, speed: 1.0, damage: 15, score: 250 },
+};
+
+const PHASE_ENEMIES = ["capanga-branco", "capanga-cinza", "capanga-rapido"];
 
 // ── Translation ref (accessible from non-React functions) ──────────────
 let _t = (k) => k;
 
 // ============================================================
-// DRAW HELPERS (Graphics placeholders)
-// ============================================================
-function drawPlayerGraphics() {
-  const g = new Graphics();
-  // Head
-  g.circle(PLAYER_W / 2, 8, 8);
-  g.fill({ color: 0xf4c48a });
-  // Hair
-  g.rect(PLAYER_W / 2 - 8, 0, 16, 6);
-  g.fill({ color: 0x1a1a1a });
-  // Headband
-  g.rect(PLAYER_W / 2 - 10, 5, 20, 3);
-  g.fill({ color: 0xdc2626 });
-  // Body (gi)
-  g.rect(4, 16, 24, 18);
-  g.fill({ color: 0xffffff });
-  // Belt
-  g.rect(4, 26, 24, 3);
-  g.fill({ color: 0x1a1a1a });
-  // Legs
-  g.rect(6, 34, 8, 14);
-  g.fill({ color: 0xffffff });
-  g.rect(18, 34, 8, 14);
-  g.fill({ color: 0xffffff });
-  return g;
-}
-
-function drawEnemyGraphics(color) {
-  const g = new Graphics();
-  // Head
-  g.circle(16, 8, 7);
-  g.fill({ color: 0xd4a574 });
-  // Body
-  g.rect(4, 15, 24, 18);
-  g.fill({ color });
-  // Legs
-  g.rect(6, 33, 8, 12);
-  g.fill({ color });
-  g.rect(18, 33, 8, 12);
-  g.fill({ color });
-  return g;
-}
-
-// ============================================================
 // BUILD SCENE
 // ============================================================
-function buildScene(app) {
+async function buildScene(app) {
+  const textures = await loadAllAssets();
+
   const bgLayer = new Container();
   const midLayer = new Container();
   const gameLayer = new Container();
@@ -163,10 +102,12 @@ function buildScene(app) {
   }
 
   // Player
-  const playerGfx = drawPlayerGraphics();
-  playerGfx.x = 80;
-  playerGfx.y = GROUND_Y - PLAYER_H;
-  gameLayer.addChild(playerGfx);
+  const playerSprite = new Sprite(textures.player.idle.frames[0]);
+  playerSprite.anchor.set(0.5, 1); // pivot at feet
+  playerSprite.x = 80 + FRAME_SIZE / 2;
+  playerSprite.y = GROUND_Y;
+  gameLayer.addChild(playerSprite);
+  const playerAnim = new AnimController({ sprite: playerSprite, anims: textures.player });
 
   // HUD - HP bar background
   const hpBg = new Graphics();
@@ -227,10 +168,12 @@ function buildScene(app) {
   return {
     app,
     bgLayer, midLayer, gameLayer, fgLayer, hudLayer,
-    playerGfx,
+    playerSprite,
+    playerAnim,
+    textures,
+    enemyAnims: [],
     hpBar, scoreText, phaseText, livesText, phaseTitle, phaseSub,
     enemies: [],
-    enemyGfxList: [],
     particles: [],
     player: {
       x: 80,
@@ -244,6 +187,8 @@ function buildScene(app) {
       grounded: true,
       attacking: false,
       attackTimer: 0,
+      attackType: null,
+      hitbox: { w: 28, h: 40, ox: 10, oy: 4 },
     },
     cameraX: 0,
     phase: 1,
@@ -257,32 +202,34 @@ function buildScene(app) {
 // ============================================================
 // SPAWN ENEMY
 // ============================================================
-function spawnEnemy(game) {
+function spawnEnemy(game, type) {
+  if (!type) {
+    type = PHASE_ENEMIES[Math.floor(Math.random() * PHASE_ENEMIES.length)];
+  }
+  const stats = ENEMY_STATS[type];
+  if (!stats || !game.textures.enemies[type]) return;
+
   const side = Math.random() > 0.5 ? 1 : -1;
-  const color = ENEMY_COLORS[Math.floor(Math.random() * ENEMY_COLORS.length)];
-  const ex = side === 1
-    ? game.cameraX + CW + 20
-    : game.cameraX - 40;
+  const ex = side === 1 ? game.cameraX + CW + 20 : game.cameraX - FRAME_SIZE;
+
+  const sprite = new Sprite(game.textures.enemies[type].idle.frames[0]);
+  sprite.anchor.set(0.5, 1);
+  sprite.x = ex + FRAME_SIZE / 2;
+  sprite.y = GROUND_Y;
+  game.gameLayer.addChild(sprite);
+  const anim = new AnimController({ sprite, anims: game.textures.enemies[type] });
 
   const enemy = {
-    x: ex,
-    y: GROUND_Y - 45,
-    w: 32,
-    h: 45,
-    vx: side === -1 ? 1.2 : -1.2,
-    hp: 2,
-    color,
-    alive: true,
-    hitTimer: 0,
+    x: ex, y: GROUND_Y - FRAME_SIZE,
+    w: FRAME_SIZE, h: FRAME_SIZE,
+    vx: side === -1 ? stats.speed : -stats.speed,
+    hp: stats.hp, damage: stats.damage, score: stats.score,
+    type, alive: true, hitTimer: 0,
+    hitbox: { w: 28, h: 40, ox: 10, oy: 8 },
   };
 
-  const gfx = drawEnemyGraphics(color);
-  gfx.x = enemy.x;
-  gfx.y = enemy.y;
-  game.gameLayer.addChild(gfx);
-
   game.enemies.push(enemy);
-  game.enemyGfxList.push(gfx);
+  game.enemyAnims.push(anim);
 }
 
 // ============================================================
@@ -312,6 +259,18 @@ function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
 }
 
 // ============================================================
+// GEThitbox HELPER
+// ============================================================
+function getHitbox(entity) {
+  return {
+    x: entity.x + (entity.hitbox?.ox || 0),
+    y: entity.y + (entity.hitbox?.oy || 0),
+    w: entity.hitbox?.w || 28,
+    h: entity.hitbox?.h || 40,
+  };
+}
+
+// ============================================================
 // UPDATE (called every tick — NO re-renders)
 // ============================================================
 function update(game, keys, dt) {
@@ -319,17 +278,19 @@ function update(game, keys, dt) {
   game.frame++;
 
   // ---- Player movement ----
+  player.vx = 0;
   const spd = PLAYER_SPEED * dt;
   if (!player.attacking) {
     if (keys.has("ArrowLeft") || keys.has("KeyA")) {
-      player.x -= spd;
+      player.vx = -spd;
       player.facing = -1;
     }
     if (keys.has("ArrowRight") || keys.has("KeyD")) {
-      player.x += spd;
+      player.vx = spd;
       player.facing = 1;
     }
   }
+  player.x += player.vx;
 
   // Jump
   if ((keys.has("Space") || keys.has("ArrowUp") || keys.has("KeyW")) && player.grounded) {
@@ -341,10 +302,14 @@ function update(game, keys, dt) {
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded) {
     player.attacking = true;
     player.attackTimer = 15;
+    player.attackType = "punch";
+    game.playerAnim.play("punch");
   }
   if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && player.grounded) {
     player.attacking = true;
     player.attackTimer = 20;
+    player.attackType = "kick";
+    game.playerAnim.play("kick");
   }
 
   // Gravity
@@ -364,8 +329,20 @@ function update(game, keys, dt) {
     player.attackTimer -= dt;
     if (player.attackTimer <= 0) {
       player.attacking = false;
+      player.attackType = null;
     }
   }
+
+  // ---- Player animation state ----
+  if (!player.attacking) {
+    if (!player.grounded) game.playerAnim.play("jump");
+    else if (Math.abs(player.vx) > 0.5) game.playerAnim.play("walk");
+    else game.playerAnim.play("idle");
+  }
+  game.playerAnim.setFacing(player.facing);
+  game.playerAnim.update(dt);
+  game.playerSprite.x = player.x + FRAME_SIZE / 2;
+  game.playerSprite.y = player.y + PLAYER_H;
 
   // ---- Spawn enemies ----
   game.spawnTimer -= dt;
@@ -375,22 +352,28 @@ function update(game, keys, dt) {
   }
 
   // ---- Update enemies ----
+  const playerHb = getHitbox(player);
+
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     const e = game.enemies[i];
+    const eAnim = game.enemyAnims[i];
     if (!e.alive) continue;
 
     // Move toward player
     const dx = player.x - e.x;
-    e.vx = dx > 0 ? 1.2 * dt : -1.2 * dt;
+    e.vx = dx > 0 ? ENEMY_STATS[e.type].speed * dt : -ENEMY_STATS[e.type].speed * dt;
     e.x += e.vx;
 
     if (e.hitTimer > 0) e.hitTimer -= dt;
 
+    const eHb = getHitbox(e);
+
     // Attack range — damage player
-    if (e.hitTimer <= 0 && aabb(e.x, e.y, e.w, e.h, player.x, player.y, PLAYER_W, PLAYER_H)) {
+    if (e.hitTimer <= 0 && aabb(eHb.x, eHb.y, eHb.w, eHb.h, playerHb.x, playerHb.y, playerHb.w, playerHb.h)) {
       if (!player.attacking) {
-        player.hp -= 5;
+        player.hp -= e.damage;
         e.hitTimer = 60;
+        game.playerAnim.play("hit");
         spawnParticles(game, player.x + PLAYER_W / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
       }
     }
@@ -398,30 +381,36 @@ function update(game, keys, dt) {
     // Player attack hits enemy
     if (player.attacking && player.attackTimer > 5) {
       const attackX = player.facing === 1 ? player.x + PLAYER_W : player.x - 20;
-      if (aabb(attackX, player.y, 20, PLAYER_H, e.x, e.y, e.w, e.h)) {
+      if (aabb(attackX, player.y, 20, PLAYER_H, eHb.x, eHb.y, eHb.w, eHb.h)) {
         e.hp--;
         e.hitTimer = 30;
-        spawnParticles(game, e.x + e.w / 2, e.y + e.h / 2, e.color, 6);
+        eAnim.play("hit");
+        spawnParticles(game, e.x + e.w / 2, e.y + e.h / 2, 0xff8800, 6);
         if (e.hp <= 0) {
           e.alive = false;
-          player.score += 100;
+          player.score += e.score;
           spawnParticles(game, e.x + e.w / 2, e.y + e.h / 2, 0xffd700, 12);
         }
       }
     }
 
-    // Sync gfx
-    game.enemyGfxList[i].x = e.x;
-    game.enemyGfxList[i].y = e.y;
-    game.enemyGfxList[i].alpha = e.alive ? (e.hitTimer > 0 ? 0.5 : 1) : 0;
+    // Enemy animation state
+    if (e.alive) {
+      if (Math.abs(e.vx) > 0.1) eAnim.play("walk");
+      else eAnim.play("idle");
+      eAnim.setFacing(dx > 0 ? -1 : 1);
+      eAnim.update(dt);
+      eAnim.sprite.x = e.x + FRAME_SIZE / 2;
+      eAnim.sprite.y = e.y + FRAME_SIZE;
+    }
   }
 
   // Remove dead enemies
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     if (!game.enemies[i].alive) {
-      game.enemyGfxList[i].destroy();
+      game.enemyAnims[i].sprite.destroy();
       game.enemies.splice(i, 1);
-      game.enemyGfxList.splice(i, 1);
+      game.enemyAnims.splice(i, 1);
     }
   }
 
@@ -449,15 +438,6 @@ function update(game, keys, dt) {
   game.gameLayer.x = -game.cameraX;
   game.fgLayer.x = -game.cameraX;
   // hudLayer stays at 0
-
-  // ---- Sync player graphics ----
-  game.playerGfx.x = player.x;
-  game.playerGfx.y = player.y;
-  game.playerGfx.scale.x = player.facing;
-  if (player.facing === -1) game.playerGfx.x += PLAYER_W;
-
-  // Flash player when attacking
-  game.playerGfx.alpha = player.attacking ? (Math.floor(game.frame / 2) % 2 === 0 ? 1 : 0.7) : 1;
 
   // ---- HUD ----
   game.hpBar.clear();
@@ -535,7 +515,8 @@ export default function KungFuCastle() {
       app.canvas.style.border = "2px solid rgba(220,38,38,0.27)";
       appRef.current = app;
 
-      const scene = buildScene(app);
+      const scene = await buildScene(app);
+      if (destroyed) { app.destroy(true, { children: true }); return; }
       gameRef.current = scene;
 
       app.ticker.add((ticker) => {
