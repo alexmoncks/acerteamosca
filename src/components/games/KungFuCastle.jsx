@@ -52,53 +52,97 @@ async function buildScene(app) {
 
   app.stage.addChild(bgLayer, midLayer, gameLayer, fgLayer, hudLayer);
 
-  // -- Background: sky gradient + mountains
+  const { scenery } = textures;
+
+  // -- Sky (solid night color)
   const sky = new Graphics();
-  sky.rect(0, 0, LEVEL_WIDTH, GROUND_Y);
-  sky.fill({ color: 0x1a1a2e });
+  sky.rect(0, 0, LEVEL_WIDTH, CH);
+  sky.fill({ color: 0x0a0a1e });
   bgLayer.addChild(sky);
 
-  // Distant mountains (parallax bg)
-  for (let i = 0; i < 12; i++) {
-    const m = new Graphics();
-    const mx = i * 220;
-    const mh = 40 + Math.random() * 60;
-    m.moveTo(mx, GROUND_Y);
-    m.lineTo(mx + 60 + Math.random() * 40, GROUND_Y - mh);
-    m.lineTo(mx + 120 + Math.random() * 40, GROUND_Y);
-    m.closePath();
-    m.fill({ color: 0x16213e });
-    bgLayer.addChild(m);
+  // -- Parallax mountains (bgLayer, parallax 0.15)
+  // Texture is 256×64; tile across LEVEL_WIDTH
+  if (scenery.parallaxMountains) {
+    const mtnW = scenery.parallaxMountains.width;
+    const mtnH = scenery.parallaxMountains.height;
+    const mtnY = GROUND_Y - mtnH;
+    const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 1;
+    for (let i = 0; i < mtnCount; i++) {
+      const s = new Sprite(scenery.parallaxMountains);
+      s.x = i * mtnW;
+      s.y = mtnY;
+      bgLayer.addChild(s);
+    }
   }
 
-  // Mid-layer: trees / lanterns
-  for (let i = 0; i < 20; i++) {
-    const tree = new Graphics();
-    const tx = i * 130 + Math.random() * 40;
-    // Trunk
-    tree.rect(tx + 6, GROUND_Y - 40, 8, 40);
-    tree.fill({ color: 0x4a3728 });
-    // Canopy
-    tree.circle(tx + 10, GROUND_Y - 50, 18);
-    tree.fill({ color: 0x2d5a3a });
-    midLayer.addChild(tree);
+  // -- Parallax trees (midLayer, parallax 0.5)
+  // Texture is 256×80; tile across LEVEL_WIDTH
+  if (scenery.parallaxTrees) {
+    const treeW = scenery.parallaxTrees.width;
+    const treeH = scenery.parallaxTrees.height;
+    const treeY = GROUND_Y - treeH;
+    const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 1;
+    for (let i = 0; i < treeCount; i++) {
+      const s = new Sprite(scenery.parallaxTrees);
+      s.x = i * treeW;
+      s.y = treeY;
+      midLayer.addChild(s);
+    }
   }
 
-  // Ground
-  const ground = new Graphics();
-  ground.rect(0, GROUND_Y, LEVEL_WIDTH, CH - GROUND_Y);
-  ground.fill({ color: 0x2d2d44 });
-  // Ground line
-  ground.rect(0, GROUND_Y, LEVEL_WIDTH, 2);
-  ground.fill({ color: 0x4a4a6a });
-  gameLayer.addChild(ground);
+  // -- Tileset ground (gameLayer)
+  // Ground strip: GROUND_Y to CH = 60px tall → 2 rows of 32px tiles (fits within 60px)
+  // Top row uses grass-edge tiles (index 2/3), fill row uses solid tile (index 5)
+  if (scenery.tileset && scenery.tileset.length >= 16) {
+    const TILE = 32;
+    const tilesAcross = Math.ceil(LEVEL_WIDTH / TILE);
+    const topTiles  = [scenery.tileset[2], scenery.tileset[3]]; // row0 col2/col3 — grass top edge
+    const fillTile  = scenery.tileset[5];                        // row1 col1 — solid path
 
-  // Stone path details
-  for (let i = 0; i < LEVEL_WIDTH / 40; i++) {
-    const stone = new Graphics();
-    stone.rect(i * 40 + 2, GROUND_Y + 8, 36, 4);
-    stone.fill({ color: 0x3a3a54 });
-    gameLayer.addChild(stone);
+    // Row 0: grass-top edge at GROUND_Y
+    for (let col = 0; col < tilesAcross; col++) {
+      const s = new Sprite(topTiles[col % topTiles.length]);
+      s.x = col * TILE;
+      s.y = GROUND_Y;
+      gameLayer.addChild(s);
+    }
+    // Row 1: solid fill below
+    for (let col = 0; col < tilesAcross; col++) {
+      const s = new Sprite(fillTile);
+      s.x = col * TILE;
+      s.y = GROUND_Y + TILE;
+      gameLayer.addChild(s);
+    }
+  }
+
+  // -- Decorative props (gameLayer, anchor bottom-center at GROUND_Y)
+  const PROP_LAYOUT = [
+    { asset: "torii-vermelho",       x: 60 },
+    { asset: "cerejeira-sakura",     x: 200 },
+    { asset: "lanterna-ishidoro",    x: 350 },
+    { asset: "pedra-decorativa",     x: 500 },
+    { asset: "cerejeira-sakura",     x: 700 },
+    { asset: "komainu",              x: 850 },
+    { asset: "cerca-bambu",          x: 1000 },
+    { asset: "lanterna-ishidoro",    x: 1150 },
+    { asset: "cerejeira-sakura",     x: 1350 },
+    { asset: "pedra-decorativa",     x: 1500 },
+    { asset: "komainu",              x: 1650 },
+    { asset: "lanterna-ishidoro",    x: 1800 },
+    { asset: "cerejeira-sakura",     x: 1950 },
+    { asset: "cerca-bambu",          x: 2100 },
+    { asset: "portao-arco-pedra",    x: 2300 },
+    { asset: "escada-pedra-externa", x: 2370 },
+  ];
+
+  for (const { asset, x } of PROP_LAYOUT) {
+    const tex = scenery.props[asset];
+    if (!tex) continue;
+    const s = new Sprite(tex);
+    s.anchor.set(0.5, 1);
+    s.x = x;
+    s.y = GROUND_Y;
+    gameLayer.addChild(s);
   }
 
   // Player
