@@ -13,7 +13,9 @@ const CH = 320;
 const GROUND_Y = 260;
 const PLAYER_W = 32;
 const PLAYER_H = 48;
-const PLAYER_SPEED = 3;
+const PLAYER_WALK_SPEED = 1.4; // similar to capanga-branco (1.2)
+const PLAYER_RUN_SPEED = 3.2;
+const DOUBLE_TAP_WINDOW = 12; // frames to detect double-tap
 const GRAVITY = 0.6;
 const JUMP_FORCE = -10;
 const LEVEL_WIDTH = 2400;
@@ -147,22 +149,22 @@ async function buildScene(app) {
   // -- Decorative props
   // layer: "bg" = behind characters (midLayer), "fg" = in front (fgLayer), "game" = same level (gameLayer)
   const PROP_LAYOUT = [
-    { asset: "torii-vermelho",       x: 60,   y: 10, layer: "bg" },
-    { asset: "cerejeira-sakura",     x: 200,  y: 6,  layer: "bg" },
-    { asset: "lanterna-ishidoro",    x: 350,  y: 2,  layer: "fg" },
-    { asset: "pedra-decorativa",     x: 500,  y: 2,  layer: "fg" },
-    { asset: "cerejeira-sakura",     x: 700,  y: 6,  layer: "bg" },
-    { asset: "komainu",              x: 850,  y: 2,  layer: "fg" },
-    { asset: "cerca-bambu",          x: 1000, y: 2,  layer: "fg" },
-    { asset: "lanterna-ishidoro",    x: 1150, y: 2,  layer: "fg" },
-    { asset: "cerejeira-sakura",     x: 1350, y: 6,  layer: "bg" },
-    { asset: "pedra-decorativa",     x: 1500, y: 0,  layer: "fg" },
-    { asset: "komainu",              x: 1650, y: 0,  layer: "fg" },
-    { asset: "lanterna-ishidoro",    x: 1800, y: 0,  layer: "fg" },
-    { asset: "cerejeira-sakura",     x: 1950, y: 6,  layer: "bg" },
-    { asset: "cerca-bambu",          x: 2100, y: 0,  layer: "fg" },
-    { asset: "portao-arco-pedra",    x: 2300, y: 8,  layer: "bg" },
-    { asset: "escada-pedra-externa", x: 2370, y: 10, layer: "bg" },
+    { asset: "torii-vermelho",       x: 60,   y: 10, layer: "game" },
+    { asset: "cerejeira-sakura",     x: 200,  y: 5,  layer: "bg" },
+    { asset: "lanterna-ishidoro",    x: 350,  y: 4,  layer: "fg" },
+    { asset: "pedra-decorativa",     x: 500,  y: 4,  layer: "game" },
+    { asset: "cerejeira-sakura",     x: 700,  y: 5,  layer: "bg" },
+    { asset: "komainu",              x: 850,  y: 6,  layer: "game" },
+    { asset: "cerca-bambu",          x: 1000, y: 4,  layer: "fg" },
+    { asset: "lanterna-ishidoro",    x: 1150, y: 4,  layer: "fg" },
+    { asset: "cerejeira-sakura",     x: 1350, y: 5,  layer: "game" },
+    { asset: "pedra-decorativa",     x: 1500, y: 7,  layer: "fg" },
+    { asset: "komainu",              x: 1650, y: 4,  layer: "fg" },
+    { asset: "lanterna-ishidoro",    x: 1800, y: 6,  layer: "game" },
+    { asset: "cerejeira-sakura",     x: 1950, y: 5,  layer: "bg" },
+    { asset: "cerca-bambu",          x: 2100, y: 6,  layer: "fg" },
+    { asset: "portao-arco-pedra",    x: 2300, y: 4,  layer: "game" },
+    { asset: "escada-pedra-externa", x: 2370, y: 10, layer: "game" },
   ];
 
   const layerMap = { bg: midLayer, game: gameLayer, fg: fgLayer };
@@ -263,6 +265,9 @@ async function buildScene(app) {
       attacking: false,
       attackTimer: 0,
       attackType: null,
+      running: false,
+      tapTimer: { left: 0, right: 0 },
+      currentSpeed: 0, // for deceleration
       hitbox: { w: 28, h: 40, ox: 10, oy: 4 },
     },
     cameraX: 0,
@@ -389,19 +394,54 @@ function update(game, keys, dt) {
     return;
   }
 
-  // ---- Player movement ----
-  player.vx = 0;
-  const spd = PLAYER_SPEED * dt;
-  if (!player.attacking) {
-    if (keys.has("ArrowLeft") || keys.has("KeyA")) {
-      player.vx = -spd;
-      player.facing = -1;
-    }
-    if (keys.has("ArrowRight") || keys.has("KeyD")) {
-      player.vx = spd;
-      player.facing = 1;
-    }
+  // ---- Player movement (walk / double-tap to run / decelerate on release) ----
+  const leftDown = keys.has("ArrowLeft") || keys.has("KeyA");
+  const rightDown = keys.has("ArrowRight") || keys.has("KeyD");
+  const wasLeft = player._prevLeft || false;
+  const wasRight = player._prevRight || false;
+
+  // Detect fresh key press (rising edge) for double-tap
+  if (leftDown && !wasLeft) {
+    player.running = player.tapTimer.left > 0; // second tap within window = run
+    player.tapTimer.left = DOUBLE_TAP_WINDOW;
   }
+  if (rightDown && !wasRight) {
+    player.running = player.tapTimer.right > 0;
+    player.tapTimer.right = DOUBLE_TAP_WINDOW;
+  }
+  player._prevLeft = leftDown;
+  player._prevRight = rightDown;
+
+  // Count down tap timers
+  if (player.tapTimer.left > 0) player.tapTimer.left -= dt;
+  if (player.tapTimer.right > 0) player.tapTimer.right -= dt;
+
+  // Target speed based on input
+  const targetSpeed = player.running ? PLAYER_RUN_SPEED : PLAYER_WALK_SPEED;
+  let moveDir = 0;
+  if (!player.attacking) {
+    if (leftDown) { moveDir = -1; player.facing = -1; }
+    if (rightDown) { moveDir = 1; player.facing = 1; }
+  }
+
+  if (moveDir !== 0) {
+    // Accelerate toward target speed
+    const accel = player.running ? 0.25 : 0.2;
+    player.currentSpeed += (targetSpeed - player.currentSpeed) * accel;
+    player.vx = moveDir * player.currentSpeed * dt;
+  } else {
+    // Decelerate when no input
+    player.currentSpeed *= 0.85; // friction
+    if (player.currentSpeed < 0.1) { player.currentSpeed = 0; player.running = false; }
+    player.vx = player.facing * player.currentSpeed * dt;
+  }
+
+  // Stop running if direction changes
+  if ((leftDown && player.facing === 1) || (rightDown && player.facing === -1)) {
+    player.running = false;
+    player.currentSpeed = PLAYER_WALK_SPEED;
+  }
+
   player.x += player.vx;
 
   // Jump
@@ -423,7 +463,7 @@ function update(game, keys, dt) {
     player.attackTimer = ATTACKS.flyKick.duration;
     game.playerAnim.forcePlay("flyKick");
     // Boost forward in facing direction
-    player.vx = player.facing * PLAYER_SPEED * 1.5;
+    player.vx = player.facing * PLAYER_RUN_SPEED * 1.5 * dt;
   }
   // Ground punch
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded) {
@@ -471,8 +511,8 @@ function update(game, keys, dt) {
       // Just landed — force-reset past jump/flyKick priority
       player.attacking = false;
       player.attackType = null;
-      game.playerAnim.forcePlay(Math.abs(player.vx) > 0.5 ? "walk" : "idle");
-    } else if (Math.abs(player.vx) > 0.5) {
+      game.playerAnim.forcePlay(player.currentSpeed > 0.3 ? "walk" : "idle");
+    } else if (player.currentSpeed > 0.3) {
       game.playerAnim.play("walk");
     } else {
       game.playerAnim.play("idle");
