@@ -224,7 +224,7 @@ function spawnEnemy(game, type) {
     w: FRAME_SIZE, h: FRAME_SIZE,
     vx: side === -1 ? stats.speed : -stats.speed,
     hp: stats.hp, damage: stats.damage, score: stats.score,
-    type, alive: true, hitTimer: 0,
+    type, alive: true, hitTimer: 0, attackCooldown: 30 + Math.random() * 30,
     hitbox: { w: 28, h: 40, ox: 10, oy: 8 },
   };
 
@@ -353,65 +353,100 @@ function update(game, keys, dt) {
 
   // ---- Update enemies ----
   const playerHb = getHitbox(player);
+  const COMBAT_RANGE = 38; // distance to stop and attack
+  const ATTACK_REACH = 16; // hitbox extends from sprite edge
 
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     const e = game.enemies[i];
     const eAnim = game.enemyAnims[i];
-    if (!e.alive) continue;
 
-    // Move toward player
+    // --- Dead enemy: knockback + fade out ---
+    if (!e.alive) {
+      if (!e.deathTimer) {
+        e.deathTimer = 30;
+        e.knockVx = (player.x > e.x ? -3 : 3); // fly away from player
+      }
+      e.deathTimer -= dt;
+      e.x += e.knockVx * dt;
+      eAnim.sprite.x = e.x + FRAME_SIZE / 2;
+      eAnim.sprite.alpha = Math.max(0, e.deathTimer / 30);
+      eAnim.sprite.y += 0.5 * dt; // sink slightly
+      if (e.deathTimer <= 0) {
+        eAnim.sprite.destroy();
+        game.enemies.splice(i, 1);
+        game.enemyAnims.splice(i, 1);
+      }
+      continue;
+    }
+
     const dx = player.x - e.x;
-    e.vx = dx > 0 ? ENEMY_STATS[e.type].speed * dt : -ENEMY_STATS[e.type].speed * dt;
-    e.x += e.vx;
+    const dist = Math.abs(dx);
+    const facing = dx > 0 ? 1 : -1;
 
     if (e.hitTimer > 0) e.hitTimer -= dt;
+    if (e.attackCooldown > 0) e.attackCooldown -= dt;
+
+    // --- Movement: stop at combat range, don't overlap ---
+    if (dist > COMBAT_RANGE && e.hitTimer <= 0) {
+      const spd = (ENEMY_STATS[e.type]?.speed || 1.2) * dt;
+      e.vx = facing * spd;
+      e.x += e.vx;
+    } else {
+      e.vx = 0;
+    }
 
     const eHb = getHitbox(e);
 
-    // Attack range — damage player
-    if (e.hitTimer <= 0 && aabb(eHb.x, eHb.y, eHb.w, eHb.h, playerHb.x, playerHb.y, playerHb.w, playerHb.h)) {
-      if (!player.attacking) {
+    // --- Enemy attacks player when in range ---
+    if (dist <= COMBAT_RANGE && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
+      e.attackCooldown = 50 + Math.random() * 30; // cooldown between attacks
+      const attackAnim = e.type === "capanga-cinza" && Math.random() > 0.5 ? "kick" : "punch";
+      eAnim.play(eAnim.anims[attackAnim] ? attackAnim : "punch");
+
+      // Damage player after short windup (only if close enough)
+      if (dist <= COMBAT_RANGE + 5 && !player.attacking) {
         player.hp -= e.damage;
-        e.hitTimer = 60;
         game.playerAnim.play("hit");
-        spawnParticles(game, player.x + PLAYER_W / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
+        spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
       }
     }
 
-    // Player attack hits enemy
+    // --- Player attack hits enemy (aligned with sprite) ---
     if (player.attacking && player.attackTimer > 5) {
-      const attackX = player.facing === 1 ? player.x + PLAYER_W : player.x - 20;
-      if (aabb(attackX, player.y, 20, PLAYER_H, eHb.x, eHb.y, eHb.w, eHb.h)) {
-        e.hp--;
-        e.hitTimer = 30;
-        eAnim.play("hit");
-        spawnParticles(game, e.x + e.w / 2, e.y + e.h / 2, 0xff8800, 6);
-        if (e.hp <= 0) {
-          e.alive = false;
-          player.score += e.score;
-          spawnParticles(game, e.x + e.w / 2, e.y + e.h / 2, 0xffd700, 12);
+      // Attack hitbox extends from player center toward facing direction
+      const px = player.x + FRAME_SIZE / 2;
+      const attackX = player.facing === 1 ? px : px - ATTACK_REACH - 20;
+      const attackW = ATTACK_REACH + 20;
+      if (aabb(attackX, player.y, attackW, PLAYER_H, eHb.x, eHb.y, eHb.w, eHb.h)) {
+        if (!e.justHit) { // prevent multi-hit per attack
+          e.justHit = true;
+          e.hp--;
+          e.hitTimer = 20;
+          eAnim.play("hit");
+          // Knockback on hit
+          e.x += player.facing * 12;
+          spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xff8800, 6);
+          if (e.hp <= 0) {
+            e.alive = false;
+            player.score += e.score;
+            spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xffd700, 12);
+          }
         }
       }
+    } else {
+      e.justHit = false; // reset when player stops attacking
     }
 
-    // Enemy animation state
-    if (e.alive) {
+    // --- Enemy animation state ---
+    if (e.alive && e.hitTimer <= 0) {
       if (Math.abs(e.vx) > 0.1) eAnim.play("walk");
-      else eAnim.play("idle");
-      eAnim.setFacing(dx > 0 ? 1 : -1);
-      eAnim.update(dt);
-      eAnim.sprite.x = e.x + FRAME_SIZE / 2;
-      eAnim.sprite.y = e.y + FRAME_SIZE;
+      else if (dist > COMBAT_RANGE) eAnim.play("idle");
+      // if in combat range, attack anim plays from above
     }
-  }
-
-  // Remove dead enemies
-  for (let i = game.enemies.length - 1; i >= 0; i--) {
-    if (!game.enemies[i].alive) {
-      game.enemyAnims[i].sprite.destroy();
-      game.enemies.splice(i, 1);
-      game.enemyAnims.splice(i, 1);
-    }
+    eAnim.setFacing(facing);
+    eAnim.update(dt);
+    eAnim.sprite.x = e.x + FRAME_SIZE / 2;
+    eAnim.sprite.y = e.y + FRAME_SIZE;
   }
 
   // ---- Particles ----
