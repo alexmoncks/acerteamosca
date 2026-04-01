@@ -144,34 +144,36 @@ async function buildScene(app) {
     }
   }
 
-  // -- Decorative props (anchor bottom-center, sitting ON the grass)
+  // -- Decorative props
+  // layer: "bg" = behind characters (midLayer), "fg" = in front (fgLayer), "game" = same level (gameLayer)
   const PROP_LAYOUT = [
-    { asset: "torii-vermelho",       x: 60  , y: 10},
-    { asset: "cerejeira-sakura",     x: 200 , y: 6},
-    { asset: "lanterna-ishidoro",    x: 350 , y: 2},
-    { asset: "pedra-decorativa",     x: 500 , y: 2},
-    { asset: "cerejeira-sakura",     x: 700 , y: 6},
-    { asset: "komainu",              x: 850 , y: 2},
-    { asset: "cerca-bambu",          x: 1000 , y: 2},
-    { asset: "lanterna-ishidoro",    x: 1150 , y: 2},
-    { asset: "cerejeira-sakura",     x: 1350 , y: 6},
-    { asset: "pedra-decorativa",     x: 1500 , y: 0},
-    { asset: "komainu",              x: 1650 , y: 0},
-    { asset: "lanterna-ishidoro",    x: 1800 , y: 0},
-    { asset: "cerejeira-sakura",     x: 1950 , y: 6},
-    { asset: "cerca-bambu",          x: 2100 , y: 0},
-    { asset: "portao-arco-pedra",    x: 2300 , y: 8},
-    { asset: "escada-pedra-externa", x: 2370 , y: 10},
+    { asset: "torii-vermelho",       x: 60,   y: 10, layer: "bg" },
+    { asset: "cerejeira-sakura",     x: 200,  y: 6,  layer: "bg" },
+    { asset: "lanterna-ishidoro",    x: 350,  y: 2,  layer: "fg" },
+    { asset: "pedra-decorativa",     x: 500,  y: 2,  layer: "fg" },
+    { asset: "cerejeira-sakura",     x: 700,  y: 6,  layer: "bg" },
+    { asset: "komainu",              x: 850,  y: 2,  layer: "fg" },
+    { asset: "cerca-bambu",          x: 1000, y: 2,  layer: "fg" },
+    { asset: "lanterna-ishidoro",    x: 1150, y: 2,  layer: "fg" },
+    { asset: "cerejeira-sakura",     x: 1350, y: 6,  layer: "bg" },
+    { asset: "pedra-decorativa",     x: 1500, y: 0,  layer: "fg" },
+    { asset: "komainu",              x: 1650, y: 0,  layer: "fg" },
+    { asset: "lanterna-ishidoro",    x: 1800, y: 0,  layer: "fg" },
+    { asset: "cerejeira-sakura",     x: 1950, y: 6,  layer: "bg" },
+    { asset: "cerca-bambu",          x: 2100, y: 0,  layer: "fg" },
+    { asset: "portao-arco-pedra",    x: 2300, y: 8,  layer: "bg" },
+    { asset: "escada-pedra-externa", x: 2370, y: 10, layer: "bg" },
   ];
 
-  for (const { asset, x, y } of PROP_LAYOUT) {
+  const layerMap = { bg: midLayer, game: gameLayer, fg: fgLayer };
+  for (const { asset, x, y, layer } of PROP_LAYOUT) {
     const tex = scenery.props[asset];
     if (!tex) continue;
     const s = new Sprite(tex);
     s.anchor.set(0.5, 1);
     s.x = x;
-    s.y = GROUND_Y + y; // sit on the grass, slight overlap
-    gameLayer.addChild(s);
+    s.y = GROUND_Y + y;
+    (layerMap[layer] || gameLayer).addChild(s);
   }
 
   // Player
