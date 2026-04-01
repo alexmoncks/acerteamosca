@@ -158,7 +158,7 @@ async function buildScene(app) {
     { asset: "cerca-bambu",          x: 1000, y: 4,  layer: "fg" },
     { asset: "lanterna-ishidoro",    x: 1150, y: 4,  layer: "fg" },
     { asset: "cerejeira-sakura",     x: 1350, y: 8,  layer: "fg" },
-    { asset: "pedra-decorativa",     x: 1500, y: 7,  layer: "fg" },
+    { asset: "pedra-decorativa",     x: 1500, y: 1,  layer: "game" },
     { asset: "komainu",              x: 1650, y: 4,  layer: "fg" },
     { asset: "lanterna-ishidoro",    x: 1800, y: 2,  layer: "game" },
     { asset: "cerejeira-sakura",     x: 1950, y: 5,  layer: "bg" },
@@ -456,7 +456,7 @@ function update(game, keys, dt) {
     kick:    { duration: 24, hitStart: 12, hitEnd: 6, reach: 22, hitH: 20, hitOy: 14, dmg: 2 },
     flyKick: { duration: 28, hitStart: 14, hitEnd: 6, reach: 28, hitH: 24, hitOy: 6, dmg: 3 },
     sweep:   { duration: 26, hitStart: 13, hitEnd: 6, reach: 26, hitH: 16, hitOy: 32, dmg: 2 },
-    special: { duration: 30, hitStart: 15, hitEnd: 5, reach: 999, hitH: 48, hitOy: 0, dmg: 999, hpCost: 2 },
+    special: { duration: 30, hitStart: 15, hitEnd: 5, reach: 144, hitH: 48, hitOy: 0, dmg: 999, hpCost: 2 },
   };
 
   // Crouch / Sweep / Special
@@ -504,13 +504,20 @@ function update(game, keys, dt) {
     player.crouching = false;
   }
 
-  // Flying kick: jump + kick
-  if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && !player.grounded) {
+  // Flying kick: kick while airborne OR kick while running
+  const canFlyKick = !player.attacking && (kickKey && !punchKey);
+  if (canFlyKick && (!player.grounded || player.running)) {
     player.attacking = true;
     player.attackType = "flyKick";
     player.attackTimer = ATTACKS.flyKick.duration;
     game.playerAnim.forcePlay("flyKick");
-    player.vx = player.facing * PLAYER_RUN_SPEED * 1.5 * dt;
+    // Launch into air if on ground (running voadora)
+    if (player.grounded) {
+      player.vy = JUMP_FORCE * 0.6;
+      player.grounded = false;
+    }
+    player.currentSpeed = PLAYER_RUN_SPEED * 1.5;
+    player.vx = player.facing * player.currentSpeed * dt;
   }
   // Ground punch
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded && !player.crouching) {
