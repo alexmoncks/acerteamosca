@@ -510,7 +510,10 @@ export default function KungFuCastle() {
 
       containerRef.current?.appendChild(app.canvas);
       app.canvas.style.imageRendering = "pixelated";
-      app.canvas.style.maxWidth = "100%";
+      app.canvas.style.width = "100%";
+      app.canvas.style.height = "auto";
+      app.canvas.style.maxHeight = "calc(100vh - 80px)";
+      app.canvas.style.objectFit = "contain";
       app.canvas.style.borderRadius = "8px";
       app.canvas.style.border = "2px solid rgba(220,38,38,0.27)";
       appRef.current = app;
@@ -640,7 +643,7 @@ export default function KungFuCastle() {
       {screen === "playing" && (
         <div
           ref={containerRef}
-          style={{ width: CW, maxWidth: "100%", margin: "0 auto" }}
+          style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}
         />
       )}
 
@@ -680,7 +683,7 @@ export default function KungFuCastle() {
         </div>
       )}
 
-      <AdBanner slot="kungfucastle_bottom" style={{ marginTop: 16, maxWidth: CW }} />
+      <AdBanner slot="kungfucastle_bottom" style={{ marginTop: 16, maxWidth: 960 }} />
     </div>
   );
 }
