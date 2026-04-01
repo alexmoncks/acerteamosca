@@ -334,6 +334,8 @@ function update(game, keys, dt) {
     if (player.attackTimer <= 0) {
       player.attacking = false;
       player.attackType = null;
+      // Force-reset past attack priority so idle/walk can take over
+      game.playerAnim.forcePlay("idle");
     }
   }
 

@@ -17,9 +17,9 @@ const ASSET_MANIFEST = {
     anims: {
       idle:    { src: "/images/kungfucastle/player/idle.png",        speed: 0.08, loop: true  },
       walk:    { src: "/images/kungfucastle/player/walk.png",        speed: 0.12, loop: true  },
-      punch:   { src: "/images/kungfucastle/player/punch.png",       speed: 0.15, loop: false, next: "idle" },
-      kick:    { src: "/images/kungfucastle/player/kick.png",        speed: 0.15, loop: false, next: "idle" },
-      flyKick: { src: "/images/kungfucastle/player/flying-kick.png", speed: 0.15, loop: false, next: "idle" },
+      punch:   { src: "/images/kungfucastle/player/punch.png",       speed: 0.33, loop: false, next: "idle" },
+      kick:    { src: "/images/kungfucastle/player/kick.png",        speed: 0.32, loop: false, next: "idle" },
+      flyKick: { src: "/images/kungfucastle/player/flying-kick.png", speed: 0.30, loop: false, next: "idle" },
       sweep:   { src: "/images/kungfucastle/player/sweep.png",       speed: 0.15, loop: false, next: "idle" },
       jump:    { src: "/images/kungfucastle/player/jump.png",        speed: 0.28, loop: false },
       crouch:  { src: "/images/kungfucastle/player/crouch.png",      speed: 0.10, loop: false },
