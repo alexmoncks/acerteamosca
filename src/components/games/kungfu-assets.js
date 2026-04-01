@@ -176,7 +176,8 @@ export async function loadAllAssets() {
 
   const paths = [...srcSet];
 
-  // 2. Load all textures in parallel
+  // 2. Load all textures in parallel (disable workers to avoid CSP blob: issues)
+  Assets.setPreferences({ preferWorkers: false });
   const textureMap = await Assets.load(paths);
   // Assets.load(string[]) resolves to { [src]: Texture }
 
