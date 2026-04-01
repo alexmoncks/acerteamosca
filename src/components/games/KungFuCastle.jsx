@@ -152,15 +152,15 @@ async function buildScene(app) {
     { asset: "torii-vermelho",       x: 60,   y: 10, layer: "game" },
     { asset: "cerejeira-sakura",     x: 200,  y: 5,  layer: "bg" },
     { asset: "lanterna-ishidoro",    x: 350,  y: 4,  layer: "fg" },
-    { asset: "pedra-decorativa",     x: 500,  y: 4,  layer: "game" },
+    { asset: "pedra-decorativa",     x: 500,  y: 1,  layer: "game" },
     { asset: "cerejeira-sakura",     x: 700,  y: 5,  layer: "bg" },
-    { asset: "komainu",              x: 850,  y: 6,  layer: "game" },
+    { asset: "komainu",              x: 850,  y: 2,  layer: "game" },
     { asset: "cerca-bambu",          x: 1000, y: 4,  layer: "fg" },
     { asset: "lanterna-ishidoro",    x: 1150, y: 4,  layer: "fg" },
-    { asset: "cerejeira-sakura",     x: 1350, y: 5,  layer: "game" },
+    { asset: "cerejeira-sakura",     x: 1350, y: 8,  layer: "fg" },
     { asset: "pedra-decorativa",     x: 1500, y: 7,  layer: "fg" },
     { asset: "komainu",              x: 1650, y: 4,  layer: "fg" },
-    { asset: "lanterna-ishidoro",    x: 1800, y: 6,  layer: "game" },
+    { asset: "lanterna-ishidoro",    x: 1800, y: 2,  layer: "game" },
     { asset: "cerejeira-sakura",     x: 1950, y: 5,  layer: "bg" },
     { asset: "cerca-bambu",          x: 2100, y: 6,  layer: "fg" },
     { asset: "portao-arco-pedra",    x: 2300, y: 4,  layer: "game" },
@@ -450,30 +450,94 @@ function update(game, keys, dt) {
     player.grounded = false;
   }
 
-  // Attack — each type has: duration, hit window (when damage activates), reach, damage multiplier
+  // Attack definitions
   const ATTACKS = {
     punch:   { duration: 20, hitStart: 10, hitEnd: 5, reach: 18, hitH: 20, hitOy: 8, dmg: 1 },
     kick:    { duration: 24, hitStart: 12, hitEnd: 6, reach: 22, hitH: 20, hitOy: 14, dmg: 2 },
     flyKick: { duration: 28, hitStart: 14, hitEnd: 6, reach: 28, hitH: 24, hitOy: 6, dmg: 3 },
+    sweep:   { duration: 26, hitStart: 13, hitEnd: 6, reach: 26, hitH: 16, hitOy: 32, dmg: 2 },
+    special: { duration: 30, hitStart: 15, hitEnd: 5, reach: 999, hitH: 48, hitOy: 0, dmg: 999, hpCost: 2 },
   };
-  // Flying kick: kick while in the air
+
+  // Crouch: hold down
+  const downDown = keys.has("ArrowDown") || keys.has("KeyS");
+  const wasDown = player._prevDown || false;
+
+  // Detect fresh down press for double-tap sweep
+  if (downDown && !wasDown) {
+    if (player._downTapTimer > 0 && !player.attacking && player.grounded) {
+      // Double-tap down = SWEEP
+      player.attacking = true;
+      player.attackType = "sweep";
+      player.attackTimer = ATTACKS.sweep.duration;
+      game.playerAnim.forcePlay("sweep");
+      player.vx = player.facing * PLAYER_WALK_SPEED * 1.2 * dt;
+      player._downTapTimer = 0;
+    } else {
+      player._downTapTimer = DOUBLE_TAP_WINDOW;
+    }
+  }
+  player._prevDown = downDown;
+  if (player._downTapTimer > 0) player._downTapTimer -= dt;
+
+  // Crouch (hold down, not attacking)
+  if (downDown && !player.attacking && player.grounded) {
+    player.crouching = true;
+    game.playerAnim.play("crouch");
+  } else {
+    player.crouching = false;
+  }
+
+  // Special: back → forward → kick (costs 2% HP, kills all in front, 4% to bosses)
+  // Detect: pressing opposite-of-facing then facing then kick
+  if (!player.attacking && player.grounded) {
+    const backKey = player.facing === 1
+      ? (keys.has("ArrowLeft") || keys.has("KeyA"))
+      : (keys.has("ArrowRight") || keys.has("KeyD"));
+    const fwdKey = player.facing === 1
+      ? (keys.has("ArrowRight") || keys.has("KeyD"))
+      : (keys.has("ArrowLeft") || keys.has("KeyA"));
+
+    // Track special input sequence
+    if (backKey && !fwdKey) player._specialStep = 1;
+    if (player._specialStep === 1 && fwdKey && !backKey) player._specialStep = 2;
+    if (player._specialStep === 2 && (keys.has("KeyX") || keys.has("KeyM"))) {
+      // Activate special!
+      player._specialStep = 0;
+      player.attacking = true;
+      player.attackType = "special";
+      player.attackTimer = ATTACKS.special.duration;
+      player.hp = Math.max(1, player.hp - ATTACKS.special.hpCost);
+      game.playerAnim.forcePlay("special");
+      // Screen flash effect
+      spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xffd700, 20);
+    }
+    // Reset if no input for a bit
+    if (!backKey && !fwdKey && !(keys.has("KeyX") || keys.has("KeyM"))) {
+      if (player._specialResetTimer > 0) player._specialResetTimer -= dt;
+      else player._specialStep = 0;
+    } else {
+      player._specialResetTimer = 20;
+    }
+  }
+
+  // Flying kick: jump + kick
   if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && !player.grounded) {
     player.attacking = true;
     player.attackType = "flyKick";
     player.attackTimer = ATTACKS.flyKick.duration;
     game.playerAnim.forcePlay("flyKick");
-    // Boost forward in facing direction
     player.vx = player.facing * PLAYER_RUN_SPEED * 1.5 * dt;
   }
   // Ground punch
-  if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded) {
+  if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded && !player.crouching) {
     player.attacking = true;
     player.attackType = "punch";
     player.attackTimer = ATTACKS.punch.duration;
     game.playerAnim.play("punch");
   }
   // Ground kick
-  if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && player.grounded) {
+  if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && player.grounded && !player.crouching) {
     player.attacking = true;
     player.attackType = "kick";
     player.attackTimer = ATTACKS.kick.duration;
@@ -592,19 +656,33 @@ function update(game, keys, dt) {
     const atk = player.attackType && ATTACKS[player.attackType];
     const inHitWindow = atk && player.attackTimer <= atk.hitStart && player.attackTimer > atk.hitEnd;
     if (player.attacking && inHitWindow) {
-      // Attack hitbox: extends from player sprite edge in facing direction
-      // positioned at correct body height (not full sprite)
+      const isSpecial = player.attackType === "special";
       const px = player.x + FRAME_SIZE / 2;
-      const attackX = player.facing === 1 ? px + 2 : px - 2 - atk.reach;
+
+      // Special: hits ALL enemies in front (infinite reach)
+      // Normal attacks: hitbox from sprite edge
+      const attackX = isSpecial
+        ? (player.facing === 1 ? px : 0)
+        : (player.facing === 1 ? px + 2 : px - 2 - atk.reach);
+      const attackW = isSpecial
+        ? (player.facing === 1 ? game.levelWidth - px : px)
+        : atk.reach;
       const attackY = player.y + (atk.hitOy || 8);
-      if (aabb(attackX, attackY, atk.reach, atk.hitH, eHb.x, eHb.y, eHb.w, eHb.h)) {
+
+      if (aabb(attackX, attackY, attackW, atk.hitH, eHb.x, eHb.y, eHb.w, eHb.h)) {
         if (!e.justHit) {
           e.justHit = true;
-          e.hp--;
+          if (isSpecial) {
+            // Special: instant kill normal enemies, 4% damage to bosses
+            e.hp = e.isBoss ? e.hp - Math.ceil(e.maxHp * 0.04) : 0;
+          } else {
+            e.hp -= atk.dmg || 1;
+          }
           e.hitTimer = 20;
           eAnim.play("hit");
-          e.x += player.facing * 14;
-          spawnParticles(game, e.x + FRAME_SIZE / 2, attackY + atk.hitH / 2, 0xff8800, 6);
+          e.x += player.facing * (isSpecial ? 30 : 14);
+          const pColor = isSpecial ? 0xffd700 : 0xff8800;
+          spawnParticles(game, e.x + FRAME_SIZE / 2, attackY + atk.hitH / 2, pColor, isSpecial ? 12 : 6);
           if (e.hp <= 0) {
             e.alive = false;
             player.score += e.score;
