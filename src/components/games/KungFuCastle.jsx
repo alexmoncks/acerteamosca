@@ -298,17 +298,21 @@ function update(game, keys, dt) {
     player.grounded = false;
   }
 
-  // Attack
+  // Attack — each type has: duration, hit window (when damage activates), reach
+  const ATTACKS = {
+    punch: { duration: 18, hitStart: 8, hitEnd: 4, reach: 18, hitH: 20, hitOy: 8 },
+    kick:  { duration: 22, hitStart: 11, hitEnd: 5, reach: 22, hitH: 20, hitOy: 14 },
+  };
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded) {
     player.attacking = true;
-    player.attackTimer = 15;
     player.attackType = "punch";
+    player.attackTimer = ATTACKS.punch.duration;
     game.playerAnim.play("punch");
   }
   if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && player.grounded) {
     player.attacking = true;
-    player.attackTimer = 20;
     player.attackType = "kick";
+    player.attackTimer = ATTACKS.kick.duration;
     game.playerAnim.play("kick");
   }
 
@@ -411,21 +415,23 @@ function update(game, keys, dt) {
       }
     }
 
-    // --- Player attack hits enemy (aligned with sprite) ---
-    if (player.attacking && player.attackTimer > 5) {
-      // Attack hitbox extends from player center toward facing direction
+    // --- Player attack hits enemy (only during active hit frames) ---
+    const atk = player.attackType && ATTACKS[player.attackType];
+    const inHitWindow = atk && player.attackTimer <= atk.hitStart && player.attackTimer > atk.hitEnd;
+    if (player.attacking && inHitWindow) {
+      // Attack hitbox: extends from player sprite edge in facing direction
+      // positioned at correct body height (not full sprite)
       const px = player.x + FRAME_SIZE / 2;
-      const attackX = player.facing === 1 ? px : px - ATTACK_REACH - 20;
-      const attackW = ATTACK_REACH + 20;
-      if (aabb(attackX, player.y, attackW, PLAYER_H, eHb.x, eHb.y, eHb.w, eHb.h)) {
-        if (!e.justHit) { // prevent multi-hit per attack
+      const attackX = player.facing === 1 ? px + 2 : px - 2 - atk.reach;
+      const attackY = player.y + (atk.hitOy || 8);
+      if (aabb(attackX, attackY, atk.reach, atk.hitH, eHb.x, eHb.y, eHb.w, eHb.h)) {
+        if (!e.justHit) {
           e.justHit = true;
           e.hp--;
           e.hitTimer = 20;
           eAnim.play("hit");
-          // Knockback on hit
-          e.x += player.facing * 12;
-          spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xff8800, 6);
+          e.x += player.facing * 14;
+          spawnParticles(game, e.x + FRAME_SIZE / 2, attackY + atk.hitH / 2, 0xff8800, 6);
           if (e.hp <= 0) {
             e.alive = false;
             player.score += e.score;
@@ -433,8 +439,8 @@ function update(game, keys, dt) {
           }
         }
       }
-    } else {
-      e.justHit = false; // reset when player stops attacking
+    } else if (!player.attacking) {
+      e.justHit = false;
     }
 
     // --- Enemy animation state ---
