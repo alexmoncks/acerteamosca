@@ -366,7 +366,7 @@ function update(game, keys, dt) {
 
   // ---- Update enemies ----
   const playerHb = getHitbox(player);
-  const COMBAT_RANGE = 38; // distance to stop and attack
+  const COMBAT_RANGE = 23; // distance to stop and attack (~1px overlap)
   const ATTACK_REACH = 16; // hitbox extends from sprite edge
 
   for (let i = game.enemies.length - 1; i >= 0; i--) {
