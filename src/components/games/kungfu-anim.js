@@ -155,7 +155,7 @@ export class AnimController {
     this._frameTimer += anim.speed * dt;
 
     if (this._frameTimer >= 1) {
-      this._frameTimer = 0;
+      this._frameTimer -= 1;
       this._frameIndex++;
 
       if (this._frameIndex >= anim.frames.length) {

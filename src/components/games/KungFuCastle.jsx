@@ -300,8 +300,8 @@ function update(game, keys, dt) {
 
   // Attack — each type has: duration, hit window (when damage activates), reach
   const ATTACKS = {
-    punch: { duration: 18, hitStart: 8, hitEnd: 4, reach: 18, hitH: 20, hitOy: 8 },
-    kick:  { duration: 22, hitStart: 11, hitEnd: 5, reach: 22, hitH: 20, hitOy: 14 },
+    punch: { duration: 20, hitStart: 10, hitEnd: 5, reach: 18, hitH: 20, hitOy: 8 },
+    kick:  { duration: 24, hitStart: 12, hitEnd: 6, reach: 22, hitH: 20, hitOy: 14 },
   };
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded) {
     player.attacking = true;
