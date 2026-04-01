@@ -71,11 +71,11 @@ async function buildScene(app) {
 
   // -- Parallax mountains (bgLayer) — just above the tree line
   if (scenery.parallaxMountains) {
-    const scale = 1.5;
+    const scale = 2.0;
     const mtnW = scenery.parallaxMountains.width * scale;
     const mtnH = scenery.parallaxMountains.height * scale;
     // Trees are 80px tall from GROUND_Y, mountains sit just above them
-    const mtnY = GROUND_Y - 80 - mtnH + 20;
+    const mtnY = GROUND_Y - 10 - mtnH + 20;
     const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 2;
     for (let i = 0; i < mtnCount; i++) {
       const s = new Sprite(scenery.parallaxMountains);
@@ -114,18 +114,19 @@ async function buildScene(app) {
     const grassTile = scenery.tileset[12]; // full grass, seamless
     const transitionTile = scenery.tileset[3]; // grass top, brick bottom
 
-    // Row 0: grass at GROUND_Y (characters walk here)
+    // Row 0: grass — top of tile aligns with feet (shift up so grass surface = GROUND_Y)
+    const GRASS_OFFSET = 14; // grass surface is ~14px from top of tile
     for (let col = 0; col < tilesAcross; col++) {
       const s = new Sprite(grassTile);
       s.x = col * TILE;
-      s.y = GROUND_Y;
+      s.y = GROUND_Y - GRASS_OFFSET;
       gameLayer.addChild(s);
     }
     // Row 1: transition (grass→brick) below
     for (let col = 0; col < tilesAcross; col++) {
       const s = new Sprite(transitionTile);
       s.x = col * TILE;
-      s.y = GROUND_Y + TILE;
+      s.y = GROUND_Y - GRASS_OFFSET + TILE;
       gameLayer.addChild(s);
     }
   }
