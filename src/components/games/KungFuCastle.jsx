@@ -335,17 +335,29 @@ function update(game, keys, dt) {
     player.grounded = false;
   }
 
-  // Attack — each type has: duration, hit window (when damage activates), reach
+  // Attack — each type has: duration, hit window (when damage activates), reach, damage multiplier
   const ATTACKS = {
-    punch: { duration: 20, hitStart: 10, hitEnd: 5, reach: 18, hitH: 20, hitOy: 8 },
-    kick:  { duration: 24, hitStart: 12, hitEnd: 6, reach: 22, hitH: 20, hitOy: 14 },
+    punch:   { duration: 20, hitStart: 10, hitEnd: 5, reach: 18, hitH: 20, hitOy: 8, dmg: 1 },
+    kick:    { duration: 24, hitStart: 12, hitEnd: 6, reach: 22, hitH: 20, hitOy: 14, dmg: 2 },
+    flyKick: { duration: 28, hitStart: 14, hitEnd: 6, reach: 28, hitH: 24, hitOy: 6, dmg: 3 },
   };
+  // Flying kick: kick while in the air
+  if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && !player.grounded) {
+    player.attacking = true;
+    player.attackType = "flyKick";
+    player.attackTimer = ATTACKS.flyKick.duration;
+    game.playerAnim.forcePlay("flyKick");
+    // Boost forward in facing direction
+    player.vx = player.facing * PLAYER_SPEED * 1.5;
+  }
+  // Ground punch
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded) {
     player.attacking = true;
     player.attackType = "punch";
     player.attackTimer = ATTACKS.punch.duration;
     game.playerAnim.play("punch");
   }
+  // Ground kick
   if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && player.grounded) {
     player.attacking = true;
     player.attackType = "kick";
@@ -380,8 +392,10 @@ function update(game, keys, dt) {
   if (!player.attacking) {
     if (!player.grounded) {
       game.playerAnim.play("jump");
-    } else if (game.playerAnim.state === "jump") {
-      // Just landed — force-reset past jump priority
+    } else if (game.playerAnim.state === "jump" || game.playerAnim.state === "flyKick") {
+      // Just landed — force-reset past jump/flyKick priority
+      player.attacking = false;
+      player.attackType = null;
       game.playerAnim.forcePlay(Math.abs(player.vx) > 0.5 ? "walk" : "idle");
     } else if (Math.abs(player.vx) > 0.5) {
       game.playerAnim.play("walk");
