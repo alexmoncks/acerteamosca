@@ -113,6 +113,7 @@ async function buildScene(app) {
     // 6  = wang_0  (mixed brick)
     const grassTile = scenery.tileset[12]; // full grass, seamless
     const transitionTile = scenery.tileset[3]; // grass top, brick bottom
+    const brickTile = scenery.tileset[6]; // brick only, no grass
 
     // Row 0: grass — top of tile aligns with feet (shift up so grass surface = GROUND_Y)
     const GRASS_OFFSET = 52; // grass surface is ~14px from top of tile
@@ -122,14 +123,22 @@ async function buildScene(app) {
       s.y = GROUND_Y - GRASS_OFFSET;
       gameLayer.addChild(s);
     }
-    // Rows below: brick tiles filling to bottom of screen
-    const startY = GROUND_Y - GRASS_OFFSET + TILE;
-    const rowsNeeded = Math.ceil((CH - startY) / TILE) + 1;
+    // Row 1: transition (grass top + brick bottom) just below grass
+    const transY = GROUND_Y - GRASS_OFFSET + TILE;
+    for (let col = 0; col < tilesAcross; col++) {
+      const s = new Sprite(transitionTile);
+      s.x = col * TILE;
+      s.y = transY;
+      gameLayer.addChild(s);
+    }
+    // Rows 2+: pure brick filling to bottom of screen
+    const brickStartY = transY + TILE;
+    const rowsNeeded = Math.ceil((CH - brickStartY) / TILE) + 1;
     for (let row = 0; row < rowsNeeded; row++) {
       for (let col = 0; col < tilesAcross; col++) {
-        const s = new Sprite(transitionTile);
+        const s = new Sprite(brickTile);
         s.x = col * TILE;
-        s.y = startY + row * TILE;
+        s.y = brickStartY + row * TILE;
         gameLayer.addChild(s);
       }
     }
