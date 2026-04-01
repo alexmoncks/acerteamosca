@@ -5,7 +5,7 @@
 // ── Priority map ──────────────────────────────────────────────────────────────
 const PRIORITY = {
   idle: 0,
-  walk: 1,
+  walk: 0,
   jump: 2,
   crouch: 2,
   punch: 3,

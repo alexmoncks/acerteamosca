@@ -277,6 +277,43 @@ function update(game, keys, dt) {
   const { player } = game;
   game.frame++;
 
+  // ---- Death sequence (blocks all input/updates) ----
+  if (player.hp <= 0 && !player.dying) {
+    player.dying = true;
+    player.deathTimer = 90;
+    player.attacking = false;
+    player.attackType = null;
+    game.playerAnim.forcePlay("hit");
+  }
+
+  if (player.dying) {
+    player.deathTimer -= dt;
+    game.playerSprite.y += 0.5 * dt;
+    game.playerSprite.alpha = Math.max(0.2, player.deathTimer / 90);
+    game.playerSprite.rotation += 0.02 * dt;
+    game.playerAnim.update(dt);
+
+    if (player.deathTimer <= 0) {
+      player.dying = false;
+      player.lives--;
+      game.playerSprite.alpha = 1;
+      game.playerSprite.rotation = 0;
+      if (player.lives <= 0) {
+        game.gameOver = true;
+      } else {
+        player.hp = 100;
+        player.x = 80;
+        player.y = GROUND_Y - PLAYER_H;
+        player.vy = 0;
+        player.grounded = true;
+        game.playerAnim.forcePlay("idle");
+        game.playerSprite.x = player.x + FRAME_SIZE / 2;
+        game.playerSprite.y = player.y + PLAYER_H;
+      }
+    }
+    return;
+  }
+
   // ---- Player movement ----
   player.vx = 0;
   const spd = PLAYER_SPEED * dt;
@@ -510,17 +547,6 @@ function update(game, keys, dt) {
     game.phaseSub.alpha = 0;
   }
 
-  // ---- Game over check ----
-  if (player.hp <= 0) {
-    player.lives--;
-    if (player.lives <= 0) {
-      game.gameOver = true;
-    } else {
-      player.hp = 100;
-      player.x = game.cameraX + 80;
-      player.y = GROUND_Y - PLAYER_H;
-    }
-  }
 }
 
 // ============================================================
