@@ -128,6 +128,38 @@ function buildEnemyManifest() {
   };
 }
 
+// ── Boss manifest ─────────────────────────────────────────────────────────
+
+function bossAnims(name, frameH, animList) {
+  const base = `/images/kungfucastle/bosses/${name}`;
+  const anims = {};
+  for (const [animName, opts] of animList) {
+    anims[animName] = {
+      src: `${base}/${opts.file || animName}.png`,
+      speed: opts.speed || 0.12,
+      loop: opts.loop ?? false,
+      next: opts.next,
+    };
+  }
+  return { frameH, anims };
+}
+
+const BOSS_MANIFEST = {
+  "mestre-capangas": bossAnims("mestre-capangas", 68, [
+    ["idle",    { speed: 0.08, loop: true }],
+    ["walk",    { speed: 0.10, loop: true }],
+    ["punch",   { speed: 0.20, next: "idle" }],
+    ["charge",  { speed: 0.18, next: "idle" }],
+    ["stomp",   { speed: 0.15, next: "idle" }],
+    ["grab",    { speed: 0.15, next: "idle" }],
+    ["war-cry", { file: "war-cry", speed: 0.12, next: "idle" }],
+    ["stunned", { speed: 0.10, loop: true }],
+    ["windup",  { speed: 0.12, next: "punch" }],
+    ["hit",     { speed: 0.15, next: "idle" }],
+    ["death",   { speed: 0.08 }],
+  ]),
+};
+
 // ── Sprite sheet cutter ────────────────────────────────────────────────────
 
 /**
@@ -190,6 +222,11 @@ export async function loadAllAssets() {
       srcSet.add(anim.src);
     }
   }
+  for (const boss of Object.values(BOSS_MANIFEST)) {
+    for (const anim of Object.values(boss.anims)) {
+      srcSet.add(anim.src);
+    }
+  }
   for (const path of SCENERY_PATHS) {
     srcSet.add(path);
   }
@@ -230,7 +267,13 @@ export async function loadAllAssets() {
     enemies[type] = buildAnimMap(manifest);
   }
 
-  // 6. Build scenery textures
+  // 6. Build boss AnimMaps
+  const bosses = {};
+  for (const [name, manifest] of Object.entries(BOSS_MANIFEST)) {
+    bosses[name] = buildAnimMap(manifest);
+  }
+
+  // 7. Build scenery textures
   // Tileset: 128×128, 4×4 grid of 32×32 Wang tiles → 16 textures
   const tilesetSrc = textureMap["/images/kungfucastle/tiles/fase1-jardim.png"];
   const TILE_SIZE = 32;
@@ -265,5 +308,5 @@ export async function loadAllAssets() {
   const scenery = { tileset, parallaxMountains, parallaxTrees, props };
 
   // 7. Return organised texture maps
-  return { player, enemies, scenery };
+  return { player, enemies, bosses, scenery };
 }

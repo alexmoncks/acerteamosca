@@ -274,6 +274,9 @@ async function buildScene(app) {
     phase: 1,
     frame: 0,
     spawnTimer: 0,
+    killCount: 0,
+    bossActive: false,
+    bossDefeated: false,
     gameOver: false,
     levelWidth: LEVEL_WIDTH,
   };
@@ -306,6 +309,51 @@ function spawnEnemy(game, type) {
     hp: stats.hp, damage: stats.damage, score: stats.score,
     type, alive: true, hitTimer: 0, attackCooldown: 30 + Math.random() * 30,
     hitbox: { w: 28, h: 40, ox: 10, oy: 8 },
+  };
+
+  game.enemies.push(enemy);
+  game.enemyAnims.push(anim);
+}
+
+// ============================================================
+// SPAWN BOSS
+// ============================================================
+const BOSS_FOR_PHASE = {
+  1: { type: "mestre-capangas", hp: 25, damage: 10, speed: 1.5, score: 1000, frameSize: 68 },
+};
+
+function spawnBoss(game) {
+  const bossDef = BOSS_FOR_PHASE[game.phase];
+  if (!bossDef || !game.textures.bosses[bossDef.type]) return;
+
+  const bossTextures = game.textures.bosses[bossDef.type];
+  const fs = bossDef.frameSize;
+
+  const sprite = new Sprite(bossTextures.idle.frames[0]);
+  sprite.anchor.set(0.5, 1);
+  sprite.x = game.cameraX + CW + fs;
+  sprite.y = GROUND_Y;
+  game.gameLayer.addChild(sprite);
+
+  const anim = new AnimController({ sprite, anims: bossTextures });
+
+  const enemy = {
+    x: game.cameraX + CW + fs,
+    y: GROUND_Y - fs,
+    w: fs,
+    h: fs,
+    vx: 0,
+    hp: bossDef.hp,
+    maxHp: bossDef.hp,
+    damage: bossDef.damage,
+    score: bossDef.score,
+    type: bossDef.type,
+    alive: true,
+    isBoss: true,
+    hitTimer: 0,
+    attackCooldown: 60,
+    hitbox: { w: 40, h: 56, ox: 14, oy: 12 },
+    frameSize: fs,
   };
 
   game.enemies.push(enemy);
@@ -577,11 +625,19 @@ function update(game, keys, dt) {
   game.playerSprite.x = player.x + FRAME_SIZE / 2;
   game.playerSprite.y = player.y + PLAYER_H;
 
-  // ---- Spawn enemies ----
-  game.spawnTimer -= dt;
-  if (game.spawnTimer <= 0 && game.enemies.length < 5) {
-    spawnEnemy(game);
-    game.spawnTimer = 90 + Math.random() * 60;
+  // ---- Spawn enemies / boss ----
+  const BOSS_KILL_THRESHOLD = 100;
+  if (!game.bossActive && !game.bossDefeated) {
+    game.spawnTimer -= dt;
+    if (game.spawnTimer <= 0 && game.enemies.length < 5 && game.killCount < BOSS_KILL_THRESHOLD) {
+      spawnEnemy(game);
+      game.spawnTimer = 90 + Math.random() * 60;
+    }
+    // Spawn boss when kill threshold reached and no more regular enemies
+    if (game.killCount >= BOSS_KILL_THRESHOLD && game.enemies.length === 0) {
+      spawnBoss(game);
+      game.bossActive = true;
+    }
   }
 
   // ---- Update enemies ----
@@ -599,7 +655,7 @@ function update(game, keys, dt) {
       }
       e.deathTimer -= dt;
       e.x += e.knockVx * dt;
-      eAnim.sprite.x = e.x + FRAME_SIZE / 2;
+      eAnim.sprite.x = e.x + (e.frameSize || FRAME_SIZE) / 2;
       eAnim.sprite.alpha = Math.max(0, e.deathTimer / 30);
       eAnim.sprite.y += 0.5 * dt; // sink slightly
       if (e.deathTimer <= 0) {
@@ -676,7 +732,14 @@ function update(game, keys, dt) {
           if (e.hp <= 0) {
             e.alive = false;
             player.score += e.score;
+            if (!e.isBoss) game.killCount++;
             spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xffd700, 12);
+            // Boss defeated
+            if (e.isBoss) {
+              game.bossActive = false;
+              game.bossDefeated = true;
+              spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xff4444, 20);
+            }
           }
         }
       }
@@ -726,9 +789,20 @@ function update(game, keys, dt) {
   game.hpBar.rect(18, 18, Math.max(0, player.hp), 8);
   game.hpBar.fill({ color: player.hp > 30 ? 0x22c55e : 0xef4444 });
 
-  game.scoreText.text = `${_t("hud.score")}: ${player.score}`;
+  game.scoreText.text = `${_t("hud.score")}: ${player.score}  KO: ${game.killCount}/100`;
   game.phaseText.text = `${_t("hud.phase")}: ${game.phase}`;
   game.livesText.text = `${_t("hud.lives")}: ${player.lives}`;
+
+  // Boss HP bar
+  const bossEnemy = game.enemies.find(e => e.isBoss && e.alive);
+  if (bossEnemy) {
+    const bossW = 160;
+    const bossX = (CW - bossW) / 2;
+    game.hpBar.rect(bossX, CH - 24, bossW, 8);
+    game.hpBar.fill({ color: 0x333333 });
+    game.hpBar.rect(bossX, CH - 24, Math.max(0, (bossEnemy.hp / bossEnemy.maxHp) * bossW), 8);
+    game.hpBar.fill({ color: 0xcc0000 });
+  }
 
   // Phase title fade
   if (game.frame < 120) {
