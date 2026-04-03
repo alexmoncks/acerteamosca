@@ -337,11 +337,14 @@ function spawnBoss(game) {
 
   const anim = new AnimController({ sprite, anims: bossTextures });
 
+  // Set facing toward player immediately
+  anim.setFacing(-1);
+
   const enemy = {
     x: game.cameraX + CW + fs,
-    y: GROUND_Y - fs,
+    y: GROUND_Y - PLAYER_H,
     w: fs,
-    h: fs,
+    h: PLAYER_H,
     vx: 0,
     hp: bossDef.hp,
     maxHp: bossDef.hp,
@@ -756,7 +759,7 @@ function update(game, keys, dt) {
     eAnim.setFacing(facing);
     eAnim.update(dt);
     eAnim.sprite.x = e.x + FRAME_SIZE / 2;
-    eAnim.sprite.y = e.y + FRAME_SIZE;
+    eAnim.sprite.y = GROUND_Y;
   }
 
   // ---- Particles ----
