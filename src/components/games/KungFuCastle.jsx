@@ -268,7 +268,7 @@ async function buildScene(app) {
       running: false,
       tapTimer: { left: 0, right: 0 },
       currentSpeed: 0, // for deceleration
-      hitbox: { w: 28, h: 40, ox: 10, oy: 4 },
+      hitbox: { w: 23, h: 42, ox: 13, oy: 6 }, // measured from sprite transparency
     },
     cameraX: 0,
     phase: 1,
@@ -308,7 +308,7 @@ function spawnEnemy(game, type) {
     vx: side === -1 ? stats.speed : -stats.speed,
     hp: stats.hp, damage: stats.damage, score: stats.score,
     type, alive: true, hitTimer: 0, attackCooldown: 30 + Math.random() * 30,
-    hitbox: { w: 28, h: 40, ox: 10, oy: 8 },
+    hitbox: { w: 23, h: 42, ox: 13, oy: 6 }, // measured from sprite transparency
   };
 
   game.enemies.push(enemy);
@@ -352,7 +352,7 @@ function spawnBoss(game) {
     isBoss: true,
     hitTimer: 0,
     attackCooldown: 60,
-    hitbox: { w: 40, h: 56, ox: 14, oy: 12 },
+    hitbox: { w: 23, h: 49, ox: 23, oy: 9 }, // measured from sprite transparency
     frameSize: fs,
     groundOffset: 12, // compensate canvas padding (68px canvas, ~40px character)
   };
