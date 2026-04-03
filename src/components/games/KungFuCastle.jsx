@@ -337,9 +337,6 @@ function spawnBoss(game) {
 
   const anim = new AnimController({ sprite, anims: bossTextures });
 
-  // Set facing toward player immediately
-  anim.setFacing(-1);
-
   const enemy = {
     x: game.cameraX + CW + fs,
     y: GROUND_Y - PLAYER_H,
@@ -357,6 +354,7 @@ function spawnBoss(game) {
     attackCooldown: 60,
     hitbox: { w: 40, h: 56, ox: 14, oy: 12 },
     frameSize: fs,
+    groundOffset: 12, // compensate canvas padding (68px canvas, ~40px character)
   };
 
   game.enemies.push(enemy);
@@ -671,7 +669,8 @@ function update(game, keys, dt) {
 
     const dx = player.x - e.x;
     const dist = Math.abs(dx);
-    const facing = dx > 0 ? 1 : -1;
+    // Sprites face LEFT by default (west). scale.x=1 → left, scale.x=-1 → right
+    const facing = dx > 0 ? -1 : 1;
 
     if (e.hitTimer > 0) e.hitTimer -= dt;
     if (e.attackCooldown > 0) e.attackCooldown -= dt;
@@ -758,8 +757,9 @@ function update(game, keys, dt) {
     }
     eAnim.setFacing(facing);
     eAnim.update(dt);
-    eAnim.sprite.x = e.x + FRAME_SIZE / 2;
-    eAnim.sprite.y = GROUND_Y;
+    const efs = e.frameSize || FRAME_SIZE;
+    eAnim.sprite.x = e.x + efs / 2;
+    eAnim.sprite.y = GROUND_Y + (e.groundOffset || 0);
   }
 
   // ---- Particles ----
