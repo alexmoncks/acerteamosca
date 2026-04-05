@@ -3,9 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
+import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
+
+const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const CW = 480;
@@ -468,9 +471,25 @@ function update(game, keys, dt) {
   // Target speed based on input
   const targetSpeed = player.running ? PLAYER_RUN_SPEED : PLAYER_WALK_SPEED;
   let moveDir = 0;
+  const prevFacing = player.facing;
   if (!player.attacking) {
     if (leftDown) { moveDir = -1; player.facing = -1; }
     if (rightDown) { moveDir = 1; player.facing = 1; }
+  }
+
+  // Direction change while running → play turn animation
+  const dirChanged = moveDir !== 0 && moveDir !== prevFacing;
+  if (dirChanged) {
+    if (player.running && !player._turning) {
+      game.playerAnim.forcePlay("turn");
+      player._turning = true;
+    }
+    player.running = false;
+    player.currentSpeed = PLAYER_WALK_SPEED;
+  }
+  // Clear turning flag when turn animation finishes
+  if (player._turning && game.playerAnim.state !== "turn") {
+    player._turning = false;
   }
 
   if (moveDir !== 0) {
@@ -483,12 +502,6 @@ function update(game, keys, dt) {
     player.currentSpeed *= 0.85; // friction
     if (player.currentSpeed < 0.1) { player.currentSpeed = 0; player.running = false; }
     player.vx = player.facing * player.currentSpeed * dt;
-  }
-
-  // Stop running if direction changes
-  if ((leftDown && player.facing === 1) || (rightDown && player.facing === -1)) {
-    player.running = false;
-    player.currentSpeed = PLAYER_WALK_SPEED;
   }
 
   player.x += player.vx;
@@ -614,9 +627,11 @@ function update(game, keys, dt) {
       // Just landed — force-reset past jump/flyKick priority
       player.attacking = false;
       player.attackType = null;
-      game.playerAnim.forcePlay(player.currentSpeed > 0.3 ? "walk" : "idle");
+      game.playerAnim.forcePlay(player.currentSpeed > 0.3 ? (player.running ? "run" : "walk") : "idle");
+    } else if (player._turning) {
+      // Let turn animation play out (transitions to run via next)
     } else if (player.currentSpeed > 0.3) {
-      game.playerAnim.play("walk");
+      game.playerAnim.play(player.running ? "run" : "walk");
     } else {
       game.playerAnim.play("idle");
     }
@@ -830,7 +845,12 @@ export default function KungFuCastle() {
   const appRef = useRef(null);
   const gameRef = useRef(null);
   const keysRef = useRef(new Set());
-  const [screen, setScreen] = useState("menu");
+  const [screen, setScreen] = useState(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t") {
+      return "spritetest";
+    }
+    return "menu";
+  });
   const [finalScore, setFinalScore] = useState(0);
 
   // Keep translation ref in sync
@@ -994,6 +1014,26 @@ export default function KungFuCastle() {
             {t("start")}
           </button>
 
+          <button
+            onClick={() => setScreen("spritetest")}
+            style={{
+              fontFamily: "'Fira Code', monospace",
+              fontSize: 9,
+              color: "#8892b0",
+              background: "transparent",
+              border: "1px solid #333",
+              borderRadius: 6,
+              padding: "8px 20px",
+              cursor: "pointer",
+              marginTop: 12,
+              display: "block",
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            Sprite Test
+          </button>
+
           <p style={{ fontSize: 9, color: "#4a5568", marginTop: 16 }}>
             {t("controlsHint")}
           </p>
@@ -1041,6 +1081,10 @@ export default function KungFuCastle() {
             {t("start")}
           </button>
         </div>
+      )}
+
+      {screen === "spritetest" && (
+        <KungFuSpriteTest onBack={() => setScreen("menu")} />
       )}
 
       <AdBanner slot="kungfucastle_bottom" style={{ marginTop: 16, maxWidth: 960 }} />

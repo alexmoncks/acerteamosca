@@ -6,6 +6,8 @@
 const PRIORITY = {
   idle: 0,
   walk: 0,
+  run: 0,
+  turn: 1,
   jump: 2,
   crouch: 2,
   punch: 3,
