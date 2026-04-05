@@ -100,17 +100,33 @@ export default async function LocaleLayout({ children, params }) {
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "WebSite",
-                "name": "Acerte a Mosca",
-                "url": "https://acerteamosca.com.br",
-                "description": messages.metadata.description,
-                "publisher": {
+              __html: JSON.stringify([
+                {
+                  "@context": "https://schema.org",
                   "@type": "Organization",
-                  "name": "Acerte a Mosca"
-                }
-              })
+                  "@id": "https://acerteamosca.com.br/#organization",
+                  "name": "MMSoft Digital",
+                  "url": "https://acerteamosca.com.br",
+                  "logo": "https://acerteamosca.com.br/icons/icon-192.svg",
+                  "sameAs": ["https://nailedthefly.com"],
+                  "founder": {
+                    "@type": "Person",
+                    "name": "Alex Marra",
+                  },
+                },
+                {
+                  "@context": "https://schema.org",
+                  "@type": "WebSite",
+                  "name": "Acerte a Mosca",
+                  "url": "https://acerteamosca.com.br",
+                  "description": messages.metadata.description,
+                  "inLanguage": [locale === "pt" ? "pt-BR" : "en"],
+                  "publisher": {
+                    "@type": "Organization",
+                    "@id": "https://acerteamosca.com.br/#organization",
+                  },
+                },
+              ])
             }}
           />
           {GA_ID && (

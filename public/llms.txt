@@ -1,0 +1,43 @@
+# Acerte a Mosca
+
+> Free online browser gaming platform with 13 arcade and casual games. No downloads required. Play on mobile or desktop.
+
+## About
+
+Acerte a Mosca (English: Nailed the Fly) is a free-to-play browser gaming platform featuring retro pixel art games, created by MMSoft Digital (Alex Marra). Built with Next.js and Pixi.js, the site supports Portuguese (BR) and English, with real-time online multiplayer for select titles.
+
+- Primary domain: https://acerteamosca.com.br
+- English domain: https://nailedthefly.com
+- Languages: pt-BR, en
+
+## Games
+
+- [Acerte a Mosca](https://acerteamosca.com.br/jogos/acerteamosca): Reflex arcade game — swat the mosquito with a slipper
+- [Pong](https://acerteamosca.com.br/jogos/pong): Classic Pong with CPU, local, and online multiplayer
+- [Ships](https://acerteamosca.com.br/jogos/ships): Space navigation maze with ricocheting shots and online multiplayer
+- [Wordle](https://acerteamosca.com.br/jogos/wordle): Word guessing game (5 letters, 6 attempts) in Portuguese and English
+- [Memory](https://acerteamosca.com.br/jogos/memory): Matching pairs card game with online multiplayer
+- [2048](https://acerteamosca.com.br/jogos/2048): Sliding number puzzle with solo and online multiplayer modes
+- [Bubble Shooter](https://acerteamosca.com.br/jogos/bubbleshooter): Bubble popping arcade game
+- [Deep Attack](https://acerteamosca.com.br/jogos/deepattack): Space shooter with alien enemies
+- [Jacare](https://acerteamosca.com.br/jogos/jacare): Frogger-style crossing game
+- [Tiro ao Alvo](https://acerteamosca.com.br/jogos/tiroaoalvo): Target shooting reflex game
+- [Batalha Naval](https://acerteamosca.com.br/jogos/batalha-naval): Battleship strategy game with CPU or online multiplayer
+- [Brick Breaker](https://acerteamosca.com.br/jogos/brickbreaker): Arkanoid-style brick breaking — 25 stages across 5 worlds
+- [3INVADER](https://acerteamosca.com.br/jogos/3invader): Space shooter — 25 stages, 5 worlds, 5 epic bosses
+
+## Features
+
+- No download or registration required
+- Works on mobile and desktop browsers
+- Online multiplayer for Pong, Ships, Memory, 2048, and Batalha Naval
+- PWA support — installable as an app
+- Retro pixel art aesthetic
+
+## Technical
+
+- Framework: Next.js 14 (App Router) + React 18
+- Rendering: Pixi.js for 2D game graphics
+- Multiplayer: WebSocket servers for real-time gameplay
+- Database: Prisma ORM
+- i18n: next-intl with pt-BR and en locales
