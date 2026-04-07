@@ -217,6 +217,7 @@ export default function KungFuSpriteTest({ onBack }) {
   const [frameInfo, setFrameInfo] = useState({ count: 0, size: 0, current: 0 });
   const [playing, setPlaying] = useState(true);
   const [stripFrames, setStripFrames] = useState([]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const char = SPRITE_CATALOG[charKey];
   const animKeys = Object.keys(char.anims);
@@ -309,6 +310,10 @@ export default function KungFuSpriteTest({ onBack }) {
     Assets.setPreferences({ preferWorkers: false });
 
     try {
+      // Force reload: unload cached asset first
+      if (Assets.cache.has(src)) {
+        Assets.unload(src);
+      }
       const tex = await Assets.load(src);
       const frames = cutSheet(tex, c.frameH);
 
@@ -354,10 +359,10 @@ export default function KungFuSpriteTest({ onBack }) {
     setAnimKey(firstAnim);
   }, [charKey]);
 
-  // Load when animKey changes
+  // Load when animKey changes or reload requested
   useEffect(() => {
     if (animKey) loadAnim(charKey, animKey);
-  }, [charKey, animKey, loadAnim]);
+  }, [charKey, animKey, loadAnim, reloadKey]);
 
   // Update speed/zoom/playing on the fly
   useEffect(() => {
@@ -419,6 +424,9 @@ export default function KungFuSpriteTest({ onBack }) {
           {playing ? "||" : "\u25B6"}
         </button>
         <button onClick={() => stepFrame(1)} style={{ ...S.back, marginTop: 0, padding: "4px 12px" }}>&gt;</button>
+        <button onClick={() => setReloadKey((k) => k + 1)} style={{ ...S.back, marginTop: 0, padding: "4px 14px" }} title="Reload sprite">
+          &#x21bb;
+        </button>
       </div>
 
       {/* Canvas */}

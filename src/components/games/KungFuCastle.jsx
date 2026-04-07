@@ -845,12 +845,8 @@ export default function KungFuCastle() {
   const appRef = useRef(null);
   const gameRef = useRef(null);
   const keysRef = useRef(new Set());
-  const [screen, setScreen] = useState(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t") {
-      return "spritetest";
-    }
-    return "menu";
-  });
+  const isTstMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t";
+  const [screen, setScreen] = useState(isTstMode ? "spritetest" : "menu");
   const [finalScore, setFinalScore] = useState(0);
 
   // Keep translation ref in sync
@@ -1014,25 +1010,27 @@ export default function KungFuCastle() {
             {t("start")}
           </button>
 
-          <button
-            onClick={() => setScreen("spritetest")}
-            style={{
-              fontFamily: "'Fira Code', monospace",
-              fontSize: 9,
-              color: "#8892b0",
-              background: "transparent",
-              border: "1px solid #333",
-              borderRadius: 6,
-              padding: "8px 20px",
-              cursor: "pointer",
-              marginTop: 12,
-              display: "block",
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
-          >
-            Sprite Test
-          </button>
+          {isTstMode && (
+            <button
+              onClick={() => setScreen("spritetest")}
+              style={{
+                fontFamily: "'Fira Code', monospace",
+                fontSize: 9,
+                color: "#8892b0",
+                background: "transparent",
+                border: "1px solid #333",
+                borderRadius: 6,
+                padding: "8px 20px",
+                cursor: "pointer",
+                marginTop: 12,
+                display: "block",
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              Sprite Test
+            </button>
+          )}
 
           <p style={{ fontSize: 9, color: "#4a5568", marginTop: 16 }}>
             {t("controlsHint")}
