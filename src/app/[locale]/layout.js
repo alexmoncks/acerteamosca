@@ -107,7 +107,10 @@ export default async function LocaleLayout({ children, params }) {
                 "name": "MMSoft Digital",
                 "url": "https://acerteamosca.com.br",
                 "logo": "https://acerteamosca.com.br/icons/icon-192.svg",
-                "sameAs": ["https://nailedthefly.com"],
+                "sameAs": [
+                  "https://nailedthefly.com",
+                  "https://www.wikidata.org/wiki/Q139577693",
+                ],
                 "founder": {
                   "@type": "Person",
                   "name": "Alex Marra",
