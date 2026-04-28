@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import AdBanner from "@/components/AdBanner";
 import AdsTerraPopunder from "@/components/AdsTerraPopunder";
 import AdsTerraBanner from "@/components/AdsTerraBanner";
+import AdsTerraSocialBar from "@/components/AdsTerraSocialBar";
 
 const slugs = [
   { slug: "acerteamosca", emoji: "🦟", cor: "#00f0ff", destaque: true },
@@ -39,6 +40,7 @@ export default function Home() {
       }}
     >
       <AdsTerraPopunder />
+      <AdsTerraSocialBar />
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
         style={{

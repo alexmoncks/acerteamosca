@@ -5,7 +5,6 @@ import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import InstallPrompt from "@/components/InstallPrompt";
-import AdsTerraSocialBar from "@/components/AdsTerraSocialBar";
 import CookieConsent from "@/components/CookieConsent";
 import Footer from "@/components/Footer";
 
@@ -161,7 +160,6 @@ export default async function LocaleLayout({ children, params }) {
           <InstallPrompt />
           <main style={{ paddingTop: 48 }}>{children}</main>
           <Footer />
-          <AdsTerraSocialBar />
           <CookieConsent />
         </NextIntlClientProvider>
       </body>
