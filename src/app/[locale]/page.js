@@ -276,16 +276,6 @@ export default function Home() {
 
       <AdsTerraBanner style={{ marginTop: 30, maxWidth: 900 }} />
 
-      <p
-        style={{
-          marginTop: 30,
-          color: "#2a2a4a",
-          fontSize: 10,
-          fontFamily: "'Fira Code', monospace",
-        }}
-      >
-        {tc("footer")}
-      </p>
     </div>
   );
 }

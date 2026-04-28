@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import InstallPrompt from "@/components/InstallPrompt";
 import AdsTerraSocialBar from "@/components/AdsTerraSocialBar";
 import CookieConsent from "@/components/CookieConsent";
+import Footer from "@/components/Footer";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
@@ -159,6 +160,7 @@ export default async function LocaleLayout({ children, params }) {
           <Navbar />
           <InstallPrompt />
           <main style={{ paddingTop: 48 }}>{children}</main>
+          <Footer />
           <AdsTerraSocialBar />
           <CookieConsent />
         </NextIntlClientProvider>

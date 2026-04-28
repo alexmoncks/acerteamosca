@@ -641,9 +641,15 @@
       }
     }
   },
+  "footer": {
+    "about": "Sobre",
+    "contact": "Contato",
+    "privacy": "Política de Privacidade",
+    "terms": "Termos de Uso",
+    "tagline": "© 2026 Acerte a Mosca · v1.0 powered by chineladas"
+  },
   "common": {
     "playFree": "Jogue grátis em acerteamosca.com.br",
-    "mainGame": "JOGO PRINCIPAL",
-    "footer": "v1.0 - powered by chineladas"
+    "mainGame": "JOGO PRINCIPAL"
   }
 }

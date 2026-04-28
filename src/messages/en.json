@@ -641,9 +641,15 @@
       }
     }
   },
+  "footer": {
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "tagline": "© 2026 Nailed The Fly · v1.0"
+  },
   "common": {
     "playFree": "Play free at acerteamosca.com.br",
-    "mainGame": "FEATURED GAME",
-    "footer": "v1.0 - powered by slipper slaps"
+    "mainGame": "FEATURED GAME"
   }
 }
