@@ -121,6 +121,7 @@ export default async function LocaleLayout({ children, params }) {
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
+                "@id": "https://acerteamosca.com.br/#website",
                 "name": "Acerte a Mosca",
                 "url": "https://acerteamosca.com.br",
                 "description": messages.metadata.description,

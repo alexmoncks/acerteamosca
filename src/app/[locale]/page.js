@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import AdBanner from "@/components/AdBanner";
 import AdsTerraPopunder from "@/components/AdsTerraPopunder";
@@ -26,7 +26,34 @@ const slugs = [
 export default function Home() {
   const t = useTranslations("home");
   const tc = useTranslations("common");
+  const tm = useTranslations("metadata");
+  const locale = useLocale();
   const faqItems = t.raw("faq.items");
+  const siteUrl = locale === "en" ? "https://nailedthefly.com" : "https://acerteamosca.com.br";
+  const inLanguage = locale === "pt" ? "pt-BR" : "en";
+
+  const webPageLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": tm("title"),
+    "description": tm("description"),
+    "url": siteUrl,
+    "inLanguage": inLanguage,
+    "isPartOf": { "@id": "https://acerteamosca.com.br/#website" },
+    "about": { "@id": "https://acerteamosca.com.br/#organization" },
+    "primaryImageOfPage": `${siteUrl}/opengraph-image`,
+  };
+
+  const faqPageLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "inLanguage": inLanguage,
+    "mainEntity": faqItems.map((item) => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": { "@type": "Answer", "text": item.a },
+    })),
+  };
 
   return (
     <div
@@ -39,6 +66,14 @@ export default function Home() {
         padding: "8px 12px",
       }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageLd) }}
+      />
       <AdsTerraPopunder />
       <AdsTerraSocialBar />
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
