@@ -638,6 +638,15 @@
         "3": "Interior do Castelo",
         "4": "Torre de Vigia",
         "5": "Topo do Castelo"
+      },
+      "phaseClear": {
+        "title": "FASE COMPLETA",
+        "continue": "ESPAÇO PARA CONTINUAR"
+      },
+      "victory": {
+        "title": "VITÓRIA!",
+        "subtitle": "Você concluiu o Kung Fu Castle.",
+        "restart": "JOGAR DE NOVO"
       }
     }
   },

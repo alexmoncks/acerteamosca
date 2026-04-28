@@ -38,7 +38,28 @@ const ENEMY_STATS = {
   "lancador-bomba": { hp: 3, speed: 1.0, damage: 15, score: 250 },
 };
 
-const PHASE_ENEMIES = ["capanga-branco", "capanga-cinza", "capanga-rapido"];
+const BOSS_STATS = {
+  "mestre-capangas": {
+    hp: 25, damage: 10, speed: 1.5, score: 1000, frameSize: 68,
+    hitbox: { w: 23, h: 49, ox: 23, oy: 9 },
+    groundOffset: 12,
+  },
+};
+
+const PHASE_CONFIG = {
+  1: {
+    enemies: ["capanga-branco", "capanga-cinza", "capanga-rapido"],
+    boss: "mestre-capangas",
+    killThreshold: 100,
+  },
+  // TODO: phases 2–5 — add { enemies, boss, killThreshold } when content ready
+};
+
+const MAX_PHASE = Math.max(...Object.keys(PHASE_CONFIG).map(Number));
+const TRANSITION_FADE_FRAMES = 60;
+const TRANSITION_CLEAR_FRAMES = 240;
+const TRANSITION_INPUT_DELAY = 20;
+const POST_BOSS_DELAY = 90;
 
 // ── Translation ref (accessible from non-React functions) ──────────────
 let _t = (k) => k;
@@ -245,6 +266,18 @@ async function buildScene(app) {
   phaseSub.y = CH / 2 + 10;
   hudLayer.addChild(phaseSub);
 
+  // Fade overlay (full screen, drawn on top — controlled by transition state)
+  const fadeOverlay = new Graphics();
+  fadeOverlay.rect(0, 0, CW, CH);
+  fadeOverlay.fill({ color: 0x000000 });
+  fadeOverlay.alpha = 0;
+  hudLayer.addChild(fadeOverlay);
+  // Phase title texts must render above fade — re-add to put them on top
+  hudLayer.removeChild(phaseTitle);
+  hudLayer.removeChild(phaseSub);
+  hudLayer.addChild(phaseTitle);
+  hudLayer.addChild(phaseSub);
+
   return {
     app,
     bgLayer, midLayer, gameLayer, fgLayer, hudLayer,
@@ -253,6 +286,10 @@ async function buildScene(app) {
     textures,
     enemyAnims: [],
     hpBar, scoreText, phaseText, livesText, phaseTitle, phaseSub,
+    fadeOverlay,
+    transition: null,
+    victory: false,
+    bossDefeatedFrame: 0,
     enemies: [],
     particles: [],
     player: {
@@ -290,7 +327,8 @@ async function buildScene(app) {
 // ============================================================
 function spawnEnemy(game, type) {
   if (!type) {
-    type = PHASE_ENEMIES[Math.floor(Math.random() * PHASE_ENEMIES.length)];
+    const pool = PHASE_CONFIG[game.phase]?.enemies || PHASE_CONFIG[1].enemies;
+    type = pool[Math.floor(Math.random() * pool.length)];
   }
   const stats = ENEMY_STATS[type];
   if (!stats || !game.textures.enemies[type]) return;
@@ -321,16 +359,13 @@ function spawnEnemy(game, type) {
 // ============================================================
 // SPAWN BOSS
 // ============================================================
-const BOSS_FOR_PHASE = {
-  1: { type: "mestre-capangas", hp: 25, damage: 10, speed: 1.5, score: 1000, frameSize: 68 },
-};
-
 function spawnBoss(game) {
-  const bossDef = BOSS_FOR_PHASE[game.phase];
-  if (!bossDef || !game.textures.bosses[bossDef.type]) return;
+  const bossType = PHASE_CONFIG[game.phase]?.boss;
+  const stats = BOSS_STATS[bossType];
+  if (!bossType || !stats || !game.textures.bosses[bossType]) return;
 
-  const bossTextures = game.textures.bosses[bossDef.type];
-  const fs = bossDef.frameSize;
+  const bossTextures = game.textures.bosses[bossType];
+  const fs = stats.frameSize;
 
   const sprite = new Sprite(bossTextures.idle.frames[0]);
   sprite.anchor.set(0.5, 1);
@@ -346,22 +381,104 @@ function spawnBoss(game) {
     w: fs,
     h: PLAYER_H,
     vx: 0,
-    hp: bossDef.hp,
-    maxHp: bossDef.hp,
-    damage: bossDef.damage,
-    score: bossDef.score,
-    type: bossDef.type,
+    hp: stats.hp,
+    maxHp: stats.hp,
+    damage: stats.damage,
+    score: stats.score,
+    type: bossType,
     alive: true,
     isBoss: true,
     hitTimer: 0,
     attackCooldown: 60,
-    hitbox: { w: 23, h: 49, ox: 23, oy: 9 }, // measured from sprite transparency
+    hitbox: stats.hitbox,
     frameSize: fs,
-    groundOffset: 12, // compensate canvas padding (68px canvas, ~40px character)
+    groundOffset: stats.groundOffset || 0,
   };
 
   game.enemies.push(enemy);
   game.enemyAnims.push(anim);
+}
+
+// ============================================================
+// LOAD PHASE — clears enemies, resets phase state, keeps player score/lives
+// ============================================================
+function loadPhase(game, n) {
+  for (const a of game.enemyAnims) a.sprite.destroy();
+  game.enemies = [];
+  game.enemyAnims = [];
+
+  for (const p of game.particles) p.destroy();
+  game.particles = [];
+
+  game.phase = n;
+  game.killCount = 0;
+  game.bossActive = false;
+  game.bossDefeated = false;
+  game.bossDefeatedFrame = 0;
+  game.spawnTimer = 0;
+  game.frame = 0;
+
+  game.player.x = 80;
+  game.player.y = GROUND_Y - PLAYER_H;
+  game.player.vx = 0;
+  game.player.vy = 0;
+  game.player.hp = 100;
+  game.player.attacking = false;
+  game.player.attackType = null;
+  game.player.attackTimer = 0;
+  game.player.dying = false;
+  game.cameraX = 0;
+}
+
+// ============================================================
+// TRANSITION — phase end fade-out → clear screen → fade-in
+// ============================================================
+function updateTransition(game, keys, dt) {
+  const t = game.transition;
+  t.timer -= dt;
+
+  if (t.state === "fadeOut") {
+    game.fadeOverlay.alpha = Math.min(1, 1 - t.timer / TRANSITION_FADE_FRAMES);
+    if (t.timer <= 0) {
+      t.state = "phaseClear";
+      t.timer = TRANSITION_CLEAR_FRAMES;
+      game.fadeOverlay.alpha = 1;
+      const isLast = game.phase >= MAX_PHASE;
+      game.phaseTitle.text = isLast
+        ? _t("victory.title")
+        : `${_t("phaseClear.title")} ${game.phase}`;
+      game.phaseSub.text = _t("phaseClear.continue");
+      game.phaseTitle.alpha = 1;
+      game.phaseSub.alpha = 1;
+    }
+    return;
+  }
+
+  if (t.state === "phaseClear") {
+    const ready = t.timer < TRANSITION_CLEAR_FRAMES - TRANSITION_INPUT_DELAY;
+    const pressed = keys.has("Space") || keys.has("Enter") || keys.has("KeyZ") || keys.has("KeyX");
+    if ((ready && pressed) || t.timer <= 0) {
+      if (game.phase >= MAX_PHASE) {
+        game.victory = true;
+        game.transition = null;
+      } else {
+        loadPhase(game, game.phase + 1);
+        t.state = "fadeIn";
+        t.timer = TRANSITION_FADE_FRAMES;
+        game.phaseTitle.alpha = 0;
+        game.phaseSub.alpha = 0;
+      }
+    }
+    return;
+  }
+
+  if (t.state === "fadeIn") {
+    game.fadeOverlay.alpha = Math.max(0, t.timer / TRANSITION_FADE_FRAMES);
+    if (t.timer <= 0) {
+      game.fadeOverlay.alpha = 0;
+      game.transition = null;
+    }
+  }
 }
 
 // ============================================================
@@ -408,6 +525,31 @@ function getHitbox(entity) {
 function update(game, keys, dt) {
   const { player } = game;
   game.frame++;
+
+  // ---- Transition (blocks gameplay; only animates fade + particles) ----
+  if (game.transition) {
+    updateTransition(game, keys, dt);
+    game.playerAnim.update(dt);
+    for (let i = game.particles.length - 1; i >= 0; i--) {
+      const p = game.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 0.2 * dt;
+      p.life -= p.decay * dt;
+      p.alpha = p.life;
+      if (p.life <= 0) {
+        p.destroy();
+        game.particles.splice(i, 1);
+      }
+    }
+    return;
+  }
+
+  // ---- Trigger phase-end transition once boss has been defeated ----
+  if (game.bossDefeated && !game.transition && game.frame - game.bossDefeatedFrame > POST_BOSS_DELAY) {
+    game.transition = { state: "fadeOut", timer: TRANSITION_FADE_FRAMES };
+    return;
+  }
 
   // ---- Death sequence (blocks all input/updates) ----
   if (player.hp <= 0 && !player.dying) {
@@ -755,6 +897,7 @@ function update(game, keys, dt) {
             if (e.isBoss) {
               game.bossActive = false;
               game.bossDefeated = true;
+              game.bossDefeatedFrame = game.frame;
               spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xff4444, 20);
             }
           }
@@ -888,10 +1031,13 @@ export default function KungFuCastle() {
 
       app.ticker.add((ticker) => {
         const g = gameRef.current;
-        if (!g || g.gameOver) {
+        if (!g || g.gameOver || g.victory) {
           if (g?.gameOver) {
             setFinalScore(g.player.score);
             setScreen("gameover");
+          } else if (g?.victory) {
+            setFinalScore(g.player.score);
+            setScreen("victory");
           }
           return;
         }
@@ -1077,6 +1223,47 @@ export default function KungFuCastle() {
             }}
           >
             {t("start")}
+          </button>
+        </div>
+      )}
+
+      {screen === "victory" && (
+        <div style={{ textAlign: "center" }}>
+          <h2
+            style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 24,
+              color: "#ffd700",
+              textShadow: "0 0 30px rgba(255,215,0,0.6)",
+              marginBottom: 12,
+              letterSpacing: 4,
+            }}
+          >
+            {t("victory.title")}
+          </h2>
+          <p style={{ color: "#ccd6f6", fontSize: 12, marginBottom: 8 }}>
+            {t("victory.subtitle")}
+          </p>
+          <p style={{ color: "#ccd6f6", fontSize: 14, marginBottom: 16, marginTop: 16 }}>
+            {_t("hud.score")}: {finalScore}
+          </p>
+          <button
+            onClick={handleRestart}
+            style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 11,
+              color: "#050510",
+              background: "#ffd700",
+              border: "none",
+              borderRadius: 8,
+              padding: "12px 28px",
+              cursor: "pointer",
+              boxShadow: "0 0 20px rgba(255,215,0,0.5)",
+              letterSpacing: 2,
+              marginTop: 8,
+            }}
+          >
+            {t("victory.restart")}
           </button>
         </div>
       )}

@@ -638,6 +638,15 @@
         "3": "Castle Interior",
         "4": "Watchtower",
         "5": "Castle Top"
+      },
+      "phaseClear": {
+        "title": "STAGE CLEAR",
+        "continue": "PRESS SPACE TO CONTINUE"
+      },
+      "victory": {
+        "title": "VICTORY!",
+        "subtitle": "You completed Kung Fu Castle.",
+        "restart": "PLAY AGAIN"
       }
     }
   },
