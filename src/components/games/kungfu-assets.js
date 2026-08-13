@@ -160,6 +160,73 @@ const BOSS_MANIFEST = {
     ["hit",     { speed: 0.15, next: "idle" }],
     ["death",   { speed: 0.08 }],
   ]),
+
+  "guardiao-portao": bossAnims("guardiao-portao", 68, [
+    ["idle",             { speed: 0.08, loop: true }],
+    ["walk",             { speed: 0.10, loop: true }],
+    ["horizontal-swing", { file: "horizontal-swing", speed: 0.18, next: "idle" }],
+    ["overhead-smash",   { file: "overhead-smash", speed: 0.15, next: "idle" }],
+    ["charge",           { speed: 0.18, next: "idle" }],
+    ["kick",             { speed: 0.18, next: "idle" }],
+    ["shield-block",     { file: "shield-block", speed: 0.10, loop: true }],
+    ["earthquake",       { speed: 0.15, next: "idle" }],
+    ["taunt",            { speed: 0.12, next: "idle" }],
+    ["stuck",            { speed: 0.10, loop: true }],
+    ["hit",              { speed: 0.15, next: "idle" }],
+    ["death",            { speed: 0.08 }],
+  ]),
+
+  "senhor-sombras": bossAnims("senhor-sombras", 68, [
+    ["idle",          { speed: 0.08, loop: true }],
+    ["walk",          { speed: 0.12, loop: true }],
+    ["ninja-combo",   { file: "ninja-combo", speed: 0.22, next: "idle" }],
+    ["dash-kick",     { file: "dash-kick", speed: 0.20, next: "idle" }],
+    ["shuriken",      { speed: 0.18, next: "idle" }],
+    ["shadow-strike", { file: "shadow-strike", speed: 0.22, next: "idle" }],
+    ["shadow-sweep",  { file: "shadow-sweep", speed: 0.18, next: "idle" }],
+    ["smoke-bomb",    { file: "smoke-bomb", speed: 0.15, next: "idle" }],
+    ["vanish",        { speed: 0.15, next: "idle" }],
+    ["clone",         { speed: 0.12, next: "idle" }],
+    ["hit",           { speed: 0.15, next: "idle" }],
+    ["death",         { speed: 0.08 }],
+  ]),
+
+  "general-oni": bossAnims("general-oni", 68, [
+    ["idle",           { speed: 0.08, loop: true }],
+    ["walk",           { speed: 0.10, loop: true }],
+    ["dual-slash",     { file: "dual-slash", speed: 0.20, next: "idle" }],
+    ["kick",           { speed: 0.18, next: "idle" }],
+    ["spin-blades",    { file: "spin-blades", speed: 0.15, next: "idle" }],
+    ["counter-slash",  { file: "counter-slash", speed: 0.22, next: "idle" }],
+    ["cross-block",    { file: "cross-block", speed: 0.10, loop: true }],
+    ["crushing-leap",  { file: "crushing-leap", speed: 0.15, next: "idle" }],
+    ["thrust-lunge",   { file: "thrust-lunge", speed: 0.20, next: "idle" }],
+    ["oni-roar",       { file: "oni-roar", speed: 0.12, next: "idle" }],
+    ["demon-fury",     { file: "demon-fury", speed: 0.15, next: "idle" }],
+    ["summon",         { speed: 0.12, next: "idle" }],
+    ["hit",            { speed: 0.15, next: "idle" }],
+    ["death",          { speed: 0.08 }],
+  ]),
+
+  "senhor-castelo": bossAnims("senhor-castelo", 92, [
+    ["idle",            { speed: 0.08, loop: true }],
+    ["walk",            { speed: 0.10, loop: true }],
+    ["sword-slash",     { file: "sword-slash", speed: 0.20, next: "idle" }],
+    ["draw-sword",      { file: "draw-sword", speed: 0.15, next: "sword-slash" }],
+    ["flying-kick",     { file: "flying-kick", speed: 0.18, next: "idle" }],
+    ["crescent-kick",   { file: "crescent-kick", speed: 0.18, next: "idle" }],
+    ["steel-palm",      { file: "steel-palm", speed: 0.20, next: "idle" }],
+    ["ki-blast",        { file: "ki-blast", speed: 0.18, next: "idle" }],
+    ["ki-barrier",      { file: "ki-barrier", speed: 0.10, loop: true }],
+    ["imperial-combo",  { file: "imperial-combo", speed: 0.22, next: "idle" }],
+    ["supreme-strike",  { file: "supreme-strike", speed: 0.15, next: "imperial-combo" }],
+    ["devastation",     { speed: 0.12, next: "idle" }],
+    ["summon-ninjas",   { file: "summon-ninjas", speed: 0.12, next: "idle" }],
+    ["teleport-in",     { file: "teleport-in", speed: 0.20 }],
+    ["teleport-out",    { file: "teleport-out", speed: 0.20 }],
+    ["hit",             { speed: 0.15, next: "idle" }],
+    ["death",           { speed: 0.08 }],
+  ]),
 };
 
 // ── Sprite sheet cutter ────────────────────────────────────────────────────
@@ -187,8 +254,16 @@ export function cutSpriteSheet(texture, frameH) {
 
 // ── Scenery asset paths ───────────────────────────────────────────────────
 
+const TILESET_PATHS = {
+  1: "/images/kungfucastle/tiles/fase1-jardim.png",
+  2: "/images/kungfucastle/tiles/fase2-muralha.png",
+  3: "/images/kungfucastle/tiles/fase3-tatami.png",
+  4: "/images/kungfucastle/tiles/fase4-madeira.png",
+  5: "/images/kungfucastle/tiles/fase5-cerimonial.png",
+};
+
 const SCENERY_PATHS = [
-  "/images/kungfucastle/tiles/fase1-jardim.png",
+  ...Object.values(TILESET_PATHS),
   "/images/kungfucastle/props/parallax-montanhas.png",
   "/images/kungfucastle/props/parallax-arvores.png",
   "/images/kungfucastle/props/cerejeira-sakura.png",
@@ -276,16 +351,22 @@ export async function loadAllAssets() {
   }
 
   // 7. Build scenery textures
-  // Tileset: 128×128, 4×4 grid of 32×32 Wang tiles → 16 textures
-  const tilesetSrc = textureMap["/images/kungfucastle/tiles/fase1-jardim.png"];
+  // Tilesets: 128×128, 4×4 grid of 32×32 Wang tiles → 16 textures per phase
   const TILE_SIZE = 32;
-  const tileset = [];
-  for (let row = 0; row < 4; row++) {
-    for (let col = 0; col < 4; col++) {
-      const rect = new Rectangle(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      tileset.push(new Texture({ source: tilesetSrc.source, frame: rect }));
+  const tilesets = {};
+  for (const [phase, path] of Object.entries(TILESET_PATHS)) {
+    const src = textureMap[path];
+    if (!src) continue;
+    const tiles = [];
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        const rect = new Rectangle(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        tiles.push(new Texture({ source: src.source, frame: rect }));
+      }
     }
+    tilesets[phase] = tiles;
   }
+  const tileset = tilesets[1] || [];
 
   const parallaxMountains = textureMap["/images/kungfucastle/props/parallax-montanhas.png"];
   const parallaxTrees     = textureMap["/images/kungfucastle/props/parallax-arvores.png"];
@@ -307,7 +388,7 @@ export async function loadAllAssets() {
     props[name] = tex;
   }
 
-  const scenery = { tileset, parallaxMountains, parallaxTrees, props };
+  const scenery = { tileset, tilesets, parallaxMountains, parallaxTrees, props };
 
   // 7. Return organised texture maps
   return { player, enemies, bosses, scenery };

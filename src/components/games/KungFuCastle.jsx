@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
+import { BossAI } from "./kungfu-boss-ai";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 
@@ -38,7 +39,27 @@ const ENEMY_STATS = {
   "lancador-bomba": { hp: 3, speed: 1.0, damage: 15, score: 250 },
 };
 
-const PHASE_ENEMIES = ["capanga-branco", "capanga-cinza", "capanga-rapido"];
+const PHASE_ENEMIES = {
+  1: ["capanga-branco", "capanga-cinza", "capanga-rapido"],
+  2: ["capanga-branco", "capanga-cinza", "guarda-bastao", "atirador"],
+  3: ["ninja", "kunoichi", "capanga-rapido", "lancador-bomba"],
+  4: ["ninja-espada", "ninja", "samurai", "lancador-bomba"],
+  5: ["samurai", "ninja-espada", "kunoichi", "guarda-bastao"],
+};
+
+// Enemies that keep their distance and throw instead of closing in.
+const RANGED_ENEMIES = {
+  "atirador":       { range: 200, projSpeed: 4.0, dmg: 8,  color: 0xdddddd, cooldown: 90,  w: 6, h: 6 },
+  "lancador-bomba": { range: 170, projSpeed: 3.0, dmg: 15, color: 0xff8800, cooldown: 130, w: 8, h: 8 },
+};
+
+const BOSS_KILL_THRESHOLD = {
+  1: 100,
+  2: 80,
+  3: 60,
+  4: 50,
+  5: 40,
+};
 
 // ── Translation ref (accessible from non-React functions) ──────────────
 let _t = (k) => k;
@@ -107,6 +128,7 @@ async function buildScene(app) {
   }
 
   // -- Ground: grass row at feet level + brick wall rows below
+  const groundSprites = { grass: [], transition: [], brick: [] };
   if (scenery.tileset && scenery.tileset.length >= 16) {
     const TILE = 32;
     const tilesAcross = Math.ceil(LEVEL_WIDTH / TILE);
@@ -127,6 +149,7 @@ async function buildScene(app) {
       s.x = col * TILE;
       s.y = GROUND_Y - GRASS_OFFSET;
       gameLayer.addChild(s);
+      groundSprites.grass.push(s);
     }
     // Row 1: transition (grass top + brick bottom) just below grass
     const transY = GROUND_Y - GRASS_OFFSET + TILE;
@@ -135,6 +158,7 @@ async function buildScene(app) {
       s.x = col * TILE;
       s.y = transY;
       gameLayer.addChild(s);
+      groundSprites.transition.push(s);
     }
     // Rows 2+: pure brick filling to bottom of screen
     const brickStartY = transY + TILE;
@@ -145,6 +169,7 @@ async function buildScene(app) {
         s.x = col * TILE;
         s.y = brickStartY + row * TILE;
         gameLayer.addChild(s);
+        groundSprites.brick.push(s);
       }
     }
   }
@@ -255,6 +280,7 @@ async function buildScene(app) {
     hpBar, scoreText, phaseText, livesText, phaseTitle, phaseSub,
     enemies: [],
     particles: [],
+    enemyProjectiles: [],
     player: {
       x: 80,
       y: GROUND_Y - PLAYER_H,
@@ -280,8 +306,14 @@ async function buildScene(app) {
     killCount: 0,
     bossActive: false,
     bossDefeated: false,
+    transitioning: false,
+    transitionTimer: 0,
+    transitionPhase: 1,
+    victory: false,
+    victoryTimer: 0,
     gameOver: false,
     levelWidth: LEVEL_WIDTH,
+    _groundSprites: groundSprites,
   };
 }
 
@@ -290,7 +322,8 @@ async function buildScene(app) {
 // ============================================================
 function spawnEnemy(game, type) {
   if (!type) {
-    type = PHASE_ENEMIES[Math.floor(Math.random() * PHASE_ENEMIES.length)];
+    const pool = PHASE_ENEMIES[game.phase] || PHASE_ENEMIES[1];
+    type = pool[Math.floor(Math.random() * pool.length)];
   }
   const stats = ENEMY_STATS[type];
   if (!stats || !game.textures.enemies[type]) return;
@@ -321,8 +354,15 @@ function spawnEnemy(game, type) {
 // ============================================================
 // SPAWN BOSS
 // ============================================================
+// footPad = transparent rows below the feet in each boss's idle frame. The sprite
+// pivot is the frame's bottom edge, so it has to be pushed down by that much for
+// the boss to stand on the same ground line as the player.
 const BOSS_FOR_PHASE = {
-  1: { type: "mestre-capangas", hp: 25, damage: 10, speed: 1.5, score: 1000, frameSize: 68 },
+  1: { type: "mestre-capangas", hp: 30,  damage: 10, speed: 1.5, score: 1000, frameSize: 68, footPad: 10 },
+  2: { type: "guardiao-portao", hp: 40,  damage: 12, speed: 1.2, score: 1500, frameSize: 68, footPad: 9  },
+  3: { type: "senhor-sombras",  hp: 45,  damage: 14, speed: 2.5, score: 2000, frameSize: 68, footPad: 8  },
+  4: { type: "general-oni",     hp: 55,  damage: 16, speed: 1.8, score: 2500, frameSize: 68, footPad: 2  },
+  5: { type: "senhor-castelo",  hp: 70,  damage: 18, speed: 2.0, score: 5000, frameSize: 92, footPad: 4  },
 };
 
 function spawnBoss(game) {
@@ -339,6 +379,12 @@ function spawnBoss(game) {
   game.gameLayer.addChild(sprite);
 
   const anim = new AnimController({ sprite, anims: bossTextures });
+  const ai = new BossAI(bossDef.type);
+
+  const hitboxW = fs === 92 ? 30 : 23;
+  const hitboxH = fs === 92 ? 60 : 49;
+  const hitboxOx = fs === 92 ? 31 : 23;
+  const hitboxOy = fs === 92 ? 16 : 9;
 
   const enemy = {
     x: game.cameraX + CW + fs,
@@ -353,11 +399,13 @@ function spawnBoss(game) {
     type: bossDef.type,
     alive: true,
     isBoss: true,
+    ai,
     hitTimer: 0,
     attackCooldown: 60,
-    hitbox: { w: 23, h: 49, ox: 23, oy: 9 }, // measured from sprite transparency
+    hitbox: { w: hitboxW, h: hitboxH, ox: hitboxOx, oy: hitboxOy },
     frameSize: fs,
-    groundOffset: 12, // compensate canvas padding (68px canvas, ~40px character)
+    groundOffset: bossDef.footPad,
+    _arcY: 0,
   };
 
   game.enemies.push(enemy);
@@ -400,6 +448,23 @@ function getHitbox(entity) {
     w: entity.hitbox?.w || 28,
     h: entity.hitbox?.h || 40,
   };
+}
+
+// ============================================================
+// REBUILD TILESET (swap ground tiles for new phase)
+// ============================================================
+function rebuildTileset(game, phase) {
+  const tiles = game.textures.scenery.tilesets[phase];
+  if (!tiles || tiles.length < 16) return;
+
+  const grassTile = tiles[12];
+  const transitionTile = tiles[3];
+  const brickTile = tiles[6];
+
+  if (!game._groundSprites) return;
+  for (const s of game._groundSprites.grass) s.texture = grassTile;
+  for (const s of game._groundSprites.transition) s.texture = transitionTile;
+  for (const s of game._groundSprites.brick) s.texture = brickTile;
 }
 
 // ============================================================
@@ -641,23 +706,80 @@ function update(game, keys, dt) {
   game.playerSprite.x = player.x + FRAME_SIZE / 2;
   game.playerSprite.y = player.y + PLAYER_H;
 
+  // ---- Phase transition / victory ----
+  // Wait for the boss death animation to finish (sprite removed) before starting.
+  if (game.bossDefeated && !game.transitioning && !game.victory && game.enemies.length === 0) {
+    if (game.phase >= 5) {
+      game.victory = true;
+      game.victoryTimer = 0;
+    } else {
+      game.transitioning = true;
+      game.transitionTimer = 180;
+      game.transitionPhase = game.phase + 1;
+    }
+  }
+
+  if (game.transitioning) {
+    game.transitionTimer -= dt;
+    const progress = 1 - game.transitionTimer / 180;
+    game.phaseTitle.text = `${_t("hud.phase")} ${game.transitionPhase}`;
+    game.phaseTitle.alpha = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+    game.phaseSub.text = _t(`phases.${game.transitionPhase}`);
+    game.phaseSub.alpha = game.phaseTitle.alpha;
+
+    // Swap the tileset at the darkest point of the fade
+    if (!game._tilesSwapped && progress >= 0.5) {
+      game._tilesSwapped = true;
+      rebuildTileset(game, game.transitionPhase);
+      for (const proj of game.enemyProjectiles) proj.gfx.destroy();
+      game.enemyProjectiles.length = 0;
+      player.x = 80;
+      player.y = GROUND_Y - PLAYER_H;
+      player.vy = 0;
+      player.currentSpeed = 0;
+      player.hp = Math.min(100, player.hp + 30);
+      game.cameraX = 0;
+    }
+
+    if (game.transitionTimer <= 0) {
+      game.phase = game.transitionPhase;
+      game.killCount = 0;
+      game.bossActive = false;
+      game.bossDefeated = false;
+      game.transitioning = false;
+      game._tilesSwapped = false;
+      game.spawnTimer = 60;
+    }
+  }
+
+  if (game.victory) {
+    game.victoryTimer += dt;
+    game.phaseTitle.text = "VICTORY!";
+    game.phaseTitle.alpha = 1;
+    game.phaseSub.text = `${_t("hud.score")}: ${player.score}`;
+    game.phaseSub.alpha = 1;
+    if (game.victoryTimer > 300) {
+      game.won = true;
+      game.gameOver = true;
+    }
+  }
+
   // ---- Spawn enemies / boss ----
-  const BOSS_KILL_THRESHOLD = 100;
-  if (!game.bossActive && !game.bossDefeated) {
+  const threshold = BOSS_KILL_THRESHOLD[game.phase] || 100;
+  if (!game.bossActive && !game.bossDefeated && !game.transitioning && !game.victory) {
     game.spawnTimer -= dt;
-    if (game.spawnTimer <= 0 && game.enemies.length < 5 && game.killCount < BOSS_KILL_THRESHOLD) {
+    if (game.spawnTimer <= 0 && game.enemies.length < 5 && game.killCount < threshold) {
       spawnEnemy(game);
       game.spawnTimer = 90 + Math.random() * 60;
     }
-    // Spawn boss when kill threshold reached and no more regular enemies
-    if (game.killCount >= BOSS_KILL_THRESHOLD && game.enemies.length === 0) {
+    if (game.killCount >= threshold && game.enemies.length === 0) {
       spawnBoss(game);
       game.bossActive = true;
     }
   }
 
   // ---- Update enemies ----
-  const COMBAT_RANGE = 23; // distance to stop and attack (~1px overlap)
+  const COMBAT_RANGE = 23;
 
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     const e = game.enemies[i];
@@ -667,13 +789,20 @@ function update(game, keys, dt) {
     if (!e.alive) {
       if (!e.deathTimer) {
         e.deathTimer = 30;
-        e.knockVx = (player.x > e.x ? -3 : 3); // fly away from player
+        e.knockVx = (player.x > e.x ? -3 : 3);
+        if (e.isBoss && e.ai) {
+          e.ai.onDeath();
+          for (const proj of e.ai.projectiles) proj.gfx?.destroy();
+          e.ai.projectiles.length = 0;
+        }
       }
       e.deathTimer -= dt;
       e.x += e.knockVx * dt;
       eAnim.sprite.x = e.x + (e.frameSize || FRAME_SIZE) / 2;
       eAnim.sprite.alpha = Math.max(0, e.deathTimer / 30);
-      eAnim.sprite.y += 0.5 * dt; // sink slightly
+      eAnim.sprite.y += 0.5 * dt;
+      if (e.isBoss) eAnim.forcePlay("death");
+      eAnim.update(dt);
       if (e.deathTimer <= 0) {
         eAnim.sprite.destroy();
         game.enemies.splice(i, 1);
@@ -684,46 +813,147 @@ function update(game, keys, dt) {
 
     const dx = player.x - e.x;
     const dist = Math.abs(dx);
-    // Enemies face TOWARD player
     const facing = dx > 0 ? 1 : -1;
 
     if (e.hitTimer > 0) e.hitTimer -= dt;
-    if (e.attackCooldown > 0) e.attackCooldown -= dt;
 
-    // --- Movement: stop at combat range, don't overlap ---
-    if (dist > COMBAT_RANGE && e.hitTimer <= 0) {
-      const spd = (ENEMY_STATS[e.type]?.speed || 1.2) * dt;
-      e.vx = facing * spd;
-      e.x += e.vx;
+    // ── Boss AI ──
+    if (e.isBoss && e.ai) {
+      const spawnCb = () => spawnEnemy(game);
+      const aiResult = e.ai.update(e, player, dt, spawnCb, eAnim);
+
+      if (aiResult.vx) e.x += aiResult.vx;
+      e.x = Math.max(0, Math.min(game.levelWidth - (e.frameSize || FRAME_SIZE), e.x));
+
+      // Boss attack hits player
+      if (aiResult.hit && e.hitTimer <= 0) {
+        const h = aiResult.hit;
+        const bx = e.x + (e.frameSize || FRAME_SIZE) / 2;
+        const hitX = aiResult.facing === 1 ? bx : bx - h.reach;
+        const hitY = e.y + (h.hitOy || 8);
+        const pHb = getHitbox(player);
+
+        if (h.aoe || aabb(hitX, hitY, h.reach, h.hitH, pHb.x, pHb.y, pHb.w, pHb.h)) {
+          if (h.groundOnly && !player.grounded) {
+            // Ground-only attacks miss airborne players
+          } else {
+            player.hp -= h.dmg;
+            player.x += aiResult.facing * h.knockback;
+            game.playerAnim.forcePlay("hit");
+            spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 8);
+          }
+        }
+      }
+
+      // Boss projectiles — render, collide, then drain
+      if (e.ai.projectiles) {
+        const pHb = getHitbox(player);
+        for (let pi = e.ai.projectiles.length - 1; pi >= 0; pi--) {
+          const proj = e.ai.projectiles[pi];
+
+          if (!proj.gfx) {
+            const g = new Graphics();
+            g.rect(0, 0, proj.w, proj.h);
+            g.fill({ color: proj.color || 0xffdd55 });
+            game.gameLayer.addChild(g);
+            proj.gfx = g;
+          }
+          proj.gfx.x = proj.x;
+          proj.gfx.y = proj.y;
+
+          if (aabb(proj.x, proj.y, proj.w, proj.h, pHb.x, pHb.y, pHb.w, pHb.h)) {
+            player.hp -= proj.dmg;
+            player.x += (proj.vx > 0 ? 1 : -1) * (proj.knockback || 6);
+            game.playerAnim.forcePlay("hit");
+            spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
+            proj.expired = true;
+          }
+
+          if (proj.expired) {
+            proj.gfx.destroy();
+            e.ai.projectiles.splice(pi, 1);
+          }
+        }
+      }
+
+      eAnim.setFacing(aiResult.facing);
+      eAnim.update(dt);
+      const efs = e.frameSize || FRAME_SIZE;
+      eAnim.sprite.x = e.x + efs / 2;
+      eAnim.sprite.y = GROUND_Y + (e.groundOffset || 0) + (e._arcY || 0);
+
     } else {
-      e.vx = 0;
+      // ── Regular enemy AI ──
+      if (e.attackCooldown > 0) e.attackCooldown -= dt;
+
+      const ranged = RANGED_ENEMIES[e.type];
+      // Ranged types hold a stand-off distance instead of closing to melee range.
+      const stopDist = ranged ? ranged.range * 0.7 : COMBAT_RANGE;
+
+      if (dist > stopDist && e.hitTimer <= 0) {
+        const spd = (ENEMY_STATS[e.type]?.speed || 1.2) * dt;
+        e.vx = facing * spd;
+        e.x += e.vx;
+      } else {
+        e.vx = 0;
+      }
+
+      if (ranged) {
+        if (dist <= ranged.range && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
+          e.attackCooldown = ranged.cooldown + Math.random() * 40;
+          if (eAnim.anims.attack) eAnim.play("attack");
+          const g = new Graphics();
+          g.rect(0, 0, ranged.w, ranged.h);
+          g.fill({ color: ranged.color });
+          game.gameLayer.addChild(g);
+          game.enemyProjectiles.push({
+            x: e.x + FRAME_SIZE / 2 + facing * 12,
+            y: e.y + 20,
+            vx: facing * ranged.projSpeed,
+            w: ranged.w, h: ranged.h,
+            dmg: ranged.dmg,
+            life: 150,
+            gfx: g,
+          });
+        }
+      }
+
+      const playerInReach = !ranged && dist <= COMBAT_RANGE && player.grounded;
+      if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
+        e.attackCooldown = 50 + Math.random() * 30;
+        // Enemies carry different attack anims (punch/kick/attack) — pick one they own.
+        const options = ["punch", "kick", "attack"].filter((a) => eAnim.anims[a]);
+        if (options.length) {
+          eAnim.play(options[Math.floor(Math.random() * options.length)]);
+        }
+
+        if (!player.attacking) {
+          player.hp -= e.damage;
+          game.playerAnim.play("hit");
+          spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
+        }
+      }
+
+      if (e.alive && e.hitTimer <= 0) {
+        if (Math.abs(e.vx) > 0.1) eAnim.play("walk");
+        else if (dist > COMBAT_RANGE) eAnim.play("idle");
+      }
+      eAnim.setFacing(facing);
+      eAnim.update(dt);
+      const efs = e.frameSize || FRAME_SIZE;
+      eAnim.sprite.x = e.x + efs / 2;
+      eAnim.sprite.y = GROUND_Y + (e.groundOffset || 0);
     }
 
     const eHb = getHitbox(e);
 
-    // --- Enemy attacks player when in range (only if player is on ground) ---
-    const playerInReach = dist <= COMBAT_RANGE && player.grounded;
-    if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
-      e.attackCooldown = 50 + Math.random() * 30;
-      const attackAnim = e.type === "capanga-cinza" && Math.random() > 0.5 ? "kick" : "punch";
-      eAnim.play(eAnim.anims[attackAnim] ? attackAnim : "punch");
-
-      if (!player.attacking) {
-        player.hp -= e.damage;
-        game.playerAnim.play("hit");
-        spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
-      }
-    }
-
-    // --- Player attack hits enemy (only during active hit frames) ---
+    // --- Player attack hits enemy ---
     const atk = player.attackType && ATTACKS[player.attackType];
     const inHitWindow = atk && player.attackTimer <= atk.hitStart && player.attackTimer > atk.hitEnd;
     if (player.attacking && inHitWindow) {
       const isSpecial = player.attackType === "special";
       const px = player.x + FRAME_SIZE / 2;
 
-      // Special: hits ALL enemies in front (infinite reach)
-      // Normal attacks: hitbox from sprite edge
       const attackX = isSpecial
         ? (player.facing === 1 ? px : 0)
         : (player.facing === 1 ? px + 2 : px - 2 - atk.reach);
@@ -733,10 +963,13 @@ function update(game, keys, dt) {
       const attackY = player.y + (atk.hitOy || 8);
 
       if (aabb(attackX, attackY, attackW, atk.hitH, eHb.x, eHb.y, eHb.w, eHb.h)) {
-        if (!e.justHit) {
+        // Boss blocking check
+        const bossBlocking = e.isBoss && e.ai && e.ai.isBlocking();
+        if (bossBlocking && !isSpecial) {
+          spawnParticles(game, e.x + (e.frameSize || FRAME_SIZE) / 2, attackY, 0x8888ff, 4);
+        } else if (!e.justHit) {
           e.justHit = true;
           if (isSpecial) {
-            // Special: instant kill normal enemies, 4% damage to bosses
             e.hp = e.isBoss ? e.hp - Math.ceil(e.maxHp * 0.04) : 0;
           } else {
             e.hp -= atk.dmg || 1;
@@ -745,17 +978,16 @@ function update(game, keys, dt) {
           eAnim.play("hit");
           e.x += player.facing * (isSpecial ? 30 : 14);
           const pColor = isSpecial ? 0xffd700 : 0xff8800;
-          spawnParticles(game, e.x + FRAME_SIZE / 2, attackY + atk.hitH / 2, pColor, isSpecial ? 12 : 6);
+          spawnParticles(game, e.x + (e.frameSize || FRAME_SIZE) / 2, attackY + atk.hitH / 2, pColor, isSpecial ? 12 : 6);
           if (e.hp <= 0) {
             e.alive = false;
             player.score += e.score;
             if (!e.isBoss) game.killCount++;
-            spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xffd700, 12);
-            // Boss defeated
+            spawnParticles(game, e.x + (e.frameSize || FRAME_SIZE) / 2, e.y + FRAME_SIZE / 2, 0xffd700, 12);
             if (e.isBoss) {
               game.bossActive = false;
               game.bossDefeated = true;
-              spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xff4444, 20);
+              spawnParticles(game, e.x + (e.frameSize || FRAME_SIZE) / 2, e.y + FRAME_SIZE / 2, 0xff4444, 20);
             }
           }
         }
@@ -763,18 +995,32 @@ function update(game, keys, dt) {
     } else if (!player.attacking) {
       e.justHit = false;
     }
+  }
 
-    // --- Enemy animation state ---
-    if (e.alive && e.hitTimer <= 0) {
-      if (Math.abs(e.vx) > 0.1) eAnim.play("walk");
-      else if (dist > COMBAT_RANGE) eAnim.play("idle");
-      // if in combat range, attack anim plays from above
+  // ---- Enemy projectiles ----
+  {
+    const pHb = getHitbox(player);
+    for (let i = game.enemyProjectiles.length - 1; i >= 0; i--) {
+      const proj = game.enemyProjectiles[i];
+      proj.x += proj.vx * dt;
+      proj.life -= dt;
+      proj.gfx.x = proj.x;
+      proj.gfx.y = proj.y;
+
+      let done = proj.life <= 0 || proj.x < 0 || proj.x > game.levelWidth;
+
+      if (!done && aabb(proj.x, proj.y, proj.w, proj.h, pHb.x, pHb.y, pHb.w, pHb.h)) {
+        player.hp -= proj.dmg;
+        game.playerAnim.forcePlay("hit");
+        spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
+        done = true;
+      }
+
+      if (done) {
+        proj.gfx.destroy();
+        game.enemyProjectiles.splice(i, 1);
+      }
     }
-    eAnim.setFacing(facing);
-    eAnim.update(dt);
-    const efs = e.frameSize || FRAME_SIZE;
-    eAnim.sprite.x = e.x + efs / 2;
-    eAnim.sprite.y = GROUND_Y + (e.groundOffset || 0);
   }
 
   // ---- Particles ----
@@ -807,7 +1053,7 @@ function update(game, keys, dt) {
   game.hpBar.rect(18, 18, Math.max(0, player.hp), 8);
   game.hpBar.fill({ color: player.hp > 30 ? 0x22c55e : 0xef4444 });
 
-  game.scoreText.text = `${_t("hud.score")}: ${player.score}  KO: ${game.killCount}/100`;
+  game.scoreText.text = `${_t("hud.score")}: ${player.score}  KO: ${game.killCount}/${threshold}`;
   game.phaseText.text = `${_t("hud.phase")}: ${game.phase}`;
   game.livesText.text = `${_t("hud.lives")}: ${player.lives}`;
 
@@ -822,18 +1068,61 @@ function update(game, keys, dt) {
     game.hpBar.fill({ color: 0xcc0000 });
   }
 
-  // Phase title fade
-  if (game.frame < 120) {
-    const alpha = Math.max(0, 1 - game.frame / 120);
-    game.phaseTitle.text = `${_t("hud.phase")} ${game.phase}`;
-    game.phaseTitle.alpha = alpha;
-    game.phaseSub.text = _t(`phases.${game.phase}`);
-    game.phaseSub.alpha = alpha;
-  } else {
-    game.phaseTitle.alpha = 0;
-    game.phaseSub.alpha = 0;
+  // Phase title fade (the transition/victory blocks own the overlay while active)
+  if (!game.transitioning && !game.victory) {
+    if (game.frame < 120) {
+      const alpha = Math.max(0, 1 - game.frame / 120);
+      game.phaseTitle.text = `${_t("hud.phase")} ${game.phase}`;
+      game.phaseTitle.alpha = alpha;
+      game.phaseSub.text = _t(`phases.${game.phase}`);
+      game.phaseSub.alpha = alpha;
+    } else {
+      game.phaseTitle.alpha = 0;
+      game.phaseSub.alpha = 0;
+    }
   }
 
+}
+
+// ============================================================
+// TOUCH CONTROLS
+// ============================================================
+function TouchButton({ code, label, keysRef, size = 56, color = "#dc2626" }) {
+  const codes = Array.isArray(code) ? code : [code];
+  const press = (e) => {
+    e.preventDefault();
+    for (const c of codes) keysRef.current.add(c);
+  };
+  const release = () => {
+    for (const c of codes) keysRef.current.delete(c);
+  };
+  return (
+    <button
+      onPointerDown={press}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onPointerLeave={release}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: `${color}33`,
+        border: `2px solid ${color}aa`,
+        color: "#ccd6f6",
+        fontFamily: "'Press Start 2P', monospace",
+        fontSize: size > 50 ? 11 : 9,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTapHighlightColor: "transparent",
+      }}
+    >
+      {label}
+    </button>
+  );
 }
 
 // ============================================================
@@ -848,6 +1137,12 @@ export default function KungFuCastle() {
   const isTstMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t";
   const [screen, setScreen] = useState(isTstMode ? "spritetest" : "menu");
   const [finalScore, setFinalScore] = useState(0);
+  const [won, setWon] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   // Keep translation ref in sync
   _t = t;
@@ -891,6 +1186,7 @@ export default function KungFuCastle() {
         if (!g || g.gameOver) {
           if (g?.gameOver) {
             setFinalScore(g.player.score);
+            setWon(!!g.won);
             setScreen("gameover");
           }
           return;
@@ -1039,10 +1335,45 @@ export default function KungFuCastle() {
       )}
 
       {screen === "playing" && (
-        <div
-          ref={containerRef}
-          style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}
-        />
+        <>
+          <div
+            ref={containerRef}
+            style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}
+          />
+          {isTouch && (
+            <div
+              style={{
+                position: "fixed",
+                left: 0,
+                right: 0,
+                bottom: 16,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-end",
+                padding: "0 16px",
+                pointerEvents: "none",
+                zIndex: 30,
+              }}
+            >
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 52px)", gridTemplateRows: "repeat(2, 52px)", gap: 4, pointerEvents: "auto" }}>
+                <div />
+                <TouchButton code="ArrowUp" label="▲" keysRef={keysRef} size={52} color="#00f0ff" />
+                <div />
+                <TouchButton code="ArrowLeft" label="◀" keysRef={keysRef} size={52} color="#00f0ff" />
+                <TouchButton code="ArrowDown" label="▼" keysRef={keysRef} size={52} color="#00f0ff" />
+                <TouchButton code="ArrowRight" label="▶" keysRef={keysRef} size={52} color="#00f0ff" />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", pointerEvents: "auto" }}>
+                <TouchButton code={["KeyZ", "KeyX"]} label="SP" keysRef={keysRef} size={44} color="#ffd700" />
+                <div style={{ display: "flex", gap: 10 }}>
+                  <TouchButton code="KeyZ" label="Z" keysRef={keysRef} size={58} color="#dc2626" />
+                  <TouchButton code="KeyX" label="X" keysRef={keysRef} size={58} color="#b026ff" />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {screen === "gameover" && (
@@ -1051,11 +1382,12 @@ export default function KungFuCastle() {
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 22,
-              color: "#dc2626",
+              color: won ? "#ffd700" : "#dc2626",
+              textShadow: won ? "0 0 20px rgba(255,215,0,0.5)" : "none",
               marginBottom: 16,
             }}
           >
-            GAME OVER
+            {won ? "VICTORY!" : "GAME OVER"}
           </h2>
           <p style={{ color: "#ccd6f6", fontSize: 14, marginBottom: 8 }}>
             {_t("hud.score")}: {finalScore}
