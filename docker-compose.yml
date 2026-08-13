@@ -11,6 +11,49 @@ services:
       - "5433:5432"
     volumes:
       - acerteamosca_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acerteamosca -d acerteamosca"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Baked into the client bundle — point them at the host you browse from.
+        NEXT_PUBLIC_WS_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/pong"
+        NEXT_PUBLIC_WS_SHIPS_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/ships"
+        NEXT_PUBLIC_WS_MEMORY_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/memory"
+        NEXT_PUBLIC_WS_2048_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/2048"
+        NEXT_PUBLIC_WS_BATALHA_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/batalha-naval"
+    container_name: acerteamosca-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://acerteamosca:acerteamosca123@db:5432/acerteamosca"
+    # Published on 0.0.0.0, so it is reachable over Tailscale at 100.64.0.2:53300
+    ports:
+      - "53300:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Create the schema on first boot, then serve.
+    command: >
+      sh -c "npx prisma db push --skip-generate --accept-data-loss &&
+             npx next start -H 0.0.0.0 -p 3000"
+
+  ws:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: acerteamosca-ws
+    restart: unless-stopped
+    environment:
+      PORT: "3002"
+    ports:
+      - "53302:3002"
+    command: ["node", "server/ws-unified.js"]
 
 volumes:
   acerteamosca_pgdata:
