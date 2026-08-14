@@ -65,3 +65,32 @@ check("phase 2 uses the castle-gate tileset and a gradient sky", () => {
   assert.equal(s.tileset, "fase2-portao-chao");
   assert.equal(s.sky.type, "gradient");
 });
+
+check("the asset manifest loads every scenery path from PHASE_SCENERY", () => {
+  const ASSETS = source("src/components/games/kungfu-assets.js");
+  assert.match(ASSETS, /sceneryAssetPaths/,
+    "kungfu-assets.js must build its scenery list from kungfu-scenery.js");
+  assert.ok(!/const SCENERY_PATHS = \[/.test(ASSETS),
+    "the hardcoded SCENERY_PATHS array must be gone");
+});
+
+check("guardiao-portao is in the boss manifest with all 12 used animations", () => {
+  const ASSETS = source("src/components/games/kungfu-assets.js");
+  const block = ASSETS.match(/"guardiao-portao":\s*bossAnims\([\s\S]*?\]\),/);
+  assert.ok(block, "guardiao-portao missing from BOSS_MANIFEST");
+  for (const a of ["idle", "walk", "horizontal-swing", "overhead-smash", "stuck",
+                   "earthquake", "shield-block", "charge", "kick", "taunt", "hit", "death"]) {
+    assert.match(block[0], new RegExp(`\\["${a}"`), `missing anim ${a}`);
+  }
+});
+
+check("every boss sheet named in the manifest exists on disk", () => {
+  const ASSETS = source("src/components/games/kungfu-assets.js");
+  for (const m of ASSETS.matchAll(/bossAnims\("([a-z-]+)",\s*\d+,\s*\[([\s\S]*?)\]\)/g)) {
+    const boss = m[1];
+    for (const a of m[2].matchAll(/\["([a-z-]+)"/g)) {
+      const file = repoPath(`public/images/kungfucastle/bosses/${boss}/${a[1]}.png`);
+      assert.ok(fs.existsSync(file), `missing sheet: ${boss}/${a[1]}.png`);
+    }
+  }
+});

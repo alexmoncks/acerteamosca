@@ -5,6 +5,7 @@
  */
 
 import { Assets, Texture, Rectangle } from "pixi.js";
+import { sceneryAssetPaths, sceneryTilesetNames } from "./kungfu-scenery";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const FRAME_H = 48; // All sprites use 48×48 square frames
@@ -162,6 +163,21 @@ const BOSS_MANIFEST = {
     ["hit",     { speed: 0.15, next: "idle" }],
     ["death",   { speed: 0.08 }],
   ]),
+
+  "guardiao-portao": bossAnims("guardiao-portao", 68, [
+    ["idle",             { speed: 0.08, loop: true }],
+    ["walk",             { speed: 0.10, loop: true }],
+    ["horizontal-swing", { speed: 0.12, next: "idle" }],
+    ["overhead-smash",   { speed: 0.09, next: "idle" }],
+    ["stuck",            { speed: 0.05, loop: true }],
+    ["earthquake",       { speed: 0.09, next: "idle" }],
+    ["shield-block",     { speed: 0.07, loop: true }],
+    ["charge",           { speed: 0.14, loop: true }],
+    ["kick",             { speed: 0.16, next: "idle" }],
+    ["taunt",            { speed: 0.07, next: "idle" }],
+    ["hit",              { speed: 0.15, next: "idle" }],
+    ["death",            { speed: 0.08 }],
+  ]),
 };
 
 // ── Sprite sheet cutter ────────────────────────────────────────────────────
@@ -187,22 +203,6 @@ export function cutSpriteSheet(texture, frameH) {
   return frames;
 }
 
-// ── Scenery asset paths ───────────────────────────────────────────────────
-
-const SCENERY_PATHS = [
-  "/images/kungfucastle/tiles/fase1-jardim.png",
-  "/images/kungfucastle/props/parallax-montanhas.png",
-  "/images/kungfucastle/props/parallax-arvores.png",
-  "/images/kungfucastle/props/cerejeira-sakura.png",
-  "/images/kungfucastle/props/lanterna-ishidoro.png",
-  "/images/kungfucastle/props/torii-vermelho.png",
-  "/images/kungfucastle/props/pedra-decorativa.png",
-  "/images/kungfucastle/props/cerca-bambu.png",
-  "/images/kungfucastle/props/komainu.png",
-  "/images/kungfucastle/props/portao-arco-pedra.png",
-  "/images/kungfucastle/props/escada-pedra-externa.png",
-];
-
 // ── Loader ─────────────────────────────────────────────────────────────────
 
 /**
@@ -212,7 +212,7 @@ const SCENERY_PATHS = [
  * @returns {Promise<{ player: AnimMap, enemies: { [type: string]: AnimMap }, scenery: SceneryMap }>}
  *
  * AnimMap = { [animName]: { frames: Texture[], speed: number, loop: boolean, next?: string } }
- * SceneryMap = { tileset: Texture[], parallaxMountains: Texture, parallaxTrees: Texture, props: { [name]: Texture } }
+ * SceneryMap = { tilesets: { [name]: Texture[] }, props: { [name]: Texture } }
  */
 export async function loadAllAssets() {
   // 1. Collect every unique source path across the whole manifest
@@ -231,7 +231,7 @@ export async function loadAllAssets() {
       srcSet.add(anim.src);
     }
   }
-  for (const path of SCENERY_PATHS) {
+  for (const path of sceneryAssetPaths()) {
     srcSet.add(path);
   }
 
@@ -278,38 +278,36 @@ export async function loadAllAssets() {
   }
 
   // 7. Build scenery textures
-  // Tileset: 128×128, 4×4 grid of 32×32 Wang tiles → 16 textures
-  const tilesetSrc = textureMap["/images/kungfucastle/tiles/fase1-jardim.png"];
+  // Tilesets: each is a 128×128 sheet, a 4×4 grid of 32×32 Wang tiles → 16 textures
   const TILE_SIZE = 32;
-  const tileset = [];
-  for (let row = 0; row < 4; row++) {
-    for (let col = 0; col < 4; col++) {
-      const rect = new Rectangle(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      tileset.push(new Texture({ source: tilesetSrc.source, frame: rect }));
+  const tilesets = {};
+  for (const name of sceneryTilesetNames()) {
+    const src = textureMap[`/images/kungfucastle/tiles/${name}.png`];
+    if (!src) {
+      console.warn(`[kungfu-assets] Tileset not found: ${name}`);
+      continue;
     }
+    const frames = [];
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        const rect = new Rectangle(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        frames.push(new Texture({ source: src.source, frame: rect }));
+      }
+    }
+    tilesets[name] = frames;
   }
 
-  const parallaxMountains = textureMap["/images/kungfucastle/props/parallax-montanhas.png"];
-  const parallaxTrees     = textureMap["/images/kungfucastle/props/parallax-arvores.png"];
-
-  const PROP_NAMES = [
-    "cerejeira-sakura",
-    "lanterna-ishidoro",
-    "torii-vermelho",
-    "pedra-decorativa",
-    "cerca-bambu",
-    "komainu",
-    "portao-arco-pedra",
-    "escada-pedra-externa",
-  ];
+  // Props (and parallax bands) come straight from the scenery description.
   const props = {};
-  for (const name of PROP_NAMES) {
-    const tex = textureMap[`/images/kungfucastle/props/${name}.png`];
+  for (const path of sceneryAssetPaths()) {
+    if (!path.includes("/props/")) continue;
+    const name = path.split("/").pop().replace(".png", "");
+    const tex = textureMap[path];
     if (!tex) console.warn(`[kungfu-assets] Scenery prop not found: ${name}`);
     props[name] = tex;
   }
 
-  const scenery = { tileset, parallaxMountains, parallaxTrees, props };
+  const scenery = { tilesets, props };
 
   // 7. Return organised texture maps
   return { player, enemies, bosses, scenery };

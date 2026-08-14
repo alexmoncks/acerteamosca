@@ -110,15 +110,15 @@ async function buildScene(app) {
   bgLayer.addChild(sky);
 
   // -- Parallax mountains (bgLayer) — just above the tree line
-  if (scenery.parallaxMountains) {
+  if (scenery.props["parallax-montanhas"]) {
     const scale = 2.2;
-    const mtnW = scenery.parallaxMountains.width * scale;
-    const mtnH = scenery.parallaxMountains.height * scale;
+    const mtnW = scenery.props["parallax-montanhas"].width * scale;
+    const mtnH = scenery.props["parallax-montanhas"].height * scale;
     // Trees are 80px tall from GROUND_Y, mountains sit just above them
     const mtnY = GROUND_Y - 10 - mtnH + 28;
     const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 2;
     for (let i = 0; i < mtnCount; i++) {
-      const s = new Sprite(scenery.parallaxMountains);
+      const s = new Sprite(scenery.props["parallax-montanhas"]);
       s.scale.set(scale);
       s.x = i * mtnW;
       s.y = mtnY;
@@ -128,13 +128,13 @@ async function buildScene(app) {
   }
 
   // -- Parallax trees (midLayer) — base touching the grass
-  if (scenery.parallaxTrees) {
-    const treeW = scenery.parallaxTrees.width;
-    const treeH = scenery.parallaxTrees.height;
+  if (scenery.props["parallax-arvores"]) {
+    const treeW = scenery.props["parallax-arvores"].width;
+    const treeH = scenery.props["parallax-arvores"].height;
     const treeY = GROUND_Y - treeH + 18; // overlap into grass
     const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 2;
     for (let i = 0; i < treeCount; i++) {
-      const s = new Sprite(scenery.parallaxTrees);
+      const s = new Sprite(scenery.props["parallax-arvores"]);
       s.x = i * treeW;
       s.y = treeY;
       midLayer.addChild(s);
@@ -142,7 +142,8 @@ async function buildScene(app) {
   }
 
   // -- Ground: grass row at feet level + brick wall rows below
-  if (scenery.tileset && scenery.tileset.length >= 16) {
+  const phase1Tiles = scenery.tilesets["fase1-jardim"];
+  if (phase1Tiles && phase1Tiles.length >= 16) {
     const TILE = 32;
     const tilesAcross = Math.ceil(LEVEL_WIDTH / TILE);
 
@@ -151,9 +152,9 @@ async function buildScene(app) {
     // 3  = wang_12 (grass top + brick bottom — transition)
     // 9  = wang_3  (brick top + grass bottom)
     // 6  = wang_0  (mixed brick)
-    const grassTile = scenery.tileset[12]; // full grass, seamless
-    const transitionTile = scenery.tileset[3]; // grass top, brick bottom
-    const brickTile = scenery.tileset[6]; // brick only, no grass
+    const grassTile = phase1Tiles[12]; // full grass, seamless
+    const transitionTile = phase1Tiles[3]; // grass top, brick bottom
+    const brickTile = phase1Tiles[6]; // brick only, no grass
 
     // Row 0: grass — top of tile aligns with feet (shift up so grass surface = GROUND_Y)
     const GRASS_OFFSET = 52; // grass surface is ~14px from top of tile
