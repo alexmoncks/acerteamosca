@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
+import { regenHp } from "./kungfu-combat";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 
@@ -16,11 +17,21 @@ const CH = 320;
 const GROUND_Y = 260;
 const PLAYER_W = 32;
 const PLAYER_H = 48;
+const PLAYER_HP_MAX = 100;
+// Passive health regeneration, as a % of MAX health per second.
+const PLAYER_REGEN_PCT_PER_SEC = 0.5;
+const BOSS_REGEN_PCT_PER_SEC = 2.5;
 const PLAYER_WALK_SPEED = 1.4; // similar to capanga-branco (1.2)
 const PLAYER_RUN_SPEED = 3.2;
 const DOUBLE_TAP_WINDOW = 12; // frames to detect double-tap
-const GRAVITY = 0.6;
-const JUMP_FORCE = -10;
+// Backflip dodge — double-tap away from the direction you're facing.
+const DODGE_DURATION = 28; // frames; matches the 10-frame backflip sheet
+const DODGE_COOLDOWN = 40; // frames before another dodge is allowed
+const DODGE_SPEED = 1.8;   // px/frame backwards → ~50px, clear of COMBAT_RANGE (23)
+const DODGE_LIFT = -3.5;   // vertical impulse; under GRAVITY 0.27 the flip lands in ~26 frames
+// Jump arc: apex = JUMP_FORCE² / (2·GRAVITY) ≈ 60px, airtime = 2·JUMP_FORCE / GRAVITY ≈ 42 frames (0.70s)
+const GRAVITY = 0.27;
+const JUMP_FORCE = -5.7;
 const LEVEL_WIDTH = 2400;
 
 const FRAME_SIZE = 48;
@@ -43,6 +54,9 @@ const BOSS_STATS = {
     hp: 25, damage: 10, speed: 1.5, score: 1000, frameSize: 68,
     hitbox: { w: 23, h: 49, ox: 23, oy: 9 },
     groundOffset: 12,
+    // Every boss sheet is drawn facing WEST, unlike the player and the regular
+    // enemies (EAST) — without this the boss renders back-turned to the player.
+    spriteFacing: -1,
   },
 };
 
@@ -297,7 +311,7 @@ async function buildScene(app) {
       y: GROUND_Y - PLAYER_H,
       vx: 0,
       vy: 0,
-      hp: 100,
+      hp: PLAYER_HP_MAX,
       lives: 3,
       score: 0,
       facing: 1,
@@ -307,6 +321,12 @@ async function buildScene(app) {
       attackType: null,
       running: false,
       tapTimer: { left: 0, right: 0 },
+      // Facing captured when each tap timer was armed — by the time the second
+      // tap arrives, player.facing has already flipped toward the tapped side.
+      tapFacing: { left: 1, right: 1 },
+      dodging: false,
+      dodgeCooldown: 0,
+      dodgeVx: 0,
       currentSpeed: 0, // for deceleration
       hitbox: { w: 28, h: 40, ox: 10, oy: 4 },
     },
@@ -373,7 +393,11 @@ function spawnBoss(game) {
   sprite.y = GROUND_Y;
   game.gameLayer.addChild(sprite);
 
-  const anim = new AnimController({ sprite, anims: bossTextures });
+  const anim = new AnimController({
+    sprite,
+    anims: bossTextures,
+    baseFacing: stats.spriteFacing || 1,
+  });
 
   const enemy = {
     x: game.cameraX + CW + fs,
@@ -422,7 +446,7 @@ function loadPhase(game, n) {
   game.player.y = GROUND_Y - PLAYER_H;
   game.player.vx = 0;
   game.player.vy = 0;
-  game.player.hp = 100;
+  game.player.hp = PLAYER_HP_MAX;
   game.player.attacking = false;
   game.player.attackType = null;
   game.player.attackTimer = 0;
@@ -510,6 +534,46 @@ function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
 // ============================================================
 // GEThitbox HELPER
 // ============================================================
+// ============================================================
+// BACKFLIP DODGE
+// ============================================================
+
+/** True when the player may start a backflip right now. */
+function canDodge(player) {
+  return (
+    player.grounded &&
+    !player.attacking &&
+    !player.dodging &&
+    !player.crouching &&
+    player.dodgeCooldown <= 0
+  );
+}
+
+/**
+ * Leap backwards in a flip, invulnerable for the whole animation.
+ *
+ * Reuses the existing attack lock: `attacking = true` already blocks every
+ * input gate AND makes enemy damage a no-op, so the dodge gets both for free.
+ * `attackType` stays null, so the flip itself deals no damage.
+ *
+ * @param {object} game
+ * @param {number} originalFacing  Facing before the first tap flipped it
+ */
+function startDodge(game, originalFacing) {
+  const { player } = game;
+  player.dodging = true;
+  player.facing = originalFacing; // flip away while still facing the enemy
+  player.attacking = true;
+  player.attackType = null;
+  player.attackTimer = DODGE_DURATION;
+  player.dodgeVx = -originalFacing * DODGE_SPEED;
+  player.currentSpeed = 0;
+  player.running = false;
+  player.vy = DODGE_LIFT;
+  player.grounded = false;
+  game.playerAnim.forcePlay("backflip");
+}
+
 function getHitbox(entity) {
   return {
     x: entity.x + (entity.hitbox?.ox || 0),
@@ -575,7 +639,7 @@ function update(game, keys, dt) {
       if (player.lives <= 0) {
         game.gameOver = true;
       } else {
-        player.hp = 100;
+        player.hp = PLAYER_HP_MAX;
         player.x = 80;
         player.y = GROUND_Y - PLAYER_H;
         player.vy = 0;
@@ -594,14 +658,25 @@ function update(game, keys, dt) {
   const wasLeft = player._prevLeft || false;
   const wasRight = player._prevRight || false;
 
-  // Detect fresh key press (rising edge) for double-tap
+  // Detect fresh key press (rising edge) for double-tap.
+  // Double-tap TOWARD the way you face = run; double-tap AWAY = backflip dodge.
   if (leftDown && !wasLeft) {
-    player.running = player.tapTimer.left > 0; // second tap within window = run
+    if (player.tapTimer.left > 0 && player.tapFacing.left === 1 && canDodge(player)) {
+      startDodge(game, 1);
+    } else {
+      player.running = player.tapTimer.left > 0; // second tap within window = run
+    }
     player.tapTimer.left = DOUBLE_TAP_WINDOW;
+    player.tapFacing.left = player.facing;
   }
   if (rightDown && !wasRight) {
-    player.running = player.tapTimer.right > 0;
+    if (player.tapTimer.right > 0 && player.tapFacing.right === -1 && canDodge(player)) {
+      startDodge(game, -1);
+    } else {
+      player.running = player.tapTimer.right > 0;
+    }
     player.tapTimer.right = DOUBLE_TAP_WINDOW;
+    player.tapFacing.right = player.facing;
   }
   player._prevLeft = leftDown;
   player._prevRight = rightDown;
@@ -609,12 +684,13 @@ function update(game, keys, dt) {
   // Count down tap timers
   if (player.tapTimer.left > 0) player.tapTimer.left -= dt;
   if (player.tapTimer.right > 0) player.tapTimer.right -= dt;
+  if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
   // Target speed based on input
   const targetSpeed = player.running ? PLAYER_RUN_SPEED : PLAYER_WALK_SPEED;
   let moveDir = 0;
   const prevFacing = player.facing;
-  if (!player.attacking) {
+  if (!player.attacking && !player.crouching) {
     if (leftDown) { moveDir = -1; player.facing = -1; }
     if (rightDown) { moveDir = 1; player.facing = 1; }
   }
@@ -656,7 +732,9 @@ function update(game, keys, dt) {
 
   // Attack definitions
   const ATTACKS = {
-    punch:   { duration: 20, hitStart: 10, hitEnd: 5, reach: 18, hitH: 20, hitOy: 8, dmg: 1 },
+    // punch.png winds up for 5 of its 6 frames — the arm is only extended on
+    // frame 5, which the sheet reaches ~15 frames in. Damage must wait for it.
+    punch:   { duration: 20, hitStart: 5,  hitEnd: 1, reach: 18, hitH: 20, hitOy: 8, dmg: 1 },
     kick:    { duration: 24, hitStart: 12, hitEnd: 6, reach: 22, hitH: 20, hitOy: 14, dmg: 2 },
     flyKick: { duration: 28, hitStart: 14, hitEnd: 6, reach: 28, hitH: 24, hitOy: 6, dmg: 3 },
     sweep:   { duration: 26, hitStart: 13, hitEnd: 6, reach: 26, hitH: 16, hitOy: 32, dmg: 2 },
@@ -694,6 +772,13 @@ function update(game, keys, dt) {
   player._prevDown = downDown;
   if (player._downTapTimer > 0) player._downTapTimer -= dt;
 
+  // Dodge: fixed backward drift for the whole flip, overriding any residual
+  // walk velocity from the taps that triggered it.
+  if (player.dodging) {
+    player.vx = player.dodgeVx * dt;
+    player.x += player.vx;
+  }
+
   // Sweep: continuous slide during animation
   if (player.attacking && player.attackType === "sweep") {
     player.vx = player.facing * PLAYER_RUN_SPEED * 1.0 * dt;
@@ -701,10 +786,12 @@ function update(game, keys, dt) {
   }
 
   // CROUCH: hold down (not attacking)
+  // forcePlay only on ENTRY — calling it every held frame resets the sheet to
+  // frame 0, which is a standing pose, so the crouch never visibly happens.
   if (downDown && !player.attacking && player.grounded) {
+    if (!player.crouching) game.playerAnim.forcePlay("crouch");
     player.crouching = true;
-    game.playerAnim.forcePlay("crouch");
-  } else if (!downDown) {
+  } else {
     player.crouching = false;
   }
 
@@ -717,7 +804,7 @@ function update(game, keys, dt) {
     game.playerAnim.forcePlay("flyKick");
     // Launch into air if on ground (running voadora)
     if (player.grounded) {
-      player.vy = JUMP_FORCE * 0.6;
+      player.vy = JUMP_FORCE * 0.7; // keeps the ~30px flying-kick arc under the lighter gravity
       player.grounded = false;
     }
     player.currentSpeed = PLAYER_RUN_SPEED * 1.5;
@@ -756,13 +843,24 @@ function update(game, keys, dt) {
     if (player.attackTimer <= 0) {
       player.attacking = false;
       player.attackType = null;
+      if (player.dodging) {
+        player.dodging = false;
+        player.dodgeCooldown = DODGE_COOLDOWN;
+      }
       // Force-reset past attack priority so idle/walk can take over
       game.playerAnim.forcePlay("idle");
     }
   }
 
+  // ---- Passive health regeneration ----
+  // Reached only while alive and in normal play — the transition and
+  // death-sequence blocks above return before this point.
+  player.hp = regenHp(player.hp, PLAYER_HP_MAX, PLAYER_REGEN_PCT_PER_SEC, dt);
+
   // ---- Player animation state ----
-  if (!player.attacking) {
+  // Skipped while crouching: `crouch` ends with _done = true, so any play()
+  // here would be accepted and would snap the held pose back to idle.
+  if (!player.attacking && !player.crouching) {
     if (!player.grounded) {
       game.playerAnim.play("jump");
     } else if (game.playerAnim.state === "jump" || game.playerAnim.state === "flyKick") {
@@ -805,11 +903,17 @@ function update(game, keys, dt) {
     const e = game.enemies[i];
     const eAnim = game.enemyAnims[i];
 
+    // Horizontal offset player→enemy, measured between sprite CENTRES.
+    // Regular enemies share the player's 48px frame, but the boss frame is
+    // 68px, so comparing left edges skews every direction test by 10px.
+    const dxCenter =
+      (player.x + FRAME_SIZE / 2) - (e.x + (e.frameSize || FRAME_SIZE) / 2);
+
     // --- Dead enemy: knockback + fade out ---
     if (!e.alive) {
       if (!e.deathTimer) {
         e.deathTimer = 30;
-        e.knockVx = (player.x > e.x ? -3 : 3); // fly away from player
+        e.knockVx = dxCenter > 0 ? -3 : 3; // fly away from player
       }
       e.deathTimer -= dt;
       e.x += e.knockVx * dt;
@@ -827,10 +931,16 @@ function update(game, keys, dt) {
     const dx = player.x - e.x;
     const dist = Math.abs(dx);
     // Enemies face TOWARD player
-    const facing = dx > 0 ? 1 : -1;
+    const facing = dxCenter > 0 ? 1 : -1;
 
     if (e.hitTimer > 0) e.hitTimer -= dt;
     if (e.attackCooldown > 0) e.attackCooldown -= dt;
+
+    // Bosses regenerate; regular enemies don't. Runs BEFORE the player's
+    // damage block so a killing blow this frame is never undone.
+    if (e.isBoss) {
+      e.hp = regenHp(e.hp, e.maxHp, BOSS_REGEN_PCT_PER_SEC, dt);
+    }
 
     // --- Movement: stop at combat range, don't overlap ---
     if (dist > COMBAT_RANGE && e.hitTimer <= 0) {

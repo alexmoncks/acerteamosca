@@ -8,3 +8,4 @@ out/
 prisma/*.db
 prisma/*.db-journal
 .DS_Store
+.superpowers/

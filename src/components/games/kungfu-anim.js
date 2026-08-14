@@ -16,6 +16,7 @@ const PRIORITY = {
   sweep: 3,
   special: 3,
   attack: 3,
+  backflip: 4,
   hit: 4,
   death: 5,
 };
@@ -36,12 +37,16 @@ function getPriority(name) {
 export class AnimController {
   /**
    * @param {object} opts
-   * @param {object} opts.sprite  - PixiJS Sprite instance (already in stage)
-   * @param {object} opts.anims   - { [name]: { frames: Texture[], speed, loop, next? } }
+   * @param {object} opts.sprite       - PixiJS Sprite instance (already in stage)
+   * @param {object} opts.anims        - { [name]: { frames: Texture[], speed, loop, next? } }
+   * @param {number} [opts.baseFacing] - Direction the artwork is drawn facing:
+   *                                     +1 = east/right (player, regular enemies),
+   *                                     -1 = west/left (all boss sheets).
    */
-  constructor({ sprite, anims }) {
+  constructor({ sprite, anims, baseFacing = 1 }) {
     this.sprite = sprite;
     this.anims = anims;
+    this.baseFacing = baseFacing;
 
     // Internal state
     this._state = null;
@@ -133,11 +138,14 @@ export class AnimController {
   }
 
   /**
-   * Set the horizontal facing direction.
+   * Set the horizontal facing direction the character should *look* at.
+   * The sheet is only mirrored when the requested direction differs from the
+   * direction the artwork was drawn in (`baseFacing`) — boss sheets are drawn
+   * facing west, everything else faces east.
    * @param {number} dir  +1 = right, -1 = left
    */
   setFacing(dir) {
-    this.sprite.scale.x = Math.abs(this.sprite.scale.x) * dir;
+    this.sprite.scale.x = Math.abs(this.sprite.scale.x) * dir * this.baseFacing;
     // anchor.x = 0.5 on the sprite ensures the pivot stays centred
   }
 
