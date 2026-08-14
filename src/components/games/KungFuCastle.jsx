@@ -58,6 +58,13 @@ const BOSS_STATS = {
     // enemies (EAST) — without this the boss renders back-turned to the player.
     spriteFacing: -1,
   },
+  "guardiao-portao": {
+    hp: 35, damage: 14, speed: 1.2, score: 1500, frameSize: 68,
+    hitbox: { w: 36, h: 52, ox: 17, oy: 7 },
+    groundOffset: 12,
+    // Como todos os chefes, a arte é desenhada virada para oeste.
+    spriteFacing: -1,
+  },
 };
 
 const PHASE_CONFIG = {
@@ -66,7 +73,12 @@ const PHASE_CONFIG = {
     boss: "mestre-capangas",
     killThreshold: 100,
   },
-  // TODO: phases 2–5 — add { enemies, boss, killThreshold } when content ready
+  2: {
+    enemies: ["guarda-bastao", "ninja", "kunoichi"],
+    boss: "guardiao-portao",
+    killThreshold: 100,
+  },
+  // TODO: phases 3–5 — add { enemies, boss, killThreshold } when content ready
 };
 
 const MAX_PHASE = Math.max(...Object.keys(PHASE_CONFIG).map(Number));
