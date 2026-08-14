@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "test": "node tests/run.mjs",
     "db:push": "npx prisma db push",
     "db:studio": "npx prisma studio",
     "db:seed": "node prisma/seed.js",
