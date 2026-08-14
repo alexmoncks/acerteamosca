@@ -46,7 +46,7 @@ export const PHASE_SCENERY = {
     // Twilight: warm orange at the horizon darkening to deep violet overhead.
     sky: { type: "gradient", from: 0x2a1b3d, to: 0xd97706 },
     bg: [
-      { asset: "fase2-parallax-castelo", every: 520, alpha: 0.75, y: "horizon", parallax: 0.15 },
+      { asset: "fase2-parallax-castelo", every: 520, alpha: 0.75, y: 180, parallax: 0.15 },
     ],
     mid: [
       { asset: "fase2-parallax-muralha", tile: true, y: "ground-overlap", parallax: 0.5 },
