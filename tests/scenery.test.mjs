@@ -98,15 +98,32 @@ check("every boss sheet named in the manifest exists on disk", () => {
 check("clearScenery empties the scenery containers, never the layers", () => {
   const fn = GAME.match(/function clearScenery[\s\S]*?\n\}/);
   assert.ok(fn, "clearScenery not found");
-  assert.match(fn[0], /sceneryLayers/,
+  const body = fn[0];
+  assert.match(body, /sceneryLayers/,
     "must operate on the dedicated containers");
-  assert.ok(!/(bgLayer|midLayer|gameLayer|fgLayer)\.removeChildren/.test(fn[0]),
+  assert.ok(!/(bgLayer|midLayer|gameLayer|fgLayer)\.removeChildren/.test(body),
     "clearing a whole layer would destroy the player sprite and the particles");
+
+  // The containers themselves must survive — emptied via removeChildren(),
+  // never destroy()ed — or every later buildScenery() would add sprites to
+  // a dead container and nothing would render again.
+  assert.match(body, /\.removeChildren\(\)/,
+    "must call removeChildren() on the containers so they survive to be reused");
+  assert.ok(!/\.destroy\(\s*\{[^)]*children/.test(body),
+    "must not destroy() a container with { children: true } — that kills the persistent container itself, not just its contents");
+
+  // Every child pulled off removeChildren() must be destroy()ed, and with
+  // NO arguments: a truthy/options argument tells PixiJS to also free the
+  // shared texture, so the next phase reusing that art renders nothing.
+  assert.match(body, /\.destroy\(\)/,
+    "children must be destroy()ed with no arguments, or every phase change leaks them");
+  assert.ok(!/\.destroy\(\s*true\s*\)/.test(body),
+    "destroy(true) frees the shared texture — the next phase reusing this art would render nothing");
+  assert.ok(!/\.destroy\(\s*\{/.test(body),
+    "destroy({...}) may free shared resources — call destroy() with no arguments");
 });
 
 check("the ground scenery container sits below the player in gameLayer", () => {
-  const build = GAME.match(/const groundScenery[\s\S]{0,400}/);
-  assert.ok(build, "groundScenery container not created");
   const groundIdx = GAME.indexOf("gameLayer.addChild(groundScenery)");
   const playerIdx = GAME.indexOf("gameLayer.addChild(playerSprite)");
   assert.ok(groundIdx > -1 && playerIdx > -1, "expected both addChild calls");
@@ -114,11 +131,17 @@ check("the ground scenery container sits below the player in gameLayer", () => {
     "groundScenery must be added before the player or props would cover it");
 });
 
-check("loadPhase rebuilds the scenery", () => {
+check("loadPhase clears scenery before rebuilding it", () => {
   const fn = GAME.match(/function loadPhase[\s\S]*?\n\}/);
   assert.ok(fn, "loadPhase not found");
-  assert.match(fn[0], /clearScenery\(game\)/);
-  assert.match(fn[0], /buildScenery\(game,\s*n\)/);
+  const body = fn[0];
+  assert.match(body, /clearScenery\(game\)/);
+  assert.match(body, /buildScenery\(game,\s*n\)/);
+  const clearIdx = body.search(/clearScenery\(game\)/);
+  const buildIdx = body.search(/buildScenery\(game,\s*n\)/);
+  assert.ok(clearIdx > -1 && buildIdx > -1, "expected both calls");
+  assert.ok(clearIdx < buildIdx,
+    "clearScenery must run before buildScenery — building first then clearing would leave a permanently empty scene");
 });
 
 check("levelWidth comes from the phase, not the old constant", () => {
