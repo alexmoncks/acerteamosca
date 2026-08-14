@@ -49,10 +49,32 @@ check("enemy damage stays gated on !player.attacking", () => {
   assert.match(GAME, /if \(!player\.attacking\) \{\n\s*player\.hp -= e\.damage/);
 });
 
+/**
+ * Assert that `expr` (e.g. "player.grounded") appears in `body` with the
+ * given polarity — i.e. whether the nearest non-whitespace character before
+ * it is a "!". Plain indexOf + backward scan, so it's robust to whitespace
+ * and line breaks but still catches a stray "!" no matter how it's spaced.
+ */
+function assertGatePolarity(body, expr, negated) {
+  const i = body.indexOf(expr);
+  assert.ok(i > -1, `${expr} not found in canDodge`);
+  let j = i - 1;
+  while (j >= 0 && /\s/.test(body[j])) j--;
+  const isNegated = body[j] === "!";
+  assert.equal(
+    isNegated,
+    negated,
+    `${expr} must be ${negated ? "negated (!" + expr + ")" : "unnegated (not !" + expr + ")"}`
+  );
+}
+
 check("a dodge cannot start while airborne, busy, or on cooldown", () => {
   const fn = GAME.match(/function canDodge[\s\S]*?\n\}/);
   assert.ok(fn, "canDodge not found");
-  for (const g of ["grounded", "attacking", "dodging", "dodgeCooldown"]) {
-    assert.match(fn[0], new RegExp(g), `canDodge must check ${g}`);
-  }
+  const body = fn[0];
+  assertGatePolarity(body, "player.grounded", false);
+  assertGatePolarity(body, "player.attacking", true);
+  assertGatePolarity(body, "player.dodging", true);
+  assertGatePolarity(body, "player.crouching", true);
+  assert.match(body, /player\.dodgeCooldown\s*<=\s*0/, "canDodge must check dodgeCooldown <= 0");
 });
