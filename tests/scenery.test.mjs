@@ -94,3 +94,34 @@ check("every boss sheet named in the manifest exists on disk", () => {
     }
   }
 });
+
+check("clearScenery empties the scenery containers, never the layers", () => {
+  const fn = GAME.match(/function clearScenery[\s\S]*?\n\}/);
+  assert.ok(fn, "clearScenery not found");
+  assert.match(fn[0], /sceneryLayers/,
+    "must operate on the dedicated containers");
+  assert.ok(!/(bgLayer|midLayer|gameLayer|fgLayer)\.removeChildren/.test(fn[0]),
+    "clearing a whole layer would destroy the player sprite and the particles");
+});
+
+check("the ground scenery container sits below the player in gameLayer", () => {
+  const build = GAME.match(/const groundScenery[\s\S]{0,400}/);
+  assert.ok(build, "groundScenery container not created");
+  const groundIdx = GAME.indexOf("gameLayer.addChild(groundScenery)");
+  const playerIdx = GAME.indexOf("gameLayer.addChild(playerSprite)");
+  assert.ok(groundIdx > -1 && playerIdx > -1, "expected both addChild calls");
+  assert.ok(groundIdx < playerIdx,
+    "groundScenery must be added before the player or props would cover it");
+});
+
+check("loadPhase rebuilds the scenery", () => {
+  const fn = GAME.match(/function loadPhase[\s\S]*?\n\}/);
+  assert.ok(fn, "loadPhase not found");
+  assert.match(fn[0], /clearScenery\(game\)/);
+  assert.match(fn[0], /buildScenery\(game,\s*n\)/);
+});
+
+check("levelWidth comes from the phase, not the old constant", () => {
+  assert.ok(!/const LEVEL_WIDTH\s*=/.test(GAME),
+    "LEVEL_WIDTH must be replaced by per-phase levelWidth");
+});

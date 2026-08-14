@@ -8,6 +8,7 @@ import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
 import { regenHp } from "./kungfu-combat";
+import { PHASE_SCENERY } from "./kungfu-scenery";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 
@@ -32,7 +33,6 @@ const DODGE_LIFT = -3.5;   // vertical impulse; under GRAVITY 0.27 the flip land
 // Jump arc: apex = JUMP_FORCE² / (2·GRAVITY) ≈ 60px, airtime = 2·JUMP_FORCE / GRAVITY ≈ 42 frames (0.70s)
 const GRAVITY = 0.27;
 const JUMP_FORCE = -5.7;
-const LEVEL_WIDTH = 2400;
 
 const FRAME_SIZE = 48;
 
@@ -92,130 +92,17 @@ async function buildScene(app) {
 
   app.stage.addChild(bgLayer, midLayer, gameLayer, fgLayer, hudLayer);
 
-  const { scenery } = textures;
-
-  // -- Starry night sky
-  const sky = new Graphics();
-  sky.rect(0, 0, LEVEL_WIDTH, CH);
-  sky.fill({ color: 0x06061a });
-  // Stars — random small dots
-  for (let i = 0; i < 200; i++) {
-    const sx = Math.random() * LEVEL_WIDTH;
-    const sy = Math.random() * (GROUND_Y - 40);
-    const size = Math.random() < 0.15 ? 2 : 1;
-    const brightness = 0.3 + Math.random() * 0.7;
-    sky.rect(sx, sy, size, size);
-    sky.fill({ color: 0xffffff, alpha: brightness });
-  }
-  bgLayer.addChild(sky);
-
-  // -- Parallax mountains (bgLayer) — just above the tree line
-  if (scenery.props["parallax-montanhas"]) {
-    const scale = 2.2;
-    const mtnW = scenery.props["parallax-montanhas"].width * scale;
-    const mtnH = scenery.props["parallax-montanhas"].height * scale;
-    // Trees are 80px tall from GROUND_Y, mountains sit just above them
-    const mtnY = GROUND_Y - 10 - mtnH + 28;
-    const mtnCount = Math.ceil(LEVEL_WIDTH / mtnW) + 2;
-    for (let i = 0; i < mtnCount; i++) {
-      const s = new Sprite(scenery.props["parallax-montanhas"]);
-      s.scale.set(scale);
-      s.x = i * mtnW;
-      s.y = mtnY;
-      s.alpha = 0.6;
-      bgLayer.addChild(s);
-    }
-  }
-
-  // -- Parallax trees (midLayer) — base touching the grass
-  if (scenery.props["parallax-arvores"]) {
-    const treeW = scenery.props["parallax-arvores"].width;
-    const treeH = scenery.props["parallax-arvores"].height;
-    const treeY = GROUND_Y - treeH + 18; // overlap into grass
-    const treeCount = Math.ceil(LEVEL_WIDTH / treeW) + 2;
-    for (let i = 0; i < treeCount; i++) {
-      const s = new Sprite(scenery.props["parallax-arvores"]);
-      s.x = i * treeW;
-      s.y = treeY;
-      midLayer.addChild(s);
-    }
-  }
-
-  // -- Ground: grass row at feet level + brick wall rows below
-  const phase1Tiles = scenery.tilesets["fase1-jardim"];
-  if (phase1Tiles && phase1Tiles.length >= 16) {
-    const TILE = 32;
-    const tilesAcross = Math.ceil(LEVEL_WIDTH / TILE);
-
-    // Tile index map (from 4x4 grid):
-    // 12 = wang_15 (all grass, seamless)
-    // 3  = wang_12 (grass top + brick bottom — transition)
-    // 9  = wang_3  (brick top + grass bottom)
-    // 6  = wang_0  (mixed brick)
-    const grassTile = phase1Tiles[12]; // full grass, seamless
-    const transitionTile = phase1Tiles[3]; // grass top, brick bottom
-    const brickTile = phase1Tiles[6]; // brick only, no grass
-
-    // Row 0: grass — top of tile aligns with feet (shift up so grass surface = GROUND_Y)
-    const GRASS_OFFSET = 52; // grass surface is ~14px from top of tile
-    for (let col = 0; col < tilesAcross; col++) {
-      const s = new Sprite(grassTile);
-      s.x = col * TILE;
-      s.y = GROUND_Y - GRASS_OFFSET;
-      gameLayer.addChild(s);
-    }
-    // Row 1: transition (grass top + brick bottom) just below grass
-    const transY = GROUND_Y - GRASS_OFFSET + TILE;
-    for (let col = 0; col < tilesAcross; col++) {
-      const s = new Sprite(transitionTile);
-      s.x = col * TILE;
-      s.y = transY;
-      gameLayer.addChild(s);
-    }
-    // Rows 2+: pure brick filling to bottom of screen
-    const brickStartY = transY + TILE;
-    const rowsNeeded = Math.ceil((CH - brickStartY) / TILE) + 1;
-    for (let row = 0; row < rowsNeeded; row++) {
-      for (let col = 0; col < tilesAcross; col++) {
-        const s = new Sprite(brickTile);
-        s.x = col * TILE;
-        s.y = brickStartY + row * TILE;
-        gameLayer.addChild(s);
-      }
-    }
-  }
-
-  // -- Decorative props
-  // layer: "bg" = behind characters (midLayer), "fg" = in front (fgLayer), "game" = same level (gameLayer)
-  const PROP_LAYOUT = [
-    { asset: "torii-vermelho",       x: 60,   y: 10, layer: "game" },
-    { asset: "cerejeira-sakura",     x: 200,  y: 5,  layer: "bg" },
-    { asset: "lanterna-ishidoro",    x: 350,  y: 4,  layer: "fg" },
-    { asset: "pedra-decorativa",     x: 500,  y: 1,  layer: "game" },
-    { asset: "cerejeira-sakura",     x: 700,  y: 5,  layer: "bg" },
-    { asset: "komainu",              x: 850,  y: 2,  layer: "game" },
-    { asset: "cerca-bambu",          x: 1000, y: 4,  layer: "fg" },
-    { asset: "lanterna-ishidoro",    x: 1150, y: 4,  layer: "fg" },
-    { asset: "cerejeira-sakura",     x: 1350, y: 8,  layer: "fg" },
-    { asset: "pedra-decorativa",     x: 1500, y: 1,  layer: "game" },
-    { asset: "komainu",              x: 1650, y: 4,  layer: "fg" },
-    { asset: "lanterna-ishidoro",    x: 1800, y: 2,  layer: "game" },
-    { asset: "cerejeira-sakura",     x: 1950, y: 5,  layer: "bg" },
-    { asset: "cerca-bambu",          x: 2100, y: 6,  layer: "fg" },
-    { asset: "portao-arco-pedra",    x: 2300, y: 4,  layer: "game" },
-    { asset: "escada-pedra-externa", x: 2370, y: 10, layer: "game" },
-  ];
-
-  const layerMap = { bg: midLayer, game: gameLayer, fg: fgLayer };
-  for (const { asset, x, y, layer } of PROP_LAYOUT) {
-    const tex = scenery.props[asset];
-    if (!tex) continue;
-    const s = new Sprite(tex);
-    s.anchor.set(0.5, 1);
-    s.x = x;
-    s.y = GROUND_Y + y;
-    (layerMap[layer] || gameLayer).addChild(s);
-  }
+  // Scenery lives in dedicated containers at fixed indices, so a phase change
+  // can empty them without touching the player sprite (gameLayer) or the
+  // particles (fgLayer), which share those same layers.
+  const bgScenery = new Container();
+  const midScenery = new Container();
+  const groundScenery = new Container();
+  const fgScenery = new Container();
+  bgLayer.addChild(bgScenery);
+  midLayer.addChild(midScenery);
+  gameLayer.addChild(groundScenery);
+  fgLayer.addChild(fgScenery);
 
   // Player
   const playerSprite = new Sprite(textures.player.idle.frames[0]);
@@ -293,9 +180,10 @@ async function buildScene(app) {
   hudLayer.addChild(phaseTitle);
   hudLayer.addChild(phaseSub);
 
-  return {
+  const game = {
     app,
     bgLayer, midLayer, gameLayer, fgLayer, hudLayer,
+    sceneryLayers: null,
     playerSprite,
     playerAnim,
     textures,
@@ -339,8 +227,13 @@ async function buildScene(app) {
     bossActive: false,
     bossDefeated: false,
     gameOver: false,
-    levelWidth: LEVEL_WIDTH,
+    levelWidth: 0,
   };
+
+  game.sceneryLayers = { bg: bgScenery, mid: midScenery, ground: groundScenery, fg: fgScenery };
+  buildScenery(game, 1);
+
+  return game;
 }
 
 // ============================================================
@@ -425,6 +318,151 @@ function spawnBoss(game) {
 }
 
 // ============================================================
+// SCENERY — built per phase, torn down on phase change
+// ============================================================
+
+/** Resolve a band's symbolic y anchor to a pixel value. */
+function resolveBandY(y, texHeight) {
+  if (typeof y === "number") return y;
+  if (y === "ground-overlap") return GROUND_Y - texHeight + 18;
+  return GROUND_Y - 10 - texHeight + 28; // "horizon"
+}
+
+/** Paint the phase's sky into a Graphics. */
+function drawSky(g, spec, width) {
+  if (spec.type === "starfield") {
+    g.rect(0, 0, width, CH);
+    g.fill({ color: spec.color });
+    for (let i = 0; i < spec.stars; i++) {
+      const sx = Math.random() * width;
+      const sy = Math.random() * (GROUND_Y - 40);
+      const size = Math.random() < 0.15 ? 2 : 1;
+      g.rect(sx, sy, size, size);
+      g.fill({ color: 0xffffff, alpha: 0.3 + Math.random() * 0.7 });
+    }
+    return;
+  }
+  // gradient: horizontal bands interpolating `from` (top) to `to` (horizon)
+  const BANDS = 32;
+  const from = spec.from, to = spec.to;
+  for (let i = 0; i < BANDS; i++) {
+    const t = i / (BANDS - 1);
+    const r = Math.round((((from >> 16) & 0xff) * (1 - t)) + (((to >> 16) & 0xff) * t));
+    const gg = Math.round((((from >> 8) & 0xff) * (1 - t)) + (((to >> 8) & 0xff) * t));
+    const b = Math.round(((from & 0xff) * (1 - t)) + ((to & 0xff) * t));
+    g.rect(0, (i * CH) / BANDS, width, CH / BANDS + 1);
+    g.fill({ color: (r << 16) | (gg << 8) | b });
+  }
+}
+
+/**
+ * Populate the scenery containers for `phase` and set the level width.
+ * @param {object} game
+ * @param {number} phase
+ */
+function buildScenery(game, phase) {
+  const spec = PHASE_SCENERY[phase];
+  if (!spec) {
+    console.warn(`[kungfu] no scenery for phase ${phase}`);
+    return;
+  }
+  const { scenery } = game.textures;
+  const { bg, mid, ground, fg } = game.sceneryLayers;
+  game.levelWidth = spec.levelWidth;
+
+  // -- Sky
+  const sky = new Graphics();
+  drawSky(sky, spec.sky, spec.levelWidth);
+  bg.addChild(sky);
+
+  // -- Parallax bands
+  const addBand = (band, container) => {
+    const tex = scenery.props[band.asset];
+    if (!tex) return;
+    const scale = band.scale || 1;
+    const w = tex.width * scale;
+    const h = tex.height * scale;
+    const y = resolveBandY(band.y, h);
+    const step = band.tile ? w : band.every;
+    if (step) {
+      // Two extra repetitions past the level edge, matching the current
+      // phase-1 loop (`Math.ceil(LEVEL_WIDTH / w) + 2`).
+      for (let x = 0; x < spec.levelWidth + step * 2; x += step) {
+        const s = new Sprite(tex);
+        s.scale.set(scale);
+        s.x = x;
+        s.y = y;
+        if (band.alpha !== undefined) s.alpha = band.alpha;
+        container.addChild(s);
+      }
+    } else {
+      const s = new Sprite(tex);
+      s.scale.set(scale);
+      s.x = band.x || 0;
+      s.y = y;
+      if (band.alpha !== undefined) s.alpha = band.alpha;
+      container.addChild(s);
+    }
+  };
+  for (const band of spec.bg) addBand(band, bg);
+  for (const band of spec.mid) addBand(band, mid);
+
+  // -- Ground: grass row at feet level + transition + brick rows below
+  const tiles = scenery.tilesets[spec.tileset];
+  if (tiles && tiles.length >= 16) {
+    const TILE = 32;
+    const across = Math.ceil(spec.levelWidth / TILE);
+    const GRASS_OFFSET = 52; // surface sits ~14px from the top of the tile
+    const rows = [
+      { tex: tiles[12], y: GROUND_Y - GRASS_OFFSET },
+      { tex: tiles[3],  y: GROUND_Y - GRASS_OFFSET + TILE },
+    ];
+    for (const { tex, y } of rows) {
+      for (let col = 0; col < across; col++) {
+        const s = new Sprite(tex);
+        s.x = col * TILE;
+        s.y = y;
+        ground.addChild(s);
+      }
+    }
+    const brickStartY = GROUND_Y - GRASS_OFFSET + TILE * 2;
+    const rowsNeeded = Math.ceil((CH - brickStartY) / TILE) + 1;
+    for (let row = 0; row < rowsNeeded; row++) {
+      for (let col = 0; col < across; col++) {
+        const s = new Sprite(tiles[6]);
+        s.x = col * TILE;
+        s.y = brickStartY + row * TILE;
+        ground.addChild(s);
+      }
+    }
+  }
+
+  // -- Props. anchor (0.5, 1) means x is the CENTRE and y sinks the prop
+  // below the ground line — this is exactly the current phase-1 placement,
+  // so do not "simplify" it or every prop shifts.
+  const target = { bg: mid, game: ground, fg };
+  for (const { asset, x, y, layer } of spec.props) {
+    const tex = scenery.props[asset];
+    if (!tex) {
+      console.warn(`[kungfu] prop not found: ${asset}`);
+      continue;
+    }
+    const s = new Sprite(tex);
+    s.anchor.set(0.5, 1);
+    s.x = x;
+    s.y = GROUND_Y + y;
+    (target[layer] || ground).addChild(s);
+  }
+}
+
+/** Destroy everything buildScenery created, keeping the containers. */
+function clearScenery(game) {
+  for (const container of Object.values(game.sceneryLayers)) {
+    for (const child of container.removeChildren()) child.destroy();
+  }
+}
+
+// ============================================================
 // LOAD PHASE — clears enemies, resets phase state, keeps player score/lives
 // ============================================================
 function loadPhase(game, n) {
@@ -436,6 +474,8 @@ function loadPhase(game, n) {
   game.particles = [];
 
   game.phase = n;
+  clearScenery(game);
+  buildScenery(game, n);
   game.killCount = 0;
   game.bossActive = false;
   game.bossDefeated = false;
