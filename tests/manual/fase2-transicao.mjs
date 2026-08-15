@@ -102,8 +102,10 @@ const after = await page.evaluate(() => {
   // from "phase-2 appended on top of leftover phase-1" — so check each old
   // child by reference: it must be marked destroyed AND absent from the
   // container's current children.
+  let stashedTotal = 0;
   const leftover = [];
   for (const [layerName, oldChildren] of Object.entries(before)) {
+    stashedTotal += oldChildren.length;
     const stillAttached = g.sceneryLayers[layerName].children;
     for (const child of oldChildren) {
       if (!child.destroyed || stillAttached.includes(child)) leftover.push(layerName);
@@ -116,13 +118,30 @@ const after = await page.evaluate(() => {
     player: !!g.playerSprite,
     particles: g.particles.length,
     enemyTypes: [...new Set(g.enemies.map((e) => e.type))],
+    phase1SceneryStashedTotal: stashedTotal,
     phase1SceneryLeftoverCount: leftover.length,
   };
 });
+
+// The `every: 520` castle band and the GRADIENT sky are now both visible in
+// 02-fase2.png, but the camera is still parked near world x 0..480 at that
+// point, so the single-`x`-positioned `ponte-madeira` (mid band, x: 900,
+// scale: 2, y: "ground-overlap") has never actually been seen on screen.
+// Pan the camera right and capture it explicitly.
+await page.evaluate(() => {
+  const g = window.__kfGame;
+  g.player.x = 1400; // comfortably past the bridge's screen-visible range
+  g.cameraX = 1200;  // seed the eased camera near its target so it doesn't lag
+});
+await page.waitForTimeout(700);
+const cameraX = await page.evaluate(() => window.__kfGame.cameraX);
+await canvas.screenshot({ path: `${OUT}/03-fase2-ponte.png` });
+
 await browser.close();
 
 console.log("before:", JSON.stringify(before));
 console.log("after: ", JSON.stringify(after));
+console.log("cameraX after pan:", cameraX);
 
 const fails = [];
 if (before.phase !== 1) fails.push(`before.phase is ${before.phase}, expected 1`);
@@ -133,12 +152,20 @@ if (!after.player) fails.push("the player sprite was destroyed by the phase chan
 if (after.ground === 0) fails.push("no ground tiles were rebuilt");
 if (after.phase1SceneryLeftoverCount > 0)
   fails.push(
-    `${after.phase1SceneryLeftoverCount} phase-1 scenery object(s) survived the rebuild ` +
-      `(not destroyed, or still attached to a container)`
+    `${after.phase1SceneryLeftoverCount} of ${after.phase1SceneryStashedTotal} stashed phase-1 ` +
+      `scenery object(s) survived the rebuild (not destroyed, or still attached to a container)`
   );
 const phase1Enemies = ["capanga-branco", "capanga-cinza", "capanga-rapido"];
+const phase2Enemies = ["guarda-bastao", "ninja", "kunoichi"];
 if (after.enemyTypes.some((t) => phase1Enemies.includes(t)))
   fails.push(`phase 1 enemies still spawning: ${after.enemyTypes}`);
+if (after.enemyTypes.length === 0)
+  fails.push("no enemies were present after the transition — the roster check would pass vacuously");
+else if (after.enemyTypes.some((t) => !phase2Enemies.includes(t)))
+  fails.push(`unexpected enemy type(s) outside the phase-2 roster: ${after.enemyTypes}`);
+// The bridge sits at world x 900 in the mid parallax band (0.5x scroll), so
+// it's only ever on screen once cameraX has moved well past 0.
+if (cameraX < 700) fails.push(`camera did not pan (cameraX is ${cameraX}) — 03-fase2-ponte.png may not show the bridge`);
 if (errors.length) fails.push(`${errors.length} console/page error(s) occurred: ${errors.join(" | ")}`);
 
 console.log(fails.length ? `\nFAILURES:\n- ${fails.join("\n- ")}` : "\nAll checks passed.");
