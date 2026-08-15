@@ -36,17 +36,21 @@ const JUMP_FORCE = -5.7;
 
 const FRAME_SIZE = 48;
 
+// `attackAnim` is the animation name each type actually attacks with — it
+// must exist in that entity's manifest entry in kungfu-assets.js (enforced
+// by tests/attack-anim.test.mjs). capanga-cinza additionally declares
+// `attackAnimAlt`, rolled 50/50 against `attackAnim` (see resolveAttackAnim).
 const ENEMY_STATS = {
-  "capanga-branco": { hp: 1, speed: 1.2, damage: 5,  score: 100 },
-  "capanga-cinza":  { hp: 2, speed: 1.5, damage: 8,  score: 150 },
-  "capanga-rapido": { hp: 1, speed: 3.0, damage: 6,  score: 150 },
-  "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200 },
-  "atirador":       { hp: 2, speed: 0,   damage: 8,  score: 200 },
-  "ninja":          { hp: 3, speed: 2.0, damage: 10, score: 200 },
-  "ninja-espada":   { hp: 4, speed: 1.8, damage: 15, score: 250 },
-  "samurai":        { hp: 5, speed: 1.0, damage: 18, score: 300 },
-  "kunoichi":       { hp: 3, speed: 3.5, damage: 12, score: 250 },
-  "lancador-bomba": { hp: 3, speed: 1.0, damage: 15, score: 250 },
+  "capanga-branco": { hp: 1, speed: 1.2, damage: 5,  score: 100, attackAnim: "punch" },
+  "capanga-cinza":  { hp: 2, speed: 1.5, damage: 8,  score: 150, attackAnim: "punch", attackAnimAlt: "kick" },
+  "capanga-rapido": { hp: 1, speed: 3.0, damage: 6,  score: 150, attackAnim: "punch" },
+  "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200, attackAnim: "punch" },
+  "atirador":       { hp: 2, speed: 0,   damage: 8,  score: 200, attackAnim: "attack" },
+  "ninja":          { hp: 3, speed: 2.0, damage: 10, score: 200, attackAnim: "punch" },
+  "ninja-espada":   { hp: 4, speed: 1.8, damage: 15, score: 250, attackAnim: "attack" },
+  "samurai":        { hp: 5, speed: 1.0, damage: 18, score: 300, attackAnim: "punch" },
+  "kunoichi":       { hp: 3, speed: 3.5, damage: 12, score: 250, attackAnim: "attack" },
+  "lancador-bomba": { hp: 3, speed: 1.0, damage: 15, score: 250, attackAnim: "attack" },
 };
 
 const BOSS_STATS = {
@@ -57,6 +61,7 @@ const BOSS_STATS = {
     // Every boss sheet is drawn facing WEST, unlike the player and the regular
     // enemies (EAST) — without this the boss renders back-turned to the player.
     spriteFacing: -1,
+    attackAnim: "punch",
   },
   "guardiao-portao": {
     hp: 35, damage: 14, speed: 1.2, score: 1500, frameSize: 68,
@@ -64,6 +69,9 @@ const BOSS_STATS = {
     groundOffset: 12,
     // Como todos os chefes, a arte é desenhada virada para oeste.
     spriteFacing: -1,
+    // The Guardião has no "punch"/"attack" anim — its telegraphed attack is
+    // the horizontal sword swing (see the phase-2 design doc).
+    attackAnim: "horizontal-swing",
   },
 };
 
@@ -637,6 +645,44 @@ function getHitbox(entity) {
 }
 
 // ============================================================
+// ATTACK ANIMATION RESOLUTION
+// ============================================================
+// Types already warned about a missing attackAnim — logged once each so a
+// misconfigured future entity is loud without spamming every attack tick.
+const warnedMissingAttackAnim = new Set();
+
+/**
+ * Resolve which animation an enemy/boss should play for its current attack.
+ * Every entry in ENEMY_STATS/BOSS_STATS declares the animation it actually
+ * attacks with via `attackAnim` (capanga-cinza also has `attackAnimAlt`,
+ * rolled 50/50 against `attackAnim` — its existing punch-or-kick behaviour).
+ *
+ * @param {object} e      Enemy/boss instance (has `.type`)
+ * @param {object} eAnim  Its AnimController
+ * @returns {string}      An animation name `eAnim` is guaranteed to have
+ */
+function resolveAttackAnim(e, eAnim) {
+  const stats = ENEMY_STATS[e.type] ?? BOSS_STATS[e.type];
+  let name = stats?.attackAnim;
+  if (stats?.attackAnimAlt && Math.random() > 0.5) name = stats.attackAnimAlt;
+
+  if (name && eAnim.anims[name]) return name;
+
+  // Unreachable for any entity whose stats correctly declare an attackAnim —
+  // this is a safety net for a future/misconfigured entity, not a normal
+  // code path. Never silently no-op (that was the bug): fall back to
+  // something `eAnim` is verified to have, and say so loudly, once per type.
+  if (!warnedMissingAttackAnim.has(e.type)) {
+    warnedMissingAttackAnim.add(e.type);
+    console.error(
+      `[kungfu] "${e.type}" has no usable attackAnim (declared "${name}") — ` +
+        `falling back to "idle". Add attackAnim to its ENEMY_STATS/BOSS_STATS entry.`
+    );
+  }
+  return eAnim.anims.idle ? "idle" : Object.keys(eAnim.anims)[0];
+}
+
+// ============================================================
 // UPDATE (called every tick — NO re-renders)
 // ============================================================
 function update(game, keys, dt) {
@@ -1010,8 +1056,7 @@ function update(game, keys, dt) {
     const playerInReach = dist <= COMBAT_RANGE && player.grounded;
     if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
       e.attackCooldown = 50 + Math.random() * 30;
-      const attackAnim = e.type === "capanga-cinza" && Math.random() > 0.5 ? "kick" : "punch";
-      eAnim.play(eAnim.anims[attackAnim] ? attackAnim : "punch");
+      eAnim.play(resolveAttackAnim(e, eAnim));
 
       if (!player.attacking) {
         player.hp -= e.damage;
