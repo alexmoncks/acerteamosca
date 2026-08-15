@@ -512,6 +512,20 @@ function loadPhase(game, n) {
   game.player.attackType = null;
   game.player.attackTimer = 0;
   game.player.dying = false;
+  // Dodge state: the only place that ever cleared it was nested inside
+  // `if (player.attacking) { if (attackTimer <= 0) ... }` above — a branch
+  // this function's own `attacking = false` makes unreachable. Landing the
+  // killing blow on the boss and then backflipping before the phase
+  // transition fires stranded `dodging`/`dodgeVx` true forever otherwise:
+  // a permanent DODGE_SPEED drag plus canDodge() locked out for the run.
+  game.player.dodging = false;
+  game.player.dodgeVx = 0;
+  game.player.dodgeCooldown = 0;
+  // Same class of staleness: changing phase mid-run/mid-crouch materialised
+  // movement with no input for several frames.
+  game.player.currentSpeed = 0;
+  game.player.running = false;
+  game.player.crouching = false;
   game.cameraX = 0;
 }
 
@@ -876,6 +890,15 @@ function update(game, keys, dt) {
   if (player.dodging) {
     player.vx = player.dodgeVx * dt;
     player.x += player.vx;
+    // Teardown normally happens below once attackTimer counts down to 0
+    // (dodging reuses the attack lock). If something ends `attacking` first
+    // — a frame that returns early, a future code path — don't let
+    // `dodging` strand itself: self-heal instead of permanently dragging
+    // the player sideways and locking canDodge() out for the rest of the run.
+    if (!player.attacking) {
+      player.dodging = false;
+      player.dodgeVx = 0;
+    }
   }
 
   // Sweep: continuous slide during animation
