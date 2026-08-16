@@ -90,6 +90,21 @@ const PHASE_CONFIG = {
 };
 
 const MAX_PHASE = Math.max(...Object.keys(PHASE_CONFIG).map(Number));
+// Kills needed before the phase boss appears. Lives on `game` so the test-mode
+// selector can zero it and drop straight into the boss fight.
+const BOSS_KILL_THRESHOLD_DEFAULT = 100;
+
+// Shared style for the test-mode phase buttons.
+const S_TEST_BTN = {
+  fontFamily: "'Fira Code', monospace",
+  fontSize: 9,
+  color: "#8892b0",
+  background: "transparent",
+  border: "1px solid #333",
+  borderRadius: 6,
+  padding: "6px 12px",
+  cursor: "pointer",
+};
 const TRANSITION_FADE_FRAMES = 60;
 const TRANSITION_CLEAR_FRAMES = 240;
 const TRANSITION_INPUT_DELAY = 20;
@@ -244,6 +259,7 @@ async function buildScene(app) {
     frame: 0,
     spawnTimer: 0,
     killCount: 0,
+    bossKillThreshold: BOSS_KILL_THRESHOLD_DEFAULT,
     bossActive: false,
     bossDefeated: false,
     gameOver: false,
@@ -1004,15 +1020,14 @@ function update(game, keys, dt) {
   game.playerSprite.y = player.y + PLAYER_H;
 
   // ---- Spawn enemies / boss ----
-  const BOSS_KILL_THRESHOLD = 100;
   if (!game.bossActive && !game.bossDefeated) {
     game.spawnTimer -= dt;
-    if (game.spawnTimer <= 0 && game.enemies.length < 5 && game.killCount < BOSS_KILL_THRESHOLD) {
+    if (game.spawnTimer <= 0 && game.enemies.length < 5 && game.killCount < game.bossKillThreshold) {
       spawnEnemy(game);
       game.spawnTimer = 90 + Math.random() * 60;
     }
     // Spawn boss when kill threshold reached and no more regular enemies
-    if (game.killCount >= BOSS_KILL_THRESHOLD && game.enemies.length === 0) {
+    if (game.killCount >= game.bossKillThreshold && game.enemies.length === 0) {
       spawnBoss(game);
       game.bossActive = true;
     }
@@ -1181,7 +1196,7 @@ function update(game, keys, dt) {
   game.hpBar.rect(18, 18, Math.max(0, player.hp), 8);
   game.hpBar.fill({ color: player.hp > 30 ? 0x22c55e : 0xef4444 });
 
-  game.scoreText.text = `${_t("hud.score")}: ${player.score}  KO: ${game.killCount}/100`;
+  game.scoreText.text = `${_t("hud.score")}: ${player.score}  KO: ${game.killCount}/${game.bossKillThreshold}`;
   game.phaseText.text = `${_t("hud.phase")}: ${game.phase}`;
   game.livesText.text = `${_t("hud.lives")}: ${player.lives}`;
 
@@ -1222,6 +1237,10 @@ export default function KungFuCastle() {
   const isTstMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t";
   const [screen, setScreen] = useState(isTstMode ? "spritetest" : "menu");
   const [finalScore, setFinalScore] = useState(0);
+  // Test-mode entry point. Kept in state so "play again" after a game over
+  // returns to the phase being tested instead of dropping back to phase 1.
+  const [startPhase, setStartPhase] = useState(1);
+  const [startAtBoss, setStartAtBoss] = useState(false);
 
   // Keep translation ref in sync
   _t = t;
@@ -1258,6 +1277,12 @@ export default function KungFuCastle() {
 
       const scene = await buildScene(app);
       if (destroyed) { app.destroy(true, { children: true }); return; }
+
+      // Test-mode entry: zero the threshold BEFORE loadPhase, so the boss is
+      // already eligible on the first frame of the requested phase.
+      if (startAtBoss) scene.bossKillThreshold = 0;
+      if (startPhase !== 1) loadPhase(scene, startPhase);
+
       gameRef.current = scene;
 
       app.ticker.add((ticker) => {
@@ -1310,6 +1335,15 @@ export default function KungFuCastle() {
 
   // ── Handlers ───────────────────────────────────────────────────
   const handleStart = () => {
+    setStartPhase(1);
+    setStartAtBoss(false);
+    setScreen("playing");
+  };
+
+  /** Test mode: drop straight into `phase`, optionally with the boss already due. */
+  const startTest = (phase, atBoss) => {
+    setStartPhase(phase);
+    setStartAtBoss(atBoss);
     setScreen("playing");
   };
 
@@ -1386,6 +1420,27 @@ export default function KungFuCastle() {
           >
             {t("start")}
           </button>
+
+          {isTstMode && (
+            <div style={{ marginTop: 20 }}>
+              <p style={{ fontSize: 9, color: "#8892b0", letterSpacing: 2, marginBottom: 8 }}>
+                MODO TESTE
+              </p>
+              {Object.keys(PHASE_CONFIG)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .map((n) => (
+                  <div key={n} style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 6 }}>
+                    <button onClick={() => startTest(n, false)} style={S_TEST_BTN}>
+                      FASE {n}
+                    </button>
+                    <button onClick={() => startTest(n, true)} style={{ ...S_TEST_BTN, color: "#dc2626" }}>
+                      FASE {n} &#9656; CHEFE
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
 
           {isTstMode && (
             <button
