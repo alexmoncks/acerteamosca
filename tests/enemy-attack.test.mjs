@@ -312,3 +312,24 @@ check("startDodge no longer claims immunity comes from the attack lock", () => {
     "that comment describes the old immunity path and is now wrong",
   );
 });
+
+// ── velocidade declarada tem de ser a velocidade andada ────────────────────
+
+check("movement reads the entity's own stats table, not just ENEMY_STATS", () => {
+  // `ENEMY_STATS[e.type]?.speed || 1.2` tinha dois furos. Chefe não está em
+  // ENEMY_STATS, então TODO chefe andava a 1.2 e BOSS_STATS.speed era enfeite
+  // — o Senhor das Sombras, cuja assinatura é ser rápido (2.5), arrastava-se
+  // no mesmo passo do brutamontes. E `|| ` transforma 0 em 1.2, então o
+  // atirador, declarado parado, andava.
+  const linha = GAME.split("\n").find((l) => l.includes("const spd ="));
+  assert.ok(linha, "linha de velocidade não encontrada");
+  assert.doesNotMatch(linha, /\|\|\s*1\.2/, "use ?? para não engolir speed 0");
+  assert.match(linha, /BOSS_STATS/, "a velocidade de chefe precisa sair de BOSS_STATS");
+});
+
+check("every boss declares a speed, since it is now actually used", () => {
+  const block = GAME.match(/const BOSS_STATS = \{[\s\S]*?\n\};/)[0];
+  for (const m of block.matchAll(/"([a-z-]+)":\s*\{([\s\S]*?)\n  \},/g)) {
+    assert.match(m[2], /speed:\s*[\d.]+/, `${m[1]} não declara speed`);
+  }
+});

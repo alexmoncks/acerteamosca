@@ -1182,7 +1182,10 @@ function update(game, keys, dt) {
 
     // --- Movement: stop at combat range, don't overlap ---
     if (dist > COMBAT_RANGE && e.hitTimer <= 0) {
-      const spd = (ENEMY_STATS[e.type]?.speed || 1.2) * dt;
+      // Chefe não está em ENEMY_STATS: lendo só de lá, todo chefe andava a 1.2
+      // e BOSS_STATS.speed era enfeite. `??` em vez de `||` porque o atirador
+      // declara speed 0, e `0 || 1.2` o punha a andar.
+      const spd = (ENEMY_STATS[e.type]?.speed ?? BOSS_STATS[e.type]?.speed ?? 1.2) * dt;
       e.vx = facing * spd;
       e.x += e.vx;
     } else {
