@@ -34,6 +34,23 @@ function tintFor(type) {
   return own ? Number(own[1]) : ENEMY_TINT;
 }
 
+/**
+ * Same for a boss, whose entry spans several lines.
+ *
+ * Bosses for phases 3-5 already have art on disk but no BOSS_STATS entry yet.
+ * They still get measured — the art has to satisfy the value rule before it is
+ * wired up, not after someone notices in play — and they take the class
+ * default, which is what they will spawn with unless the entry overrides it.
+ */
+function bossTintFor(name) {
+  const block = GAME.match(/const BOSS_STATS = \{[\s\S]*?\n\};/);
+  assert.ok(block, "BOSS_STATS not found");
+  const entry = block[0].match(new RegExp(`"${name}":\\s*\\{[\\s\\S]*?\\n  \\},`));
+  if (!entry) return BOSS_TINT;
+  const own = entry[0].match(/tint:\s*(0x[0-9a-f]{6})/);
+  return own ? Number(own[1]) : BOSS_TINT;
+}
+
 /** Luma of a tint, as the fraction of the original brightness it leaves. */
 const tintFactor = (t) =>
   (0.2126 * ((t >> 16) & 255) + 0.7152 * ((t >> 8) & 255) + 0.0722 * (t & 255)) / 255;
@@ -138,8 +155,11 @@ check("capanga-rapido separates by hue, not value", () => {
   }
 });
 
-check("spawnBoss applies BOSS_TINT", () => {
-  assert.match(GAME, /function spawnBoss[\s\S]*?tint = BOSS_TINT/);
+check("spawnBoss applies the per-boss tint, falling back to BOSS_TINT", () => {
+  // Boss art comes from two lineages and they are not the same brightness: the
+  // regenerated Chinese brute bakes at luma 182 against the old sheets' ~150,
+  // so one class-wide number cannot serve both.
+  assert.match(GAME, /function spawnBoss[\s\S]*?tint = stats\.tint \?\? BOSS_TINT/);
 });
 
 check("at least one enemy is found to measure", () => {
@@ -169,5 +189,5 @@ check("at least one boss is found to measure", () => {
 
 for (const b of bosses) {
   check(`${b} reads clearly darker than the player once tinted`, () =>
-    separates(b, bossLuma[b], BOSS_TINT));
+    separates(b, bossLuma[b], bossTintFor(b)));
 }

@@ -81,11 +81,19 @@ const ENEMY_STATS = {
 const BOSS_STATS = {
   "mestre-capangas": {
     hp: 25, damage: 10, speed: 1.5, score: 1000, frameSize: 68,
-    hitbox: { w: 23, h: 49, ox: 23, oy: 9 },
-    groundOffset: 12,
-    // Every boss sheet is drawn facing WEST, unlike the player and the regular
-    // enemies (EAST) — without this the boss renders back-turned to the player.
-    spriteFacing: -1,
+    // Medida da arte entregue (união do conteúdo opaco de idle+walk), não
+    // herdada do sprite anterior: o brutamontes chinês é bem mais largo e
+    // encosta o pé no fundo do quadro, então a caixa antiga (23x49 em oy 9)
+    // deixaria metade dele intangível.
+    hitbox: { w: 36, h: 47, ox: 18, oy: 21 },
+    groundOffset: 0,
+    // Regerado a partir da âncora chinesa, então é desenhado para LESTE como o
+    // resto do elenco. Os chefes ainda não convertidos continuam em -1.
+    spriteFacing: 1,
+    // A arte regerada é bem mais clara que a linhagem antiga de chefe (luma
+    // 182 contra ~150), então BOSS_TINT sozinho o deixava a 13% do jogador —
+    // perto demais de quem tem de ser a coisa mais clara da tela.
+    tint: 0xcccccc,
     attackAnim: "punch",
   },
   "guardiao-portao": {
@@ -347,7 +355,7 @@ function spawnBoss(game) {
 
   const sprite = new Sprite(bossTextures.idle.frames[0]);
   sprite.anchor.set(0.5, 1);
-  sprite.tint = BOSS_TINT;
+  sprite.tint = stats.tint ?? BOSS_TINT;
   sprite.x = game.cameraX + CW + fs;
   sprite.y = GROUND_Y;
   game.gameLayer.addChild(sprite);
