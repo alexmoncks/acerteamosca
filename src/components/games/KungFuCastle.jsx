@@ -1150,7 +1150,16 @@ function update(game, keys, dt) {
     if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
       e.attackCooldown = 50 + Math.random() * 30;
       const attackAnim = resolveAttackAnim(e, eAnim);
-      eAnim.play(attackAnim);
+      // forcePlay, não play: `hit` tem prioridade 4 e `punch` tem 3, e a folha
+      // de recuo dura ~50 ticks contra os 20 de e.hitTimer. Nessa janela de 30
+      // ticks — o caso comum logo depois de CADA soco do jogador — play() era
+      // recusado em silêncio e o impacto era agendado assim mesmo: dano sem
+      // nenhuma telegrafia, exatamente o que o wind-up existe para eliminar.
+      // Quem manda na duração do atordoamento é e.hitTimer, que este bloco já
+      // exigiu estar zerado; a animação segue o estado, não o contrário.
+      // Inimigos mortos saem do laço antes daqui, então não há `death` a
+      // atropelar.
+      eAnim.forcePlay(attackAnim);
       e.attackImpact = windupTicks(eAnim.anims[attackAnim]);
     }
 

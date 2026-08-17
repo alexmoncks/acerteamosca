@@ -12,7 +12,9 @@ import { check, near, source, loadModule } from "./helpers.mjs";
 
 const { windupTicks, enemyHitLands, ENEMY_WINDUP } =
   await loadModule("src/components/games/kungfu-combat.js");
+const { AnimController } = await loadModule("src/components/games/kungfu-anim.js");
 const GAME = source("src/components/games/KungFuCastle.jsx");
+const ASSETS = source("src/components/games/kungfu-assets.js");
 
 const COMBAT_RANGE = Number(GAME.match(/const COMBAT_RANGE = ([\d.]+);/)[1]);
 
@@ -110,6 +112,82 @@ check("the impact tick resolves through enemyHitLands", () => {
 
 check("KungFuCastle no longer gates enemy damage on !player.attacking", () => {
   assert.doesNotMatch(GAME, /if \(!player\.attacking\) \{\s*\n\s*player\.hp -= e\.damage/);
+});
+
+// ── a telegrafia tem de aparecer de verdade ────────────────────────────────
+//
+// O wind-up não vale nada se a animação de ataque nunca chega à tela. O
+// AnimController bloqueia por prioridade: `hit` é 4, `punch` é 3, e a animação
+// de recuo do inimigo dura mais que o atordoamento do jogo (e.hitTimer = 20
+// ticks contra ~50 da folha). Nessa janela, `play("punch")` era recusado em
+// silêncio enquanto o impacto era agendado assim mesmo — dano invisível, e o
+// caso comum logo depois de CADA soco do jogador. Os testes por regex passavam
+// os 128 com o defeito presente, então este exercita o controlador de verdade.
+
+const ENEMY_STUN = Number(GAME.match(/e\.hitTimer = (\d+);/)[1]);
+
+/** Um controlador com o conjunto de animações que um capanga realmente tem. */
+function thugController() {
+  const anims = {
+    idle: { frames: new Array(8).fill(0), speed: 0.16, loop: true },
+    walk: { frames: new Array(8).fill(0), speed: 0.14, loop: true },
+    punch: { frames: new Array(6).fill(0), speed: 0.15, loop: false, next: "idle" },
+    hit: { frames: new Array(6).fill(0), speed: 0.12, loop: false, next: "idle" },
+  };
+  const ctrl = new AnimController({ sprite: { scale: { x: 1, y: 1 }, texture: null }, anims });
+  ctrl.play("idle");
+  return ctrl;
+}
+
+check("the recoil animation outlives the stun, which is what made this possible", () => {
+  // Guard on the premise: if someone later shortens `hit` to match the stun,
+  // this whole class of bug disappears and the test below stops being about
+  // anything real. Better to notice than to keep asserting a dead scenario.
+  const ctrl = thugController();
+  ctrl.play("hit");
+  for (let t = 0; t < ENEMY_STUN; t++) ctrl.update(1);
+  assert.equal(ctrl.state, "hit", "premise changed: recoil now ends with the stun");
+});
+
+check("the attack animation plays even while the recoil sheet is still running", () => {
+  const ctrl = thugController();
+  ctrl.play("hit");
+  for (let t = 0; t < ENEMY_STUN; t++) ctrl.update(1);
+
+  // This is the line under test, transcribed from the game loop.
+  ctrl.forcePlay("punch");
+  assert.equal(
+    ctrl.state,
+    "punch",
+    "the enemy scheduled a blow whose wind-up the player never sees",
+  );
+});
+
+check("the game force-plays the attack instead of letting priority swallow it", () => {
+  const block = GAME.match(/Enemy attacks player[\s\S]*?attackImpact = windupTicks[^\n]*\n/);
+  assert.ok(block, "enemy attack block not found");
+  assert.match(
+    block[0],
+    /forcePlay\(attackAnim\)/,
+    "play() is silently blocked by the recoil's higher priority — see the test above",
+  );
+});
+
+check("no enemy's recoil sheet is slower than the stun it represents", () => {
+  // The sprite must not keep recoiling after the enemy has recovered: it reads
+  // as a free hit landing out of a stagger pose.
+  for (const m of ASSETS.matchAll(/"([a-z-]+)": enemyAnims\([\s\S]*?\n    \]\)/g)) {
+    const [, type] = m;
+    const hit = m[0].split("\n").find((l) => l.includes('["hit"'));
+    assert.ok(hit, `${type} has no hit entry`);
+    const speed = Number(hit.match(/speed:\s*([\d.]+)/)[1]);
+    const frames = 6; // taking-punch, the template every enemy uses
+    assert.ok(
+      frames / speed <= ENEMY_STUN * 2.6,
+      `${type}: recoil lasts ${(frames / speed).toFixed(0)} ticks against a ` +
+        `${ENEMY_STUN}-tick stun`,
+    );
+  }
 });
 
 check("startDodge no longer claims immunity comes from the attack lock", () => {
