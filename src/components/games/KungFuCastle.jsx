@@ -135,10 +135,12 @@ const BOSS_STATS = {
   },
   "general-oni": {
     hp: 40, damage: 16, speed: 1.4, score: 2500, frameSize: 68,
-    // Medida da arte entregue; conversão chinesa ainda não veio.
-    hitbox: { w: 38, h: 58, ox: 15, oy: 8 },
-    groundOffset: 2,
-    spriteFacing: -1,
+    // Medida da arte convertida: armadura larga, mas bem mais compacta em
+    // altura que a silhueta anterior.
+    hitbox: { w: 38, h: 41, ox: 17, oy: 27 },
+    groundOffset: 0,
+    // Regerado a partir da âncora chinesa: desenhado para LESTE.
+    spriteFacing: 1,
     attackAnim: "dual-slash",
     attackAnimAlt: "thrust-lunge",
   },
