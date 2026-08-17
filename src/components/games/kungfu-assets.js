@@ -41,7 +41,11 @@ const ASSET_MANIFEST = {
       // A corrida estava herdando a cadência do passo e patinava a 2,3× a velocidade.
       walk:    { src: "/images/kungfucastle/player/walk.png",        speed: locoSpeed(8, 1.4), loop: true },
       run:     { src: "/images/kungfucastle/player/run.png",         speed: locoSpeed(8, 3.2, RUN_CYCLE_PX), loop: true },
-      turn:    { src: "/images/kungfucastle/player/turn.png",        speed: 0.25, loop: false, next: "walk" },
+      // 5 quadros de pivô, gerados em v3 interpolando a rotação leste até a
+      // oeste. A folha está na ordem INVERTIDA de propósito: o jogo já trocou
+      // player.facing antes de tocá-la, então setFacing espelha tudo, e arte
+      // desenhada leste→frente→oeste apareceria girando para o lado errado.
+      turn:    { src: "/images/kungfucastle/player/turn.png",        speed: 0.36, loop: false, next: "walk" },
       punch:   { src: "/images/kungfucastle/player/punch.png",       speed: 0.33, loop: false, next: "idle" },
       kick:    { src: "/images/kungfucastle/player/kick.png",        speed: 0.32, loop: false, next: "idle" },
       flyKick: { src: "/images/kungfucastle/player/flying-kick.png", speed: 0.22, loop: false, next: "idle" },
@@ -108,8 +112,8 @@ function buildEnemyManifest() {
     ]),
 
     "guarda-bastao": enemyAnims("guarda-bastao", [
-      ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: locoSpeed(6, 1.0), loop: true }],
+      ["idle",  { speed: 0.16, loop: true }],
+      ["walk",  { speed: locoSpeed(8, 1.0), loop: true }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
     ]),
@@ -125,8 +129,8 @@ function buildEnemyManifest() {
     ]),
 
     "ninja": enemyAnims("ninja", [
-      ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: locoSpeed(6, 2.0), loop: true }],
+      ["idle",  { speed: 0.16, loop: true }],
+      ["walk",  { speed: locoSpeed(8, 2.0), loop: true }],
       ["punch", { speed: 0.18, loop: false, next: "idle" }],
       ["kick",  { speed: 0.18, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
@@ -149,7 +153,7 @@ function buildEnemyManifest() {
     ]),
 
     "kunoichi": enemyAnims("kunoichi", [
-      ["idle",   { speed: 0.08, loop: true  }],
+      ["idle",   { speed: 0.16, loop: true }],
       ["walk",   { file: "run",         speed: locoSpeed(8, 3.5, RUN_CYCLE_PX), loop: true }],
       ["attack", { file: "flying-kick", speed: 0.15, loop: false, next: "idle" }],
       ["hit",    { speed: 0.12, loop: false, next: "idle" }],

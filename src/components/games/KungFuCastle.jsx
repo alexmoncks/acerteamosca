@@ -62,9 +62,12 @@ const ENEMY_STATS = {
   "capanga-branco": { hp: 1, speed: 1.2, damage: 5,  score: 100, attackAnim: "punch", tint: 0xc8c8c8 },
   "capanga-cinza":  { hp: 2, speed: 1.5, damage: 8,  score: 150, attackAnim: "punch", attackAnimAlt: "kick", tint: 0xa0a0a0 },
   "capanga-rapido": { hp: 1, speed: 3.0, damage: 6,  score: 150, attackAnim: "punch" },
-  "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200, attackAnim: "punch" },
+  // Guarda e assassino já nascem escuros (armadura acolchoada cinza, seda azul
+  // noturna): o tint padrão os afundaria no cenário noturno. Um tint quase
+  // neutro basta — a distância para o jogador já vem da própria arte.
+  "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200, attackAnim: "punch", tint: 0xdcdcdc },
   "atirador":       { hp: 2, speed: 0,   damage: 8,  score: 200, attackAnim: "attack" },
-  "ninja":          { hp: 3, speed: 2.0, damage: 10, score: 200, attackAnim: "punch" },
+  "ninja":          { hp: 3, speed: 2.0, damage: 10, score: 200, attackAnim: "punch", tint: 0xf0f0f0 },
   "ninja-espada":   { hp: 4, speed: 1.8, damage: 15, score: 250, attackAnim: "attack" },
   "samurai":        { hp: 5, speed: 1.0, damage: 18, score: 300, attackAnim: "punch" },
   "kunoichi":       { hp: 3, speed: 3.5, damage: 12, score: 250, attackAnim: "attack" },
@@ -1156,7 +1159,7 @@ function update(game, keys, dt) {
       e.attackImpact -= dt;
       if (e.attackImpact <= 0) {
         e.attackImpact = 0;
-        if (enemyHitLands(e, player, COMBAT_RANGE)) {
+        if (enemyHitLands(e, player, COMBAT_RANGE) && !player.attacking) {
           player.hp -= e.damage;
           game.playerAnim.play("hit");
           spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
