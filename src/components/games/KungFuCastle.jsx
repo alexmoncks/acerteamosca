@@ -147,9 +147,11 @@ const BOSS_STATS = {
   "senhor-castelo": {
     // Chefe final: o único com moldura de 92px.
     hp: 50, damage: 18, speed: 1.6, score: 5000, frameSize: 92,
-    hitbox: { w: 37, h: 77, ox: 29, oy: 11 },
-    groundOffset: 4,
-    spriteFacing: -1,
+    // Medida da arte convertida.
+    hitbox: { w: 33, h: 56, ox: 28, oy: 36 },
+    groundOffset: 0,
+    // Regerado a partir da âncora chinesa: desenhado para LESTE.
+    spriteFacing: 1,
     // `ki-blast` e `summon-ninjas` existem na folha mas ficam de fora do
     // moveset base: um é projétil e o outro precisaria invocar inimigos.
     attackAnim: "sword-slash",
