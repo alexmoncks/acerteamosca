@@ -231,6 +231,43 @@ const BOSS_MANIFEST = {
     ["hit",           { speed: 0.15, next: "idle" }],
     ["death",         { speed: 0.08 }],
   ]),
+
+  "general-oni": bossAnims("general-oni", 68, [
+    ["idle",          { speed: 0.08, loop: true }],
+    ["walk",          { speed: 0.12, loop: true }],
+    ["dual-slash",    { speed: 0.15, next: "idle" }],
+    ["thrust-lunge",  { speed: 0.16, next: "idle" }],
+    ["counter-slash", { speed: 0.16, next: "idle" }],
+    ["spin-blades",   { speed: 0.14, next: "idle" }],
+    ["crushing-leap", { speed: 0.12, next: "idle" }],
+    ["cross-block",   { speed: 0.10, loop: true }],
+    ["demon-fury",    { speed: 0.12, next: "idle" }],
+    ["oni-roar",      { speed: 0.10, next: "idle" }],
+    ["kick",          { speed: 0.16, next: "idle" }],
+    // `summon` fica fora: invocaria inimigos, mecânica que ainda não existe.
+    ["hit",           { speed: 0.15, next: "idle" }],
+    ["death",         { speed: 0.08 }],
+  ]),
+
+  "senhor-castelo": bossAnims("senhor-castelo", 92, [
+    ["idle",            { speed: 0.08, loop: true }],
+    ["walk",            { speed: 0.12, loop: true }],
+    ["sword-slash",     { speed: 0.15, next: "idle" }],
+    ["steel-palm",      { speed: 0.16, next: "idle" }],
+    ["imperial-combo",  { speed: 0.16, next: "idle" }],
+    ["crescent-kick",   { speed: 0.15, next: "idle" }],
+    ["flying-kick",     { speed: 0.15, next: "idle" }],
+    ["draw-sword",      { speed: 0.12, next: "idle" }],
+    ["supreme-strike",  { speed: 0.11, next: "idle" }],
+    ["devastation",     { speed: 0.10, next: "idle" }],
+    ["ki-barrier",      { speed: 0.10, loop: true }],
+    ["teleport-out",    { speed: 0.16, next: "idle" }],
+    ["teleport-in",     { speed: 0.16, next: "idle" }],
+    // `ki-blast` (projétil) e `summon-ninjas` (invocação) ficam fora até as
+    // mecânicas existirem.
+    ["hit",             { speed: 0.15, next: "idle" }],
+    ["death",           { speed: 0.08 }],
+  ]),
 };
 
 // ── Animated props ────────────────────────────────────────────────────────

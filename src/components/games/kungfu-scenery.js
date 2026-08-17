@@ -111,6 +111,74 @@ export const PHASE_SCENERY = {
       { asset: "escada-ornada-tapete", x: 2380, y: 0, layer: "game" },
     ],
   },
+
+  // Fase 4 — Torre (塔樓). Andares nobres do pagode: madeira escura polida,
+  // luz quente de lanterna. O gradiente vai de carmesim a dourado — não é
+  // pôr-do-sol, é o próprio interior iluminado a fogo.
+  4: {
+    levelWidth: 2500,
+    sky: { type: "gradient", from: 0x2a0d12, to: 0x7a4410 },
+    bg: [
+      { asset: "trelica-madeira", every: 340, alpha: 0.4, y: 140, parallax: 0.15 },
+    ],
+    mid: [
+      { asset: "pilar-ornamentado", every: 430, alpha: 0.9, y: "ground-overlap", parallax: 0.5 },
+    ],
+    tileset: "fase4-madeira",
+    props: [
+      { asset: "porta-pedra-espiral",  x: 60,   y: 0,  layer: "game" },
+      { asset: "lanterna-seda",        x: 210,  y: 4,  layer: "fg"   },
+      { asset: "biombo-dourado",       x: 340,  y: 3,  layer: "game" },
+      { asset: "vaso-porcelana",       x: 500,  y: 1,  layer: "game" },
+      { asset: "pergaminho-kakejiku",  x: 640,  y: 12, layer: "bg"   },
+      { asset: "lanterna-seda",        x: 800,  y: 4,  layer: "fg"   },
+      { asset: "janela-lua",           x: 940,  y: 10, layer: "bg"   },
+      { asset: "armadura-lamelar",     x: 1100, y: 2,  layer: "game" },
+      { asset: "biombo-dourado",       x: 1260, y: 3,  layer: "game" },
+      { asset: "lanterna-seda",        x: 1420, y: 4,  layer: "fg"   },
+      { asset: "vaso-porcelana",       x: 1560, y: 1,  layer: "game" },
+      { asset: "pergaminho-kakejiku",  x: 1700, y: 12, layer: "bg"   },
+      { asset: "jian-suporte",         x: 1860, y: 8,  layer: "fg"   },
+      { asset: "lanterna-seda",        x: 2000, y: 4,  layer: "fg"   },
+      { asset: "janela-lua",           x: 2140, y: 10, layer: "bg"   },
+      { asset: "cortina-rasgada",      x: 2260, y: 12, layer: "fg"   },
+      // Escada estreita em espiral com tochas na parede: sobe para o pavilhão.
+      { asset: "escada-espiral-tochas", x: 2400, y: 0, layer: "game" },
+    ],
+  },
+
+  // Fase 5 — Pavilhão do Topo (頂閣). Sala do trono, a céu aberto no alto da
+  // torre: aqui o starfield volta a ser céu de verdade, e é o mais escuro do
+  // jogo. Piso de pedra cerimonial roxa.
+  5: {
+    levelWidth: 2200,
+    sky: { type: "starfield", color: 0x04030c, stars: 260 },
+    bg: [
+      { asset: "pilar-ornamentado", every: 380, alpha: 0.45, y: 120, parallax: 0.15 },
+    ],
+    mid: [
+      { asset: "cortina-rasgada", every: 520, alpha: 0.6, y: "ground-overlap", parallax: 0.5 },
+    ],
+    tileset: "fase5-cerimonial",
+    props: [
+      { asset: "braseiro-fogo",       x: 120,  y: 1,  layer: "game" },
+      { asset: "pilar-ornamentado",   x: 260,  y: 0,  layer: "game" },
+      { asset: "janela-lua",          x: 420,  y: 10, layer: "bg"   },
+      { asset: "cortina-rasgada",     x: 560,  y: 12, layer: "fg"   },
+      { asset: "braseiro-fogo",       x: 700,  y: 1,  layer: "game" },
+      { asset: "pilar-ornamentado",   x: 860,  y: 0,  layer: "game" },
+      { asset: "tocha-fogo",          x: 1000, y: 2,  layer: "fg"   },
+      { asset: "janela-lua",          x: 1140, y: 10, layer: "bg"   },
+      { asset: "braseiro-fogo",       x: 1300, y: 1,  layer: "game" },
+      { asset: "cortina-rasgada",     x: 1440, y: 12, layer: "fg"   },
+      { asset: "pilar-ornamentado",   x: 1580, y: 0,  layer: "game" },
+      { asset: "tocha-fogo",          x: 1720, y: 2,  layer: "fg"   },
+      // O fim do jogo: trono ao fundo, princesa amarrada ao lado dele.
+      { asset: "trono-sombrio",       x: 1980, y: 0,  layer: "bg"   },
+      { asset: "princesa-amarrada",   x: 2090, y: 2,  layer: "game" },
+      { asset: "braseiro-fogo",       x: 1900, y: 1,  layer: "game" },
+    ],
+  },
 };
 
 /** Public path for a tileset name. */

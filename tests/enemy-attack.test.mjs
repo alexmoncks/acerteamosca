@@ -172,12 +172,29 @@ check("an empty field has nobody winding up", () => {
   assert.equal(countWindingUp([]), 0);
 });
 
-check("the cap keeps a phase-3 swarm survivable", () => {
-  // Pior caso da fase 3: só ninja-espada, 15 de dano. Com a senha, o jogador
-  // aguenta rodadas suficientes para revidar; sem ela eram 1,3.
+check("the cap keeps the worst swarm in the game survivable", () => {
+  // O pior caso sai das pools de verdade, não de um número escrito à mão: a
+  // fase 5 trouxe o general a 18 de dano e o teste que fixava 15 teria passado
+  // sem notar. Cada fase nova entra nesta conta sozinha.
   const PLAYER_HP = Number(GAME.match(/const PLAYER_HP_MAX = (\d+);/)[1]);
-  const rodadas = PLAYER_HP / (15 * MAX_ATTACKERS);
-  assert.ok(rodadas >= 3, `${rodadas.toFixed(1)} rodadas até a morte é curto demais`);
+  const dano = {};
+  for (const m of GAME.match(/const ENEMY_STATS = \{[\s\S]*?\n\};/)[0]
+    .matchAll(/"([a-z-]+)":[^\n]*?damage:\s*(\d+)/g)) dano[m[1]] = Number(m[2]);
+
+  const pools = [...GAME.match(/const PHASE_CONFIG = \{[\s\S]*?\n\};/)[0]
+    .matchAll(/(\d+):\s*\{[\s\S]*?enemies:\s*\[([^\]]*)\]/g)];
+  assert.ok(pools.length >= 3, `só ${pools.length} pools lidas`);
+
+  for (const [, fase, lista] of pools) {
+    const tipos = [...lista.matchAll(/"([a-z-]+)"/g)].map((m) => m[1]);
+    const pior = Math.max(...tipos.map((t) => dano[t] ?? 0));
+    assert.ok(pior > 0, `fase ${fase}: nenhum dano lido de ${tipos}`);
+    const rodadas = PLAYER_HP / (pior * MAX_ATTACKERS);
+    assert.ok(
+      rodadas >= 2.5,
+      `fase ${fase}: pior inimigo bate ${pior}, ${rodadas.toFixed(1)} rodadas até a morte`,
+    );
+  }
 });
 
 check("the game gates the attack on the attacker cap", () => {

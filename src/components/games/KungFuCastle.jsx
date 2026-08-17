@@ -133,6 +133,26 @@ const BOSS_STATS = {
     attackAnim: "shadow-strike",
     attackAnimAlt: "ninja-combo",
   },
+  "general-oni": {
+    hp: 40, damage: 16, speed: 1.4, score: 2500, frameSize: 68,
+    // Medida da arte entregue; conversão chinesa ainda não veio.
+    hitbox: { w: 38, h: 58, ox: 15, oy: 8 },
+    groundOffset: 2,
+    spriteFacing: -1,
+    attackAnim: "dual-slash",
+    attackAnimAlt: "thrust-lunge",
+  },
+  "senhor-castelo": {
+    // Chefe final: o único com moldura de 92px.
+    hp: 50, damage: 18, speed: 1.6, score: 5000, frameSize: 92,
+    hitbox: { w: 37, h: 77, ox: 29, oy: 11 },
+    groundOffset: 4,
+    spriteFacing: -1,
+    // `ki-blast` e `summon-ninjas` existem na folha mas ficam de fora do
+    // moveset base: um é projétil e o outro precisaria invocar inimigos.
+    attackAnim: "sword-slash",
+    attackAnimAlt: "steel-palm",
+  },
 };
 
 const PHASE_CONFIG = {
@@ -151,7 +171,20 @@ const PHASE_CONFIG = {
     boss: "senhor-sombras",
     killThreshold: 100,
   },
-  // TODO: phases 4–5 — add { enemies, boss, killThreshold } when content ready
+  4: {
+    // A spec pedia `lancador-bomba` aqui, mas ele arremessa e não há sistema
+    // de projéteis: entraria andando até o corpo a corpo para jogar uma bomba
+    // que não sai da mão. O guarda de bastão ocupa o lugar do inimigo pesado
+    // até os projéteis existirem.
+    enemies: ["ninja-espada", "samurai", "guarda-bastao"],
+    boss: "general-oni",
+    killThreshold: 100,
+  },
+  5: {
+    enemies: ["samurai", "kunoichi", "ninja-espada"],
+    boss: "senhor-castelo",
+    killThreshold: 100,
+  },
 };
 
 const MAX_PHASE = Math.max(...Object.keys(PHASE_CONFIG).map(Number));
