@@ -24,6 +24,16 @@ const hex = (name) => {
 const ENEMY_TINT = hex("ENEMY_TINT");
 const BOSS_TINT = hex("BOSS_TINT");
 
+/** The tint an enemy actually spawns with: its own override, else the class default. */
+function tintFor(type) {
+  const block = GAME.match(/const ENEMY_STATS = \{[\s\S]*?\n\};/);
+  assert.ok(block, "ENEMY_STATS not found");
+  const entry = block[0].split("\n").find((l) => l.includes(`"${type}":`));
+  assert.ok(entry, `${type} not found in ENEMY_STATS`);
+  const own = entry.match(/tint:\s*(0x[0-9a-f]{6})/);
+  return own ? Number(own[1]) : ENEMY_TINT;
+}
+
 /** Luma of a tint, as the fraction of the original brightness it leaves. */
 const tintFactor = (t) =>
   (0.2126 * ((t >> 16) & 255) + 0.7152 * ((t >> 8) & 255) + 0.0722 * (t & 255)) / 255;
@@ -34,20 +44,24 @@ const tintFactor = (t) =>
  * them would drag both means toward each other and hide the very gap we measure.
  */
 const DARK_FLOOR = 55;
-async function bodyLuma(relPath) {
+async function bodyStats(relPath) {
   const { data, info } = await sharp(repoPath(relPath)).ensureAlpha().raw()
     .toBuffer({ resolveWithObject: true });
-  let sum = 0;
+  let luma = 0;
+  let chroma = 0;
   let n = 0;
   for (let i = 0; i < data.length; i += info.channels) {
     if (data[i + 3] < 16) continue;
-    const l = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+    const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
     if (l <= DARK_FLOOR) continue;
-    sum += l;
+    const max = Math.max(r, g, b);
+    luma += l;
+    chroma += max > 0 ? (max - Math.min(r, g, b)) / max : 0;
     n++;
   }
   assert.ok(n > 0, `${relPath} has no body pixels above the dark floor`);
-  return sum / n;
+  return { luma: luma / n, chroma: chroma / n };
 }
 
 const PLAYER_IDLE = "public/images/kungfucastle/player/idle.png";
@@ -68,11 +82,16 @@ const bosses = fs
   .filter((d) => fs.existsSync(repoPath(`${BOSS_DIR}/${d}/idle.png`)))
   .sort();
 
-const playerLuma = await bodyLuma(PLAYER_IDLE);
+const playerLuma = (await bodyStats(PLAYER_IDLE)).luma;
 const enemyLuma = {};
-for (const e of enemies) enemyLuma[e] = await bodyLuma(`${ENEMY_DIR}/${e}/idle.png`);
+const enemyChroma = {};
+for (const e of enemies) {
+  const s = await bodyStats(`${ENEMY_DIR}/${e}/idle.png`);
+  enemyLuma[e] = s.luma;
+  enemyChroma[e] = s.chroma;
+}
 const bossLuma = {};
-for (const b of bosses) bossLuma[b] = await bodyLuma(`${BOSS_DIR}/${b}/idle.png`);
+for (const b of bosses) bossLuma[b] = (await bodyStats(`${BOSS_DIR}/${b}/idle.png`)).luma;
 
 check("the player is never tinted", () => {
   // The player sprite is built inline, not in a spawn function — match the
@@ -86,8 +105,37 @@ check("enemies are tinted darker than bosses, bosses darker than the player", ()
   assert.ok(tintFactor(BOSS_TINT) < 1, "bosses must sit below the player");
 });
 
-check("spawnEnemy applies ENEMY_TINT", () => {
-  assert.match(GAME, /function spawnEnemy[\s\S]*?tint = ENEMY_TINT/);
+check("spawnEnemy applies the per-type tint, falling back to ENEMY_TINT", () => {
+  assert.match(GAME, /function spawnEnemy[\s\S]*?tint = stats\.tint \?\? ENEMY_TINT/);
+});
+
+// The three phase-1 thugs spawn together and share a silhouette, so each pair
+// needs SOME channel keeping them apart. Branco and cinza both wear neutral
+// cloth, so theirs has to be value. Rapido wears red — hue does that job, and
+// forcing it onto the same luma ladder would be a rule invented for the test
+// rather than for the screen.
+check("capanga-branco reads lighter than capanga-cinza", () => {
+  const branco = enemyLuma["capanga-branco"] * tintFactor(tintFor("capanga-branco"));
+  const cinza = enemyLuma["capanga-cinza"] * tintFactor(tintFor("capanga-cinza"));
+  assert.ok(
+    cinza <= branco * 0.92,
+    `cinza ${cinza.toFixed(1)} vs branco ${branco.toFixed(1)} — they wear the same ` +
+      `neutral cloth, so 8% is the smallest gap that separates them at 48px`,
+  );
+});
+
+check("capanga-rapido separates by hue, not value", () => {
+  assert.ok(
+    enemyChroma["capanga-rapido"] >= 0.35,
+    `rapido's mean chroma is ${enemyChroma["capanga-rapido"].toFixed(2)} — the red ` +
+      `tunic is what tells it apart from the other two thugs`,
+  );
+  for (const t of ["capanga-branco", "capanga-cinza"]) {
+    assert.ok(
+      enemyChroma[t] < enemyChroma["capanga-rapido"],
+      `${t} (${enemyChroma[t].toFixed(2)}) should be less saturated than rapido`,
+    );
+  }
 });
 
 check("spawnBoss applies BOSS_TINT", () => {
@@ -112,7 +160,7 @@ const separates = (name, luma, tint) => {
 
 for (const e of enemies) {
   check(`${e} reads clearly darker than the player once tinted`, () =>
-    separates(e, enemyLuma[e], ENEMY_TINT));
+    separates(e, enemyLuma[e], tintFor(e)));
 }
 
 check("at least one boss is found to measure", () => {

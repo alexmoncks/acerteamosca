@@ -41,6 +41,13 @@ const FRAME_SIZE = 48;
 // your own character is the first job of the art, so the player stays untinted
 // and the cast is knocked back. Doing it here instead of in the sprite sheets
 // costs nothing to change and no regeneration — tune these numbers freely.
+//
+// ENEMY_STATS may override with its own `tint`. That second lever exists
+// because PixelLab generates the whole cast from one anchor and returns them at
+// nearly the same luma: baked, the white-tunic thug and the gray one land 11
+// points apart and read as the same character. The design ladder — worn white
+// (weakest) → gray brawler → red sprinter — is restored here, where it can be
+// retuned without touching a PNG.
 const ENEMY_TINT = 0xb0b0b0;
 const BOSS_TINT = 0xdadada;
 
@@ -49,8 +56,11 @@ const BOSS_TINT = 0xdadada;
 // by tests/attack-anim.test.mjs). capanga-cinza additionally declares
 // `attackAnimAlt`, rolled 50/50 against `attackAnim` (see resolveAttackAnim).
 const ENEMY_STATS = {
-  "capanga-branco": { hp: 1, speed: 1.2, damage: 5,  score: 100, attackAnim: "punch" },
-  "capanga-cinza":  { hp: 2, speed: 1.5, damage: 8,  score: 150, attackAnim: "punch", attackAnimAlt: "kick" },
+  // Os três capangas da fase 1 sobem a escada de valor: o de túnica branca é o
+  // mais claro, o cinza o mais escuro, o vermelho fica no meio e se separa pela
+  // cor. Sem esses tints eles saem a 8 pontos de luma um do outro.
+  "capanga-branco": { hp: 1, speed: 1.2, damage: 5,  score: 100, attackAnim: "punch", tint: 0xc8c8c8 },
+  "capanga-cinza":  { hp: 2, speed: 1.5, damage: 8,  score: 150, attackAnim: "punch", attackAnimAlt: "kick", tint: 0xa0a0a0 },
   "capanga-rapido": { hp: 1, speed: 3.0, damage: 6,  score: 150, attackAnim: "punch" },
   "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200, attackAnim: "punch" },
   "atirador":       { hp: 2, speed: 0,   damage: 8,  score: 200, attackAnim: "attack" },
@@ -298,7 +308,7 @@ function spawnEnemy(game, type) {
 
   const sprite = new Sprite(game.textures.enemies[type].idle.frames[0]);
   sprite.anchor.set(0.5, 1);
-  sprite.tint = ENEMY_TINT;
+  sprite.tint = stats.tint ?? ENEMY_TINT;
   sprite.x = ex + FRAME_SIZE / 2;
   sprite.y = GROUND_Y;
   game.gameLayer.addChild(sprite);
