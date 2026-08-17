@@ -74,3 +74,39 @@ export function enemyHitLands(enemy, player, combatRange) {
   if (!player.grounded) return false;     // airborne, the blow passes under
   return Math.abs(player.x - enemy.x) <= combatRange;
 }
+
+/**
+ * Stagger an enemy: it recoils, and whatever it was swinging dies with the
+ * interruption.
+ *
+ * Clearing `attackImpact` is the whole point. Checking `hitTimer` at the impact
+ * tick is not enough, because the stun (20 ticks) is shorter than several
+ * wind-ups — capanga-cinza's kick takes 25.7. Hit that enemy on the first tick
+ * of its swing and it would recover before the impact, then land the blow out
+ * of an idle pose with nothing on screen to explain it.
+ */
+export function staggerEnemy(enemy, stunTicks) {
+  enemy.hitTimer = stunTicks;
+  enemy.attackImpact = 0;
+}
+
+/**
+ * Advance a pending blow by `dt` and report whether it connects on this tick.
+ *
+ * Returns true at most once per scheduled blow: the counter is zeroed as it
+ * resolves, so a long frame (background tab, GC pause — `dt` is not 1.0) makes
+ * the blow land late rather than vanish or land twice.
+ *
+ * The game loop owns the consequences (health, the hit animation, particles);
+ * this owns the decision, so the decision is testable without a browser. That
+ * split is deliberate: while the decision lived inline in the loop, the only
+ * test tying the two together was a regex for the function's name, and a gate
+ * granting blanket immunity was reintroduced without a single test failing.
+ */
+export function tickAttackImpact(enemy, player, combatRange, dt) {
+  if (!(enemy.attackImpact > 0)) return false;
+  enemy.attackImpact -= dt;
+  if (enemy.attackImpact > 0) return false;
+  enemy.attackImpact = 0;
+  return enemyHitLands(enemy, player, combatRange);
+}

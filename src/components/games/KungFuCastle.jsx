@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
-import { regenHp, windupTicks, enemyHitLands } from "./kungfu-combat";
+import { regenHp, windupTicks, staggerEnemy, tickAttackImpact } from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
@@ -28,6 +28,10 @@ const DOUBLE_TAP_WINDOW = 12; // frames to detect double-tap
 // Backflip dodge — double-tap away from the direction you're facing.
 const DODGE_DURATION = 28; // frames; matches the 10-frame backflip sheet
 const DODGE_COOLDOWN = 40; // frames before another dodge is allowed
+// Quanto tempo um inimigo fica atordoado ao levar um golpe. É a autoridade
+// sobre a duração do recuo: a folha de `hit` de vários inimigos é mais longa
+// que isso, e quem manda é este número, não o sprite.
+const ENEMY_STUN = 20;
 const DODGE_SPEED = 1.8;   // px/frame backwards → ~50px, clear of COMBAT_RANGE (23)
 const DODGE_LIFT = -3.5;   // vertical impulse; under GRAVITY 0.27 the flip lands in ~26 frames
 // Jump arc: apex = JUMP_FORCE² / (2·GRAVITY) ≈ 60px, airtime = 2·JUMP_FORCE / GRAVITY ≈ 42 frames (0.70s)
@@ -1164,16 +1168,10 @@ function update(game, keys, dt) {
     }
 
     // --- The blow connects (or the player got out of it) ---
-    if (e.attackImpact > 0) {
-      e.attackImpact -= dt;
-      if (e.attackImpact <= 0) {
-        e.attackImpact = 0;
-        if (enemyHitLands(e, player, COMBAT_RANGE) && !player.attacking) {
-          player.hp -= e.damage;
-          game.playerAnim.play("hit");
-          spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
-        }
-      }
+    if (tickAttackImpact(e, player, COMBAT_RANGE, dt)) {
+      player.hp -= e.damage;
+      game.playerAnim.play("hit");
+      spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
     }
 
     // --- Player attack hits enemy (only during active hit frames) ---
@@ -1202,7 +1200,11 @@ function update(game, keys, dt) {
           } else {
             e.hp -= atk.dmg || 1;
           }
-          e.hitTimer = 20;
+          // Atordoa E mata o golpe em preparo: só checar hitTimer na hora
+          // do impacto não basta, porque vários wind-ups são mais longos que o
+          // atordoamento e o golpe reapareceria depois da recuperação, sem
+          // nenhuma animação para explicá-lo.
+          staggerEnemy(e, ENEMY_STUN);
           eAnim.play("hit");
           e.x += player.facing * (isSpecial ? 30 : 14);
           const pColor = isSpecial ? 0xffd700 : 0xff8800;

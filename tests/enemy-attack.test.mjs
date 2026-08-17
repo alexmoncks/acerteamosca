@@ -10,7 +10,7 @@
 import assert from "node:assert/strict";
 import { check, near, source, loadModule } from "./helpers.mjs";
 
-const { windupTicks, enemyHitLands, ENEMY_WINDUP } =
+const { windupTicks, enemyHitLands, staggerEnemy, tickAttackImpact, ENEMY_WINDUP } =
   await loadModule("src/components/games/kungfu-combat.js");
 const { AnimController } = await loadModule("src/components/games/kungfu-anim.js");
 const GAME = source("src/components/games/KungFuCastle.jsx");
@@ -89,6 +89,71 @@ check("interrupting the enemy mid-wind-up cancels its blow", () => {
   assert.equal(enemyHitLands(attacker({ hitTimer: 5 }), target(), COMBAT_RANGE), false);
 });
 
+// ── a interrupção tem de valer para o golpe inteiro ────────────────────────
+//
+// Checar hitTimer só no tick do impacto não basta: o atordoamento dura 20
+// ticks e vários wind-ups são mais longos (o chute do capanga cinza leva 25,7).
+// Acertar o inimigo nos primeiros ticks do movimento fazia com que ele se
+// recuperasse ANTES do impacto — e o golpe caía com o sprite já em "hit" ou
+// "idle", que é o mesmo dano invisível de antes por outro caminho. O golpe em
+// preparo tem de morrer junto com a interrupção.
+
+check("being staggered kills the pending blow outright", () => {
+  const e = attacker({ attackImpact: 22 });
+  staggerEnemy(e, 20);
+  assert.equal(e.attackImpact, 0, "o golpe em preparo sobreviveu à interrupção");
+  assert.equal(e.hitTimer, 20);
+});
+
+check("a blow interrupted on its very first tick never lands", () => {
+  // O caso que o teste anterior não cobria: wind-up 22 contra atordoamento 20.
+  const e = attacker({ attackImpact: 22 });
+  const p = target();
+  staggerEnemy(e, 20);
+  let dano = false;
+  for (let t = 0; t < 40; t++) {
+    if (e.hitTimer > 0) e.hitTimer -= 1;
+    if (tickAttackImpact(e, p, COMBAT_RANGE, 1)) dano = true;
+  }
+  assert.equal(dano, false, "o inimigo se recuperou e o golpe caiu sem animação");
+});
+
+check("an uninterrupted blow still lands, at its own wind-up tick", () => {
+  const e = attacker({ attackImpact: 10 });
+  const p = target();
+  const quandoCaiu = [];
+  for (let t = 1; t <= 20; t++) {
+    if (tickAttackImpact(e, p, COMBAT_RANGE, 1)) quandoCaiu.push(t);
+  }
+  assert.deepEqual(quandoCaiu, [10], `esperava um golpe no tick 10, veio ${quandoCaiu}`);
+});
+
+check("the impact resolves once, not once per tick after it expires", () => {
+  const e = attacker({ attackImpact: 3 });
+  const p = target();
+  let n = 0;
+  for (let t = 0; t < 30; t++) if (tickAttackImpact(e, p, COMBAT_RANGE, 1)) n++;
+  assert.equal(n, 1, `o mesmo golpe causou dano ${n} vezes`);
+});
+
+check("a long frame does not skip the impact", () => {
+  // dt não é 1.0: uma aba em segundo plano ou um GC entregam um quadro longo.
+  const e = attacker({ attackImpact: 22 });
+  const p = target();
+  let n = 0;
+  for (let t = 0; t < 5; t++) if (tickAttackImpact(e, p, COMBAT_RANGE, 9)) n++;
+  assert.equal(n, 1, "o golpe sumiu num quadro longo em vez de cair");
+});
+
+check("the game clears the pending blow through staggerEnemy", () => {
+  assert.match(GAME, /staggerEnemy\(e, ENEMY_STUN\)/);
+  assert.doesNotMatch(GAME, /e\.hitTimer = \d+;/, "o atordoamento deve passar por staggerEnemy");
+});
+
+check("the game resolves the impact through tickAttackImpact", () => {
+  assert.match(GAME, /if \(tickAttackImpact\(e, player, COMBAT_RANGE, dt\)\)/);
+});
+
 check("killing the enemy mid-wind-up cancels its blow", () => {
   assert.equal(enemyHitLands(attacker({ alive: false }), target(), COMBAT_RANGE), false);
 });
@@ -106,12 +171,20 @@ check("the game schedules an impact instead of damaging on frame 0", () => {
   assert.match(block[0], /attackImpact = windupTicks/);
 });
 
-check("the impact tick resolves through enemyHitLands", () => {
-  assert.match(GAME, /attackImpact[\s\S]{0,400}?enemyHitLands\(/);
-});
-
-check("KungFuCastle no longer gates enemy damage on !player.attacking", () => {
-  assert.doesNotMatch(GAME, /if \(!player\.attacking\) \{\s*\n\s*player\.hp -= e\.damage/);
+check("KungFuCastle no longer gates enemy damage on player.attacking", () => {
+  // Este teste já foi frouxo: casava só a forma `if (!player.attacking) {`, e
+  // o gate voltou disfarçado de `&& !player.attacking` dentro da condição do
+  // impacto — passou despercebido por dois commits. Agora a asserção é sobre a
+  // vizinhança do dano, em qualquer forma.
+  const bloco = GAME.match(/player\.hp -= e\.damage[\s\S]{0,200}/);
+  assert.ok(bloco, "o bloco de dano do inimigo sumiu");
+  const antes = GAME.slice(Math.max(0, GAME.indexOf("player.hp -= e.damage") - 300),
+                           GAME.indexOf("player.hp -= e.damage"));
+  assert.doesNotMatch(
+    antes,
+    /player\.attacking/,
+    "atacar não pode voltar a conceder imunidade — ver enemyHitLands",
+  );
 });
 
 // ── a telegrafia tem de aparecer de verdade ────────────────────────────────
@@ -124,7 +197,7 @@ check("KungFuCastle no longer gates enemy damage on !player.attacking", () => {
 // caso comum logo depois de CADA soco do jogador. Os testes por regex passavam
 // os 128 com o defeito presente, então este exercita o controlador de verdade.
 
-const ENEMY_STUN = Number(GAME.match(/e\.hitTimer = (\d+);/)[1]);
+const ENEMY_STUN = Number(GAME.match(/const ENEMY_STUN = (\d+);/)[1]);
 
 /** Um controlador com o conjunto de animações que um capanga realmente tem. */
 function thugController() {

@@ -52,7 +52,11 @@ check("the dodge raises its own invulnerability flag, not the attack lock's", ()
   // from `player.dodging` in enemyHitLands; see tests/enemy-attack.test.mjs.
   const fn = GAME.match(/function startDodge[\s\S]*?\n\}/);
   assert.match(fn[0], /player\.dodging\s*=\s*true/);
-  assert.match(GAME, /enemyHitLands\(/, "enemy damage must resolve through enemyHitLands");
+  assert.match(
+    GAME,
+    /tickAttackImpact\(/,
+    "enemy damage must resolve through tickAttackImpact, which reads player.dodging",
+  );
 });
 
 /**
