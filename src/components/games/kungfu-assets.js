@@ -137,16 +137,16 @@ function buildEnemyManifest() {
     ]),
 
     "ninja-espada": enemyAnims("ninja-espada", [
-      ["idle",   { speed: 0.08, loop: true  }],
-      ["walk",   { speed: locoSpeed(6, 1.8), loop: true }],
+      ["idle",   { speed: 0.16, loop: true }],
+      ["walk",   { speed: locoSpeed(8, 1.8), loop: true }],
       ["attack", { file: "slash", speed: 0.15, loop: false, next: "idle" }],
       ["kick",   { speed: 0.15, loop: false, next: "idle" }],
       ["hit",    { speed: 0.12, loop: false, next: "idle" }],
     ]),
 
     "samurai": enemyAnims("samurai", [
-      ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: locoSpeed(6, 1.0), loop: true }],
+      ["idle",  { speed: 0.16, loop: true }],
+      ["walk",  { speed: locoSpeed(8, 1.0), loop: true }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
       ["kick",  { speed: 0.15, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],

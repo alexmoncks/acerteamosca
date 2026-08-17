@@ -72,8 +72,8 @@ const ENEMY_STATS = {
   "guarda-bastao":  { hp: 3, speed: 1.0, damage: 12, score: 200, attackAnim: "punch", tint: 0xdcdcdc },
   "atirador":       { hp: 2, speed: 0,   damage: 8,  score: 200, attackAnim: "attack" },
   "ninja":          { hp: 3, speed: 2.0, damage: 10, score: 200, attackAnim: "punch", tint: 0xf0f0f0 },
-  "ninja-espada":   { hp: 4, speed: 1.8, damage: 15, score: 250, attackAnim: "attack" },
-  "samurai":        { hp: 5, speed: 1.0, damage: 18, score: 300, attackAnim: "punch" },
+  "ninja-espada":   { hp: 4, speed: 1.8, damage: 15, score: 250, attackAnim: "attack", tint: 0xf0f0f0 },
+  "samurai":        { hp: 5, speed: 1.0, damage: 18, score: 300, attackAnim: "punch", tint: 0xdcdcdc },
   "kunoichi":       { hp: 3, speed: 3.5, damage: 12, score: 250, attackAnim: "attack" },
   "lancador-bomba": { hp: 3, speed: 1.0, damage: 15, score: 250, attackAnim: "attack" },
 };

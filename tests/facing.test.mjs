@@ -53,7 +53,13 @@ check("repeated setFacing calls do not accumulate scale", () => {
   assert.equal(Math.abs(sprite.scale.x), 1);
 });
 
-check("every boss in BOSS_STATS declares spriteFacing: -1", () => {
+check("every boss in BOSS_STATS declares spriteFacing explicitly", () => {
+  // Boss art comes from two lineages: the old sheets are drawn facing WEST,
+  // and anything regenerated from the Chinese anchor comes out EAST like the
+  // rest of the cast. Neither may fall through to the default — a boss with a
+  // silent spriteFacing renders back-turned to the player, which is exactly
+  // the bug that opened this whole conversion. The value must match the art;
+  // the declaration is what makes that a decision instead of an accident.
   const block = GAME.match(/const BOSS_STATS = \{[\s\S]*?\n\};/);
   assert.ok(block, "BOSS_STATS not found");
   const bosses = [...block[0].matchAll(/"([a-z-]+)":\s*\{/g)].map((m) => m[1]);
@@ -61,6 +67,10 @@ check("every boss in BOSS_STATS declares spriteFacing: -1", () => {
   for (const b of bosses) {
     const entry = block[0].match(new RegExp(`"${b}":\\s*\\{[\\s\\S]*?\\n  \\},`));
     assert.ok(entry, `entry for ${b} not found`);
-    assert.match(entry[0], /spriteFacing:\s*-1/, `${b} must declare spriteFacing: -1`);
+    assert.match(
+      entry[0],
+      /spriteFacing:\s*-?1\b/,
+      `${b} must declare spriteFacing: 1 (east-drawn) or -1 (west-drawn)`,
+    );
   }
 });
