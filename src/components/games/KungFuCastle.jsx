@@ -36,6 +36,14 @@ const JUMP_FORCE = -5.7;
 
 const FRAME_SIZE = 48;
 
+// Value separation between the player and everyone else, applied at runtime as
+// a PixiJS tint rather than baked into the PNGs. The temple is dark and finding
+// your own character is the first job of the art, so the player stays untinted
+// and the cast is knocked back. Doing it here instead of in the sprite sheets
+// costs nothing to change and no regeneration — tune these numbers freely.
+const ENEMY_TINT = 0xb0b0b0;
+const BOSS_TINT = 0xdadada;
+
 // `attackAnim` is the animation name each type actually attacks with — it
 // must exist in that entity's manifest entry in kungfu-assets.js (enforced
 // by tests/attack-anim.test.mjs). capanga-cinza additionally declares
@@ -223,6 +231,8 @@ async function buildScene(app) {
     playerAnim,
     textures,
     enemyAnims: [],
+    // Controladores dos props que piscam (tochas, braseiros, lanternas).
+    propAnims: [],
     hpBar, scoreText, phaseText, livesText, phaseTitle, phaseSub,
     fadeOverlay,
     transition: null,
@@ -288,6 +298,7 @@ function spawnEnemy(game, type) {
 
   const sprite = new Sprite(game.textures.enemies[type].idle.frames[0]);
   sprite.anchor.set(0.5, 1);
+  sprite.tint = ENEMY_TINT;
   sprite.x = ex + FRAME_SIZE / 2;
   sprite.y = GROUND_Y;
   game.gameLayer.addChild(sprite);
@@ -319,6 +330,7 @@ function spawnBoss(game) {
 
   const sprite = new Sprite(bossTextures.idle.frames[0]);
   sprite.anchor.set(0.5, 1);
+  sprite.tint = BOSS_TINT;
   sprite.x = game.cameraX + CW + fs;
   sprite.y = GROUND_Y;
   game.gameLayer.addChild(sprite);
@@ -443,15 +455,21 @@ function buildScenery(game, phase) {
   for (const band of spec.bg) addBand(band, bg);
   for (const band of spec.mid) addBand(band, mid);
 
-  // -- Ground: grass row at feet level + transition + brick rows below
+  // -- Ground: surface row at feet level + transition + fill rows below
   const tiles = scenery.tilesets[spec.tileset];
   if (tiles && tiles.length >= 16) {
     const TILE = 32;
     const across = Math.ceil(spec.levelWidth / TILE);
     const GRASS_OFFSET = 52; // surface sits ~14px from the top of the tile
+    // Which of the 16 tiles plays each role. PixelLab does NOT emit a stable
+    // Wang ordering across tilesets — the phase-1 courtyard set has an EMPTY
+    // tile where the garden set had its seamless surface, so a shared constant
+    // silently renders the ground invisible. Declared per phase, with the
+    // original garden indices as the default.
+    const role = spec.tileRoles ?? { surface: 12, transition: 3, fill: 6 };
     const rows = [
-      { tex: tiles[12], y: GROUND_Y - GRASS_OFFSET },
-      { tex: tiles[3],  y: GROUND_Y - GRASS_OFFSET + TILE },
+      { tex: tiles[role.surface],    y: GROUND_Y - GRASS_OFFSET },
+      { tex: tiles[role.transition], y: GROUND_Y - GRASS_OFFSET + TILE },
     ];
     for (const { tex, y } of rows) {
       for (let col = 0; col < across; col++) {
@@ -465,7 +483,7 @@ function buildScenery(game, phase) {
     const rowsNeeded = Math.ceil((CH - brickStartY) / TILE) + 1;
     for (let row = 0; row < rowsNeeded; row++) {
       for (let col = 0; col < across; col++) {
-        const s = new Sprite(tiles[6]);
+        const s = new Sprite(tiles[role.fill]);
         s.x = col * TILE;
         s.y = brickStartY + row * TILE;
         ground.addChild(s);
@@ -478,7 +496,8 @@ function buildScenery(game, phase) {
   // so do not "simplify" it or every prop shifts.
   const target = { bg: mid, game: ground, fg };
   for (const { asset, x, y, layer } of spec.props) {
-    const tex = scenery.props[asset];
+    const anim = scenery.propAnims?.[asset];
+    const tex = anim ? anim.frames[0] : scenery.props[asset];
     if (!tex) {
       console.warn(`[kungfu] prop not found: ${asset}`);
       continue;
@@ -488,6 +507,18 @@ function buildScenery(game, phase) {
     s.x = x;
     s.y = GROUND_Y + y;
     (target[layer] || ground).addChild(s);
+
+    if (anim) {
+      // Every torch gets its own controller seeded at a different frame —
+      // otherwise a corridor of them flickers in lockstep, which reads as
+      // one animation stamped repeatedly rather than as separate fires.
+      const ctrl = new AnimController({ sprite: s, anims: { flicker: anim } });
+      ctrl.forcePlay("flicker");
+      for (let i = 0; i < game.propAnims.length % anim.frames.length; i++) {
+        ctrl.update(1 / anim.speed);
+      }
+      game.propAnims.push(ctrl);
+    }
   }
 }
 
@@ -496,6 +527,9 @@ function clearScenery(game) {
   for (const container of Object.values(game.sceneryLayers)) {
     for (const child of container.removeChildren()) child.destroy();
   }
+  // Os sprites que estes controladores animavam acabaram de ser destruídos —
+  // manter os controladores faria update() tocar em sprite morto na fase seguinte.
+  game.propAnims.length = 0;
 }
 
 // ============================================================
@@ -1016,6 +1050,9 @@ function update(game, keys, dt) {
   }
   game.playerAnim.setFacing(player.facing);
   game.playerAnim.update(dt);
+
+  // Props que emitem luz crepitam por conta própria, independentes do jogador.
+  for (const a of game.propAnims) a.update(dt);
   game.playerSprite.x = player.x + FRAME_SIZE / 2;
   game.playerSprite.y = player.y + PLAYER_H;
 

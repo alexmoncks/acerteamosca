@@ -16,8 +16,8 @@ const ASSET_MANIFEST = {
   player: {
     frameH: FRAME_H,
     anims: {
-      idle:    { src: "/images/kungfucastle/player/idle.png",        speed: 0.08, loop: true  },
-      walk:    { src: "/images/kungfucastle/player/walk.png",        speed: 0.12, loop: true  },
+      idle:    { src: "/images/kungfucastle/player/idle.png",        speed: 0.16, loop: true  }, // 8 frames (era 4): dobra a contagem, dobra a velocidade para manter o ciclo
+      walk:    { src: "/images/kungfucastle/player/walk.png",        speed: 0.16, loop: true  }, // 8 frames (era 6)
       run:     { src: "/images/kungfucastle/player/run.png",         speed: 0.16, loop: true  },
       turn:    { src: "/images/kungfucastle/player/turn.png",        speed: 0.25, loop: false, next: "walk" },
       punch:   { src: "/images/kungfucastle/player/punch.png",       speed: 0.33, loop: false, next: "idle" },
@@ -58,8 +58,9 @@ function enemyAnims(type, animDefs) {
 function buildEnemyManifest() {
   return {
     "capanga-branco": enemyAnims("capanga-branco", [
-      ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: 0.12, loop: true  }],
+      // 8 frames (era 4 e 6): velocidade sobe junto para o ciclo durar o mesmo
+      ["idle",  { speed: 0.16, loop: true  }],
+      ["walk",  { speed: 0.16, loop: true  }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
     ]),
@@ -180,6 +181,21 @@ const BOSS_MANIFEST = {
   ]),
 };
 
+// ── Animated props ────────────────────────────────────────────────────────
+
+/**
+ * Props that are horizontal frame strips rather than single images: anything
+ * that emits light, so the flame crackles and the glow breathes instead of
+ * standing still. Speeds are deliberately unequal — flames synchronised across
+ * a level read as machinery, not as fire.
+ */
+const ANIMATED_PROPS = {
+  "tocha-fogo":     { frames: 9, speed: 0.22 },
+  "braseiro-fogo":  { frames: 9, speed: 0.18 },
+  "lanterna-papel": { frames: 9, speed: 0.12 },
+  "lanterna-seda":  { frames: 9, speed: 0.10 },
+};
+
 // ── Sprite sheet cutter ────────────────────────────────────────────────────
 
 /**
@@ -209,10 +225,14 @@ export function cutSpriteSheet(texture, frameH) {
  * Load all assets defined in ASSET_MANIFEST in parallel, cut sprite sheets,
  * and return organised texture maps.
  *
- * @returns {Promise<{ player: AnimMap, enemies: { [type: string]: AnimMap }, scenery: SceneryMap }>}
+ * An AnimMap is `{ [animName]: { frames: Texture[], speed, loop, next? } }`.
  *
- * AnimMap = { [animName]: { frames: Texture[], speed: number, loop: boolean, next?: string } }
- * SceneryMap = { tilesets: { [name]: Texture[] }, props: { [name]: Texture } }
+ * `scenery` is `{ tilesets, props, propAnims }`:
+ *   tilesets   `{ [name]: Texture[] }` — 16 tiles each
+ *   props      `{ [name]: Texture }`   — single frame
+ *   propAnims  `{ [name]: { frames: Texture[], speed, loop } }` — light sources
+ *
+ * @returns {Promise<object>}
  */
 export async function loadAllAssets() {
   // 1. Collect every unique source path across the whole manifest
@@ -307,7 +327,26 @@ export async function loadAllAssets() {
     props[name] = tex;
   }
 
-  const scenery = { tilesets, props };
+  // Light sources are horizontal strips, not single frames — cut them so the
+  // flame can flicker. The frame count cannot be inferred from the aspect
+  // ratio: props are not square, so a 32x48 strip of 9 is indistinguishable
+  // from one tall still. It is declared.
+  const propAnims = {};
+  for (const [name, def] of Object.entries(ANIMATED_PROPS)) {
+    const tex = props[name];
+    if (!tex) continue;
+    const frameW = Math.round(tex.width / def.frames);
+    const frames = [];
+    for (let i = 0; i < def.frames; i++) {
+      frames.push(new Texture({
+        source: tex.source,
+        frame: new Rectangle(i * frameW, 0, frameW, tex.height),
+      }));
+    }
+    propAnims[name] = { frames, speed: def.speed, loop: true };
+  }
+
+  const scenery = { tilesets, props, propAnims };
 
   // 7. Return organised texture maps
   return { player, enemies, bosses, scenery };
