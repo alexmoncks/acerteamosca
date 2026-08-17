@@ -7,7 +7,14 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
-import { regenHp, windupTicks, staggerEnemy, tickAttackImpact } from "./kungfu-combat";
+import {
+  regenHp,
+  windupTicks,
+  staggerEnemy,
+  tickAttackImpact,
+  countWindingUp,
+  MAX_ATTACKERS,
+} from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
@@ -106,6 +113,20 @@ const BOSS_STATS = {
     // the horizontal sword swing (see the phase-2 design doc).
     attackAnim: "horizontal-swing",
   },
+  "senhor-sombras": {
+    hp: 30, damage: 14, speed: 2.5, score: 2000, frameSize: 68,
+    // Medida da arte entregue; a conversão chinesa deste chefe ainda não veio.
+    hitbox: { w: 23, h: 52, ox: 24, oy: 9 },
+    groundOffset: 7,
+    // Arte ainda da linhagem antiga, desenhada para oeste.
+    spriteFacing: -1,
+    // Não tem "punch"/"attack": o moveset é de assassino. O golpe de sombra é
+    // o ataque base e o combo entra na metade das vezes. `shuriken` existe na
+    // folha mas fica de fora — não há sistema de projéteis, então ele animaria
+    // um arremesso que não sai do lugar.
+    attackAnim: "shadow-strike",
+    attackAnimAlt: "ninja-combo",
+  },
 };
 
 const PHASE_CONFIG = {
@@ -119,7 +140,12 @@ const PHASE_CONFIG = {
     boss: "guardiao-portao",
     killThreshold: 100,
   },
-  // TODO: phases 3–5 — add { enemies, boss, killThreshold } when content ready
+  3: {
+    enemies: ["ninja", "ninja-espada", "kunoichi"],
+    boss: "senhor-sombras",
+    killThreshold: 100,
+  },
+  // TODO: phases 4–5 — add { enemies, boss, killThreshold } when content ready
 };
 
 const MAX_PHASE = Math.max(...Object.keys(PHASE_CONFIG).map(Number));
@@ -487,10 +513,16 @@ function buildScenery(game, phase) {
     const across = Math.ceil(spec.levelWidth / TILE);
     const GRASS_OFFSET = 52; // surface sits ~14px from the top of the tile
     // Which of the 16 tiles plays each role. PixelLab does NOT emit a stable
-    // Wang ordering across tilesets — the phase-1 courtyard set has an EMPTY
-    // tile where the garden set had its seamless surface, so a shared constant
-    // silently renders the ground invisible. Declared per phase, with the
-    // original garden indices as the default.
+    // Wang ordering across tilesets, então cada fase pode declarar a sua.
+    //
+    // Medido nos três tilesets em uso (jardim, portão, salão): o índice 12 é
+    // TRANSPARENTE em todos, e o chão que se vê vem inteiro do `transition`
+    // (índice 3, com conteúdo a partir da linha 16 do tile) sobre o `fill`
+    // (índice 6, 100% opaco). Com GRASS_OFFSET 52 a transição começa em
+    // GROUND_Y-20, então a borda visível do piso cai 4px acima do pé — é por
+    // isso que funciona. Um tileset novo precisa ser medido antes de confiar
+    // nesse padrão: se o índice 3 vier cheio desde a linha 0, o piso sobe meio
+    // tile e o personagem afunda.
     const role = spec.tileRoles ?? { surface: 12, transition: 3, fill: 6 };
     const rows = [
       { tex: tiles[role.surface],    y: GROUND_Y - GRASS_OFFSET },
@@ -1100,6 +1132,11 @@ function update(game, keys, dt) {
   // ---- Update enemies ----
   const COMBAT_RANGE = 23; // distance to stop and attack (~1px overlap)
 
+  // Senha de ataque: no máximo MAX_ATTACKERS golpes em preparo por vez. Começa
+  // contando quem já está no meio de um e sobe conforme novos entram, porque
+  // eles entram dentro deste mesmo laço.
+  let atacando = countWindingUp(game.enemies);
+
   for (let i = game.enemies.length - 1; i >= 0; i--) {
     const e = game.enemies[i];
     const eAnim = game.enemyAnims[i];
@@ -1159,7 +1196,9 @@ function update(game, keys, dt) {
     // whether it connects is re-read at the impact tick below, so the player
     // has a window to walk out, jump, flip, or hit first.
     const playerInReach = dist <= COMBAT_RANGE && player.grounded;
-    if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
+    if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0
+        && atacando < MAX_ATTACKERS) {
+      atacando++;
       e.attackCooldown = 50 + Math.random() * 30;
       const attackAnim = resolveAttackAnim(e, eAnim);
       // forcePlay, não play: `hit` tem prioridade 4 e `punch` tem 3, e a folha

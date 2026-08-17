@@ -44,20 +44,30 @@ function extractMultiLineEntries(block) {
 const enemyEntries = enemyStatsBlock ? extractSingleLineEntries(enemyStatsBlock[0]) : [];
 const bossEntries = bossStatsBlock ? extractMultiLineEntries(bossStatsBlock[0]) : [];
 
-check("the parser finds the real roster — 10 ENEMY_STATS entries + 2 BOSS_STATS entries", () => {
+/** Chaves entre aspas no topo de um bloco de stats, a contagem que a extração deve bater. */
+const countKeys = (block) => [...block.matchAll(/^\s{2}"([a-z-]+)":/gm)].length;
+
+check("the parser finds every entry in both stats blocks", () => {
   // Guards against the manifest test passing vacuously because a formatting
   // change broke extraction and left both lists empty (0 iterations = 0
   // failures, which looks like success but tested nothing).
+  //
+  // Contava 10 e 2 na mão, o que virava tarefa a cada personagem novo — e uma
+  // tarefa que se resolve subindo o número não protege nada. Agora a contagem
+  // esperada sai do próprio bloco: se a extração quebrar, ela some e o número
+  // do bloco continua lá.
   assert.equal(
     enemyEntries.length,
-    10,
+    countKeys(enemyStatsBlock[0]),
     `parsed ${enemyEntries.length} ENEMY_STATS entries: [${enemyEntries.map(([n]) => n).join(", ")}]`
   );
   assert.equal(
     bossEntries.length,
-    2,
+    countKeys(bossStatsBlock[0]),
     `parsed ${bossEntries.length} BOSS_STATS entries: [${bossEntries.map(([n]) => n).join(", ")}]`
   );
+  assert.ok(enemyEntries.length >= 10, "ENEMY_STATS encolheu inesperadamente");
+  assert.ok(bossEntries.length >= 2, "BOSS_STATS encolheu inesperadamente");
 });
 
 /** Pull attackAnim (and, for capanga-cinza, attackAnimAlt) out of a stats-entry body. */

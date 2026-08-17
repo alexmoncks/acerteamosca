@@ -213,6 +213,22 @@ const BOSS_MANIFEST = {
     ["hit",              { speed: 0.15, next: "idle" }],
     ["death",            { speed: 0.08 }],
   ]),
+
+  "senhor-sombras": bossAnims("senhor-sombras", 68, [
+    ["idle",          { speed: 0.08, loop: true }],
+    ["walk",          { speed: 0.14, loop: true }],
+    ["shadow-strike", { speed: 0.15, next: "idle" }],
+    ["ninja-combo",   { speed: 0.18, next: "idle" }],
+    ["shadow-sweep",  { speed: 0.14, next: "idle" }],
+    ["dash-kick",     { speed: 0.16, next: "idle" }],
+    ["vanish",        { speed: 0.14, next: "idle" }],
+    ["clone",         { speed: 0.12, next: "idle" }],
+    ["smoke-bomb",    { speed: 0.14, next: "idle" }],
+    // `shuriken` fica fora do manifesto até existir sistema de projéteis:
+    // carregado, seria uma animação de arremesso sem nada saindo da mão.
+    ["hit",           { speed: 0.15, next: "idle" }],
+    ["death",         { speed: 0.08 }],
+  ]),
 };
 
 // ── Animated props ────────────────────────────────────────────────────────

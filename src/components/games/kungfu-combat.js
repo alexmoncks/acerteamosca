@@ -103,6 +103,25 @@ export function staggerEnemy(enemy, stunTicks) {
  * test tying the two together was a regex for the function's name, and a gate
  * granting blanket immunity was reintroduced without a single test failing.
  */
+/**
+ * Quantos inimigos podem estar com um golpe em preparo ao mesmo tempo.
+ *
+ * Cabem cinco em cena e nada os impedia de golpear no mesmo quadro. Na fase 1
+ * isso custava 40 de vida por rodada e passava; na fase 3, com o assassino de
+ * jian a 15, custa 75 — o jogador morre em 1,3 rodada parado, antes de ter o
+ * que responder. Beat-em-up resolve isso desde sempre com uma senha de ataque:
+ * dois entram, o resto cerca e espera. O cerco continua sendo pressão, mas
+ * pressão que dá para ler.
+ */
+export const MAX_ATTACKERS = 2;
+
+/** Quantos inimigos da lista já estão com um golpe agendado. */
+export function countWindingUp(enemies) {
+  let n = 0;
+  for (const e of enemies) if (e.attackImpact > 0) n++;
+  return n;
+}
+
 export function tickAttackImpact(enemy, player, combatRange, dt) {
   if (!(enemy.attackImpact > 0)) return false;
   enemy.attackImpact -= dt;

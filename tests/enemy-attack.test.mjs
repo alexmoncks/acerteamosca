@@ -10,7 +10,10 @@
 import assert from "node:assert/strict";
 import { check, near, source, loadModule } from "./helpers.mjs";
 
-const { windupTicks, enemyHitLands, staggerEnemy, tickAttackImpact, ENEMY_WINDUP } =
+const {
+  windupTicks, enemyHitLands, staggerEnemy, tickAttackImpact,
+  countWindingUp, ENEMY_WINDUP, MAX_ATTACKERS,
+} =
   await loadModule("src/components/games/kungfu-combat.js");
 const { AnimController } = await loadModule("src/components/games/kungfu-anim.js");
 const GAME = source("src/components/games/KungFuCastle.jsx");
@@ -143,6 +146,43 @@ check("a long frame does not skip the impact", () => {
   let n = 0;
   for (let t = 0; t < 5; t++) if (tickAttackImpact(e, p, COMBAT_RANGE, 9)) n++;
   assert.equal(n, 1, "o golpe sumiu num quadro longo em vez de cair");
+});
+
+// ── quantos podem bater ao mesmo tempo ─────────────────────────────────────
+//
+// Até 5 inimigos cabem em cena e nada os impedia de golpear no mesmo quadro.
+// Na fase 1 isso custava 40 de vida por rodada; na fase 3, com ninja-espada a
+// 15, custa 75 — o jogador morre em 1,3 rodada parado, sem chance de reagir.
+// Beat-em-up resolve isso há quarenta anos com uma senha de ataque: os outros
+// cercam e esperam.
+
+check("only a couple of enemies may be winding up at once", () => {
+  const enemies = [
+    { attackImpact: 12 },
+    { attackImpact: 0 },
+    { attackImpact: 5 },
+    { attackImpact: 0 },
+  ];
+  assert.equal(countWindingUp(enemies), 2);
+  assert.ok(MAX_ATTACKERS >= 1, "pelo menos um inimigo tem de poder atacar");
+  assert.ok(MAX_ATTACKERS <= 3, `${MAX_ATTACKERS} atacantes simultâneos é cerco, não luta`);
+});
+
+check("an empty field has nobody winding up", () => {
+  assert.equal(countWindingUp([]), 0);
+});
+
+check("the cap keeps a phase-3 swarm survivable", () => {
+  // Pior caso da fase 3: só ninja-espada, 15 de dano. Com a senha, o jogador
+  // aguenta rodadas suficientes para revidar; sem ela eram 1,3.
+  const PLAYER_HP = Number(GAME.match(/const PLAYER_HP_MAX = (\d+);/)[1]);
+  const rodadas = PLAYER_HP / (15 * MAX_ATTACKERS);
+  assert.ok(rodadas >= 3, `${rodadas.toFixed(1)} rodadas até a morte é curto demais`);
+});
+
+check("the game gates the attack on the attacker cap", () => {
+  assert.match(GAME, /countWindingUp\(game\.enemies\)/);
+  assert.match(GAME, /atacando < MAX_ATTACKERS/);
 });
 
 check("the game clears the pending blow through staggerEnemy", () => {

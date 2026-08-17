@@ -74,6 +74,43 @@ export const PHASE_SCENERY = {
       { asset: "portao-madeira-aberto",  x: 2500, y: 0, layer: "game" },
     ],
   },
+
+  // Fase 3 — Salão Principal (大殿). Primeiro interior: o campo `sky` não pinta
+  // firmamento nenhum, é o mesmo Graphics servindo de parede ao fundo. Daí o
+  // gradiente escuro e fechado, sem horizonte claro.
+  3: {
+    levelWidth: 2500,
+    sky: { type: "gradient", from: 0x0f0b16, to: 0x2c1f2c },
+    bg: [
+      // Treliça de madeira repetida ao fundo: a parede do salão. `every` maior
+      // que a largura do painel deixa respiro entre eles, como vãos de janela.
+      { asset: "trelica-madeira", every: 300, alpha: 0.5, y: 150, parallax: 0.15 },
+    ],
+    mid: [
+      // Colunata: pilares mais próximos, passando mais rápido que a parede.
+      { asset: "pilar-ornamentado", every: 470, alpha: 0.85, y: "ground-overlap", parallax: 0.5 },
+    ],
+    tileset: "fase3-salao",
+    props: [
+      { asset: "portal-lua",          x: 80,   y: 0,  layer: "game" },
+      { asset: "vaso-porcelana",      x: 260,  y: 1,  layer: "game" },
+      { asset: "trelica-madeira",     x: 380,  y: 6,  layer: "bg"   },
+      { asset: "armadura-lamelar",    x: 520,  y: 2,  layer: "game" },
+      { asset: "janela-lua",          x: 700,  y: 10, layer: "bg"   },
+      { asset: "biombo-dourado",      x: 860,  y: 3,  layer: "game" },
+      { asset: "jian-suporte",        x: 1040, y: 8,  layer: "fg"   },
+      { asset: "vaso-porcelana",      x: 1180, y: 1,  layer: "game" },
+      { asset: "cortina-rasgada",     x: 1300, y: 12, layer: "fg"   },
+      { asset: "trelica-madeira",     x: 1440, y: 6,  layer: "bg"   },
+      { asset: "armadura-lamelar",    x: 1600, y: 2,  layer: "game" },
+      { asset: "janela-lua",          x: 1760, y: 10, layer: "bg"   },
+      { asset: "biombo-dourado",      x: 1920, y: 3,  layer: "game" },
+      { asset: "jian-suporte",        x: 2080, y: 8,  layer: "fg"   },
+      { asset: "vaso-porcelana",      x: 2200, y: 1,  layer: "game" },
+      // Fecho da fase: a escada que sobe para os aposentos nobres da fase 4.
+      { asset: "escada-ornada-tapete", x: 2380, y: 0, layer: "game" },
+    ],
+  },
 };
 
 /** Public path for a tileset name. */
