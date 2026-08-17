@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
-import { regenHp } from "./kungfu-combat";
+import { regenHp, windupTicks, enemyHitLands } from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
@@ -687,9 +687,11 @@ function canDodge(player) {
 /**
  * Leap backwards in a flip, invulnerable for the whole animation.
  *
- * Reuses the existing attack lock: `attacking = true` already blocks every
- * input gate AND makes enemy damage a no-op, so the dodge gets both for free.
- * `attackType` stays null, so the flip itself deals no damage.
+ * Reuses the existing attack lock to block every input gate while the flip
+ * plays; `attackType` stays null, so the flip itself deals no damage. The
+ * invulnerability is separate and explicit — `enemyHitLands` reads
+ * `player.dodging`. It used to ride on `attacking` being truthy, which also
+ * made every ordinary punch invulnerable.
  *
  * @param {object} game
  * @param {number} originalFacing  Facing before the first tap flipped it
@@ -1138,15 +1140,27 @@ function update(game, keys, dt) {
     const eHb = getHitbox(e);
 
     // --- Enemy attacks player when in range (only if player is on ground) ---
+    // Starting the attack only schedules the blow. Everything that decides
+    // whether it connects is re-read at the impact tick below, so the player
+    // has a window to walk out, jump, flip, or hit first.
     const playerInReach = dist <= COMBAT_RANGE && player.grounded;
     if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0) {
       e.attackCooldown = 50 + Math.random() * 30;
-      eAnim.play(resolveAttackAnim(e, eAnim));
+      const attackAnim = resolveAttackAnim(e, eAnim);
+      eAnim.play(attackAnim);
+      e.attackImpact = windupTicks(eAnim.anims[attackAnim]);
+    }
 
-      if (!player.attacking) {
-        player.hp -= e.damage;
-        game.playerAnim.play("hit");
-        spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
+    // --- The blow connects (or the player got out of it) ---
+    if (e.attackImpact > 0) {
+      e.attackImpact -= dt;
+      if (e.attackImpact <= 0) {
+        e.attackImpact = 0;
+        if (enemyHitLands(e, player, COMBAT_RANGE)) {
+          player.hp -= e.damage;
+          game.playerAnim.play("hit");
+          spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
+        }
       }
     }
 
@@ -1331,6 +1345,14 @@ export default function KungFuCastle() {
       if (startPhase !== 1) loadPhase(scene, startPhase);
 
       gameRef.current = scene;
+
+      // Test mode only: hand the live scene to whatever is driving the browser.
+      // Combat behaviour (did the flip actually dodge? does mashing attack
+      // still grant immunity?) can only be answered from state — reading it
+      // back off the canvas is impossible, since PixiJS runs without
+      // preserveDrawingBuffer and the drawing buffer is blank by the time a
+      // script can copy it.
+      if (isTstMode) window.__kungfu = scene;
 
       app.ticker.add((ticker) => {
         const g = gameRef.current;

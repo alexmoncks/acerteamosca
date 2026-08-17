@@ -37,7 +37,7 @@ check("same-direction double-tap still starts a run", () => {
   assert.match(GAME, /player\.running\s*=\s*player\.tapTimer\.left\s*>\s*0/);
 });
 
-check("the dodge reuses the attack lock, so input is blocked and damage is nil", () => {
+check("the dodge reuses the attack lock, so input is blocked during the flip", () => {
   const fn = GAME.match(/function startDodge[\s\S]*?\n\}/);
   assert.ok(fn, "startDodge not found");
   assert.match(fn[0], /player\.attacking\s*=\s*true/);
@@ -45,8 +45,14 @@ check("the dodge reuses the attack lock, so input is blocked and damage is nil",
   assert.match(fn[0], /player\.facing\s*=\s*originalFacing/);
 });
 
-check("enemy damage stays gated on !player.attacking", () => {
-  assert.match(GAME, /if \(!player\.attacking\) \{\n\s*player\.hp -= e\.damage/);
+check("the dodge raises its own invulnerability flag, not the attack lock's", () => {
+  // The flip used to be invulnerable only because `attacking` was truthy and
+  // enemy damage was gated on `!player.attacking`. That gate made EVERY punch
+  // invulnerable too, so mashing attack beat dodging. Immunity is now read
+  // from `player.dodging` in enemyHitLands; see tests/enemy-attack.test.mjs.
+  const fn = GAME.match(/function startDodge[\s\S]*?\n\}/);
+  assert.match(fn[0], /player\.dodging\s*=\s*true/);
+  assert.match(GAME, /enemyHitLands\(/, "enemy damage must resolve through enemyHitLands");
 });
 
 /**

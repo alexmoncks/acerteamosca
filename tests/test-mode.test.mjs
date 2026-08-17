@@ -57,6 +57,19 @@ check("the selector is gated behind test mode", () => {
   );
 });
 
+check("the live-scene handle is gated behind test mode", () => {
+  // window.__kungfu is how a browser driver answers combat questions that the
+  // canvas cannot — PixiJS runs without preserveDrawingBuffer, so a script can
+  // never read the rendered frame back. It must not exist in a normal session.
+  const line = GAME.split("\n").find((l) => l.includes("window.__kungfu"));
+  assert.ok(line, "window.__kungfu handle not found");
+  assert.match(
+    line,
+    /if \(isTstMode\)|isTstMode\s*&&/,
+    "the scene handle must only be exposed when ?tst=t is set",
+  );
+});
+
 check("the phase buttons derive from PHASE_CONFIG, not a hardcoded list", () => {
   const block = GAME.match(/MODO TESTE[\s\S]{0,1600}/)[0];
   assert.match(
