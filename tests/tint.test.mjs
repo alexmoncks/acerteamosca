@@ -52,6 +52,7 @@ async function bodyLuma(relPath) {
 
 const PLAYER_IDLE = "public/images/kungfucastle/player/idle.png";
 const ENEMY_DIR = "public/images/kungfucastle/enemies";
+const BOSS_DIR = "public/images/kungfucastle/bosses";
 
 // Every enemy that ships an idle sheet, so a new enemy is covered the day it
 // lands rather than the day someone remembers to add it here.
@@ -60,9 +61,18 @@ const enemies = fs
   .filter((d) => fs.existsSync(repoPath(`${ENEMY_DIR}/${d}/idle.png`)))
   .sort();
 
+// Boss art comes from a different generation lineage than the anchor cast, so
+// it needs the same measured check rather than trusting BOSS_TINT's ordering.
+const bosses = fs
+  .readdirSync(repoPath(BOSS_DIR))
+  .filter((d) => fs.existsSync(repoPath(`${BOSS_DIR}/${d}/idle.png`)))
+  .sort();
+
 const playerLuma = await bodyLuma(PLAYER_IDLE);
 const enemyLuma = {};
 for (const e of enemies) enemyLuma[e] = await bodyLuma(`${ENEMY_DIR}/${e}/idle.png`);
+const bossLuma = {};
+for (const b of bosses) bossLuma[b] = await bodyLuma(`${BOSS_DIR}/${b}/idle.png`);
 
 check("the player is never tinted", () => {
   // The player sprite is built inline, not in a spawn function — match the
@@ -90,13 +100,26 @@ check("at least one enemy is found to measure", () => {
 
 // 0.85 is the loosest gap that still reads on screen: the hero's robe clips to
 // white, so an enemy at 0.9 of his luma is a shade, not a different character.
+const GAP = 0.85;
+const separates = (name, luma, tint) => {
+  const onScreen = luma * tintFactor(tint);
+  assert.ok(
+    onScreen <= playerLuma * GAP,
+    `${name} at ${onScreen.toFixed(1)} vs player ${playerLuma.toFixed(1)} ` +
+      `— needs <= ${(playerLuma * GAP).toFixed(1)}`,
+  );
+};
+
 for (const e of enemies) {
-  check(`${e} reads clearly darker than the player once tinted`, () => {
-    const onScreen = enemyLuma[e] * tintFactor(ENEMY_TINT);
-    assert.ok(
-      onScreen <= playerLuma * 0.85,
-      `${e} at ${onScreen.toFixed(1)} vs player ${playerLuma.toFixed(1)} ` +
-        `— needs <= ${(playerLuma * 0.85).toFixed(1)}`,
-    );
-  });
+  check(`${e} reads clearly darker than the player once tinted`, () =>
+    separates(e, enemyLuma[e], ENEMY_TINT));
+}
+
+check("at least one boss is found to measure", () => {
+  assert.ok(bosses.length > 0, `no idle sheets under ${BOSS_DIR}`);
+});
+
+for (const b of bosses) {
+  check(`${b} reads clearly darker than the player once tinted`, () =>
+    separates(b, bossLuma[b], BOSS_TINT));
 }

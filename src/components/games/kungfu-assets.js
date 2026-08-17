@@ -10,6 +10,26 @@ import { sceneryAssetPaths, sceneryTilesetNames } from "./kungfu-scenery";
 // ── Constants ──────────────────────────────────────────────────────────────
 const FRAME_H = 48; // All sprites use 48×48 square frames
 
+// Cadência de locomoção — por que os `speed` de walk/run não são arbitrários.
+//
+// AnimController avança `speed × dt` quadros por frame, então um ciclo dura
+// `frames / speed` frames e cobre `moveSpeed × frames / speed` pixels. Se essa
+// distância não bater com a passada desenhada, o pé desliza: cadência rápida
+// demais faz o personagem correr no lugar, lenta demais faz patinar.
+//
+// A referência é o walk do jogador, que já foi jogado e lê bem: 8 quadros a
+// 0.16 com PLAYER_WALK_SPEED 1.4 → 70px por ciclo. A corrida tem passada mais
+// longa; 96px por ciclo mantém a mesma leitura em velocidade alta.
+//
+//   speed = frames × moveSpeed / distância
+//
+// tests/locomotion.test.mjs recalcula isso a partir dos PNGs entregues e dos
+// stats do jogo, então um inimigo novo com cadência errada falha na hora.
+const WALK_CYCLE_PX = 70;
+const RUN_CYCLE_PX = 96;
+const locoSpeed = (frames, moveSpeed, cyclePx = WALK_CYCLE_PX) =>
+  Math.round((frames * moveSpeed * 100) / cyclePx) / 100;
+
 // ── Asset manifest ─────────────────────────────────────────────────────────
 
 const ASSET_MANIFEST = {
@@ -17,8 +37,10 @@ const ASSET_MANIFEST = {
     frameH: FRAME_H,
     anims: {
       idle:    { src: "/images/kungfucastle/player/idle.png",        speed: 0.16, loop: true  }, // 8 frames (era 4): dobra a contagem, dobra a velocidade para manter o ciclo
-      walk:    { src: "/images/kungfucastle/player/walk.png",        speed: 0.16, loop: true  }, // 8 frames (era 6)
-      run:     { src: "/images/kungfucastle/player/run.png",         speed: 0.16, loop: true  },
+      // 8 quadros; PLAYER_WALK_SPEED 1.4 e PLAYER_RUN_SPEED 3.2 (KungFuCastle.jsx).
+      // A corrida estava herdando a cadência do passo e patinava a 2,3× a velocidade.
+      walk:    { src: "/images/kungfucastle/player/walk.png",        speed: locoSpeed(8, 1.4), loop: true },
+      run:     { src: "/images/kungfucastle/player/run.png",         speed: locoSpeed(8, 3.2, RUN_CYCLE_PX), loop: true },
       turn:    { src: "/images/kungfucastle/player/turn.png",        speed: 0.25, loop: false, next: "walk" },
       punch:   { src: "/images/kungfucastle/player/punch.png",       speed: 0.33, loop: false, next: "idle" },
       kick:    { src: "/images/kungfucastle/player/kick.png",        speed: 0.32, loop: false, next: "idle" },
@@ -57,36 +79,44 @@ function enemyAnims(type, animDefs) {
 
 function buildEnemyManifest() {
   return {
+    // Cada `walk`/`run` usa locoSpeed(quadros do PNG, ENEMY_STATS.speed) —
+    // ver o bloco de cadência no topo. Nunca copie o número do vizinho: dois
+    // inimigos com contagens de quadro iguais e velocidades diferentes precisam
+    // de cadências diferentes, senão o mais rápido patina.
     "capanga-branco": enemyAnims("capanga-branco", [
-      // 8 frames (era 4 e 6): velocidade sobe junto para o ciclo durar o mesmo
       ["idle",  { speed: 0.16, loop: true  }],
-      ["walk",  { speed: 0.16, loop: true  }],
+      ["walk",  { speed: locoSpeed(8, 1.2), loop: true }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
     ]),
 
     "capanga-cinza": enemyAnims("capanga-cinza", [
-      ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: 0.12, loop: true  }],
+      ["idle",  { speed: 0.16, loop: true }], // 8 quadros, mesma cadência de respiro do elenco
+      ["walk",  { speed: locoSpeed(8, 1.5), loop: true }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
-      ["kick",  { speed: 0.15, loop: false, next: "idle" }],
+      ["kick",  { speed: 0.15, loop: false, next: "idle" }], // 7 quadros: roundhouse é mais longo que o soco
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
     ]),
 
     "capanga-rapido": enemyAnims("capanga-rapido", [
-      ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { file: "run", speed: 0.14, loop: true  }],
+      ["idle",  { speed: 0.16, loop: true }],
+      ["walk",  { file: "run", speed: locoSpeed(8, 3.0, RUN_CYCLE_PX), loop: true }],
+      // 3 quadros (lead-jab): ~17 ticks contra os 40 do capanga branco. O golpe
+      // rápido é a assinatura desse inimigo, então a cadência acompanha.
       ["punch", { speed: 0.18, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
     ]),
 
     "guarda-bastao": enemyAnims("guarda-bastao", [
       ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: 0.10, loop: true  }],
+      ["walk",  { speed: locoSpeed(6, 1.0), loop: true }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
     ]),
 
+    // ENEMY_STATS.speed é 0 para o atirador: ele fica parado e ataca à
+    // distância, então `walk` nunca toca. Fica no manifesto porque o carregador
+    // exige o arquivo, e a cadência aqui é indiferente.
     "atirador": enemyAnims("atirador", [
       ["idle",   { speed: 0.08, loop: true  }],
       ["walk",   { speed: 0.12, loop: true  }],
@@ -96,7 +126,7 @@ function buildEnemyManifest() {
 
     "ninja": enemyAnims("ninja", [
       ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: 0.14, loop: true  }],
+      ["walk",  { speed: locoSpeed(6, 2.0), loop: true }],
       ["punch", { speed: 0.18, loop: false, next: "idle" }],
       ["kick",  { speed: 0.18, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
@@ -104,7 +134,7 @@ function buildEnemyManifest() {
 
     "ninja-espada": enemyAnims("ninja-espada", [
       ["idle",   { speed: 0.08, loop: true  }],
-      ["walk",   { speed: 0.12, loop: true  }],
+      ["walk",   { speed: locoSpeed(6, 1.8), loop: true }],
       ["attack", { file: "slash", speed: 0.15, loop: false, next: "idle" }],
       ["kick",   { speed: 0.15, loop: false, next: "idle" }],
       ["hit",    { speed: 0.12, loop: false, next: "idle" }],
@@ -112,7 +142,7 @@ function buildEnemyManifest() {
 
     "samurai": enemyAnims("samurai", [
       ["idle",  { speed: 0.08, loop: true  }],
-      ["walk",  { speed: 0.10, loop: true  }],
+      ["walk",  { speed: locoSpeed(6, 1.0), loop: true }],
       ["punch", { speed: 0.15, loop: false, next: "idle" }],
       ["kick",  { speed: 0.15, loop: false, next: "idle" }],
       ["hit",   { speed: 0.12, loop: false, next: "idle" }],
@@ -120,14 +150,14 @@ function buildEnemyManifest() {
 
     "kunoichi": enemyAnims("kunoichi", [
       ["idle",   { speed: 0.08, loop: true  }],
-      ["walk",   { file: "run",         speed: 0.14, loop: true  }],
+      ["walk",   { file: "run",         speed: locoSpeed(8, 3.5, RUN_CYCLE_PX), loop: true }],
       ["attack", { file: "flying-kick", speed: 0.15, loop: false, next: "idle" }],
       ["hit",    { speed: 0.12, loop: false, next: "idle" }],
     ]),
 
     "lancador-bomba": enemyAnims("lancador-bomba", [
       ["idle",   { speed: 0.08, loop: true  }],
-      ["walk",   { speed: 0.10, loop: true  }],
+      ["walk",   { speed: locoSpeed(6, 1.0), loop: true }],
       ["attack", { file: "throw", speed: 0.12, loop: false, next: "idle" }],
       ["hit",    { speed: 0.12, loop: false, next: "idle" }],
     ]),
