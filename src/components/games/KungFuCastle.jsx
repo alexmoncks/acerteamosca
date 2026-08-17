@@ -115,11 +115,17 @@ const BOSS_STATS = {
   },
   "senhor-sombras": {
     hp: 30, damage: 14, speed: 2.5, score: 2000, frameSize: 68,
-    // Medida da arte entregue; a conversão chinesa deste chefe ainda não veio.
-    hitbox: { w: 23, h: 52, ox: 24, oy: 9 },
-    groundOffset: 7,
-    // Arte ainda da linhagem antiga, desenhada para oeste.
-    spriteFacing: -1,
+    // Medida da arte convertida: silhueta esguia de assassino, bem mais
+    // estreita e baixa que a do brutamontes.
+    hitbox: { w: 28, h: 38, ox: 16, oy: 30 },
+    groundOffset: 0,
+    // Regerado a partir da âncora chinesa: desenhado para LESTE.
+    spriteFacing: 1,
+    // Robe todo preto com detalhe roxo — luma 81 assado, contra 179 do
+    // jogador. BOSS_TINT o afundaria ainda mais no salão escuro, e um chefe
+    // que some no fundo não é atmosfera, é bug. Sem knock-back: a distância
+    // para o jogador já é enorme.
+    tint: 0xffffff,
     // Não tem "punch"/"attack": o moveset é de assassino. O golpe de sombra é
     // o ataque base e o combo entra na metade das vezes. `shuriken` existe na
     // folha mas fica de fora — não há sistema de projéteis, então ele animaria

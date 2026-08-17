@@ -215,8 +215,10 @@ const BOSS_MANIFEST = {
   ]),
 
   "senhor-sombras": bossAnims("senhor-sombras", 68, [
-    ["idle",          { speed: 0.08, loop: true }],
-    ["walk",          { speed: 0.14, loop: true }],
+    ["idle",          { speed: 0.16, loop: true }], // 8 quadros, como o resto do elenco
+    // Corrida de 8 quadros a BOSS_STATS.speed 2.5 — ele é o chefe rápido, e a
+    // cadência sai do mesmo cálculo de passada do elenco em vez de ser chutada.
+    ["walk",          { speed: locoSpeed(8, 2.5, RUN_CYCLE_PX), loop: true }],
     ["shadow-strike", { speed: 0.15, next: "idle" }],
     ["ninja-combo",   { speed: 0.18, next: "idle" }],
     ["shadow-sweep",  { speed: 0.14, next: "idle" }],
