@@ -88,6 +88,76 @@ export function enemyHitLands(enemy, player, combatRange) {
 export function staggerEnemy(enemy, stunTicks) {
   enemy.hitTimer = stunTicks;
   enemy.attackImpact = 0;
+  // Levar golpe cancela o poder em preparo, em qualquer ponto dele. É a punição
+  // por atravessar a distância que o chefe abriu — sem ela, recuar seria de
+  // graça e o jogador não teria motivo para perseguir.
+  enemy.powerState = null;
+}
+
+/** Os dois estados do poder. Fora deles, o chefe luta como qualquer inimigo. */
+export const POWER_STATES = { recuar: "recuar", carregar: "carregar" };
+
+/**
+ * Teto de tempo recuando, em ticks.
+ *
+ * Sem desistência, um jogador colado prende o chefe recuando até a parede e a
+ * luta trava — ele nunca chega à distância e nunca carrega. Passado o teto, ele
+ * carrega de onde estiver, o que também é a recompensa de quem persegue: o
+ * poder sai de perto, com menos espaço para o jogador.
+ */
+export const MAX_RECUO = 90;
+
+/**
+ * Um passo da máquina de poder de um chefe.
+ *
+ * A troca que este mecanismo compra: o chefe ganha um golpe que dói mais e
+ * alcança mais longe; o jogador ganha uma janela em que o chefe está longe,
+ * parado e vulnerável. Um sem o outro seria só dano extra sem resposta.
+ *
+ * Devolve o que o laço do jogo deve fazer neste tick — nunca mexe em sprite,
+ * animação ou posição, para poder ser testado sem navegador:
+ *   { acao: "nada" }                        segue a rotina normal
+ *   { acao: "recuar", direcao: 1 | -1 }     ande para longe do jogador
+ *   { acao: "carregar", anim }              comece a carga
+ *   { acao: "carregando" }                  fique parado
+ *   { acao: "golpe", anim, damage, range }  solte o poder
+ *
+ * @param {object} enemy   com powerState, powerTimer, powerCooldown
+ * @param {object} player
+ * @param {object} [power] BOSS_STATS.power; ausente = o chefe não tem poder
+ * @param {number} dt
+ */
+export function powerStep(enemy, player, power, dt) {
+  if (!power || !enemy.alive) return { acao: "nada" };
+
+  if (enemy.powerState === POWER_STATES.carregar) {
+    enemy.powerTimer -= dt;
+    if (enemy.powerTimer > 0) return { acao: "carregando" };
+    enemy.powerState = null;
+    enemy.powerCooldown = power.cooldown;
+    return { acao: "golpe", anim: power.strike, damage: power.damage, range: power.range };
+  }
+
+  if (enemy.powerState === POWER_STATES.recuar) {
+    enemy.powerTimer -= dt;
+    const longe = Math.abs(player.x - enemy.x) >= power.distance;
+    if (longe || enemy.powerTimer <= 0) {
+      enemy.powerState = POWER_STATES.carregar;
+      enemy.powerTimer = power.charge;
+      return { acao: "carregar", anim: power.windup };
+    }
+    return { acao: "recuar", direcao: player.x > enemy.x ? -1 : 1 };
+  }
+
+  if (enemy.powerCooldown > 0) {
+    enemy.powerCooldown -= dt;
+    return { acao: "nada" };
+  }
+  if (enemy.hitTimer > 0) return { acao: "nada" }; // atordoado não começa nada
+
+  enemy.powerState = POWER_STATES.recuar;
+  enemy.powerTimer = MAX_RECUO;
+  return { acao: "recuar", direcao: player.x > enemy.x ? -1 : 1 };
 }
 
 /**

@@ -13,6 +13,7 @@ import {
   staggerEnemy,
   tickAttackImpact,
   countWindingUp,
+  powerStep,
   MAX_ATTACKERS,
 } from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
@@ -104,6 +105,8 @@ const BOSS_STATS = {
     // perto demais de quem tem de ser a coisa mais clara da tela.
     tint: 0xcccccc,
     attackAnim: "punch",
+    // Ruge de peito aberto e desaba o pé no chão. 22 contra os 10 do soco.
+    power: { windup: "war-cry", strike: "stomp", charge: 45, cooldown: 420, distance: 90, range: 70, damage: 22 },
   },
   "guardiao-portao": {
     hp: 35, damage: 14, speed: 1.2, score: 1500, frameSize: 68,
@@ -116,6 +119,8 @@ const BOSS_STATS = {
     // The Guardião has no "punch"/"attack" anim — its telegraphed attack is
     // the horizontal sword swing (see the phase-2 design doc).
     attackAnim: "horizontal-swing",
+    // Chama com a mão e enterra o chuí: o tremor pega largo.
+    power: { windup: "taunt", strike: "earthquake", charge: 50, cooldown: 450, distance: 95, range: 80, damage: 26 },
   },
   "senhor-sombras": {
     hp: 30, damage: 14, speed: 2.5, score: 2000, frameSize: 68,
@@ -136,6 +141,9 @@ const BOSS_STATS = {
     // um arremesso que não sai do lugar.
     attackAnim: "shadow-strike",
     attackAnimAlt: "ninja-combo",
+    // Some na sombra e volta com o pé: carga curta, porque a assinatura dele
+    // é velocidade — mas o alcance do avanço é o maior do jogo.
+    power: { windup: "vanish", strike: "dash-kick", charge: 34, cooldown: 360, distance: 100, range: 90, damage: 24 },
   },
   "general-oni": {
     hp: 40, damage: 16, speed: 1.4, score: 2500, frameSize: 68,
@@ -147,6 +155,8 @@ const BOSS_STATS = {
     spriteFacing: 1,
     attackAnim: "dual-slash",
     attackAnimAlt: "thrust-lunge",
+    // Ruge atrás da máscara e desce a fúria com as duas lâminas.
+    power: { windup: "oni-roar", strike: "demon-fury", charge: 48, cooldown: 400, distance: 90, range: 75, damage: 28 },
   },
   "senhor-castelo": {
     // Chefe final: o único com moldura de 92px.
@@ -160,6 +170,9 @@ const BOSS_STATS = {
     // moveset base: um é projétil e o outro precisaria invocar inimigos.
     attackAnim: "sword-slash",
     attackAnimAlt: "steel-palm",
+    // Ergue a barreira de qi e solta a devastação. O poder mais caro de
+    // carregar e o que mais dói: é o último chefe.
+    power: { windup: "ki-barrier", strike: "devastation", charge: 60, cooldown: 480, distance: 105, range: 95, damage: 32 },
   },
 };
 
@@ -189,7 +202,20 @@ const PHASE_CONFIG = {
     killThreshold: 100,
   },
   5: {
-    enemies: ["samurai", "kunoichi", "ninja-espada"],
+    // A última fase é um apanhado: os três dela mais o inimigo mais forte de
+    // cada etapa anterior — maior dano, empate desfeito por vida. Fases 3 e 4
+    // já contribuem com ninja-espada e samurai, que a 5 tinha de nascença, de
+    // modo que o que entra de novo é o capanga cinza e o guarda de bastão.
+    //
+    // Vale saber: o capanga cinza bate 8 contra os 18 do general, então ele não
+    // aumenta a pressão média — dilui. O que ele aumenta é a VARIEDADE do que
+    // aparece, e o reencontro com o primeiro inimigo do jogo no último andar.
+    // tests/fase5.test.mjs recalcula essa lista a partir de ENEMY_STATS.
+    enemies: [
+      "samurai", "kunoichi", "ninja-espada",
+      "capanga-cinza",   // mais forte da fase 1
+      "guarda-bastao",   // mais forte da fase 2
+    ],
     boss: "senhor-castelo",
     killThreshold: 100,
   },
@@ -1208,8 +1234,38 @@ function update(game, keys, dt) {
       e.hp = regenHp(e.hp, e.maxHp, BOSS_REGEN_PCT_PER_SEC, dt);
     }
 
+    // Stats da entidade: inimigo comum ou chefe. `resolveAttackAnim` faz a
+    // mesma busca; aqui ela é necessária antes, porque o poder e a velocidade
+    // saem dela.
+    const stats = ENEMY_STATS[e.type] ?? BOSS_STATS[e.type];
+
+    // --- Poder do chefe: recuar, carregar, soltar ---
+    // Roda antes do movimento e do ataque porque manda nos dois: enquanto o
+    // poder está em curso o chefe não persegue nem soca, ele abre distância e
+    // fica parado carregando.
+    const passo = powerStep(e, player, stats?.power, dt);
+    if (passo.acao === "recuar") {
+      e.vx = passo.direcao * ((stats?.speed ?? 1.2) * dt);
+      e.x += e.vx;
+      eAnim.play("walk");
+    } else if (passo.acao === "carregar" || passo.acao === "golpe") {
+      e.vx = 0;
+      eAnim.forcePlay(passo.anim);
+      if (passo.acao === "golpe") {
+        // Passa pelo mesmo caminho do soco comum: wind-up derivado da própria
+        // animação e impacto reavaliado na hora. O que muda é o dano e o
+        // alcance, que vêm do poder.
+        e.attackImpact = windupTicks(eAnim.anims[passo.anim]);
+        e.attackDamage = passo.damage;
+        e.attackRange = passo.range;
+      }
+    } else if (passo.acao === "carregando") {
+      e.vx = 0;
+    }
+    const ocupado = passo.acao !== "nada";
+
     // --- Movement: stop at combat range, don't overlap ---
-    if (dist > COMBAT_RANGE && e.hitTimer <= 0) {
+    if (!ocupado && dist > COMBAT_RANGE && e.hitTimer <= 0) {
       // Chefe não está em ENEMY_STATS: lendo só de lá, todo chefe andava a 1.2
       // e BOSS_STATS.speed era enfeite. `??` em vez de `||` porque o atirador
       // declara speed 0, e `0 || 1.2` o punha a andar.
@@ -1227,7 +1283,7 @@ function update(game, keys, dt) {
     // whether it connects is re-read at the impact tick below, so the player
     // has a window to walk out, jump, flip, or hit first.
     const playerInReach = dist <= COMBAT_RANGE && player.grounded;
-    if (playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0
+    if (!ocupado && playerInReach && e.hitTimer <= 0 && (e.attackCooldown || 0) <= 0
         && atacando < MAX_ATTACKERS) {
       atacando++;
       e.attackCooldown = 50 + Math.random() * 30;
@@ -1243,11 +1299,13 @@ function update(game, keys, dt) {
       // atropelar.
       eAnim.forcePlay(attackAnim);
       e.attackImpact = windupTicks(eAnim.anims[attackAnim]);
+      e.attackDamage = e.damage;
+      e.attackRange = COMBAT_RANGE;
     }
 
     // --- The blow connects (or the player got out of it) ---
-    if (tickAttackImpact(e, player, COMBAT_RANGE, dt)) {
-      player.hp -= e.damage;
+    if (tickAttackImpact(e, player, e.attackRange ?? COMBAT_RANGE, dt)) {
+      player.hp -= e.attackDamage ?? e.damage;
       game.playerAnim.play("hit");
       spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
     }
@@ -1307,7 +1365,7 @@ function update(game, keys, dt) {
     }
 
     // --- Enemy animation state ---
-    if (e.alive && e.hitTimer <= 0) {
+    if (e.alive && e.hitTimer <= 0 && !ocupado) {
       if (Math.abs(e.vx) > 0.1) eAnim.play("walk");
       else if (dist > COMBAT_RANGE) eAnim.play("idle");
       // if in combat range, attack anim plays from above

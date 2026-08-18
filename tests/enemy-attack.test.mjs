@@ -208,7 +208,9 @@ check("the game clears the pending blow through staggerEnemy", () => {
 });
 
 check("the game resolves the impact through tickAttackImpact", () => {
-  assert.match(GAME, /if \(tickAttackImpact\(e, player, COMBAT_RANGE, dt\)\)/);
+  // O alcance vem do golpe agendado — o poder do chefe alcança bem mais longe
+  // que o soco comum — e cai no padrão quando não há nada declarado.
+  assert.match(GAME, /if \(tickAttackImpact\(e, player, e\.attackRange \?\? COMBAT_RANGE, dt\)\)/);
 });
 
 check("killing the enemy mid-wind-up cancels its blow", () => {
@@ -233,10 +235,12 @@ check("KungFuCastle no longer gates enemy damage on player.attacking", () => {
   // o gate voltou disfarçado de `&& !player.attacking` dentro da condição do
   // impacto — passou despercebido por dois commits. Agora a asserção é sobre a
   // vizinhança do dano, em qualquer forma.
-  const bloco = GAME.match(/player\.hp -= e\.damage[\s\S]{0,200}/);
-  assert.ok(bloco, "o bloco de dano do inimigo sumiu");
-  const antes = GAME.slice(Math.max(0, GAME.indexOf("player.hp -= e.damage") - 300),
-                           GAME.indexOf("player.hp -= e.damage"));
+  // O dano vem do golpe agendado (o poder do chefe bate mais que o soco) e cai
+  // no padrão do inimigo quando não há nada declarado.
+  const marca = "player.hp -= e.attackDamage ?? e.damage";
+  const i = GAME.indexOf(marca);
+  assert.ok(i > -1, "o bloco de dano do inimigo sumiu");
+  const antes = GAME.slice(Math.max(0, i - 300), i);
   assert.doesNotMatch(
     antes,
     /player\.attacking/,
