@@ -6,9 +6,13 @@
 // a lista exata de sprites que cada modelo manda desenhar, com posição, camada,
 // escala e alfa — reconstruída pelas mesmas regras que o jogo usa.
 //
-// O modelo antigo está congelado aqui embaixo, copiado do commit anterior à
-// migração. Ele existe só para esta comparação; quando ela já não tiver o que
-// provar, o arquivo inteiro sai.
+// OS DOIS LADOS SÃO CONGELADOS. O antigo vem do commit anterior à migração; o
+// novo, do commit que a fez (791a126). Comparar contra src/data/kungfu ao vivo
+// seria errado: aqueles arquivos existem para o editor gravar neles, e a
+// primeira edição de verdade quebraria um teste que não é sobre edição nenhuma
+// — é sobre uma conversão que aconteceu uma vez. Aconteceu aqui e fica provada
+// aqui; o que os arquivos vivos devem cumprir daqui para frente está em
+// scenery.test.mjs (forma, camadas, âncoras, assets existentes).
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { check, repoPath, loadModule } from "./helpers.mjs";
@@ -93,12 +97,11 @@ async function desenhaNovo(fase) {
 // ── comparação ─────────────────────────────────────────────────────────────
 
 const ANTIGO = JSON.parse(fs.readFileSync(repoPath("tests/fixtures/cenario-antes.json"), "utf8"));
+const NOVO = JSON.parse(fs.readFileSync(repoPath("tests/fixtures/cenario-depois.json"), "utf8"));
 
 const resultados = {};
 for (const n of Object.keys(ANTIGO)) {
-  const nova = hydrate(
-    JSON.parse(fs.readFileSync(repoPath(`src/data/kungfu/fase-${n}.json`), "utf8")),
-  );
+  const nova = hydrate(NOVO[n]);
   resultados[n] = {
     antigo: await desenhaAntigo(ANTIGO[n]),
     novo: await desenhaNovo(nova),
@@ -111,8 +114,9 @@ for (const n of Object.keys(ANTIGO)) {
   };
 }
 
-check("the frozen pre-migration snapshot covers every phase", () => {
+check("both frozen snapshots cover every phase", () => {
   assert.deepEqual(Object.keys(ANTIGO).sort(), ["1", "2", "3", "4", "5"]);
+  assert.deepEqual(Object.keys(NOVO).sort(), ["1", "2", "3", "4", "5"]);
 });
 
 for (const [n, r] of Object.entries(resultados)) {

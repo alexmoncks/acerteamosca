@@ -247,13 +247,14 @@ export default function KungFuFaseEditor({ phase, onBack }) {
     const r = ev.currentTarget.getBoundingClientRect();
     const sx = (ev.clientX - r.left) / ZOOM;
     const sy = (ev.clientY - r.top) / ZOOM;
-    const el = specRef.current.elements[d.i];
     // A âncora decide o que o y significa, então o arrasto vertical grava no
-    // campo certo sem o usuário precisar saber disso.
-    const dy = sy - d.sy;
+    // campo certo sem o usuário precisar saber disso. E o x de um elemento que
+    // repete é o INÍCIO da série: arrastar desliza a fileira inteira, que é o
+    // que se vê acontecer e o que permite intercalar duas faixas de fundo em
+    // vez de as duas começarem coladas em zero.
     patch(d.i, {
-      ...(el.repeat ? {} : { x: Math.round(d.x0 + (sx - d.sx)) }),
-      y: Math.round(d.y0 + dy),
+      x: Math.round(d.x0 + (sx - d.sx)),
+      y: Math.round(d.y0 + (sy - d.sy)),
     });
   };
 
@@ -414,15 +415,21 @@ export default function KungFuFaseEditor({ phase, onBack }) {
                     checked={!!el.repeat}
                     onChange={(e) =>
                       patch(sel, e.target.checked
-                        ? { repeat: { every: 300 }, x: 0 }
-                        : { repeat: undefined, x: Math.round(cameraX + CW / 2) })
+                        ? { repeat: { every: 300 }, x: el.x ?? Math.round(cameraX + CW / 2) }
+                        : { repeat: undefined, x: el.x ?? Math.round(cameraX + CW / 2) })
                     }
                   />{" "}
                   repete
                 </span>
               </label>
 
-              {el.repeat ? (
+              <label style={S.campo}>
+                {el.repeat ? "início (x)" : "posição (x)"}
+                <input type="number" value={el.x ?? 0}
+                  onChange={(e) => patch(sel, { x: Number(e.target.value) })} style={S.input} />
+              </label>
+
+              {el.repeat && (
                 <label style={S.campo}>
                   a cada
                   <span style={{ display: "flex", gap: 4 }}>
@@ -443,11 +450,6 @@ export default function KungFuFaseEditor({ phase, onBack }) {
                       {el.repeat.every === "auto" ? "auto ✓" : "auto"}
                     </button>
                   </span>
-                </label>
-              ) : (
-                <label style={S.campo}>
-                  posição (x)
-                  <input type="number" value={el.x ?? 0} onChange={(e) => patch(sel, { x: Number(e.target.value) })} style={S.input} />
                 </label>
               )}
 

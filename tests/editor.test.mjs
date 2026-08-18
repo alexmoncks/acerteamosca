@@ -82,10 +82,31 @@ check("repeat is a property of the element, with its own frequency", () => {
   assert.match(EDITOR, /repeat: undefined/, "desmarcar precisa remover a propriedade, não zerá-la");
 });
 
-check("dragging a repeating element does not write a meaningless x", () => {
-  // Um elemento que repete começa em x e se espalha pelo nível; arrastar na
-  // horizontal deslocaria a série inteira e confunde mais do que ajuda.
-  assert.match(EDITOR, /\.\.\.\(el\.repeat \? \{\} : \{ x: Math\.round/);
+check("a repeating element exposes where the series starts", () => {
+  // O x de quem repete é o INÍCIO da série. Escondê-lo travava toda faixa de
+  // fundo em zero, e duas faixas repetidas começavam coladas — impossível
+  // intercalar uma na outra.
+  assert.match(EDITOR, /el\.repeat \? "início \(x\)" : "posição \(x\)"/,
+    "o campo precisa dizer que é o início quando repete");
+  const painel = EDITOR.match(/\{el\.repeat && \([\s\S]*?\n              \)\}/);
+  assert.ok(painel, "o bloco de frequência não é mais condicional ao repeat");
+  assert.ok(!/posição \(x\)\n?\s*<input[\s\S]{0,200}\) : \(/.test(EDITOR),
+    "o campo de x não pode voltar a ser exclusivo de quem não repete");
+});
+
+check("checking repeat leaves the element where it is", () => {
+  // Jogar o elemento para x=0 ao marcar a caixa desfaz o posicionamento que
+  // acabou de ser feito, e some com ele da vista se a câmera não estiver no
+  // começo da fase.
+  assert.match(EDITOR, /repeat: \{ every: 300 \}, x: el\.x \?\?/);
+});
+
+check("dragging a repeating element slides the whole series", () => {
+  // Agora que o início é visível e editável, arrastar na horizontal é o gesto
+  // direto para ajustá-lo — e é o que se vê acontecer na tela.
+  const fn = EDITOR.match(/const onMouseMove = \(ev\) => \{[\s\S]*?\n  \};/)[0];
+  assert.match(fn, /x: Math\.round\(d\.x0 \+ \(sx - d\.sx\)\)/);
+  assert.ok(!/el\.repeat \? \{\}/.test(fn), "o x deixou de ser suprimido para quem repete");
 });
 
 check("the editor never mutates PHASE_SCENERY", () => {
