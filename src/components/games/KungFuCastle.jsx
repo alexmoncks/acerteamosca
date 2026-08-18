@@ -105,10 +105,12 @@ const BOSS_STATS = {
   },
   "guardiao-portao": {
     hp: 35, damage: 14, speed: 1.2, score: 1500, frameSize: 68,
-    hitbox: { w: 36, h: 52, ox: 17, oy: 7 },
-    groundOffset: 12,
-    // Como todos os chefes, a arte é desenhada virada para oeste.
-    spriteFacing: -1,
+    // Medida da arte convertida.
+    hitbox: { w: 33, h: 40, ox: 17, oy: 28 },
+    groundOffset: 0,
+    // Regerado a partir da âncora chinesa: desenhado para LESTE. Com este, os
+    // cinco chefes vêm da mesma linhagem e nenhum sobrou em -1.
+    spriteFacing: 1,
     // The Guardião has no "punch"/"attack" anim — its telegraphed attack is
     // the horizontal sword swing (see the phase-2 design doc).
     attackAnim: "horizontal-swing",

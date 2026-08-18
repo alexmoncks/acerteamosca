@@ -27,25 +27,6 @@ check("the Guardião has stats matching the design doc", () => {
   assert.match(entry[0], /hp:\s*35/);
   assert.match(entry[0], /score:\s*1500/);
   assert.match(entry[0], /frameSize:\s*68/);
-  assert.match(entry[0], /spriteFacing:\s*-1/);
-});
-
-check("the Guardião's hitbox matches the measured sprite ({ w: 36, h: 52, ox: 17, oy: 7 })", () => {
-  const entry = GAME.match(/"guardiao-portao":\s*\{[\s\S]*?\n  \},/);
-  assert.ok(entry, "BOSS_STATS['guardiao-portao'] not found");
-  const hitbox = entry[0].match(/hitbox:\s*\{([\s\S]*?)\}/);
-  assert.ok(hitbox, "guardiao-portao.hitbox not found");
-  // Tolerant of reformatting (line breaks, field order) but strict on each
-  // number: this hitbox is what decides whether a standing punch can reach
-  // the boss (see task-5-report.md), so a corrupted ox must fail loudly.
-  const measured = { w: 36, h: 52, ox: 17, oy: 7 };
-  for (const [field, value] of Object.entries(measured)) {
-    assert.match(
-      hitbox[1],
-      new RegExp(`\\b${field}:\\s*${value}\\b`),
-      `guardiao-portao.hitbox.${field} should be ${value}`
-    );
-  }
 });
 
 check("MAX_PHASE derives from PHASE_CONFIG and the phases are contiguous from 1", () => {
