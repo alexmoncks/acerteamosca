@@ -164,3 +164,33 @@ check("clicks are ignored until the scene is built", () => {
   assert.match(EDITOR, /montando a cena/, "o estado de carregamento precisa ser visível");
   assert.match(EDITOR, /data-pronto=/, "e observável de fora, para os drivers esperarem");
 });
+
+check("no text in the editor panel is smaller than 11px", () => {
+  // O editor herdou a tipografia do menu retrô: 8-10px em cinza apagado. No
+  // menu passa — cinco botões olhados por dois segundos. Aqui não: este painel
+  // é operado por minutos, com números a conferir e 49 nomes de asset a
+  // distinguir. É ferramenta, não vitrine.
+  const bloco = EDITOR.match(/const S = \{[\s\S]*?\n\};/);
+  assert.ok(bloco, "objeto de estilos não encontrado");
+  const tamanhos = [...bloco[0].matchAll(/fontSize:\s*(\d+)/g)].map((m) => Number(m[1]));
+  assert.ok(tamanhos.length >= 10, `só ${tamanhos.length} tamanhos lidos`);
+  const pequenos = tamanhos.filter((t) => t < 11);
+  assert.deepEqual(pequenos, [], `tamanhos abaixo de 11px: ${pequenos}`);
+});
+
+check("muted label text keeps enough contrast to read", () => {
+  // #8892b0 dava ~6:1 sobre o fundo; a 11px isso já é cansativo. #b8c4d0 dá ~9:1.
+  const bloco = EDITOR.match(/const S = \{[\s\S]*?\n\};/)[0];
+  assert.ok(!/#8892b0/.test(bloco), "o cinza apagado do menu não serve para um painel de trabalho");
+  const luma = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const fundo = luma("#0d1117");
+  for (const cor of [...bloco.matchAll(/color:\s*"(#[0-9a-f]{6})"/g)].map((m) => m[1])) {
+    if (cor === "#ffd700") continue; // o dourado é destaque, não texto corrido
+    const razao = (luma(cor) + 0.05) / (fundo + 0.05);
+    assert.ok(razao >= 4.5, `${cor} dá contraste ${razao.toFixed(1)}:1, abaixo de 4.5:1`);
+  }
+});

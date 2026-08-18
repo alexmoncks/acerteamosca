@@ -477,21 +477,29 @@ export default function KungFuFaseEditor({ phase, onBack }) {
   );
 }
 
+// Tipografia de painel de trabalho, não a do jogo.
+//
+// A primeira versão herdou os 8-10px e o cinza apagado do menu retrô do Kung Fu
+// Castle. No menu isso funciona: são cinco botões olhados por dois segundos.
+// Aqui não — este painel é lido e operado por minutos seguidos, com números que
+// precisam ser conferidos e nomes de asset que precisam ser distinguidos entre
+// 49 parecidos. Nada abaixo de 11px, e o cinza dos rótulos subiu de #8892b0
+// para #b8c4d0 (contraste ~9:1 sobre o fundo, contra ~6:1 antes).
 const S = {
-  wrap: { fontFamily: "'Fira Code', monospace", color: "#c9d1d9", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
-  topo: { display: "flex", gap: 10, alignItems: "center", width: CW * ZOOM, marginBottom: 6, flexWrap: "wrap" },
-  titulo: { fontSize: 11, letterSpacing: 2, color: "#ffd700" },
-  info: { fontSize: 9, color: "#8892b0", marginLeft: "auto" },
-  status: { fontSize: 9, color: "#8892b0", flexBasis: "100%" },
-  btn: { fontFamily: "inherit", fontSize: 9, color: "#8892b0", background: "transparent", border: "1px solid #333", borderRadius: 4, padding: "4px 10px", cursor: "pointer" },
-  colunas: { display: "flex", gap: 12, width: CW * ZOOM, marginTop: 8, alignItems: "flex-start" },
-  painel: { flex: 1, border: "1px solid #222", borderRadius: 6, padding: 8, minWidth: 0 },
-  rotulo: { fontSize: 9, letterSpacing: 2, color: "#8892b0", marginBottom: 6 },
-  paleta: { display: "flex", flexWrap: "wrap", gap: 4, maxHeight: 180, overflowY: "auto" },
-  chip: { fontFamily: "inherit", fontSize: 8, color: "#c9d1d9", background: "#161b22", border: "1px solid #30363d", borderRadius: 3, padding: "3px 5px", cursor: "pointer" },
-  campo: { display: "grid", gap: 2, fontSize: 9, color: "#8892b0" },
-  input: { fontFamily: "inherit", fontSize: 10, color: "#c9d1d9", background: "#0d1117", border: "1px solid #30363d", borderRadius: 3, padding: "3px 5px", width: "100%" },
-  asset: { fontSize: 11, color: "#ffd700" },
-  vazio: { fontSize: 9, color: "#4a5568" },
-  carregando: { fontSize: 10, color: "#ffd700", padding: "4px 0" },
+  wrap: { fontFamily: "'Fira Code', monospace", color: "#e6edf3", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
+  topo: { display: "flex", gap: 12, alignItems: "center", width: CW * ZOOM, marginBottom: 8, flexWrap: "wrap" },
+  titulo: { fontSize: 13, letterSpacing: 2, color: "#ffd700" },
+  info: { fontSize: 11, color: "#b8c4d0", marginLeft: "auto" },
+  status: { fontSize: 11, color: "#b8c4d0", flexBasis: "100%", minHeight: 15 },
+  btn: { fontFamily: "inherit", fontSize: 11, color: "#c9d1d9", background: "transparent", border: "1px solid #484f58", borderRadius: 4, padding: "5px 12px", cursor: "pointer" },
+  colunas: { display: "flex", gap: 14, width: CW * ZOOM, marginTop: 10, alignItems: "flex-start" },
+  painel: { flex: 1, border: "1px solid #30363d", borderRadius: 6, padding: 10, minWidth: 0 },
+  rotulo: { fontSize: 11, letterSpacing: 2, color: "#b8c4d0", marginBottom: 8 },
+  paleta: { display: "flex", flexWrap: "wrap", gap: 5, maxHeight: 220, overflowY: "auto" },
+  chip: { fontFamily: "inherit", fontSize: 11, color: "#dbe3ea", background: "#161b22", border: "1px solid #444c56", borderRadius: 4, padding: "4px 7px", cursor: "pointer" },
+  campo: { display: "grid", gap: 3, fontSize: 11, color: "#b8c4d0" },
+  input: { fontFamily: "inherit", fontSize: 13, color: "#f0f6fc", background: "#0d1117", border: "1px solid #444c56", borderRadius: 4, padding: "5px 7px", width: "100%" },
+  asset: { fontSize: 14, color: "#ffd700", marginBottom: 2 },
+  vazio: { fontSize: 11, color: "#8b949e" },
+  carregando: { fontSize: 12, color: "#ffd700", padding: "4px 0" },
 };
