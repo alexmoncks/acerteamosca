@@ -146,3 +146,20 @@ check("errors accumulate instead of stopping at the first", () => {
   f.elements[0].layer = "nenhuma";
   assert.ok(validatePhase(f, () => true).length >= 3);
 });
+
+check("the previous version is kept before overwriting", () => {
+  // Estes arquivos são compostos ao vivo e ficam horas sem commit. Perdi uma
+  // composição inteira da fase 5 com um `git checkout` apressado, e não havia
+  // de onde recuperar. A cópia é local, ignorada pelo git, e custa um write.
+  assert.match(ROTA, /copyFileSync\(arquivo, path\.join\(DIR_BACKUP/);
+  const i = ROTA.indexOf("copyFileSync");
+  const j = ROTA.indexOf("writeFileSync");
+  assert.ok(i > -1 && j > -1 && i < j, "a cópia precisa acontecer ANTES de gravar");
+});
+
+check("a failed backup does not block the save", () => {
+  // Rede de segurança não pode virar pré-requisito: disco cheio ou permissão
+  // negada não devem impedir alguém de salvar o que acabou de compor.
+  const bloco = ROTA.match(/try \{[\s\S]*?copyFileSync[\s\S]*?\} catch \{[\s\S]*?\}/);
+  assert.ok(bloco, "o backup precisa estar dentro de try/catch");
+});

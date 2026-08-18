@@ -19,6 +19,7 @@ import { validatePhase } from "@/components/games/kungfu-scenery-lib";
 const FASES = [1, 2, 3, 4, 5];
 const DIR_DADOS = path.join(process.cwd(), "src", "data", "kungfu");
 const DIR_PROPS = path.join(process.cwd(), "public", "images", "kungfucastle", "props");
+const DIR_BACKUP = path.join(process.cwd(), "src", "data", "kungfu", ".backup");
 
 const naoEncontrado = () => new NextResponse("Not Found", { status: 404 });
 
@@ -71,6 +72,24 @@ export async function POST(request) {
   if (erros.length) return NextResponse.json({ erros }, { status: 400 });
 
   const arquivo = path.join(DIR_DADOS, `fase-${fase}.json`);
+
+  // Guarda a versão anterior antes de sobrescrever.
+  //
+  // Estes arquivos são compostos ao vivo no editor e ficam horas sem commit. Um
+  // save errado, um driver de teste desgovernado ou um `git checkout` apressado
+  // apagam trabalho que não existe em lugar nenhum — aconteceu, e não havia de
+  // onde recuperar. A cópia é local e ignorada pelo git; custa um write e
+  // devolve o último estado bom.
+  try {
+    fs.mkdirSync(DIR_BACKUP, { recursive: true });
+    if (fs.existsSync(arquivo)) {
+      fs.copyFileSync(arquivo, path.join(DIR_BACKUP, `fase-${fase}.json`));
+    }
+  } catch {
+    // Backup é rede de segurança, não pré-requisito: se falhar, grava assim
+    // mesmo em vez de bloquear o trabalho.
+  }
+
   // Indentação de 2 e newline final: o diff no git precisa ficar legível, já
   // que este arquivo é editado tanto pelo editor quanto à mão.
   fs.writeFileSync(arquivo, JSON.stringify(corpo.scenery, null, 2) + "\n");

@@ -10,3 +10,4 @@ prisma/*.db-journal
 .DS_Store
 .superpowers/
 .claude/worktrees/
+src/data/kungfu/.backup/
