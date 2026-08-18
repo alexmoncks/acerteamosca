@@ -81,14 +81,20 @@ check("an element either repeats or declares where it sits", () => {
   }
 });
 
-check("phase 1 keeps its layout through the migration: 2400px, starfield, 18 elements", () => {
-  // 16 props + 2 faixas = 18 elementos. A contagem é o guarda-costas da
-  // migração: se ela perdesse ou duplicasse alguma coisa, apareceria aqui.
+check("phase 1 keeps the fields the editor cannot touch", () => {
+  // A contagem de elementos SAIU daqui. Ela era o guarda-costas da migração,
+  // mas migração é coisa de uma vez só e já está provada em
+  // scenery-migration.test.mjs contra dois retratos congelados. Contar
+  // elementos do arquivo vivo transforma cada composição no editor — que é
+  // para isso que o arquivo existe — em teste vermelho.
+  //
+  // Sobram os campos que o editor ainda não edita. No dia em que ele editar,
+  // estes saem também.
   const s = PHASE_SCENERY[1];
   assert.equal(s.levelWidth, 2400);
   assert.equal(s.sky.type, "starfield");
   assert.equal(s.tileset, "fase1-jardim");
-  assert.equal(s.elements.length, 18);
+  assert.ok(s.elements.length > 0, "a fase não pode ficar sem elemento nenhum");
 });
 
 check("phase 2 uses the castle-gate tileset and a gradient sky", () => {

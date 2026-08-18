@@ -19,7 +19,7 @@ import {
 import { PHASE_SCENERY } from "./kungfu-scenery";
 import {
   anchorPoint, resolveY, positionsFor, textureFor,
-  escadaDeSaida, linhaDeSubida,
+  escadaDeSaida, caminhoDeSubida, pontoNoCaminho,
 } from "./kungfu-scenery-lib";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
@@ -702,6 +702,17 @@ function loadPhase(game, n) {
   game.player.running = false;
   game.player.crouching = false;
   game.cameraX = 0;
+
+  // O sprite e a animação também. `update()` os reposiciona a cada quadro, mas
+  // fica DESLIGADO enquanto há transição — então, sem isto, a fase nova abria
+  // com o herói ainda na altura do último degrau, encolhido e em `climb`,
+  // durante o segundo inteiro do fade de entrada.
+  game.player.facing = 1;
+  game.playerSprite.scale.set(1);
+  game.playerAnim.setFacing(1);
+  game.playerAnim.forcePlay("idle");
+  game.playerSprite.x = game.player.x + FRAME_SIZE / 2;
+  game.playerSprite.y = game.player.y + PLAYER_H;
 }
 
 /**
@@ -728,10 +739,10 @@ function updateTransition(game, keys, dt) {
 
   if (t.state === "fadeOut") {
     game.fadeOverlay.alpha = Math.min(1, 1 - t.timer / TRANSITION_FADE_FRAMES);
-    if (t.timer <= 0 && t.linha && !t.subiu) {
+    if (t.timer <= 0 && t.caminho && !t.subiu) {
       // Tela preta: é aqui que o herói é levado para o pé da escada. Fazer isso
       // à vista seria um teleporte, que lê como defeito.
-      player.x = t.linha.x0 - FRAME_SIZE / 2 - EXIT_APPROACH;
+      player.x = t.caminho[0].x - FRAME_SIZE / 2 - EXIT_APPROACH;
       player.y = GROUND_Y - PLAYER_H;
       player.facing = 1;
       game.playerAnim.setFacing(1);
@@ -759,7 +770,7 @@ function updateTransition(game, keys, dt) {
   if (t.state === "andar") {
     const k = Math.min(1, 1 - t.timer / EXIT_WALK_FRAMES);
     game.fadeOverlay.alpha = 1 - k;
-    player.x = t.linha.x0 - FRAME_SIZE / 2 - EXIT_APPROACH * (1 - k);
+    player.x = t.caminho[0].x - FRAME_SIZE / 2 - EXIT_APPROACH * (1 - k);
     game.playerAnim.play("walk");
     game.playerAnim.update(dt);
     game.playerSprite.x = player.x + FRAME_SIZE / 2;
@@ -769,19 +780,25 @@ function updateTransition(game, keys, dt) {
       game.fadeOverlay.alpha = 0;
       t.state = "subir";
       t.timer = EXIT_CLIMB_FRAMES;
-      t.origem = { x: player.x, y: player.y };
       game.playerAnim.forcePlay("climb");
     }
     return;
   }
 
-  // Sobe a diagonal medida na própria arte da escada.
+  // Sobe o caminho medido na própria arte da escada. Não é uma reta: a de
+  // tapete recua e dobra à esquerda no segundo lance, a espiral zigue-zagueia.
   if (t.state === "subir") {
     const k = Math.min(1, 1 - t.timer / EXIT_CLIMB_FRAMES);
-    player.x = t.origem.x + (t.linha.x1 - FRAME_SIZE / 2 - t.origem.x) * k;
-    player.y = t.origem.y - (t.linha.y0 - t.linha.y1) * k;
+    const p = pontoNoCaminho(t.caminho, k);
+    player.x = p.x - FRAME_SIZE / 2;
+    player.y = p.y - PLAYER_H;
     game.playerAnim.play("climb");
     game.playerAnim.update(dt);
+    // Virar e encolher são o que vendem o afastamento: sem eles o herói sobe
+    // do mesmo tamanho e segue reto onde a escada dobra.
+    game.playerAnim.setFacing(p.facing);
+    game.playerSprite.scale.y = p.escala;
+    game.playerSprite.scale.x = Math.sign(game.playerSprite.scale.x) * p.escala;
     game.playerSprite.x = player.x + FRAME_SIZE / 2;
     game.playerSprite.y = player.y + PLAYER_H;
     updateCamera(game);
@@ -971,8 +988,8 @@ function update(game, keys, dt) {
     // que é o comportamento de sempre.
     const escada = escadaDeSaida(PHASE_SCENERY[game.phase]);
     const tex = escada && game.textures.scenery.props[escada.asset];
-    const linha = tex ? linhaDeSubida(escada, tex, GROUND_Y) : null;
-    game.transition = { state: "fadeOut", timer: TRANSITION_FADE_FRAMES, linha };
+    const caminho = tex ? caminhoDeSubida(escada, tex, GROUND_Y) : null;
+    game.transition = { state: "fadeOut", timer: TRANSITION_FADE_FRAMES, caminho };
     return;
   }
 

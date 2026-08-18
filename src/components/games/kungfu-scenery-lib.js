@@ -182,23 +182,49 @@ export function validatePhase(fase, assetExists = () => true) {
 }
 
 /**
- * A linha de degraus de cada escada, em frações da caixa do sprite.
+ * O caminho que o herói percorre em cada escada, como uma sequência de pontos.
  *
- * Medida OLHANDO a arte, não extraída: o primeiro pixel opaco de cada coluna
- * pega corrimão, tocha e ornamento, não o degrau — na escada de tapete o
- * corrimão dá y=3 em metade das colunas enquanto o degrau está em y=40. Duas
- * escadas, duas linhas; ajustar é trocar quatro números.
+ * Não é uma reta porque as escadas não são retas. A de tapete é vista de FRENTE,
+ * recuando: o tapete sobe afastando-se da câmera e, no alto, um segundo lance
+ * dobra para a esquerda. A espiral sobe quase parada em x. Uma linha só, com
+ * escala fixa, punha o herói do mesmo tamanho no primeiro e no último degrau, e
+ * seguindo em frente onde a escada dobra.
  *
- * `base` é onde o pé encosta no primeiro degrau; `topo`, onde ele sai do último.
- * Ambas as escadas em uso sobem da esquerda para a direita, na mesma direção em
- * que o herói caminha.
+ * Cada ponto traz:
+ *   p       posição em frações da caixa do sprite da escada
+ *   facing  para onde o herói olha ao chegar ali (1 leste, -1 oeste)
+ *   escala  tamanho do sprite ali — encolher é o que vende o afastamento
+ *
+ * Medido olhando a arte, não extraído: o primeiro pixel opaco de cada coluna
+ * pega corrimão, tocha e ornamento, não degrau — na escada de tapete o corrimão
+ * dá y=3 em metade das colunas enquanto o degrau está em y=40.
  */
-export const LINHAS_DE_ESCADA = {
-  "escada-pedra-externa":  { base: [0.10, 0.89], topo: [0.81, 0.24] },
-  "escada-ornada-tapete":  { base: [0.20, 0.92], topo: [0.76, 0.22] },
-  "escada-espiral-tochas": { base: [0.30, 0.94], topo: [0.55, 0.16] },
-  "escada-madeira":        { base: [0.15, 0.90], topo: [0.80, 0.25] },
-  "escada-madeira-portal": { base: [0.18, 0.90], topo: [0.75, 0.25] },
+export const CAMINHOS_DE_ESCADA = {
+  // Pedra, três quartos, um lance só subindo para a direita e afastando pouco.
+  "escada-pedra-externa": [
+    { p: [0.10, 0.89], facing: 1, escala: 1 },
+    { p: [0.81, 0.24], facing: 1, escala: 0.82 },
+  ],
+  // Tapete: frontal. Sobe recuando e DOBRA para a esquerda no segundo lance.
+  "escada-ornada-tapete": [
+    { p: [0.22, 0.92], facing: 1, escala: 1 },
+    { p: [0.70, 0.32], facing: 1, escala: 0.68 },
+    { p: [0.34, 0.08], facing: -1, escala: 0.48 },
+  ],
+  // Espiral: sobe quase parada em x, e é a que mais encolhe — é uma torre.
+  "escada-espiral-tochas": [
+    { p: [0.45, 0.92], facing: 1, escala: 1 },
+    { p: [0.60, 0.50], facing: -1, escala: 0.66 },
+    { p: [0.45, 0.14], facing: 1, escala: 0.42 },
+  ],
+  "escada-madeira": [
+    { p: [0.15, 0.90], facing: 1, escala: 1 },
+    { p: [0.80, 0.25], facing: 1, escala: 0.80 },
+  ],
+  "escada-madeira-portal": [
+    { p: [0.18, 0.90], facing: 1, escala: 1 },
+    { p: [0.75, 0.25], facing: 1, escala: 0.78 },
+  ],
 };
 
 /**
@@ -209,7 +235,7 @@ export const LINHAS_DE_ESCADA = {
 export function escadaDeSaida(fase) {
   let melhor = null;
   for (const el of fase.elements) {
-    if (!(el.asset in LINHAS_DE_ESCADA)) continue;
+    if (!(el.asset in CAMINHOS_DE_ESCADA)) continue;
     if (el.repeat) continue; // uma escada repetida não é uma saída
     if (!melhor || (el.x ?? 0) > (melhor.x ?? 0)) melhor = el;
   }
@@ -217,23 +243,64 @@ export function escadaDeSaida(fase) {
 }
 
 /**
- * A linha que o herói percorre subindo, em coordenadas de mundo.
+ * O caminho da escada em coordenadas de mundo.
  *
  * @param {object} el       o elemento da escada
  * @param {{width:number,height:number}} tex
  * @param {number} groundY
  */
-export function linhaDeSubida(el, tex, groundY) {
-  const linha = LINHAS_DE_ESCADA[el.asset];
-  if (!linha) return null;
+export function caminhoDeSubida(el, tex, groundY) {
+  const pontos = CAMINHOS_DE_ESCADA[el.asset];
+  if (!pontos) return null;
   const escala = el.scale || 1;
   const w = tex.width * escala;
   const h = tex.height * escala;
   const ponto = anchorPoint(el.anchor);
   const esq = (el.x ?? 0) - ponto.x * w;
-  const topoDaCaixa = resolveY(el.anchor, el.y, h, groundY) - ponto.y * h;
-  return {
-    x0: esq + linha.base[0] * w, y0: topoDaCaixa + linha.base[1] * h,
-    x1: esq + linha.topo[0] * w, y1: topoDaCaixa + linha.topo[1] * h,
-  };
+  const topo = resolveY(el.anchor, el.y, h, groundY) - ponto.y * h;
+  return pontos.map((q) => ({
+    x: esq + q.p[0] * w,
+    y: topo + q.p[1] * h,
+    facing: q.facing,
+    escala: q.escala,
+  }));
+}
+
+/**
+ * Onde o herói está com `k` do caminho percorrido (0 a 1).
+ *
+ * Interpola por COMPRIMENTO, não por índice: senão um lance curto e um longo
+ * levariam o mesmo tempo, e a subida aceleraria e frearia sozinha na dobra.
+ *
+ * O facing NÃO é interpolado — ele troca ao entrar no trecho, porque virar é
+ * instantâneo (o sprite espelha) e meio virado não existe.
+ */
+export function pontoNoCaminho(caminho, k) {
+  if (!caminho || caminho.length === 0) return null;
+  if (caminho.length === 1) return { ...caminho[0] };
+
+  const trechos = [];
+  let total = 0;
+  for (let i = 1; i < caminho.length; i++) {
+    const a = caminho[i - 1], b = caminho[i];
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    trechos.push({ a, b, d });
+    total += d;
+  }
+  if (total === 0) return { ...caminho[0] };
+
+  let restante = Math.max(0, Math.min(1, k)) * total;
+  for (const t of trechos) {
+    if (restante <= t.d || t === trechos[trechos.length - 1]) {
+      const f = t.d === 0 ? 1 : Math.min(1, restante / t.d);
+      return {
+        x: t.a.x + (t.b.x - t.a.x) * f,
+        y: t.a.y + (t.b.y - t.a.y) * f,
+        escala: t.a.escala + (t.b.escala - t.a.escala) * f,
+        facing: t.b.facing,
+      };
+    }
+    restante -= t.d;
+  }
+  return { ...caminho[caminho.length - 1] };
 }
