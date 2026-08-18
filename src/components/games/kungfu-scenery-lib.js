@@ -180,3 +180,60 @@ export function validatePhase(fase, assetExists = () => true) {
 
   return erros;
 }
+
+/**
+ * A linha de degraus de cada escada, em frações da caixa do sprite.
+ *
+ * Medida OLHANDO a arte, não extraída: o primeiro pixel opaco de cada coluna
+ * pega corrimão, tocha e ornamento, não o degrau — na escada de tapete o
+ * corrimão dá y=3 em metade das colunas enquanto o degrau está em y=40. Duas
+ * escadas, duas linhas; ajustar é trocar quatro números.
+ *
+ * `base` é onde o pé encosta no primeiro degrau; `topo`, onde ele sai do último.
+ * Ambas as escadas em uso sobem da esquerda para a direita, na mesma direção em
+ * que o herói caminha.
+ */
+export const LINHAS_DE_ESCADA = {
+  "escada-pedra-externa":  { base: [0.10, 0.89], topo: [0.81, 0.24] },
+  "escada-ornada-tapete":  { base: [0.20, 0.92], topo: [0.76, 0.22] },
+  "escada-espiral-tochas": { base: [0.30, 0.94], topo: [0.55, 0.16] },
+  "escada-madeira":        { base: [0.15, 0.90], topo: [0.80, 0.25] },
+  "escada-madeira-portal": { base: [0.18, 0.90], topo: [0.75, 0.25] },
+};
+
+/**
+ * A escada por onde o herói sai da fase: a mais à direita, porque é para lá que
+ * ele caminha. Devolve null quando a fase não tem escada — a 2 sai por um
+ * portão e a 5 não sai, termina.
+ */
+export function escadaDeSaida(fase) {
+  let melhor = null;
+  for (const el of fase.elements) {
+    if (!(el.asset in LINHAS_DE_ESCADA)) continue;
+    if (el.repeat) continue; // uma escada repetida não é uma saída
+    if (!melhor || (el.x ?? 0) > (melhor.x ?? 0)) melhor = el;
+  }
+  return melhor;
+}
+
+/**
+ * A linha que o herói percorre subindo, em coordenadas de mundo.
+ *
+ * @param {object} el       o elemento da escada
+ * @param {{width:number,height:number}} tex
+ * @param {number} groundY
+ */
+export function linhaDeSubida(el, tex, groundY) {
+  const linha = LINHAS_DE_ESCADA[el.asset];
+  if (!linha) return null;
+  const escala = el.scale || 1;
+  const w = tex.width * escala;
+  const h = tex.height * escala;
+  const ponto = anchorPoint(el.anchor);
+  const esq = (el.x ?? 0) - ponto.x * w;
+  const topoDaCaixa = resolveY(el.anchor, el.y, h, groundY) - ponto.y * h;
+  return {
+    x0: esq + linha.base[0] * w, y0: topoDaCaixa + linha.base[1] * h,
+    x1: esq + linha.topo[0] * w, y1: topoDaCaixa + linha.topo[1] * h,
+  };
+}

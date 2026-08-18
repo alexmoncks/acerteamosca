@@ -17,7 +17,10 @@ import {
   MAX_ATTACKERS,
 } from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
-import { anchorPoint, resolveY, positionsFor, textureFor } from "./kungfu-scenery-lib";
+import {
+  anchorPoint, resolveY, positionsFor, textureFor,
+  escadaDeSaida, linhaDeSubida,
+} from "./kungfu-scenery-lib";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 const KungFuFaseEditor = dynamic(() => import("./KungFuFaseEditor"), { ssr: false });
@@ -240,6 +243,17 @@ const S_TEST_BTN = {
 const TRANSITION_FADE_FRAMES = 60;
 const TRANSITION_CLEAR_FRAMES = 240;
 const TRANSITION_INPUT_DELAY = 20;
+// A saída da fase.
+//
+// O reposicionamento acontece com a TELA PRETA, e é o que torna a sequência
+// possível: o chefe morre onde a luta calhou de acontecer, e a escada pode
+// estar a 2250px dali — andar essa distância levaria 23 segundos, contra os 8
+// que a spec de cutscenes fixou como teto para qualquer sequência sem
+// controle. Então o fade que já existia leva o herói até o pé da escada, e o
+// que se vê é só o fim do trajeto: alguns passos e a subida.
+const EXIT_APPROACH = 44;      // px a pé antes do primeiro degrau
+const EXIT_WALK_FRAMES = 40;   // ~0,7s andando, com a tela clareando junto
+const EXIT_CLIMB_FRAMES = 100; // ~1,7s subindo a diagonal
 const POST_BOSS_DELAY = 90;
 
 // ── Translation ref (accessible from non-React functions) ──────────────
@@ -690,15 +704,42 @@ function loadPhase(game, n) {
   game.cameraX = 0;
 }
 
+/**
+ * Câmera e parallax. Vive fora do update() porque a saída da fase também
+ * precisa dela — sem isso o herói andava para fora da tela na sequência final.
+ */
+function updateCamera(game) {
+  const targetX = game.player.x - CW * 0.35;
+  game.cameraX += (targetX - game.cameraX) * 0.08;
+  game.cameraX = Math.max(0, Math.min(game.cameraX, game.levelWidth - CW));
+  game.bgLayer.x = -game.cameraX * 0.15;
+  game.midLayer.x = -game.cameraX * 0.5;
+  game.gameLayer.x = -game.cameraX;
+  game.fgLayer.x = -game.cameraX;
+}
+
 // ============================================================
-// TRANSITION — phase end fade-out → clear screen → fade-in
+// TRANSITION — walk to the stairs, climb, fade, phase card
 // ============================================================
 function updateTransition(game, keys, dt) {
   const t = game.transition;
   t.timer -= dt;
+  const { player } = game;
 
   if (t.state === "fadeOut") {
     game.fadeOverlay.alpha = Math.min(1, 1 - t.timer / TRANSITION_FADE_FRAMES);
+    if (t.timer <= 0 && t.linha && !t.subiu) {
+      // Tela preta: é aqui que o herói é levado para o pé da escada. Fazer isso
+      // à vista seria um teleporte, que lê como defeito.
+      player.x = t.linha.x0 - FRAME_SIZE / 2 - EXIT_APPROACH;
+      player.y = GROUND_Y - PLAYER_H;
+      player.facing = 1;
+      game.playerAnim.setFacing(1);
+      game.cameraX = Math.max(0, Math.min(player.x - CW * 0.35, game.levelWidth - CW));
+      t.state = "andar";
+      t.timer = EXIT_WALK_FRAMES;
+      return;
+    }
     if (t.timer <= 0) {
       t.state = "phaseClear";
       t.timer = TRANSITION_CLEAR_FRAMES;
@@ -710,6 +751,44 @@ function updateTransition(game, keys, dt) {
       game.phaseSub.text = _t("phaseClear.continue");
       game.phaseTitle.alpha = 1;
       game.phaseSub.alpha = 1;
+    }
+    return;
+  }
+
+  // Últimos passos até o degrau, com a tela clareando junto.
+  if (t.state === "andar") {
+    const k = Math.min(1, 1 - t.timer / EXIT_WALK_FRAMES);
+    game.fadeOverlay.alpha = 1 - k;
+    player.x = t.linha.x0 - FRAME_SIZE / 2 - EXIT_APPROACH * (1 - k);
+    game.playerAnim.play("walk");
+    game.playerAnim.update(dt);
+    game.playerSprite.x = player.x + FRAME_SIZE / 2;
+    game.playerSprite.y = player.y + PLAYER_H;
+    updateCamera(game);
+    if (t.timer <= 0) {
+      game.fadeOverlay.alpha = 0;
+      t.state = "subir";
+      t.timer = EXIT_CLIMB_FRAMES;
+      t.origem = { x: player.x, y: player.y };
+      game.playerAnim.forcePlay("climb");
+    }
+    return;
+  }
+
+  // Sobe a diagonal medida na própria arte da escada.
+  if (t.state === "subir") {
+    const k = Math.min(1, 1 - t.timer / EXIT_CLIMB_FRAMES);
+    player.x = t.origem.x + (t.linha.x1 - FRAME_SIZE / 2 - t.origem.x) * k;
+    player.y = t.origem.y - (t.linha.y0 - t.linha.y1) * k;
+    game.playerAnim.play("climb");
+    game.playerAnim.update(dt);
+    game.playerSprite.x = player.x + FRAME_SIZE / 2;
+    game.playerSprite.y = player.y + PLAYER_H;
+    updateCamera(game);
+    if (t.timer <= 0) {
+      t.subiu = true; // o segundo fadeOut vai direto ao cartão
+      t.state = "fadeOut";
+      t.timer = TRANSITION_FADE_FRAMES;
     }
     return;
   }
@@ -887,7 +966,13 @@ function update(game, keys, dt) {
 
   // ---- Trigger phase-end transition once boss has been defeated ----
   if (game.bossDefeated && !game.transition && game.frame - game.bossDefeatedFrame > POST_BOSS_DELAY) {
-    game.transition = { state: "fadeOut", timer: TRANSITION_FADE_FRAMES };
+    // Se a fase tem escada, o herói sai por ela: caminha até a base e sobe.
+    // Sem escada — a 2 sai por um portão, a 5 termina — vai direto ao fade,
+    // que é o comportamento de sempre.
+    const escada = escadaDeSaida(PHASE_SCENERY[game.phase]);
+    const tex = escada && game.textures.scenery.props[escada.asset];
+    const linha = tex ? linhaDeSubida(escada, tex, GROUND_Y) : null;
+    game.transition = { state: "fadeOut", timer: TRANSITION_FADE_FRAMES, linha };
     return;
   }
 
@@ -1391,15 +1476,7 @@ function update(game, keys, dt) {
     }
   }
 
-  // ---- Camera ----
-  const targetX = player.x - CW * 0.35;
-  game.cameraX += (targetX - game.cameraX) * 0.08;
-  game.cameraX = Math.max(0, Math.min(game.cameraX, game.levelWidth - CW));
-
-  game.bgLayer.x = -game.cameraX * 0.15;
-  game.midLayer.x = -game.cameraX * 0.5;
-  game.gameLayer.x = -game.cameraX;
-  game.fgLayer.x = -game.cameraX;
+  updateCamera(game);
   // hudLayer stays at 0
 
   // ---- HUD ----

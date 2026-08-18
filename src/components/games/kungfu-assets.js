@@ -53,6 +53,8 @@ const ASSET_MANIFEST = {
       jump:    { src: "/images/kungfucastle/player/jump.png",        speed: 0.21, loop: false },
       crouch:  { src: "/images/kungfucastle/player/crouch.png",      speed: 0.35, loop: false },
       hit:     { src: "/images/kungfucastle/player/hit.png",         speed: 0.12, loop: false, next: "idle" },
+      // 9 quadros, gerados em v3: usada só na saída da fase, subindo a escada.
+      climb:   { src: "/images/kungfucastle/player/climb.png",       speed: 0.18, loop: true },
       // 10 frames spread over DODGE_DURATION (28) → 10 / 28 ≈ 0.36
       backflip:{ src: "/images/kungfucastle/player/backflip.png",    speed: 0.36, loop: false, next: "idle" },
       special: { src: "/images/kungfucastle/player/special.png",     speed: 0.14, loop: false, next: "idle" },
