@@ -9,7 +9,7 @@ import { check, source, loadModule } from "./helpers.mjs";
 
 const EDITOR = source("src/components/games/KungFuFaseEditor.jsx");
 const GAME = source("src/components/games/KungFuCastle.jsx");
-const { LAYERS, ANCHORS } = await loadModule("src/components/games/kungfu-scenery-lib.js");
+const { LAYERS, ANCHORS, textureFor } = await loadModule("src/components/games/kungfu-scenery-lib.js");
 
 check("test mode opens on the phase selector, not the sprite test", () => {
   assert.match(GAME, /const \[screen, setScreen\] = useState\("menu"\)/);
@@ -28,7 +28,7 @@ check("the editor renders through the game's own buildScenery", () => {
   // A regra que define este editor. Se ele desenhar por conta própria, mente —
   // e um editor que mente sobre a posição é pior que nenhum.
   assert.match(EDITOR, /import \{[\s\S]*?buildScenery[\s\S]*?\} from "\.\/KungFuCastle"/);
-  assert.match(EDITOR, /buildScenery\(game, phase, specRef\.current\)/);
+  assert.match(EDITOR, /buildScenery\(game, phase, hydrate\(specRef\.current\)\)/);
   assert.match(EDITOR, /clearScenery\(game\)/);
 });
 
@@ -91,6 +91,76 @@ check("dragging a repeating element does not write a meaningless x", () => {
 check("the editor never mutates PHASE_SCENERY", () => {
   // Ele parte de uma cópia. Sem isso, editar e voltar sem salvar deixaria o
   // jogo rodando com o cenário alterado em memória.
-  assert.match(EDITOR, /useState\(\(\) => clone\(PHASE_SCENERY\[phase\]\)\)/);
+  assert.match(EDITOR, /useState\(\(\) => dehydrate\(clone\(PHASE_SCENERY\[phase\]\)\)\)/);
   assert.match(EDITOR, /const clone = \(o\) => JSON\.parse\(JSON\.stringify\(o\)\)/);
+});
+
+check("the editor edits the on-disk shape and hydrates only to draw", () => {
+  // PHASE_SCENERY já vem hidratado (cores em número). Guardando isso, o editor
+  // gravava "color": 394778 no lugar de "#06061a" e o arquivo deixava de ser o
+  // que a migração escreveu — o round-trip não fechava.
+  assert.match(EDITOR, /dehydrate\(clone\(PHASE_SCENERY/, "o estado editado é o formato do disco");
+  assert.match(EDITOR, /buildScenery\(game, phase, hydrate\(/, "hidrata só na hora de desenhar");
+  const salvar = EDITOR.match(/const salvar = async[\s\S]*?\n  \};/)[0];
+  assert.ok(!/hydrate\(/.test(salvar), "nada de hidratado pode ir para o disco");
+});
+
+check("clicking the palette with something selected swaps it instead of adding", () => {
+  const fn = EDITOR.match(/const daPaleta = \(asset\) => \{[\s\S]*?\n  \};/);
+  assert.ok(fn, "daPaleta não encontrada");
+  assert.match(fn[0], /if \(i >= 0\) \{\s*\n\s*patch\(i, \{ asset \}\);/,
+    "com seleção, troca só o asset — posição, camada, âncora e repetição ficam");
+  assert.match(fn[0], /elements: \[/, "sem seleção, insere um novo");
+  assert.match(EDITOR, /sel >= 0 \? "troca o selecionado" : "insere no centro da vista"/,
+    "a paleta precisa dizer o que vai fazer");
+});
+
+// ── a textura que o editor mede tem de ser a que o jogo desenha ────────────
+//
+// Props com animação (tocha, braseiro, lanternas) são gravados como uma TIRA
+// horizontal: scenery.props["tocha-fogo"] tem os 9 quadros lado a lado, e o
+// renderizador desenha scenery.propAnims["tocha-fogo"].frames[0]. O editor
+// media a tira inteira, então a alça de seleção saía 9 vezes mais larga que a
+// tocha — cobrindo meia fase.
+
+check("textureFor picks the frame the renderer draws, not the whole strip", () => {
+  const tira = { width: 288, height: 48, __tira: true };
+  const quadro = { width: 32, height: 48, __quadro: true };
+  const scenery = {
+    props: { "tocha-fogo": tira, paifang: quadro },
+    propAnims: { "tocha-fogo": { frames: [quadro], speed: 0.2, loop: true } },
+  };
+  assert.equal(textureFor(scenery, "tocha-fogo"), quadro, "animado deve dar o quadro");
+  assert.equal(textureFor(scenery, "paifang"), quadro, "estático deve dar a própria textura");
+  assert.equal(textureFor({ props: {} }, "inexistente"), undefined);
+});
+
+check("both the renderer and the editor resolve textures through textureFor", () => {
+  // Se cada um resolvesse por conta própria, voltariam a divergir — foi
+  // exatamente assim que a alça passou a cobrir a tira inteira.
+  assert.match(GAME, /textureFor\(scenery, el\.asset\)/,
+    "buildScenery deve usar textureFor");
+  assert.match(EDITOR, /textureFor\(/, "o editor deve usar textureFor");
+  assert.ok(!/scenery\.props\[el\.asset\]/.test(EDITOR),
+    "o editor não pode ler scenery.props direto: para prop animado isso é a tira");
+  assert.ok(!/textures\.scenery\.props\[/.test(EDITOR),
+    "nenhum acesso direto ao mapa de props no editor");
+});
+
+check("the canvas is display:block so clicks map 1:1 to the scene", () => {
+  // Canvas é inline por padrão: senta numa linha de texto, e o topo dele deixa
+  // de coincidir com o topo da div que ouve o mouse. O clique chegava ~14px
+  // abaixo do ponto real e a base dos objetos baixos ficava inselecionável.
+  assert.match(EDITOR, /canvas\.style\.display = "block"/);
+});
+
+check("clicks are ignored until the scene is built", () => {
+  // buildScene carrega o elenco inteiro antes de devolver o jogo. Até lá o
+  // hit-test não tem textura para medir e devolve "nada" — um clique que
+  // silenciosamente não faz nada, e o usuário achando que errou a mira.
+  const fn = EDITOR.match(/const onMouseDown = \(ev\) => \{[\s\S]*?\n  \};/);
+  assert.ok(fn, "onMouseDown não encontrada");
+  assert.match(fn[0], /if \(!pronto\) return;/);
+  assert.match(EDITOR, /montando a cena/, "o estado de carregamento precisa ser visível");
+  assert.match(EDITOR, /data-pronto=/, "e observável de fora, para os drivers esperarem");
 });

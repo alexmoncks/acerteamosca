@@ -16,7 +16,7 @@ import {
   MAX_ATTACKERS,
 } from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
-import { anchorPoint, resolveY, positionsFor } from "./kungfu-scenery-lib";
+import { anchorPoint, resolveY, positionsFor, textureFor } from "./kungfu-scenery-lib";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 const KungFuFaseEditor = dynamic(() => import("./KungFuFaseEditor"), { ssr: false });
@@ -573,7 +573,7 @@ export function buildScenery(game, phase, specOverride) {
   const container = { bg, mid, game: ground, fg };
   for (const el of spec.elements) {
     const anim = scenery.propAnims?.[el.asset];
-    const tex = anim ? anim.frames[0] : scenery.props[el.asset];
+    const tex = textureFor(scenery, el.asset);
     if (!tex) {
       console.warn(`[kungfu] elemento não encontrado: ${el.asset}`);
       continue;

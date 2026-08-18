@@ -83,6 +83,30 @@ export function hydrate(fase) {
   return { ...fase, sky: hydrateSky(fase.sky) };
 }
 
+/**
+ * A textura que um elemento realmente desenha.
+ *
+ * Props com animação (tocha, braseiro, lanternas) são carregados como uma TIRA
+ * horizontal: `props["tocha-fogo"]` tem os nove quadros lado a lado, e o que se
+ * desenha é `propAnims["tocha-fogo"].frames[0]`. Quem ler o mapa de props direto
+ * mede a tira inteira — foi assim que a alça de seleção do editor saiu nove
+ * vezes mais larga que a tocha. Renderizador e editor passam os dois por aqui
+ * para não poderem divergir de novo.
+ */
+export function textureFor(scenery, asset) {
+  const anim = scenery.propAnims?.[asset];
+  return anim ? anim.frames[0] : scenery.props?.[asset];
+}
+
+/** O inverso de hydrate: devolve as cores para hex legível, como o JSON guarda. */
+export function dehydrate(fase) {
+  const sky = { ...fase.sky };
+  for (const k of ["color", "from", "to"]) {
+    if (typeof sky[k] === "number") sky[k] = "#" + sky[k].toString(16).padStart(6, "0");
+  }
+  return { ...fase, sky };
+}
+
 /** Caminho público de um asset de cenário. */
 export const propPath = (name) => `/images/kungfucastle/props/${name}.png`;
 

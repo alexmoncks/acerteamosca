@@ -28,6 +28,9 @@ import {
   anchorPoint,
   resolveY,
   positionsFor,
+  textureFor,
+  hydrate,
+  dehydrate,
 } from "./kungfu-scenery-lib";
 
 const ZOOM = 2;
@@ -40,6 +43,8 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
  * passa a apontar para o lugar errado e fica óbvio na hora.
  */
 function boundsOf(el, tex, levelWidth) {
+  // `tex` vem de textureFor: para um prop animado, o mapa de props traz a tira
+  // inteira e a caixa sairia nove vezes mais larga que a tocha.
   const escala = el.scale || 1;
   const w = tex.width * escala;
   const h = tex.height * escala;
@@ -56,7 +61,7 @@ export default function KungFuFaseEditor({ phase, onBack }) {
   const overlayRef = useRef(null);
   const dragRef = useRef(null);
 
-  const [spec, setSpec] = useState(() => clone(PHASE_SCENERY[phase]));
+  const [spec, setSpec] = useState(() => dehydrate(clone(PHASE_SCENERY[phase])));
   const [sel, setSel] = useState(-1);
   const [cameraX, setCameraX] = useState(0);
   const [assets, setAssets] = useState([]);
@@ -97,6 +102,11 @@ export default function KungFuFaseEditor({ phase, onBack }) {
 
       hostRef.current?.appendChild(app.canvas);
       app.canvas.style.imageRendering = "pixelated";
+      // display:block é obrigatório, não estética. Canvas é inline por padrão,
+      // então senta numa linha de texto e o topo dele não coincide com o topo
+      // da div que recebe os cliques — todo clique chegava ~14px abaixo do
+      // ponto real, e selecionar a base de um objeto baixo não funcionava.
+      app.canvas.style.display = "block";
       app.canvas.style.width = `${CW * ZOOM}px`;
       app.canvas.style.height = `${CH * ZOOM}px`;
       app.canvas.style.cursor = "crosshair";
@@ -145,7 +155,11 @@ export default function KungFuFaseEditor({ phase, onBack }) {
     if (!game || !overlay) return;
 
     clearScenery(game);
-    buildScenery(game, phase, specRef.current);
+    // O spec editado é o formato do disco (cores em hex). O jogo quer número,
+    // então a hidratação acontece só aqui, no desenho — se o editor guardasse o
+    // hidratado, salvaria "color": 394778 no lugar de "#06061a" e o round-trip
+    // não fecharia.
+    buildScenery(game, phase, hydrate(specRef.current));
 
     const cam = camRef.current;
     game.bgLayer.x = -cam * LAYERS.bg;
@@ -171,7 +185,7 @@ export default function KungFuFaseEditor({ phase, onBack }) {
     const i = selRef.current;
     const el = specRef.current.elements[i];
     if (el) {
-      const tex = game.textures.scenery.props[el.asset];
+      const tex = textureFor(game.textures.scenery, el.asset);
       if (tex) {
         const b = boundsOf(el, tex, specRef.current.levelWidth);
         const sx = b.x - cam * LAYERS[el.layer];
@@ -201,7 +215,7 @@ export default function KungFuFaseEditor({ phase, onBack }) {
     // De trás para frente: o que está por cima ganha o clique.
     for (let i = els.length - 1; i >= 0; i--) {
       const el = els[i];
-      const tex = game.textures.scenery.props[el.asset];
+      const tex = textureFor(game.textures.scenery, el.asset);
       if (!tex) continue;
       const b = boundsOf(el, tex, specRef.current.levelWidth);
       const x = b.x - camRef.current * LAYERS[el.layer];
@@ -211,6 +225,11 @@ export default function KungFuFaseEditor({ phase, onBack }) {
   };
 
   const onMouseDown = (ev) => {
+    // Sem cena montada não há o que acertar: buildScene carrega o elenco
+    // inteiro antes de devolver o jogo, e até lá um clique não faz nada. Sem
+    // esta guarda, ele silenciosamente não fazia — e a barra de status dizia
+    // "montando a cena" enquanto o usuário achava que tinha errado a mira.
+    if (!pronto) return;
     const r = ev.currentTarget.getBoundingClientRect();
     const sx = (ev.clientX - r.left) / ZOOM;
     const sy = (ev.clientY - r.top) / ZOOM;
@@ -251,7 +270,18 @@ export default function KungFuFaseEditor({ phase, onBack }) {
       return { ...s, elements: els };
     });
 
-  const adicionar = (asset) => {
+  /**
+   * Clique na paleta: com um elemento selecionado, TROCA o asset dele; sem
+   * seleção, insere um novo no centro da vista. Trocar é o caso mais comum ao
+   * compor — experimentar qual objeto fica melhor naquele ponto sem perder
+   * posição, camada, âncora e repetição já ajustadas.
+   */
+  const daPaleta = (asset) => {
+    const i = selRef.current;
+    if (i >= 0) {
+      patch(i, { asset });
+      return;
+    }
     setSpec((s) => ({
       ...s,
       elements: [
@@ -311,8 +341,11 @@ export default function KungFuFaseEditor({ phase, onBack }) {
         <span style={S.status}>{status}</span>
       </div>
 
+      {!pronto && <p style={S.carregando}>montando a cena&hellip;</p>}
+
       <div
         ref={hostRef}
+        data-pronto={pronto ? "1" : "0"}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
@@ -332,10 +365,12 @@ export default function KungFuFaseEditor({ phase, onBack }) {
 
       <div style={S.colunas}>
         <div style={S.painel}>
-          <p style={S.rotulo}>PALETA</p>
+          <p style={S.rotulo}>
+            PALETA &mdash; {sel >= 0 ? "troca o selecionado" : "insere no centro da vista"}
+          </p>
           <div style={S.paleta}>
             {assets.map((a) => (
-              <button key={a} onClick={() => adicionar(a)} style={S.chip} title={a}>
+              <button key={a} onClick={() => daPaleta(a)} style={S.chip} title={a}>
                 {a}
               </button>
             ))}
@@ -458,4 +493,5 @@ const S = {
   input: { fontFamily: "inherit", fontSize: 10, color: "#c9d1d9", background: "#0d1117", border: "1px solid #30363d", borderRadius: 3, padding: "3px 5px", width: "100%" },
   asset: { fontSize: 11, color: "#ffd700" },
   vazio: { fontSize: 9, color: "#4a5568" },
+  carregando: { fontSize: 10, color: "#ffd700", padding: "4px 0" },
 };
