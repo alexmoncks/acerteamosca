@@ -12,14 +12,15 @@ const GAME = source("src/components/games/KungFuCastle.jsx");
 const { LAYERS, ANCHORS, textureFor } = await loadModule("src/components/games/kungfu-scenery-lib.js");
 
 check("test mode opens on the phase selector, not the sprite test", () => {
-  assert.match(GAME, /const \[screen, setScreen\] = useState\("menu"\)/);
   assert.ok(!/useState\(isTstMode \? "spritetest"/.test(GAME),
     "?tst=t não pode mais cair direto no Sprite Test");
+  assert.match(GAME, /\? "editor" : "menu"/,
+    "sem editor na URL, a tela inicial é o menu");
 });
 
 check("the selector offers an EDITOR entry per phase", () => {
   const bloco = GAME.match(/MODO TESTE[\s\S]{0,2000}/)[0];
-  assert.match(bloco, /setScreen\("editor"\)/);
+  assert.match(bloco, /irPara\("editor", n\)/);
   assert.match(bloco, /Object\.keys\(PHASE_CONFIG\)/,
     "as fases do editor têm de sair de PHASE_CONFIG, não de uma lista à mão");
 });
@@ -214,4 +215,26 @@ check("muted label text keeps enough contrast to read", () => {
     const razao = (luma(cor) + 0.05) / (fundo + 0.05);
     assert.ok(razao >= 4.5, `${cor} dá contraste ${razao.toFixed(1)}:1, abaixo de 4.5:1`);
   }
+});
+
+check("the phase being edited lives in the URL, so a reload comes back to it", () => {
+  // Gravar escreve dentro de src/, o Fast Refresh do Next recompila, e quando
+  // ele decide que não dá para atualizar em pedaços recarrega a página inteira.
+  // Sem a fase na URL, o editor sumia e voltava o menu no meio do trabalho.
+  assert.match(GAME, /URLSearchParams\(window\.location\.search\)\.get\("editor"\)/,
+    "a fase precisa ser lida da URL");
+  assert.match(GAME, /useState\(\(\) => \(editorNaUrl\(\) \? "editor" : "menu"\)\)/,
+    "a tela inicial precisa sair da URL");
+  assert.match(GAME, /url\.searchParams\.set\("editor", String\(fase\)\)/);
+  assert.match(GAME, /url\.searchParams\.delete\("editor"\)/, "sair do editor precisa limpar a URL");
+  assert.match(GAME, /history\.replaceState/,
+    "replaceState e não pushState: o editor não deve encher o histórico do navegador");
+});
+
+check("entering and leaving the editor both go through the URL", () => {
+  // Se um dos dois caminhos chamasse setScreen direto, a URL sairia de sincronia
+  // e o próximo reload cairia na tela errada.
+  assert.match(GAME, /onClick=\{\(\) => irPara\("editor", n\)\}/);
+  assert.match(GAME, /onBack=\{\(\) => irPara\("menu"\)\}/);
+  assert.ok(!/setScreen\("editor"\)/.test(GAME), "nada pode entrar no editor sem passar por irPara");
 });

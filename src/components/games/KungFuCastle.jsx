@@ -1390,8 +1390,31 @@ export default function KungFuCastle() {
   const isTstMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t";
   // O modo teste abre no seletor de fases, não no Sprite Test: o seletor é o
   // ponto de partida de tudo — jogar uma fase, ir direto ao chefe, ou editar.
-  const [screen, setScreen] = useState("menu");
-  const [editPhase, setEditPhase] = useState(1);
+  //
+  // A fase em edição vive na URL (?tst=t&editor=3), não só no estado. Gravar o
+  // cenário escreve dentro de src/, o Fast Refresh do Next recompila, e quando
+  // ele decide que não dá para atualizar em pedaços recarrega a página inteira
+  // — o editor sumia e voltava o menu no meio do trabalho. Com a fase na URL, o
+  // remonte volta para onde se estava. De brinde, o editor vira endereço.
+  const editorNaUrl = () => {
+    if (typeof window === "undefined") return 0;
+    const n = Number(new URLSearchParams(window.location.search).get("editor"));
+    return Number.isInteger(n) && n > 0 ? n : 0;
+  };
+  const [screen, setScreen] = useState(() => (editorNaUrl() ? "editor" : "menu"));
+  const [editPhase, setEditPhase] = useState(() => editorNaUrl() || 1);
+
+  /** Troca de tela mantendo a URL coerente com o que está aberto. */
+  const irPara = (tela, fase) => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tela === "editor") url.searchParams.set("editor", String(fase));
+      else url.searchParams.delete("editor");
+      window.history.replaceState(null, "", url);
+    }
+    if (fase) setEditPhase(fase);
+    setScreen(tela);
+  };
   const [finalScore, setFinalScore] = useState(0);
   // Test-mode entry point. Kept in state so "play again" after a game over
   // returns to the phase being tested instead of dropping back to phase 1.
@@ -1602,7 +1625,7 @@ export default function KungFuCastle() {
                       FASE {n} &#9656; CHEFE
                     </button>
                     <button
-                      onClick={() => { setEditPhase(n); setScreen("editor"); }}
+                      onClick={() => irPara("editor", n)}
                       style={{ ...S_TEST_BTN, color: "#ffd700" }}
                     >
                       EDITOR
@@ -1725,7 +1748,7 @@ export default function KungFuCastle() {
       )}
 
       {screen === "editor" && (
-        <KungFuFaseEditor phase={editPhase} onBack={() => setScreen("menu")} />
+        <KungFuFaseEditor phase={editPhase} onBack={() => irPara("menu")} />
       )}
 
       {screen === "spritetest" && (
