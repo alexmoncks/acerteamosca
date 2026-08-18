@@ -8,59 +8,36 @@
   "tileset": "fase3-salao",
   "elements": [
     {
-      "asset": "trelica-madeira",
-      "layer": "bg",
-      "anchor": "topo",
-      "y": 150,
-      "repeat": {
-        "every": 300
-      },
-      "alpha": 0.5
-    },
-    {
-      "asset": "pilar-ornamentado",
-      "layer": "mid",
-      "anchor": "horizonte",
-      "y": 0,
-      "repeat": {
-        "every": 470
-      },
-      "alpha": 0.85
-    },
-    {
       "asset": "portal-lua",
       "layer": "game",
       "anchor": "chao",
-      "x": 80,
-      "y": 0
+      "x": 25,
+      "y": 10,
+      "scale": 1
     },
     {
       "asset": "vaso-porcelana",
       "layer": "game",
       "anchor": "chao",
-      "x": 260,
-      "y": 1
-    },
-    {
-      "asset": "trelica-madeira",
-      "layer": "mid",
-      "anchor": "chao",
-      "x": 380,
-      "y": 6
+      "x": 383,
+      "y": 2
     },
     {
       "asset": "armadura-lamelar",
       "layer": "game",
       "anchor": "chao",
-      "x": 520,
-      "y": 2
+      "x": 528,
+      "y": -2
     },
     {
       "asset": "janela-lua",
       "layer": "mid",
       "anchor": "chao",
-      "x": 700,
-      "y": 10
+      "x": 100,
+      "y": -116,
+      "repeat": {
+        "every": 385
+      }
     },
     {
       "asset": "biombo-dourado",
@@ -74,35 +51,21 @@
       "layer": "fg",
       "anchor": "chao",
       "x": 1040,
-      "y": 8
-    },
-    {
-      "asset": "vaso-porcelana",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 1180,
-      "y": 1
-    },
-    {
-      "asset": "cortina-rasgada",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 1300,
-      "y": 12
+      "y": 10
     },
     {
       "asset": "trelica-madeira",
-      "layer": "mid",
+      "layer": "game",
       "anchor": "chao",
-      "x": 1440,
-      "y": 6
+      "x": 2437,
+      "y": -75
     },
     {
       "asset": "armadura-lamelar",
-      "layer": "game",
+      "layer": "fg",
       "anchor": "chao",
-      "x": 1600,
-      "y": 2
+      "x": 1602,
+      "y": 8
     },
     {
       "asset": "janela-lua",
@@ -113,17 +76,17 @@
     },
     {
       "asset": "biombo-dourado",
-      "layer": "game",
+      "layer": "fg",
       "anchor": "chao",
-      "x": 1920,
-      "y": 3
+      "x": 1935,
+      "y": 11
     },
     {
       "asset": "jian-suporte",
-      "layer": "fg",
+      "layer": "game",
       "anchor": "chao",
-      "x": 2080,
-      "y": 8
+      "x": 2076,
+      "y": 2
     },
     {
       "asset": "vaso-porcelana",
@@ -136,8 +99,25 @@
       "asset": "escada-ornada-tapete",
       "layer": "game",
       "anchor": "chao",
-      "x": 2380,
-      "y": 0
+      "x": 2452,
+      "y": 8
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 134,
+      "y": 13,
+      "repeat": {
+        "every": 555
+      }
+    },
+    {
+      "asset": "estandarte",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1440,
+      "y": 2
     }
   ]
 }

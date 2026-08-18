@@ -8,45 +8,39 @@
   "tileset": "fase4-madeira",
   "elements": [
     {
-      "asset": "trelica-madeira",
-      "layer": "bg",
-      "anchor": "topo",
-      "y": 140,
-      "repeat": {
-        "every": 340
-      },
-      "alpha": 0.4
-    },
-    {
       "asset": "pilar-ornamentado",
-      "layer": "mid",
-      "anchor": "horizonte",
+      "layer": "game",
+      "anchor": "chao",
       "y": 0,
       "repeat": {
         "every": 430
       },
-      "alpha": 0.9
+      "x": 229,
+      "scale": 1.5
     },
     {
       "asset": "porta-pedra-espiral",
       "layer": "game",
       "anchor": "chao",
-      "x": 60,
-      "y": 0
+      "x": 33,
+      "y": 6
     },
     {
       "asset": "lanterna-seda",
-      "layer": "fg",
+      "layer": "mid",
       "anchor": "chao",
-      "x": 210,
-      "y": 4
+      "x": 139,
+      "y": -55,
+      "repeat": {
+        "every": 380
+      }
     },
     {
       "asset": "biombo-dourado",
-      "layer": "game",
+      "layer": "fg",
       "anchor": "chao",
-      "x": 340,
-      "y": 3
+      "x": 342,
+      "y": 8
     },
     {
       "asset": "vaso-porcelana",
@@ -59,50 +53,33 @@
       "asset": "pergaminho-kakejiku",
       "layer": "mid",
       "anchor": "chao",
-      "x": 640,
-      "y": 12
-    },
-    {
-      "asset": "lanterna-seda",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 800,
-      "y": 4
-    },
-    {
-      "asset": "janela-lua",
-      "layer": "mid",
-      "anchor": "chao",
-      "x": 940,
-      "y": 10
+      "x": 400,
+      "y": -68,
+      "repeat": {
+        "every": 370
+      },
+      "scale": 1.4
     },
     {
       "asset": "armadura-lamelar",
-      "layer": "game",
+      "layer": "fg",
       "anchor": "chao",
-      "x": 1100,
-      "y": 2
+      "x": 1103,
+      "y": 9
     },
     {
       "asset": "biombo-dourado",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 1260,
-      "y": 3
-    },
-    {
-      "asset": "lanterna-seda",
       "layer": "fg",
       "anchor": "chao",
-      "x": 1420,
-      "y": 4
+      "x": 1361,
+      "y": 10
     },
     {
       "asset": "vaso-porcelana",
       "layer": "game",
       "anchor": "chao",
-      "x": 1560,
-      "y": 1
+      "x": 1695,
+      "y": 2
     },
     {
       "asset": "pergaminho-kakejiku",
@@ -115,15 +92,8 @@
       "asset": "jian-suporte",
       "layer": "fg",
       "anchor": "chao",
-      "x": 1860,
-      "y": 8
-    },
-    {
-      "asset": "lanterna-seda",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 2000,
-      "y": 4
+      "x": 1859,
+      "y": 11
     },
     {
       "asset": "janela-lua",
@@ -133,18 +103,26 @@
       "y": 10
     },
     {
-      "asset": "cortina-rasgada",
+      "asset": "shishi",
       "layer": "fg",
       "anchor": "chao",
-      "x": 2260,
-      "y": 12
+      "x": 2141,
+      "y": 4
     },
     {
-      "asset": "escada-espiral-tochas",
+      "asset": "escada-ornada-tapete",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 2453,
+      "y": 6
+    },
+    {
+      "asset": "portal-lua",
       "layer": "game",
       "anchor": "chao",
-      "x": 2400,
-      "y": 0
+      "x": 2440,
+      "y": -65,
+      "scale": 0.9
     }
   ]
 }
