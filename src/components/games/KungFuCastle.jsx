@@ -19,11 +19,12 @@ import { PHASE_SCENERY } from "./kungfu-scenery";
 import { anchorPoint, resolveY, positionsFor } from "./kungfu-scenery-lib";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
+const KungFuFaseEditor = dynamic(() => import("./KungFuFaseEditor"), { ssr: false });
 
 // ── Constants ──────────────────────────────────────────────────────────────
-const CW = 480;
-const CH = 320;
-const GROUND_Y = 260;
+export const CW = 480;
+export const CH = 320;
+export const GROUND_Y = 260;
 const PLAYER_W = 32;
 const PLAYER_H = 48;
 const PLAYER_HP_MAX = 100;
@@ -221,7 +222,7 @@ let _t = (k) => k;
 // ============================================================
 // BUILD SCENE
 // ============================================================
-async function buildScene(app) {
+export async function buildScene(app) {
   const textures = await loadAllAssets();
 
   const bgLayer = new Container();
@@ -498,8 +499,12 @@ function drawSky(g, spec, width) {
  * @param {object} game
  * @param {number} phase
  */
-function buildScenery(game, phase) {
-  const spec = PHASE_SCENERY[phase];
+export function buildScenery(game, phase, specOverride) {
+  // `specOverride` existe para o editor: ele desenha o cenário que está sendo
+  // editado, não o que está no disco. É a mesma função que o jogo usa — um
+  // editor que desenhasse por conta própria mentiria, e um editor que mente é
+  // pior que nenhum.
+  const spec = specOverride ?? PHASE_SCENERY[phase];
   if (!spec) {
     console.warn(`[kungfu] no scenery for phase ${phase}`);
     return;
@@ -603,7 +608,7 @@ function buildScenery(game, phase) {
 }
 
 /** Destroy everything buildScenery created, keeping the containers. */
-function clearScenery(game) {
+export function clearScenery(game) {
   for (const container of Object.values(game.sceneryLayers)) {
     for (const child of container.removeChildren()) child.destroy();
   }
@@ -1383,7 +1388,10 @@ export default function KungFuCastle() {
   const gameRef = useRef(null);
   const keysRef = useRef(new Set());
   const isTstMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tst") === "t";
-  const [screen, setScreen] = useState(isTstMode ? "spritetest" : "menu");
+  // O modo teste abre no seletor de fases, não no Sprite Test: o seletor é o
+  // ponto de partida de tudo — jogar uma fase, ir direto ao chefe, ou editar.
+  const [screen, setScreen] = useState("menu");
+  const [editPhase, setEditPhase] = useState(1);
   const [finalScore, setFinalScore] = useState(0);
   // Test-mode entry point. Kept in state so "play again" after a game over
   // returns to the phase being tested instead of dropping back to phase 1.
@@ -1593,6 +1601,12 @@ export default function KungFuCastle() {
                     <button onClick={() => startTest(n, true)} style={{ ...S_TEST_BTN, color: "#dc2626" }}>
                       FASE {n} &#9656; CHEFE
                     </button>
+                    <button
+                      onClick={() => { setEditPhase(n); setScreen("editor"); }}
+                      style={{ ...S_TEST_BTN, color: "#ffd700" }}
+                    >
+                      EDITOR
+                    </button>
                   </div>
                 ))}
             </div>
@@ -1708,6 +1722,10 @@ export default function KungFuCastle() {
             {t("victory.restart")}
           </button>
         </div>
+      )}
+
+      {screen === "editor" && (
+        <KungFuFaseEditor phase={editPhase} onBack={() => setScreen("menu")} />
       )}
 
       {screen === "spritetest" && (
