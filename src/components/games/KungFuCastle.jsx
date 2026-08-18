@@ -16,6 +16,7 @@ import {
   MAX_ATTACKERS,
 } from "./kungfu-combat";
 import { PHASE_SCENERY } from "./kungfu-scenery";
+import { anchorPoint, resolveY, positionsFor } from "./kungfu-scenery-lib";
 
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 
@@ -465,13 +466,6 @@ function spawnBoss(game) {
 // SCENERY — built per phase, torn down on phase change
 // ============================================================
 
-/** Resolve a band's symbolic y anchor to a pixel value. */
-function resolveBandY(y, texHeight) {
-  if (typeof y === "number") return y;
-  if (y === "ground-overlap") return GROUND_Y - texHeight + 18;
-  return GROUND_Y - 10 - texHeight + 28; // "horizon"
-}
-
 /** Paint the phase's sky into a Graphics. */
 function drawSky(g, spec, width) {
   if (spec.type === "starfield") {
@@ -519,38 +513,6 @@ function buildScenery(game, phase) {
   drawSky(sky, spec.sky, spec.levelWidth);
   bg.addChild(sky);
 
-  // -- Parallax bands
-  const addBand = (band, container) => {
-    const tex = scenery.props[band.asset];
-    if (!tex) return;
-    const scale = band.scale || 1;
-    const w = tex.width * scale;
-    const h = tex.height * scale;
-    const y = resolveBandY(band.y, h);
-    const step = band.tile ? w : band.every;
-    if (step) {
-      // Two extra repetitions past the level edge, matching the current
-      // phase-1 loop (`Math.ceil(LEVEL_WIDTH / w) + 2`).
-      for (let x = 0; x < spec.levelWidth + step * 2; x += step) {
-        const s = new Sprite(tex);
-        s.scale.set(scale);
-        s.x = x;
-        s.y = y;
-        if (band.alpha !== undefined) s.alpha = band.alpha;
-        container.addChild(s);
-      }
-    } else {
-      const s = new Sprite(tex);
-      s.scale.set(scale);
-      s.x = band.x || 0;
-      s.y = y;
-      if (band.alpha !== undefined) s.alpha = band.alpha;
-      container.addChild(s);
-    }
-  };
-  for (const band of spec.bg) addBand(band, bg);
-  for (const band of spec.mid) addBand(band, mid);
-
   // -- Ground: surface row at feet level + transition + fill rows below
   const tiles = scenery.tilesets[spec.tileset];
   if (tiles && tiles.length >= 16) {
@@ -593,33 +555,49 @@ function buildScenery(game, phase) {
     }
   }
 
-  // -- Props. anchor (0.5, 1) means x is the CENTRE and y sinks the prop
-  // below the ground line — this is exactly the current phase-1 placement,
-  // so do not "simplify" it or every prop shifts.
-  const target = { bg: mid, game: ground, fg };
-  for (const { asset, x, y, layer } of spec.props) {
-    const anim = scenery.propAnims?.[asset];
-    const tex = anim ? anim.frames[0] : scenery.props[asset];
+  // -- Elementos do cenário: uma lista só, props e faixas juntos.
+  //
+  // Antes eram dois caminhos — `props` (um sprite, âncora no pé) e as faixas
+  // `bg`/`mid` (repetição, âncora no canto). A única diferença real entre eles
+  // era a repetição, então ela virou propriedade do elemento e o resto é comum.
+  //
+  // A camada é o que decide a parallax. Os dados traziam um campo `parallax`
+  // que ninguém lia — a velocidade sempre veio de qual contêiner o sprite
+  // entra —, então ele saiu. E um prop com layer "bg" ia para o midLayer: o
+  // nome mentia, e a migração o reescreveu como "mid" para o desenho não mudar.
+  const container = { bg, mid, game: ground, fg };
+  for (const el of spec.elements) {
+    const anim = scenery.propAnims?.[el.asset];
+    const tex = anim ? anim.frames[0] : scenery.props[el.asset];
     if (!tex) {
-      console.warn(`[kungfu] prop not found: ${asset}`);
+      console.warn(`[kungfu] elemento não encontrado: ${el.asset}`);
       continue;
     }
-    const s = new Sprite(tex);
-    s.anchor.set(0.5, 1);
-    s.x = x;
-    s.y = GROUND_Y + y;
-    (target[layer] || ground).addChild(s);
+    const escala = el.scale || 1;
+    const ponto = anchorPoint(el.anchor);
+    const y = resolveY(el.anchor, el.y, tex.height * escala, GROUND_Y);
+    const alvo = container[el.layer] || ground;
 
-    if (anim) {
-      // Every torch gets its own controller seeded at a different frame —
-      // otherwise a corridor of them flickers in lockstep, which reads as
-      // one animation stamped repeatedly rather than as separate fires.
-      const ctrl = new AnimController({ sprite: s, anims: { flicker: anim } });
-      ctrl.forcePlay("flicker");
-      for (let i = 0; i < game.propAnims.length % anim.frames.length; i++) {
-        ctrl.update(1 / anim.speed);
+    for (const x of positionsFor(el, tex.width * escala, spec.levelWidth)) {
+      const s = new Sprite(tex);
+      s.anchor.set(ponto.x, ponto.y);
+      s.scale.set(escala);
+      s.x = x;
+      s.y = y;
+      if (el.alpha !== undefined) s.alpha = el.alpha;
+      alvo.addChild(s);
+
+      if (anim) {
+        // Every torch gets its own controller seeded at a different frame —
+        // otherwise a corridor of them flickers in lockstep, which reads as
+        // one animation stamped repeatedly rather than as separate fires.
+        const ctrl = new AnimController({ sprite: s, anims: { flicker: anim } });
+        ctrl.forcePlay("flicker");
+        for (let i = 0; i < game.propAnims.length % anim.frames.length; i++) {
+          ctrl.update(1 / anim.speed);
+        }
+        game.propAnims.push(ctrl);
       }
-      game.propAnims.push(ctrl);
     }
   }
 }

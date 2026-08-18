@@ -1,0 +1,143 @@
+{
+  "levelWidth": 2400,
+  "sky": {
+    "type": "starfield",
+    "color": "#06061a",
+    "stars": 200
+  },
+  "tileset": "fase1-jardim",
+  "elements": [
+    {
+      "asset": "parallax-montanhas",
+      "layer": "bg",
+      "anchor": "horizonte",
+      "y": 0,
+      "repeat": {
+        "every": "auto"
+      },
+      "scale": 2.2,
+      "alpha": 0.6
+    },
+    {
+      "asset": "parallax-arvores",
+      "layer": "mid",
+      "anchor": "horizonte",
+      "y": 0,
+      "repeat": {
+        "every": "auto"
+      }
+    },
+    {
+      "asset": "paifang",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 60,
+      "y": 10
+    },
+    {
+      "asset": "ameixeira",
+      "layer": "mid",
+      "anchor": "chao",
+      "x": 200,
+      "y": 5
+    },
+    {
+      "asset": "lanterna-papel",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 350,
+      "y": 4
+    },
+    {
+      "asset": "rocha-taihu",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 500,
+      "y": 1
+    },
+    {
+      "asset": "ameixeira",
+      "layer": "mid",
+      "anchor": "chao",
+      "x": 700,
+      "y": 5
+    },
+    {
+      "asset": "shishi",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 850,
+      "y": 2
+    },
+    {
+      "asset": "cerca-bambu",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1000,
+      "y": 4
+    },
+    {
+      "asset": "lanterna-papel",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1150,
+      "y": 4
+    },
+    {
+      "asset": "ameixeira",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1350,
+      "y": 8
+    },
+    {
+      "asset": "rocha-taihu",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1500,
+      "y": 1
+    },
+    {
+      "asset": "shishi",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1650,
+      "y": 4
+    },
+    {
+      "asset": "lanterna-papel",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1800,
+      "y": 2
+    },
+    {
+      "asset": "ameixeira",
+      "layer": "mid",
+      "anchor": "chao",
+      "x": 1950,
+      "y": 5
+    },
+    {
+      "asset": "cerca-bambu",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 2100,
+      "y": 6
+    },
+    {
+      "asset": "portao-arco-pedra",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 2300,
+      "y": 4
+    },
+    {
+      "asset": "escada-pedra-externa",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 2370,
+      "y": 10
+    }
+  ]
+}

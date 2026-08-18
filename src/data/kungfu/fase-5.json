@@ -1,0 +1,136 @@
+{
+  "levelWidth": 2200,
+  "sky": {
+    "type": "starfield",
+    "color": "#04030c",
+    "stars": 260
+  },
+  "tileset": "fase5-cerimonial",
+  "elements": [
+    {
+      "asset": "pilar-ornamentado",
+      "layer": "bg",
+      "anchor": "topo",
+      "y": 120,
+      "repeat": {
+        "every": 380
+      },
+      "alpha": 0.45
+    },
+    {
+      "asset": "cortina-rasgada",
+      "layer": "mid",
+      "anchor": "horizonte",
+      "y": 0,
+      "repeat": {
+        "every": 520
+      },
+      "alpha": 0.6
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 120,
+      "y": 1
+    },
+    {
+      "asset": "pilar-ornamentado",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 260,
+      "y": 0
+    },
+    {
+      "asset": "janela-lua",
+      "layer": "mid",
+      "anchor": "chao",
+      "x": 420,
+      "y": 10
+    },
+    {
+      "asset": "cortina-rasgada",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 560,
+      "y": 12
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 700,
+      "y": 1
+    },
+    {
+      "asset": "pilar-ornamentado",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 860,
+      "y": 0
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1000,
+      "y": 2
+    },
+    {
+      "asset": "janela-lua",
+      "layer": "mid",
+      "anchor": "chao",
+      "x": 1140,
+      "y": 10
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1300,
+      "y": 1
+    },
+    {
+      "asset": "cortina-rasgada",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1440,
+      "y": 12
+    },
+    {
+      "asset": "pilar-ornamentado",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1580,
+      "y": 0
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1720,
+      "y": 2
+    },
+    {
+      "asset": "trono-sombrio",
+      "layer": "mid",
+      "anchor": "chao",
+      "x": 1980,
+      "y": 0
+    },
+    {
+      "asset": "princesa-amarrada",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 2090,
+      "y": 2
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1900,
+      "y": 1
+    }
+  ]
+}

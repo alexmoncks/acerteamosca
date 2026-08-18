@@ -1,0 +1,645 @@
+{
+  "1": {
+    "levelWidth": 2400,
+    "sky": {
+      "type": "starfield",
+      "color": 394778,
+      "stars": 200
+    },
+    "bg": [
+      {
+        "asset": "parallax-montanhas",
+        "tile": true,
+        "scale": 2.2,
+        "alpha": 0.6,
+        "y": "horizon",
+        "parallax": 0.15
+      }
+    ],
+    "mid": [
+      {
+        "asset": "parallax-arvores",
+        "tile": true,
+        "y": "ground-overlap",
+        "parallax": 0.5
+      }
+    ],
+    "tileset": "fase1-jardim",
+    "props": [
+      {
+        "asset": "paifang",
+        "x": 60,
+        "y": 10,
+        "layer": "game"
+      },
+      {
+        "asset": "ameixeira",
+        "x": 200,
+        "y": 5,
+        "layer": "bg"
+      },
+      {
+        "asset": "lanterna-papel",
+        "x": 350,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "rocha-taihu",
+        "x": 500,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "ameixeira",
+        "x": 700,
+        "y": 5,
+        "layer": "bg"
+      },
+      {
+        "asset": "shishi",
+        "x": 850,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "cerca-bambu",
+        "x": 1000,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "lanterna-papel",
+        "x": 1150,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "ameixeira",
+        "x": 1350,
+        "y": 8,
+        "layer": "fg"
+      },
+      {
+        "asset": "rocha-taihu",
+        "x": 1500,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "shishi",
+        "x": 1650,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "lanterna-papel",
+        "x": 1800,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "ameixeira",
+        "x": 1950,
+        "y": 5,
+        "layer": "bg"
+      },
+      {
+        "asset": "cerca-bambu",
+        "x": 2100,
+        "y": 6,
+        "layer": "fg"
+      },
+      {
+        "asset": "portao-arco-pedra",
+        "x": 2300,
+        "y": 4,
+        "layer": "game"
+      },
+      {
+        "asset": "escada-pedra-externa",
+        "x": 2370,
+        "y": 10,
+        "layer": "game"
+      }
+    ]
+  },
+  "2": {
+    "levelWidth": 2600,
+    "sky": {
+      "type": "gradient",
+      "from": 2759485,
+      "to": 14251782
+    },
+    "bg": [
+      {
+        "asset": "fase2-parallax-castelo",
+        "every": 520,
+        "alpha": 0.75,
+        "y": 180,
+        "parallax": 0.15
+      }
+    ],
+    "mid": [
+      {
+        "asset": "fase2-parallax-muralha",
+        "tile": true,
+        "y": "ground-overlap",
+        "parallax": 0.5
+      },
+      {
+        "asset": "ponte-madeira",
+        "x": 900,
+        "scale": 2,
+        "y": "ground-overlap",
+        "parallax": 0.5
+      }
+    ],
+    "tileset": "fase2-portao-chao",
+    "props": [
+      {
+        "asset": "portao-madeira",
+        "x": 60,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 180,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "estandarte",
+        "x": 240,
+        "y": 6,
+        "layer": "fg"
+      },
+      {
+        "asset": "shishi",
+        "x": 340,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "braseiro-fogo",
+        "x": 420,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "pilar-ornamentado",
+        "x": 520,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 620,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "estandarte",
+        "x": 780,
+        "y": 6,
+        "layer": "fg"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 1180,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "braseiro-fogo",
+        "x": 1360,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "estandarte",
+        "x": 1500,
+        "y": 6,
+        "layer": "fg"
+      },
+      {
+        "asset": "pilar-ornamentado",
+        "x": 1600,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 1740,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "braseiro-fogo",
+        "x": 2000,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "estandarte",
+        "x": 2100,
+        "y": 6,
+        "layer": "fg"
+      },
+      {
+        "asset": "shishi",
+        "x": 2260,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 2280,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "portao-madeira-aberto",
+        "x": 2500,
+        "y": 0,
+        "layer": "game"
+      }
+    ]
+  },
+  "3": {
+    "levelWidth": 2500,
+    "sky": {
+      "type": "gradient",
+      "from": 985878,
+      "to": 2891564
+    },
+    "bg": [
+      {
+        "asset": "trelica-madeira",
+        "every": 300,
+        "alpha": 0.5,
+        "y": 150,
+        "parallax": 0.15
+      }
+    ],
+    "mid": [
+      {
+        "asset": "pilar-ornamentado",
+        "every": 470,
+        "alpha": 0.85,
+        "y": "ground-overlap",
+        "parallax": 0.5
+      }
+    ],
+    "tileset": "fase3-salao",
+    "props": [
+      {
+        "asset": "portal-lua",
+        "x": 80,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "vaso-porcelana",
+        "x": 260,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "trelica-madeira",
+        "x": 380,
+        "y": 6,
+        "layer": "bg"
+      },
+      {
+        "asset": "armadura-lamelar",
+        "x": 520,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "janela-lua",
+        "x": 700,
+        "y": 10,
+        "layer": "bg"
+      },
+      {
+        "asset": "biombo-dourado",
+        "x": 860,
+        "y": 3,
+        "layer": "game"
+      },
+      {
+        "asset": "jian-suporte",
+        "x": 1040,
+        "y": 8,
+        "layer": "fg"
+      },
+      {
+        "asset": "vaso-porcelana",
+        "x": 1180,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "cortina-rasgada",
+        "x": 1300,
+        "y": 12,
+        "layer": "fg"
+      },
+      {
+        "asset": "trelica-madeira",
+        "x": 1440,
+        "y": 6,
+        "layer": "bg"
+      },
+      {
+        "asset": "armadura-lamelar",
+        "x": 1600,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "janela-lua",
+        "x": 1760,
+        "y": 10,
+        "layer": "bg"
+      },
+      {
+        "asset": "biombo-dourado",
+        "x": 1920,
+        "y": 3,
+        "layer": "game"
+      },
+      {
+        "asset": "jian-suporte",
+        "x": 2080,
+        "y": 8,
+        "layer": "fg"
+      },
+      {
+        "asset": "vaso-porcelana",
+        "x": 2200,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "escada-ornada-tapete",
+        "x": 2380,
+        "y": 0,
+        "layer": "game"
+      }
+    ]
+  },
+  "4": {
+    "levelWidth": 2500,
+    "sky": {
+      "type": "gradient",
+      "from": 2755858,
+      "to": 8012816
+    },
+    "bg": [
+      {
+        "asset": "trelica-madeira",
+        "every": 340,
+        "alpha": 0.4,
+        "y": 140,
+        "parallax": 0.15
+      }
+    ],
+    "mid": [
+      {
+        "asset": "pilar-ornamentado",
+        "every": 430,
+        "alpha": 0.9,
+        "y": "ground-overlap",
+        "parallax": 0.5
+      }
+    ],
+    "tileset": "fase4-madeira",
+    "props": [
+      {
+        "asset": "porta-pedra-espiral",
+        "x": 60,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "lanterna-seda",
+        "x": 210,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "biombo-dourado",
+        "x": 340,
+        "y": 3,
+        "layer": "game"
+      },
+      {
+        "asset": "vaso-porcelana",
+        "x": 500,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "pergaminho-kakejiku",
+        "x": 640,
+        "y": 12,
+        "layer": "bg"
+      },
+      {
+        "asset": "lanterna-seda",
+        "x": 800,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "janela-lua",
+        "x": 940,
+        "y": 10,
+        "layer": "bg"
+      },
+      {
+        "asset": "armadura-lamelar",
+        "x": 1100,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "biombo-dourado",
+        "x": 1260,
+        "y": 3,
+        "layer": "game"
+      },
+      {
+        "asset": "lanterna-seda",
+        "x": 1420,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "vaso-porcelana",
+        "x": 1560,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "pergaminho-kakejiku",
+        "x": 1700,
+        "y": 12,
+        "layer": "bg"
+      },
+      {
+        "asset": "jian-suporte",
+        "x": 1860,
+        "y": 8,
+        "layer": "fg"
+      },
+      {
+        "asset": "lanterna-seda",
+        "x": 2000,
+        "y": 4,
+        "layer": "fg"
+      },
+      {
+        "asset": "janela-lua",
+        "x": 2140,
+        "y": 10,
+        "layer": "bg"
+      },
+      {
+        "asset": "cortina-rasgada",
+        "x": 2260,
+        "y": 12,
+        "layer": "fg"
+      },
+      {
+        "asset": "escada-espiral-tochas",
+        "x": 2400,
+        "y": 0,
+        "layer": "game"
+      }
+    ]
+  },
+  "5": {
+    "levelWidth": 2200,
+    "sky": {
+      "type": "starfield",
+      "color": 262924,
+      "stars": 260
+    },
+    "bg": [
+      {
+        "asset": "pilar-ornamentado",
+        "every": 380,
+        "alpha": 0.45,
+        "y": 120,
+        "parallax": 0.15
+      }
+    ],
+    "mid": [
+      {
+        "asset": "cortina-rasgada",
+        "every": 520,
+        "alpha": 0.6,
+        "y": "ground-overlap",
+        "parallax": 0.5
+      }
+    ],
+    "tileset": "fase5-cerimonial",
+    "props": [
+      {
+        "asset": "braseiro-fogo",
+        "x": 120,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "pilar-ornamentado",
+        "x": 260,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "janela-lua",
+        "x": 420,
+        "y": 10,
+        "layer": "bg"
+      },
+      {
+        "asset": "cortina-rasgada",
+        "x": 560,
+        "y": 12,
+        "layer": "fg"
+      },
+      {
+        "asset": "braseiro-fogo",
+        "x": 700,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "pilar-ornamentado",
+        "x": 860,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 1000,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "janela-lua",
+        "x": 1140,
+        "y": 10,
+        "layer": "bg"
+      },
+      {
+        "asset": "braseiro-fogo",
+        "x": 1300,
+        "y": 1,
+        "layer": "game"
+      },
+      {
+        "asset": "cortina-rasgada",
+        "x": 1440,
+        "y": 12,
+        "layer": "fg"
+      },
+      {
+        "asset": "pilar-ornamentado",
+        "x": 1580,
+        "y": 0,
+        "layer": "game"
+      },
+      {
+        "asset": "tocha-fogo",
+        "x": 1720,
+        "y": 2,
+        "layer": "fg"
+      },
+      {
+        "asset": "trono-sombrio",
+        "x": 1980,
+        "y": 0,
+        "layer": "bg"
+      },
+      {
+        "asset": "princesa-amarrada",
+        "x": 2090,
+        "y": 2,
+        "layer": "game"
+      },
+      {
+        "asset": "braseiro-fogo",
+        "x": 1900,
+        "y": 1,
+        "layer": "game"
+      }
+    ]
+  }
+}

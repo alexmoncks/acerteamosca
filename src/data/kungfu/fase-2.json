@@ -1,0 +1,164 @@
+{
+  "levelWidth": 2600,
+  "sky": {
+    "type": "gradient",
+    "from": "#2a1b3d",
+    "to": "#d97706"
+  },
+  "tileset": "fase2-portao-chao",
+  "elements": [
+    {
+      "asset": "fase2-parallax-castelo",
+      "layer": "bg",
+      "anchor": "topo",
+      "y": 180,
+      "repeat": {
+        "every": 520
+      },
+      "alpha": 0.75
+    },
+    {
+      "asset": "fase2-parallax-muralha",
+      "layer": "mid",
+      "anchor": "horizonte",
+      "y": 0,
+      "repeat": {
+        "every": "auto"
+      }
+    },
+    {
+      "asset": "ponte-madeira",
+      "layer": "mid",
+      "anchor": "horizonte",
+      "y": 0,
+      "x": 900,
+      "scale": 2
+    },
+    {
+      "asset": "portao-madeira",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 60,
+      "y": 0
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 180,
+      "y": 2
+    },
+    {
+      "asset": "estandarte",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 240,
+      "y": 6
+    },
+    {
+      "asset": "shishi",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 340,
+      "y": 2
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 420,
+      "y": 1
+    },
+    {
+      "asset": "pilar-ornamentado",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 520,
+      "y": 0
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 620,
+      "y": 2
+    },
+    {
+      "asset": "estandarte",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 780,
+      "y": 6
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1180,
+      "y": 2
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1360,
+      "y": 1
+    },
+    {
+      "asset": "estandarte",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1500,
+      "y": 6
+    },
+    {
+      "asset": "pilar-ornamentado",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 1600,
+      "y": 0
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 1740,
+      "y": 2
+    },
+    {
+      "asset": "braseiro-fogo",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 2000,
+      "y": 1
+    },
+    {
+      "asset": "estandarte",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 2100,
+      "y": 6
+    },
+    {
+      "asset": "shishi",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 2260,
+      "y": 2
+    },
+    {
+      "asset": "tocha-fogo",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 2280,
+      "y": 2
+    },
+    {
+      "asset": "portao-madeira-aberto",
+      "layer": "game",
+      "anchor": "chao",
+      "x": 2500,
+      "y": 0
+    }
+  ]
+}

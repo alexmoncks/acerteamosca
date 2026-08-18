@@ -2,10 +2,19 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { check, source, repoPath, loadModule } from "./helpers.mjs";
 
-const { PHASE_SCENERY, sceneryAssetPaths } = await loadModule(
-  "src/components/games/kungfu-scenery.js",
-);
+// Os testes entram pela lib pura, não por kungfu-scenery.js: aquele importa os
+// JSON com o alias `@/`, que o Node não resolve. É exatamente para isso que os
+// dois módulos existem separados.
+const LIB = await loadModule("src/components/games/kungfu-scenery-lib.js");
+const { sceneryAssetPathsFor, hydrate, LAYERS, ANCHORS } = LIB;
 const GAME = source("src/components/games/KungFuCastle.jsx");
+
+const FASES = {};
+for (const n of [1, 2, 3, 4, 5]) {
+  FASES[n] = hydrate(JSON.parse(fs.readFileSync(repoPath(`src/data/kungfu/fase-${n}.json`), "utf8")));
+}
+const PHASE_SCENERY = FASES;
+const sceneryAssetPaths = () => sceneryAssetPathsFor(Object.values(FASES));
 
 check("every phase in PHASE_CONFIG has scenery", () => {
   const block = GAME.match(/const PHASE_CONFIG = \{[\s\S]*?\n\};/);
@@ -34,30 +43,52 @@ check("each phase declares a positive levelWidth", () => {
   }
 });
 
-check("every prop layer is a known layer name", () => {
+check("every element declares a known layer and anchor", () => {
   for (const [phase, s] of Object.entries(PHASE_SCENERY)) {
-    for (const p of s.props) {
-      assert.ok(["bg", "game", "fg"].includes(p.layer),
-        `phase ${phase}: prop ${p.asset} has unknown layer "${p.layer}"`);
+    for (const el of s.elements) {
+      assert.ok(el.layer in LAYERS,
+        `fase ${phase}: ${el.asset} tem camada desconhecida "${el.layer}"`);
+      assert.ok(ANCHORS.includes(el.anchor),
+        `fase ${phase}: ${el.asset} tem âncora desconhecida "${el.anchor}"`);
     }
   }
 });
 
-check("every band declares a parallax factor between 0 and 1", () => {
+check("parallax is gone from the data — it is the layer's job now", () => {
+  // O campo existia em toda faixa e NUNCA era lido: a velocidade sempre veio de
+  // qual contêiner o sprite entra. Mantê-lo convidava alguém a editar um número
+  // sem efeito nenhum.
   for (const [phase, s] of Object.entries(PHASE_SCENERY)) {
-    for (const b of [...s.bg, ...s.mid]) {
-      assert.ok(b.parallax >= 0 && b.parallax <= 1,
-        `phase ${phase}: band ${b.asset} parallax ${b.parallax} out of range`);
+    for (const el of s.elements) {
+      assert.equal(el.parallax, undefined, `fase ${phase}: ${el.asset} ainda traz parallax`);
+    }
+  }
+  assert.ok(!/\bel\.parallax|band\.parallax/.test(GAME),
+    "o jogo não deve voltar a ler parallax dos dados");
+});
+
+check("an element either repeats or declares where it sits", () => {
+  for (const [phase, s] of Object.entries(PHASE_SCENERY)) {
+    for (const el of s.elements) {
+      assert.ok(el.repeat !== undefined || Number.isFinite(el.x),
+        `fase ${phase}: ${el.asset} não repete e não declara x`);
+      if (el.repeat) {
+        const every = el.repeat.every;
+        assert.ok(every === "auto" || every > 0,
+          `fase ${phase}: ${el.asset} tem repeat.every inválido: ${every}`);
+      }
     }
   }
 });
 
-check("phase 1 keeps its current layout: 2400px, starfield, 16 props", () => {
+check("phase 1 keeps its layout through the migration: 2400px, starfield, 18 elements", () => {
+  // 16 props + 2 faixas = 18 elementos. A contagem é o guarda-costas da
+  // migração: se ela perdesse ou duplicasse alguma coisa, apareceria aqui.
   const s = PHASE_SCENERY[1];
   assert.equal(s.levelWidth, 2400);
   assert.equal(s.sky.type, "starfield");
   assert.equal(s.tileset, "fase1-jardim");
-  assert.equal(s.props.length, 16); // matches the current PROP_LAYOUT exactly
+  assert.equal(s.elements.length, 18);
 });
 
 check("phase 2 uses the castle-gate tileset and a gradient sky", () => {
