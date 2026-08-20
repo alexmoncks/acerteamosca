@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
+import { createAudio } from "./kungfu-audio";
 import {
   regenHp,
   windupTicks,
@@ -415,6 +416,7 @@ export async function buildScene(app) {
   };
 
   game.sceneryLayers = { bg: bgScenery, mid: midScenery, ground: groundScenery, fg: fgScenery };
+
   buildScenery(game, 1);
 
   return game;
@@ -762,6 +764,7 @@ function updateTransition(game, keys, dt) {
       game.phaseSub.text = _t("phaseClear.continue");
       game.phaseTitle.alpha = 1;
       game.phaseSub.alpha = 1;
+      game.audio.tocar(game.phase >= MAX_PHASE ? "vitoria" : "gongo");
     }
     return;
   }
@@ -794,6 +797,7 @@ function updateTransition(game, keys, dt) {
     player.y = p.y - PLAYER_H;
     game.playerAnim.play("climb");
     game.playerAnim.update(dt);
+    game.audio.tocar("passoEscada"); // a janela mínima do som vira o ritmo do passo
     // Virar e encolher são o que vendem o afastamento: sem eles o herói sobe
     // do mesmo tamanho e segue reto onde a escada dobra.
     game.playerAnim.setFacing(p.facing);
@@ -895,6 +899,7 @@ function canDodge(player) {
  */
 function startDodge(game, originalFacing) {
   const { player } = game;
+  game.audio.tocar("pirueta");
   player.dodging = true;
   player.facing = originalFacing; // flip away while still facing the enemy
   player.attacking = true;
@@ -996,6 +1001,7 @@ function update(game, keys, dt) {
   // ---- Death sequence (blocks all input/updates) ----
   if (player.hp <= 0 && !player.dying) {
     player.dying = true;
+    game.audio.tocar("derrota");
     player.deathTimer = 90;
     player.attacking = false;
     player.attackType = null;
@@ -1105,6 +1111,7 @@ function update(game, keys, dt) {
   // Jump
   if ((keys.has("Space") || keys.has("ArrowUp") || keys.has("KeyW")) && player.grounded) {
     player.vy = JUMP_FORCE;
+    game.audio.tocar("pulo");
     player.grounded = false;
   }
 
@@ -1129,6 +1136,7 @@ function update(game, keys, dt) {
   if (punchKey && kickKey && !player.attacking && player.grounded) {
     player.attacking = true;
     player.attackType = "special";
+    player.acertou = false;
     player.attackTimer = ATTACKS.special.duration;
     player.hp = Math.max(1, player.hp - ATTACKS.special.hpCost);
     game.playerAnim.forcePlay("special");
@@ -1140,6 +1148,7 @@ function update(game, keys, dt) {
     if (player._downTapTimer > 0 && !player.attacking && player.grounded) {
       player.attacking = true;
       player.attackType = "sweep";
+    player.acertou = false;
       player.attackTimer = ATTACKS.sweep.duration;
       game.playerAnim.forcePlay("sweep");
       player._downTapTimer = 0;
@@ -1187,6 +1196,7 @@ function update(game, keys, dt) {
   if (canFlyKick && (!player.grounded || player.running)) {
     player.attacking = true;
     player.attackType = "flyKick";
+    player.acertou = false;
     player.attackTimer = ATTACKS.flyKick.duration;
     game.playerAnim.forcePlay("flyKick");
     // Launch into air if on ground (running voadora)
@@ -1201,6 +1211,7 @@ function update(game, keys, dt) {
   if ((keys.has("KeyZ") || keys.has("KeyN")) && !player.attacking && player.grounded && !player.crouching) {
     player.attacking = true;
     player.attackType = "punch";
+    player.acertou = false;
     player.attackTimer = ATTACKS.punch.duration;
     game.playerAnim.play("punch");
   }
@@ -1208,6 +1219,7 @@ function update(game, keys, dt) {
   if ((keys.has("KeyX") || keys.has("KeyM")) && !player.attacking && player.grounded && !player.crouching) {
     player.attacking = true;
     player.attackType = "kick";
+    player.acertou = false;
     player.attackTimer = ATTACKS.kick.duration;
     game.playerAnim.play("kick");
   }
@@ -1217,12 +1229,21 @@ function update(game, keys, dt) {
   player.y += player.vy * dt;
   if (player.y >= GROUND_Y - PLAYER_H) {
     player.y = GROUND_Y - PLAYER_H;
+    // O som é do INSTANTE em que encosta, não de estar no chão: sem checar o
+    // grounded anterior ele tocaria a cada quadro parado.
+    if (!player.grounded) game.audio.tocar("aterrissa");
     player.vy = 0;
     player.grounded = true;
   }
 
   // Clamp to level
   player.x = Math.max(0, Math.min(game.levelWidth - PLAYER_W, player.x));
+
+  // Golpe que terminou sem encostar em ninguém: só ar. `acertou` é marcado no
+  // laço de inimigos quando o dano sai.
+  if (player.attacking && player.attackTimer <= dt && player.attackType && !player.acertou) {
+    game.audio.tocar("golpeNoVazio");
+  }
 
   // Attack timer
   if (player.attacking) {
@@ -1353,6 +1374,7 @@ function update(game, keys, dt) {
     } else if (passo.acao === "carregar" || passo.acao === "golpe") {
       e.vx = 0;
       eAnim.forcePlay(passo.anim);
+      game.audio.tocar(passo.acao === "carregar" ? "poderCarrega" : "poderGolpe");
       if (passo.acao === "golpe") {
         // Passa pelo mesmo caminho do soco comum: wind-up derivado da própria
         // animação e impacto reavaliado na hora. O que muda é o dano e o
@@ -1409,6 +1431,7 @@ function update(game, keys, dt) {
     if (tickAttackImpact(e, player, e.attackRange ?? COMBAT_RANGE, dt)) {
       player.hp -= e.attackDamage ?? e.damage;
       game.playerAnim.play("hit");
+      game.audio.tocar("jogadorApanha");
       spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
     }
 
@@ -1438,6 +1461,12 @@ function update(game, keys, dt) {
           } else {
             e.hp -= atk.dmg || 1;
           }
+          player.acertou = true;
+          game.audio.tocar(
+            e.isBoss ? "chefeApanha"
+              : player.attackType === "kick" || player.attackType === "sweep"
+                ? "chuteAcerta" : "socoAcerta",
+          );
           // Atordoa E mata o golpe em preparo: só checar hitTimer na hora
           // do impacto não basta, porque vários wind-ups são mais longos que o
           // atordoamento e o golpe reapareceria depois da recuperação, sem
@@ -1449,6 +1478,7 @@ function update(game, keys, dt) {
           spawnParticles(game, e.x + FRAME_SIZE / 2, attackY + atk.hitH / 2, pColor, isSpecial ? 12 : 6);
           if (e.hp <= 0) {
             e.alive = false;
+            game.audio.tocar(e.isBoss ? "chefeCai" : "inimigoCai");
             player.score += e.score;
             if (!e.isBoss) game.killCount++;
             spawnParticles(game, e.x + FRAME_SIZE / 2, e.y + FRAME_SIZE / 2, 0xffd700, 12);
@@ -1556,6 +1586,20 @@ export default function KungFuCastle() {
   const [screen, setScreen] = useState(() => (editorNaUrl() ? "editor" : "menu"));
   const [editPhase, setEditPhase] = useState(() => editorNaUrl() || 1);
 
+  // O tocador é do COMPONENTE, não da cena. Ele precisa existir no menu — onde
+  // ainda não há cena — para o botão de mudo e o clique funcionarem, e precisa
+  // sobreviver à troca de fase, que reconstrói a cena inteira.
+  const audioRef = useRef(null);
+  if (audioRef.current === null && typeof window !== "undefined") {
+    audioRef.current = createAudio({ storage: window.localStorage });
+  }
+  const audio = () => audioRef.current;
+  // O mudo é lembrado entre partidas. Lido aqui só para o rótulo do botão: a
+  // fonte da verdade é o tocador, que é quem grava.
+  const [mudo, setMudo] = useState(
+    () => typeof window !== "undefined" && window.localStorage.getItem("kungfu:mudo") === "1",
+  );
+
   /** Troca de tela mantendo a URL coerente com o que está aberto. */
   const irPara = (tela, fase) => {
     if (typeof window !== "undefined") {
@@ -1614,6 +1658,7 @@ export default function KungFuCastle() {
       if (startAtBoss) scene.bossKillThreshold = 0;
       if (startPhase !== 1) loadPhase(scene, startPhase);
 
+      scene.audio = audio();
       gameRef.current = scene;
 
       // Test mode only: hand the live scene to whatever is driving the browser.
@@ -1656,7 +1701,12 @@ export default function KungFuCastle() {
       "Space", "KeyA", "KeyD", "KeyW", "KeyS",
       "KeyZ", "KeyX", "KeyN", "KeyM",
     ]);
+    // O primeiro gesto do usuário é o único momento em que o navegador deixa
+    // criar e destravar o AudioContext. Criado antes, ele nasce suspenso e o
+    // jogo fica mudo a partida inteira sem dar erro nenhum.
+    const acordarAudio = () => audio()?.init();
     const onDown = (e) => {
+      acordarAudio();
       if (GAME_KEYS.has(e.code)) e.preventDefault();
       keysRef.current.add(e.code);
     };
@@ -1666,9 +1716,12 @@ export default function KungFuCastle() {
     };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
+    // Toque e clique também: no celular não existe keydown.
+    window.addEventListener("pointerdown", acordarAudio);
     return () => {
       window.removeEventListener("keydown", onDown);
       window.removeEventListener("keyup", onUp);
+      window.removeEventListener("pointerdown", acordarAudio);
     };
   }, []);
 
@@ -1770,14 +1823,14 @@ export default function KungFuCastle() {
                 .sort((a, b) => a - b)
                 .map((n) => (
                   <div key={n} style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 6 }}>
-                    <button onClick={() => startTest(n, false)} style={S_TEST_BTN}>
+                    <button onClick={() => { audio()?.tocar("menu"); startTest(n, false); }} style={S_TEST_BTN}>
                       FASE {n}
                     </button>
-                    <button onClick={() => startTest(n, true)} style={{ ...S_TEST_BTN, color: "#dc2626" }}>
+                    <button onClick={() => { audio()?.tocar("menu"); startTest(n, true); }} style={{ ...S_TEST_BTN, color: "#dc2626" }}>
                       FASE {n} &#9656; CHEFE
                     </button>
                     <button
-                      onClick={() => irPara("editor", n)}
+                      onClick={() => { audio()?.tocar("menu"); irPara("editor", n); }}
                       style={{ ...S_TEST_BTN, color: "#ffd700" }}
                     >
                       EDITOR
@@ -1808,6 +1861,17 @@ export default function KungFuCastle() {
               Sprite Test
             </button>
           )}
+
+          <button
+            onClick={() => {
+              // O clique é gesto: serve para destravar o áudio e para alternar.
+              audio()?.init();
+              setMudo(audio()?.setMudo(!mudo) ?? !mudo);
+            }}
+            style={{ ...S_TEST_BTN, marginTop: 14, color: mudo ? "#4a5568" : "#c9d1d9" }}
+          >
+            SOM: {mudo ? "OFF" : "ON"}
+          </button>
 
           <p style={{ fontSize: 9, color: "#4a5568", marginTop: 16 }}>
             {t("controlsHint")}

@@ -234,7 +234,7 @@ check("the phase being edited lives in the URL, so a reload comes back to it", (
 check("entering and leaving the editor both go through the URL", () => {
   // Se um dos dois caminhos chamasse setScreen direto, a URL sairia de sincronia
   // e o próximo reload cairia na tela errada.
-  assert.match(GAME, /onClick=\{\(\) => irPara\("editor", n\)\}/);
+  assert.match(GAME, /irPara\("editor", n\)/);
   assert.match(GAME, /onBack=\{\(\) => irPara\("menu"\)\}/);
   assert.ok(!/setScreen\("editor"\)/.test(GAME), "nada pode entrar no editor sem passar por irPara");
 });
