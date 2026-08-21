@@ -1,14 +1,21 @@
 # Railway — como este repositório deve ser construído.
 #
-# Sem este arquivo o Railway escolhe o builder sozinho, e um `Dockerfile` na
-# raiz ganha do Nixpacks. O Dockerfile daqui foi escrito para teste LOCAL (o
-# próprio cabeçalho dele diz "Not used by Railway"), mas o Railway não lê
-# comentário: desde que ele apareceu na raiz, em 13/08, o site parou de receber
-# build novo. O que está no ar hoje é daquele dia.
+# ATENÇÃO: o que está aqui NÃO controla o serviço web. O log de build de
+# 21/08 mostra `load build definition from Dockerfile` e os estágios do
+# Dockerfile da raiz (deps → builder → runner), com este arquivo dizendo
+# NIXPACKS. O painel do Railway sobrepõe a configuração de raiz, e o serviço
+# web está fixado em DOCKERFILE por lá. Para mudar o build do site, mexa no
+# `Dockerfile` — não aqui.
 #
-# `builder` é a única coisa declarada aqui de propósito. Um `startCommand`
-# valeria para TODOS os serviços do projeto que usam este repositório — e o
-# ws-server é um deles, com start command próprio (`node server/ws-unified.js`).
-# Declarar start aqui derrubaria o WebSocket dos jogos multiplayer.
+# Então por que manter a linha? Porque ela protege os OUTROS serviços do
+# projeto que saem deste mesmo repositório. O ws-server dos jogos multiplayer
+# (`node server/ws-unified.js`) é um deles. Sem esta declaração o Railway
+# escolhe o builder sozinho, e um `Dockerfile` na raiz ganha do Nixpacks —
+# o ws-server passaria a subir numa imagem de 2,3GB feita para servir Next.
+# Apagar esta linha é a armadilha, não a limpeza.
+#
+# `startCommand` continua fora daqui de propósito: valeria para TODOS os
+# serviços, e o ws-server tem start próprio. Declarar start aqui derrubaria o
+# WebSocket dos jogos multiplayer.
 [build]
 builder = "NIXPACKS"

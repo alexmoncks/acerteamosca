@@ -30,11 +30,33 @@ check("the local default survives when nothing injects PORT", () => {
   assert.match(DOCKERFILE, /\$\{PORT:-3000\}/);
 });
 
-check("the builder is pinned, so a stray Dockerfile cannot hijack the build", () => {
-  // Sem railway.toml o Railway escolhe sozinho e um Dockerfile na raiz ganha do
-  // Nixpacks. Foi assim que um arquivo escrito para teste local virou o builder
-  // de produção.
+check("the builder is pinned, so a stray Dockerfile cannot hijack the ws-server", () => {
+  // ATENÇÃO ao que este teste protege: NÃO é o build do site. O log de 21/08
+  // provou que o serviço web é DOCKERFILE, fixado no painel, que sobrepõe o
+  // railway.toml. Esta linha protege os OUTROS serviços do mesmo repositório —
+  // o ws-server dos jogos multiplayer. Sem ela, o Dockerfile da raiz ganharia
+  // do Nixpacks para eles também.
   assert.match(TOML, /builder\s*=\s*"NIXPACKS"/);
+});
+
+check("the project binaries are on PATH in the runner", () => {
+  // O CMD da imagem só vale quando o serviço não tem Start Command próprio, e
+  // um comando de painel escrito da forma óbvia (`next start`) morre com
+  // `sh: next: not found`, exit 127 — medido. O container morre no primeiro
+  // segundo, o deploy é marcado como falho e a plataforma mantém o build
+  // ANTERIOR no ar, servindo 200 com código velho. Com node_modules/.bin no
+  // PATH, qualquer grafia do comando resolve.
+  const runner = DOCKERFILE.slice(DOCKERFILE.indexOf("AS runner"));
+  assert.match(runner, /ENV PATH=\/app\/node_modules\/\.bin:\$PATH/,
+    "o runner não põe os binários do projeto no PATH");
+});
+
+check("the start command does not fall back to the network", () => {
+  // `npx` BAIXA o pacote quando não acha local. Numa imagem com node_modules
+  // quebrado isso vira um download silencioso — e uma versão do Next diferente
+  // da que compilou o .next — em vez de um erro que se vê no log.
+  const cmd = DOCKERFILE.match(/^CMD .*/m)?.[0];
+  assert.ok(!/npx/.test(cmd), `o CMD usa npx e pode baixar da rede: ${cmd}`);
 });
 
 check("railway.toml declares no start command", () => {

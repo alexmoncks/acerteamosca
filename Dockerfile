@@ -1,5 +1,12 @@
-# Kung Fu Castle / Acerte a Mosca — local test image
-# Next.js 14 + Prisma (postgres). Not used by Railway, which builds from source.
+# Kung Fu Castle / Acerte a Mosca — a imagem de PRODUCAO.
+# Next.js 14 + Prisma (postgres).
+#
+# Este cabecalho ja disse "Not used by Railway, which builds from source". Era
+# MENTIRA, e a mentira custou oito dias: sessoes inteiras descartaram este
+# arquivo por causa dela e foram consertar o Nixpacks, que o Railway nem usa. O
+# log de build de 21/08 mostra `load build definition from Dockerfile` e os
+# estagios daqui (deps -> builder -> runner). O painel do servico web sobrepoe
+# o `railway.toml`. Se voce mexer aqui, esta mexendo em producao.
 
 FROM node:20-alpine AS base
 # openssl: required by Prisma engines. libc6-compat: required by sharp.
@@ -47,13 +54,32 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 # `output: standalone` is not set in next.config.js (Railway builds from source and
 # would be affected), so ship the built tree as-is rather than changing that config.
 COPY --from=builder /app ./
+# Os binarios do projeto no PATH.
+#
+# O CMD abaixo so vale quando o servico NAO tem Start Command proprio: um
+# comando definido no painel do Railway sobrepoe o CMD da imagem. E um comando
+# escrito da forma mais obvia -- `next start` -- morre na hora:
+#
+#     $ docker run img sh -c "next start"
+#     sh: next: not found          (exit 127)
+#
+# O container morre no primeiro segundo, o deploy e marcado como falho e a
+# plataforma mantem o build ANTERIOR no ar. Do lado de fora nao se ve erro
+# nenhum: o site responde 200, com o codigo velho.
+#
+# Com o PATH abaixo, `next start`, `prisma` e qualquer outro binario do projeto
+# resolvem independente de quem escreveu o comando e de como escreveu.
+ENV PATH=/app/node_modules/.bin:$PATH
+
 # A porta vem do ambiente. Plataforma de deploy (Railway, Fly, Cloud Run)
 # injeta $PORT e faz o healthcheck NELA — um `-p 3000` fixo faz o build passar,
 # o container subir, e o deploy ser marcado como falho mesmo assim, porque
-# ninguém atende na porta que a plataforma perguntou. Foi o que aconteceu aqui:
-# oito dias servindo o build antigo, sem um único erro de compilação no log.
+# ninguém atende na porta que a plataforma perguntou.
 #
 # `${PORT:-3000}` mantém o 3000 para uso local, onde ninguém injeta nada. Exige
 # shell form: a exec form não expande variável.
+#
+# `next` e nao `npx next`: o npx BAIXA o pacote da rede quando nao acha local,
+# entao uma copia quebrada viraria um download silencioso em vez de um erro.
 EXPOSE 3000
-CMD ["sh", "-c", "npx next start -H 0.0.0.0 -p ${PORT:-3000}"]
+CMD ["sh", "-c", "next start -H 0.0.0.0 -p ${PORT:-3000}"]
