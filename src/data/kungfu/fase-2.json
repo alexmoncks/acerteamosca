@@ -27,26 +27,21 @@
       }
     },
     {
-      "asset": "ponte-madeira",
-      "layer": "mid",
-      "anchor": "horizonte",
-      "y": 0,
-      "x": 900,
-      "scale": 2
-    },
-    {
       "asset": "portao-madeira",
       "layer": "game",
       "anchor": "chao",
-      "x": 60,
-      "y": 0
+      "x": 44,
+      "y": 9
     },
     {
       "asset": "tocha-fogo",
       "layer": "fg",
       "anchor": "chao",
-      "x": 180,
-      "y": 2
+      "x": 174,
+      "y": 4,
+      "repeat": {
+        "every": 420
+      }
     },
     {
       "asset": "estandarte",
@@ -57,108 +52,62 @@
     },
     {
       "asset": "shishi",
-      "layer": "game",
+      "layer": "fg",
       "anchor": "chao",
-      "x": 340,
-      "y": 2
+      "x": 341,
+      "y": 4
     },
     {
       "asset": "braseiro-fogo",
       "layer": "game",
       "anchor": "chao",
-      "x": 420,
-      "y": 1
-    },
-    {
-      "asset": "pilar-ornamentado",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 520,
-      "y": 0
-    },
-    {
-      "asset": "tocha-fogo",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 620,
-      "y": 2
+      "x": 451,
+      "y": 3,
+      "repeat": {
+        "every": 520
+      }
     },
     {
       "asset": "estandarte",
       "layer": "fg",
       "anchor": "chao",
-      "x": 780,
-      "y": 6
-    },
-    {
-      "asset": "tocha-fogo",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 1180,
-      "y": 2
-    },
-    {
-      "asset": "braseiro-fogo",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 1360,
-      "y": 1
+      "x": 759,
+      "y": 10
     },
     {
       "asset": "estandarte",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 1500,
-      "y": 6
-    },
-    {
-      "asset": "pilar-ornamentado",
       "layer": "game",
       "anchor": "chao",
-      "x": 1600,
-      "y": 0
-    },
-    {
-      "asset": "tocha-fogo",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 1740,
-      "y": 2
-    },
-    {
-      "asset": "braseiro-fogo",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 2000,
-      "y": 1
+      "x": 1619,
+      "y": 5
     },
     {
       "asset": "estandarte",
-      "layer": "fg",
+      "layer": "game",
       "anchor": "chao",
       "x": 2100,
       "y": 6
     },
     {
       "asset": "shishi",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 2260,
-      "y": 2
-    },
-    {
-      "asset": "tocha-fogo",
       "layer": "fg",
       "anchor": "chao",
-      "x": 2280,
-      "y": 2
+      "x": 2368,
+      "y": 3
     },
     {
       "asset": "portao-madeira-aberto",
+      "layer": "fg",
+      "anchor": "chao",
+      "x": 2573,
+      "y": 7
+    },
+    {
+      "asset": "fase2-parallax-muralha",
       "layer": "game",
       "anchor": "chao",
-      "x": 2500,
-      "y": 0
+      "x": 2666,
+      "y": -10
     }
   ]
 }

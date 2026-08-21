@@ -42,11 +42,14 @@
       "y": 5
     },
     {
-      "asset": "lanterna-papel",
+      "asset": "braseiro-fogo",
       "layer": "fg",
       "anchor": "chao",
       "x": 350,
-      "y": 4
+      "y": 10,
+      "repeat": {
+        "every": 380
+      }
     },
     {
       "asset": "rocha-taihu",
@@ -60,7 +63,8 @@
       "layer": "mid",
       "anchor": "chao",
       "x": 700,
-      "y": 5
+      "y": 2,
+      "scale": 0.8
     },
     {
       "asset": "shishi",
@@ -77,13 +81,6 @@
       "y": 4
     },
     {
-      "asset": "lanterna-papel",
-      "layer": "fg",
-      "anchor": "chao",
-      "x": 1150,
-      "y": 4
-    },
-    {
       "asset": "ameixeira",
       "layer": "fg",
       "anchor": "chao",
@@ -95,7 +92,7 @@
       "layer": "game",
       "anchor": "chao",
       "x": 1500,
-      "y": 1
+      "y": -2
     },
     {
       "asset": "shishi",
@@ -103,13 +100,6 @@
       "anchor": "chao",
       "x": 1650,
       "y": 4
-    },
-    {
-      "asset": "lanterna-papel",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 1800,
-      "y": 2
     },
     {
       "asset": "ameixeira",
@@ -126,18 +116,11 @@
       "y": 6
     },
     {
-      "asset": "portao-arco-pedra",
-      "layer": "game",
-      "anchor": "chao",
-      "x": 2300,
-      "y": 4
-    },
-    {
       "asset": "escada-pedra-externa",
       "layer": "game",
       "anchor": "chao",
-      "x": 2370,
-      "y": 10
+      "x": 2392,
+      "y": 11
     }
   ]
 }
