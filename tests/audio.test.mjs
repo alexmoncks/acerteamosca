@@ -136,7 +136,13 @@ check("createAudio works without any storage at all", () => {
 // ── fiação ─────────────────────────────────────────────────────────────────
 
 check("the context is only woken by a real user gesture", () => {
-  assert.match(GAME, /const acordarAudio = \(\) => audio\(\)\?\.init\(\)/);
+  // Confere o COMPORTAMENTO, não a forma da linha: o corpo de acordarAudio
+  // tem de chamar init(). Prender a sintaxe exata fez este teste quebrar assim
+  // que a trilha entrou no mesmo gesto, sem nada de errado ter acontecido.
+  const corpo = GAME.match(/const acordarAudio = \(\) =>([\s\S]*?)\n    \};|const acordarAudio = \(\) => ([^\n]*)/);
+  assert.ok(corpo, "acordarAudio não encontrado");
+  assert.match(corpo[0], /audio\(\)\?\.init\(\)/,
+    "o gesto tem de destravar o AudioContext");
   // O tocador é do COMPONENTE, não da cena: precisa existir no menu, onde
   // cena não há, e sobreviver à troca de fase, que reconstrói a cena inteira.
   assert.match(GAME, /const audioRef = useRef\(null\)/);

@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
+import { createBgm } from "./kungfu-bgm";
 import { createAudio } from "./kungfu-audio";
 import {
   regenHp,
@@ -671,6 +672,7 @@ function loadPhase(game, n) {
   game.particles = [];
 
   game.phase = n;
+  game.bgm?.tocar("fase", n);
   clearScenery(game);
   buildScenery(game, n);
   game.killCount = 0;
@@ -1303,6 +1305,9 @@ function update(game, keys, dt) {
     if (game.killCount >= game.bossKillThreshold && game.enemies.length === 0) {
       spawnBoss(game);
       game.bossActive = true;
+      // A troca de trilha é o aviso de que a luta mudou — chega antes do
+      // primeiro golpe do chefe, que é o ponto.
+      game.bgm?.tocar("chefe", game.phase);
     }
   }
 
@@ -1600,6 +1605,15 @@ export default function KungFuCastle() {
     audioRef.current = createAudio({ storage: window.localStorage });
   }
   const audio = () => audioRef.current;
+
+  // A trilha vive no componente, como os efeitos: precisa existir no menu,
+  // atravessar a troca de fase e sobreviver ao remonte da cena do PixiJS.
+  const bgmRef = useRef(null);
+  if (bgmRef.current === null && typeof window !== "undefined") {
+    bgmRef.current = createBgm();
+    bgmRef.current.setMudo(audioRef.current?.estaMudo() ?? false);
+  }
+  const bgm = () => bgmRef.current;
   // O mudo é lembrado entre partidas. Lido aqui só para o rótulo do botão: a
   // fonte da verdade é o tocador, que é quem grava.
   const [mudo, setMudo] = useState(
@@ -1662,9 +1676,18 @@ export default function KungFuCastle() {
       // Test-mode entry: zero the threshold BEFORE loadPhase, so the boss is
       // already eligible on the first frame of the requested phase.
       if (startAtBoss) scene.bossKillThreshold = 0;
-      if (startPhase !== 1) loadPhase(scene, startPhase);
 
+      // Som ANTES de loadPhase: é ela quem pede o tema do andar, e ligada a uma
+      // cena sem trilha o pedido virava um no-op silencioso — a fase abria com
+      // a música do menu ainda tocando.
       scene.audio = audio();
+      scene.bgm = bgm();
+
+      if (startPhase !== 1) loadPhase(scene, startPhase);
+      // A fase 1 não passa por loadPhase (a cena já nasce nela), então o tema
+      // do primeiro andar precisa ser pedido aqui ou nunca tocaria.
+      else scene.bgm?.tocar("fase", 1);
+
       gameRef.current = scene;
 
       // Test mode only: hand the live scene to whatever is driving the browser.
@@ -1679,9 +1702,11 @@ export default function KungFuCastle() {
         const g = gameRef.current;
         if (!g || g.gameOver || g.victory) {
           if (g?.gameOver) {
+            g.bgm?.tocar("derrota", g.phase);
             setFinalScore(g.player.score);
             setScreen("gameover");
           } else if (g?.victory) {
+            g.bgm?.tocar("vitoria");
             setFinalScore(g.player.score);
             setScreen("victory");
           }
@@ -1693,6 +1718,9 @@ export default function KungFuCastle() {
 
     return () => {
       destroyed = true;
+      // Sair do jogo tem de calar a trilha: sem isto ela segue tocando por
+      // cima da próxima página do site.
+      bgmRef.current?.parar();
       if (appRef.current) {
         appRef.current.destroy(true, { children: true });
         appRef.current = null;
@@ -1710,7 +1738,13 @@ export default function KungFuCastle() {
     // O primeiro gesto do usuário é o único momento em que o navegador deixa
     // criar e destravar o AudioContext. Criado antes, ele nasce suspenso e o
     // jogo fica mudo a partida inteira sem dar erro nenhum.
-    const acordarAudio = () => audio()?.init();
+    const acordarAudio = () => {
+      audio()?.init();
+      // O navegador só deixa um <audio> tocar depois de um gesto, igual ao
+      // AudioContext. Sem isto a tela inicial ficaria muda até alguém clicar
+      // em alguma coisa que por acaso pedisse música.
+      if (!bgm()?.faixaAtual()) bgm()?.tocar("menu");
+    };
     const onDown = (e) => {
       acordarAudio();
       if (GAME_KEYS.has(e.code)) e.preventDefault();
@@ -1872,7 +1906,9 @@ export default function KungFuCastle() {
             onClick={() => {
               // O clique é gesto: serve para destravar o áudio e para alternar.
               audio()?.init();
-              setMudo(audio()?.setMudo(!mudo) ?? !mudo);
+              const m = audio()?.setMudo(!mudo) ?? !mudo;
+              bgm()?.setMudo(m);
+              setMudo(m);
             }}
             style={{ ...S_TEST_BTN, marginTop: 14, color: mudo ? "#4a5568" : "#c9d1d9" }}
           >

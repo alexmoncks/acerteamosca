@@ -92,10 +92,14 @@ check("the boss shortcut zeroes the threshold before the ticker starts", () => {
 });
 
 check("a non-default start phase is loaded after the scene is built", () => {
-  const idx = GAME.indexOf("const scene = await buildScene(app)");
-  assert.ok(idx > -1, "buildScene call not found");
-  const after = GAME.slice(idx, idx + 600);
-  assert.match(after, /loadPhase\(scene,\s*startPhase\)/);
+  // Ordem, não janela de caracteres: a versão anterior fatiava 600 chars depois
+  // do buildScene e quebrou quando três linhas de trilha entraram no meio, sem
+  // nada de errado ter acontecido. O que importa é que uma venha depois da outra.
+  const constroi = GAME.indexOf("const scene = await buildScene(app)");
+  const carrega = GAME.search(/loadPhase\(scene,\s*startPhase\)/);
+  assert.ok(constroi > -1, "buildScene call not found");
+  assert.ok(carrega > -1, "loadPhase(scene, startPhase) not found");
+  assert.ok(constroi < carrega, "loadPhase tem de vir depois de buildScene");
 });
 
 check("startPhase and startAtBoss are React state, so a restart keeps them", () => {
