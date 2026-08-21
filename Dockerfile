@@ -47,5 +47,13 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 # `output: standalone` is not set in next.config.js (Railway builds from source and
 # would be affected), so ship the built tree as-is rather than changing that config.
 COPY --from=builder /app ./
+# A porta vem do ambiente. Plataforma de deploy (Railway, Fly, Cloud Run)
+# injeta $PORT e faz o healthcheck NELA — um `-p 3000` fixo faz o build passar,
+# o container subir, e o deploy ser marcado como falho mesmo assim, porque
+# ninguém atende na porta que a plataforma perguntou. Foi o que aconteceu aqui:
+# oito dias servindo o build antigo, sem um único erro de compilação no log.
+#
+# `${PORT:-3000}` mantém o 3000 para uso local, onde ninguém injeta nada. Exige
+# shell form: a exec form não expande variável.
 EXPOSE 3000
-CMD ["npx", "next", "start", "-H", "0.0.0.0", "-p", "3000"]
+CMD ["sh", "-c", "npx next start -H 0.0.0.0 -p ${PORT:-3000}"]
