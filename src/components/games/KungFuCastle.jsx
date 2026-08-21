@@ -28,6 +28,8 @@ import {
 // quem cai no menu e não aperta INICIAR não paga por ela.
 const KungFuHistoria = dynamic(() => import("./KungFuHistoria"), { ssr: false });
 
+import KungFuVitrine from "./KungFuVitrine";
+
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 const KungFuFaseEditor = dynamic(() => import("./KungFuFaseEditor"), { ssr: false });
 
@@ -1885,10 +1887,9 @@ export default function KungFuCastle() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 40,
             }}
           >
-            🥋
+            <KungFuVitrine />
           </div>
 
           <button

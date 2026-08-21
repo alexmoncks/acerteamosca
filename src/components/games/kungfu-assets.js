@@ -65,6 +65,18 @@ const ASSET_MANIFEST = {
 };
 
 /**
+ * As animações do jogador — caminho da folha e cadência — para quem precisa
+ * delas sem PixiJS.
+ *
+ * A vitrine da tela inicial (KungFuVitrine.jsx) desenha o jogador em DOM, com
+ * `background-position`, e precisa do mesmo `speed` que o AnimController usa
+ * dentro da partida. Ler daqui é o que impede a tela inicial e o jogo de
+ * divergirem no dia em que alguém acertar a cadência de um golpe.
+ */
+export const PLAYER_ANIMS = ASSET_MANIFEST.player.anims;
+export const PLAYER_FRAME_H = ASSET_MANIFEST.player.frameH;
+
+/**
  * Helper — build the anims map for one enemy type.
  * Each entry is [animName, opts] where opts may include a `file` override.
  */
