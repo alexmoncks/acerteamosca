@@ -17,6 +17,19 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
+
+  // A MESMA guarda do LocaleLayout, e ela precisa estar aqui também: o Next roda
+  // generateMetadata ANTES do componente, então a guarda de lá chega tarde.
+  //
+  // O matcher do middleware exclui qualquer caminho com ponto (`.*\..*`), para
+  // não reescrever arquivo estático. Um pedido de raiz que tenha ponto e NÃO
+  // seja arquivo — /favicon.ico é o caso de todo navegador, em toda visita —
+  // passa direto e casa com [locale]. Sem esta linha o import vira
+  // `../../messages/favicon.ico.json`, que não existe, e o 404 sai como 500.
+  if (!routing.locales.includes(locale)) {
+    notFound();
+  }
+
   const messages = (await import(`../../messages/${locale}.json`)).default;
   const m = messages.metadata;
 
