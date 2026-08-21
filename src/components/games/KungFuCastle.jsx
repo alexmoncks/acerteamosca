@@ -1375,6 +1375,7 @@ function update(game, keys, dt) {
       e.vx = 0;
       eAnim.forcePlay(passo.anim);
       game.audio.tocar(passo.acao === "carregar" ? "poderCarrega" : "poderGolpe");
+      if (passo.acao === "carregar") game.audio.tocar("gritoChefe");
       if (passo.acao === "golpe") {
         // Passa pelo mesmo caminho do soco comum: wind-up derivado da própria
         // animação e impacto reavaliado na hora. O que muda é o dano e o
@@ -1432,6 +1433,7 @@ function update(game, keys, dt) {
       player.hp -= e.attackDamage ?? e.damage;
       game.playerAnim.play("hit");
       game.audio.tocar("jogadorApanha");
+      game.audio.tocar("gritoEsforco");
       spawnParticles(game, player.x + FRAME_SIZE / 2, player.y + PLAYER_H / 2, 0xff4444, 5);
     }
 
@@ -1462,11 +1464,15 @@ function update(game, keys, dt) {
             e.hp -= atk.dmg || 1;
           }
           player.acertou = true;
+          // Tapa para o golpe mais leve, soco para o resto: o mesmo som em
+          // todo golpe apaga a diferença entre encostar e acertar de verdade.
           game.audio.tocar(
             e.isBoss ? "chefeApanha"
               : player.attackType === "kick" || player.attackType === "sweep"
-                ? "chuteAcerta" : "socoAcerta",
+                ? "chuteAcerta"
+                : (atk.dmg || 1) <= 1 ? "tapa" : "socoAcerta",
           );
+          game.audio.tocar("gritoAtaque");
           // Atordoa E mata o golpe em preparo: só checar hitTimer na hora
           // do impacto não basta, porque vários wind-ups são mais longos que o
           // atordoamento e o golpe reapareceria depois da recuperação, sem

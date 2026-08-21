@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { check, source, loadModule } from "./helpers.mjs";
 
-const { SONS, duracaoDe, createAudio, VOLUME_MESTRE } =
+const { SONS, duracaoDe, createAudio, VOLUME_MESTRE, COM_AMOSTRA, PASTA_AMOSTRAS } =
   await loadModule("src/components/games/kungfu-audio.js");
 const GAME = source("src/components/games/KungFuCastle.jsx");
 
@@ -146,17 +146,68 @@ check("the context is only woken by a real user gesture", () => {
     "init não pode acontecer junto da criação");
 });
 
+check("a shout has no synth fallback, on purpose", () => {
+  // Oscilador não faz voz. Um kiai sintetizado soa como alarme de micro-ondas,
+  // e silêncio é melhor do que um bipe fingindo ser grito. Enquanto a gravação
+  // não chega, esses nomes simplesmente não soam.
+  for (const n of COM_AMOSTRA.filter((x) => x.startsWith("grito"))) {
+    assert.equal(SONS[n], undefined, `${n} não deve ter síntese de reserva`);
+  }
+});
+
+check("every impact that prefers a sample still has a synth to fall back to", () => {
+  // O contrário do teste acima: impacto o oscilador FAZ bem, então enquanto não
+  // houver arquivo o jogo não pode ficar mudo no soco.
+  for (const n of COM_AMOSTRA.filter((x) => !x.startsWith("grito"))) {
+    assert.ok(SONS[n], `${n} pede amostra mas não tem reserva sintetizada`);
+  }
+});
+
+check("samples are looked for in one declared folder", () => {
+  assert.match(PASTA_AMOSTRAS, /^\/audio\/kungfucastle\//);
+  const AUDIO = source("src/components/games/kungfu-audio.js");
+  assert.match(AUDIO, /\$\{PASTA_AMOSTRAS\}\/\$\{nome\}\.mp3/,
+    "o caminho precisa sair da constante, para acrescentar arquivo não exigir código");
+});
+
+check("a missing sample file is the normal case, never an error", () => {
+  // Enquanto as gravações não chegam, TODO nome falha ao carregar. Se isso
+  // fosse tratado como erro, o console encheria e alguém iria atrás de um bug
+  // que não existe.
+  const AUDIO = source("src/components/games/kungfu-audio.js");
+  const bloco = AUDIO.match(/function carregarAmostras[\s\S]*?\n  \}/)[0];
+  assert.match(bloco, /addEventListener\("error"/, "a falha precisa ser capturada");
+  assert.ok(!/console\.(error|warn)/.test(bloco), "arquivo ausente não é para reclamar");
+});
+
+check("an impact hit uses a different sound from a light touch", () => {
+  // O mesmo som em todo golpe apaga a diferença entre encostar e acertar.
+  assert.match(GAME, /\(atk\.dmg \|\| 1\) <= 1 \? "tapa" : "socoAcerta"/);
+});
+
 check("every sound in the table is actually reachable from the game", () => {
   // Som declarado e nunca tocado é peso morto que ninguém percebe estar
   // quebrado. O contrário — tocar nome que não existe — já é silêncio seguro.
-  const tocados = new Set(
-    [...GAME.matchAll(/tocar\("([a-zA-Z]+)"\)/g)].map((m) => m[1]),
-  );
-  const ternarios = [...GAME.matchAll(/tocar\(\s*[\s\S]{0,200}?\)/g)]
-    .flatMap((m) => [...m[0].matchAll(/"([a-zA-Z]+)"/g)].map((x) => x[1]));
-  for (const n of ternarios) tocados.add(n);
+  // Varre o argumento de cada `tocar(` com parênteses BALANCEADOS. Um regex
+  // não-guloso parava no primeiro `)`, que hoje é o de `(atk.dmg || 1)` — e o
+  // teste passava a jurar que "tapa" e "socoAcerta" nunca eram tocados.
+  const tocados = new Set();
+  for (const m of GAME.matchAll(/tocar\(/g)) {
+    let i = m.index + m[0].length;
+    let nivel = 1;
+    const inicio = i;
+    while (i < GAME.length && nivel > 0) {
+      if (GAME[i] === "(") nivel++;
+      else if (GAME[i] === ")") nivel--;
+      i++;
+    }
+    const arg = GAME.slice(inicio, i - 1);
+    for (const n of arg.matchAll(/"([a-zA-Z]+)"/g)) tocados.add(n[1]);
+  }
   const orfaos = Object.keys(SONS).filter((n) => !tocados.has(n));
   assert.deepEqual(orfaos, [], `sons declarados e nunca tocados: ${orfaos}`);
+  const amostrasOrfas = COM_AMOSTRA.filter((n) => !tocados.has(n));
+  assert.deepEqual(amostrasOrfas, [], `amostras esperadas e nunca tocadas: ${amostrasOrfas}`);
 });
 
 check("the landing sound fires on touchdown, not every frame on the ground", () => {

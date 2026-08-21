@@ -16,7 +16,9 @@
  *   onda    "sine" | "square" | "triangle" | "sawtooth"
  *   de/para frequência inicial e final em Hz (glissando exponencial)
  *   ruido   true para ruído branco em vez de oscilador
- *   filtro  corte do passa-baixa do ruído, em Hz
+ *   filtro  frequência de corte do filtro do ruído, em Hz
+ *   passa   "lowpass" (padrão) | "highpass" | "bandpass"
+ *   q       ressonância do filtro; alto = estreito, é o que dá o "crack"
  *   dur     duração em segundos
  *   vol     0 a 1, antes do volume global
  *   atraso  segundos antes de começar, para montar batidas
@@ -27,61 +29,83 @@ export const VOLUME_MESTRE = 0.5;
 
 export const SONS = {
   // ── combate ──────────────────────────────────────────────────────────────
-  // Impacto seco: um corpo grave que despenca, mais um estalo de ruído. O
-  // estalo é o que faz o soco "conectar"; sem ele fica um bipe.
+  //
+  // Impacto de verdade tem DUAS partes, e a primeira versão só tinha a segunda.
+  //
+  //   TRANSIENTE  10 a 20ms de ruído banda-estreita. É o estalo, e é o que o
+  //               ouvido usa para dizer se bateu em carne, em madeira ou em
+  //               metal. Sem ele, qualquer impacto vira bipe.
+  //   CORPO       um seno ou triângulo despencando rápido de frequência. É a
+  //               massa: quanto mais grave e mais longo, mais pesado o golpe.
+  //
+  // Tapa e soco diferem quase só no transiente. O tapa é CLARO — banda alta e
+  // estreita, corpo quase nenhum, porque pele em pele não desloca massa. O soco
+  // é ESCURO — banda mais baixa e larga, e corpo de verdade.
+
+  // Tapa: estalo alto, sem peso.
+  tapa: {
+    minIntervalo: 45,
+    vozes: [
+      { ruido: true, passa: "bandpass", filtro: 3200, q: 2.4, dur: 0.035, vol: 0.34 },
+      { onda: "sine", de: 320, para: 150, dur: 0.045, vol: 0.12 },
+    ],
+  },
+  // Soco: estalo escuro e curto, corpo grave despencando.
   socoAcerta: {
     minIntervalo: 45,
     vozes: [
-      { onda: "square", de: 190, para: 55, dur: 0.09, vol: 0.30 },
-      { ruido: true, filtro: 1800, dur: 0.05, vol: 0.22 },
+      { ruido: true, passa: "bandpass", filtro: 900, q: 1.2, dur: 0.045, vol: 0.30 },
+      { onda: "sine", de: 210, para: 48, dur: 0.11, vol: 0.30 },
+      { onda: "triangle", de: 95, para: 40, dur: 0.16, vol: 0.16, atraso: 0.01 },
     ],
   },
+  // Chute: mais massa que o soco, transiente mais grave e corpo mais longo.
   chuteAcerta: {
     minIntervalo: 45,
     vozes: [
-      { onda: "square", de: 150, para: 42, dur: 0.12, vol: 0.32 },
-      { ruido: true, filtro: 1400, dur: 0.07, vol: 0.24 },
+      { ruido: true, passa: "bandpass", filtro: 620, q: 1.0, dur: 0.055, vol: 0.30 },
+      { onda: "sine", de: 170, para: 38, dur: 0.16, vol: 0.32 },
+      { onda: "triangle", de: 80, para: 32, dur: 0.22, vol: 0.16, atraso: 0.015 },
     ],
   },
-  // Golpe no vazio: só ar. Agudo, curtíssimo, baixo — tem de ser sentido, não
-  // ouvido, senão martelar o botão vira metralhadora.
+  // Golpe no vazio: só ar deslocado. Passa-alta, sem corpo nenhum.
   golpeNoVazio: {
     minIntervalo: 60,
-    vozes: [{ ruido: true, filtro: 5200, dur: 0.06, vol: 0.10 }],
+    vozes: [{ ruido: true, passa: "highpass", filtro: 3800, dur: 0.07, vol: 0.11 }],
   },
   // O jogador apanhando precisa doer mais que o inimigo apanhando: é a única
   // pista sonora de que a vida está indo embora.
   jogadorApanha: {
     minIntervalo: 90,
     vozes: [
-      { onda: "sawtooth", de: 140, para: 40, dur: 0.18, vol: 0.34 },
-      { ruido: true, filtro: 900, dur: 0.12, vol: 0.26 },
+      { ruido: true, passa: "bandpass", filtro: 700, q: 0.9, dur: 0.06, vol: 0.28 },
+      // Mais alto que o som de acertar, de propósito: é a única pista sonora de
+      // que a vida está indo embora, e tem de furar o barulho do próprio combate.
+      { onda: "sawtooth", de: 150, para: 36, dur: 0.20, vol: 0.36 },
+      { onda: "sine", de: 62, para: 30, dur: 0.30, vol: 0.22, atraso: 0.02 },
     ],
   },
   inimigoCai: {
-    // Janela larga de propósito, e não a de um som de combate: a queda dura
-    // 260ms, e cinco inimigos caindo juntos empilhariam cinco cópias da mesma
-    // onda — que somam em fase e saturam. Uma pancada só, para um grupo
-    // inteiro, lê melhor do que cinco emboladas.
     minIntervalo: 180,
     vozes: [
-      { onda: "triangle", de: 300, para: 70, dur: 0.26, vol: 0.24 },
+      { onda: "triangle", de: 300, para: 70, dur: 0.26, vol: 0.22 },
       { ruido: true, filtro: 700, dur: 0.16, vol: 0.16, atraso: 0.08 },
     ],
   },
   chefeApanha: {
     minIntervalo: 60,
     vozes: [
-      { onda: "square", de: 120, para: 38, dur: 0.14, vol: 0.32 },
-      { ruido: true, filtro: 1100, dur: 0.08, vol: 0.24 },
+      { ruido: true, passa: "bandpass", filtro: 480, q: 0.8, dur: 0.07, vol: 0.28 },
+      { onda: "square", de: 130, para: 34, dur: 0.18, vol: 0.28 },
+      { onda: "sine", de: 55, para: 26, dur: 0.28, vol: 0.14, atraso: 0.02 },
     ],
   },
   chefeCai: {
     minIntervalo: 400,
     vozes: [
-      { onda: "sawtooth", de: 180, para: 28, dur: 0.9, vol: 0.38 },
-      { ruido: true, filtro: 500, dur: 0.7, vol: 0.28, atraso: 0.05 },
-      { onda: "sine", de: 60, para: 24, dur: 1.2, vol: 0.22, atraso: 0.1 },
+      { onda: "sawtooth", de: 180, para: 28, dur: 0.9, vol: 0.34 },
+      { ruido: true, filtro: 500, dur: 0.7, vol: 0.24, atraso: 0.05 },
+      { onda: "sine", de: 60, para: 24, dur: 1.2, vol: 0.20, atraso: 0.1 },
     ],
   },
 
@@ -144,6 +168,34 @@ export const SONS = {
   menu: { minIntervalo: 60, vozes: [{ onda: "square", de: 880, para: 1320, dur: 0.05, vol: 0.12 }] },
 };
 
+/**
+ * Sons que preferem uma AMOSTRA de verdade ao sintetizado.
+ *
+ * Oscilador não faz grito. Impacto ele faz bem — transiente mais corpo é
+ * exatamente como um soco soa —, mas voz humana não sai de onda quadrada, e um
+ * kiai sintetizado soa como alarme de micro-ondas. Grito precisa de gravação.
+ *
+ * Como usar: ponha o arquivo em `public/audio/kungfucastle/sfx/<nome>.mp3` e
+ * acrescente o nome aqui. O tocador usa a amostra quando ela carrega e cai no
+ * sintetizado quando não carrega — então acrescentar um nome antes do arquivo
+ * existir não quebra nada, só não muda nada.
+ *
+ * Os `grito*` não existem na tabela de síntese de propósito: sem arquivo eles
+ * são silêncio, e silêncio é melhor que um bipe fingindo ser voz.
+ */
+export const COM_AMOSTRA = [
+  "tapa",
+  "socoAcerta",
+  "chuteAcerta",
+  "jogadorApanha",
+  "gritoAtaque",   // kiai do jogador ao socar
+  "gritoEsforco",  // ao levar dano
+  "gritoChefe",    // o chefe carregando o poder
+];
+
+/** Onde as amostras moram. */
+export const PASTA_AMOSTRAS = "/audio/kungfucastle/sfx";
+
 /** Duração total de um som, incluindo atrasos. Usada nos testes e no mixer. */
 export function duracaoDe(som) {
   return Math.max(...som.vozes.map((v) => (v.atraso || 0) + v.dur));
@@ -168,6 +220,7 @@ export function createAudio(opts = {}) {
   let mudo = storage?.getItem(CHAVE) === "1";
   const ultimaVez = new Map();
   let ruidoBuf = null;
+  const amostras = new Map(); // nome -> pool de <audio>, quando o arquivo existe
 
   const agora = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
@@ -197,8 +250,9 @@ export function createAudio(opts = {}) {
       fonte.buffer = bufferDeRuido();
       if (v.filtro) {
         const f = ctx.createBiquadFilter();
-        f.type = "lowpass";
+        f.type = v.passa || "lowpass";
         f.frequency.value = v.filtro;
+        if (v.q) f.Q.value = v.q;
         fonte.connect(f);
         f.connect(ganho);
       } else {
@@ -217,9 +271,49 @@ export function createAudio(opts = {}) {
     fonte.stop(t + v.dur + 0.02);
   }
 
+  /**
+   * Tenta carregar as amostras. Um pool por som, porque dois inimigos apanhando
+   * juntos precisam de dois elementos — um só reinicia e o primeiro soco some.
+   *
+   * Falha em silêncio de propósito: arquivo ausente é o caso NORMAL enquanto as
+   * gravações não chegam, e o sintetizado cobre. Não é erro, é o padrão.
+   */
+  function carregarAmostras() {
+    if (typeof Audio === "undefined") return;
+    for (const nome of COM_AMOSTRA) {
+      if (amostras.has(nome)) continue;
+      const src = `${PASTA_AMOSTRAS}/${nome}.mp3`;
+      const sonda = new Audio();
+      sonda.addEventListener("canplaythrough", () => {
+        const pool = [sonda];
+        for (let i = 1; i < 3; i++) pool.push(new Audio(src));
+        amostras.set(nome, { pool, idx: 0 });
+      }, { once: true });
+      sonda.addEventListener("error", () => { /* sem arquivo: fica o sintetizado */ }, { once: true });
+      sonda.preload = "auto";
+      sonda.src = src;
+    }
+  }
+
+  function tocarAmostra(nome) {
+    const a = amostras.get(nome);
+    if (!a) return false;
+    const el = a.pool[a.idx];
+    a.idx = (a.idx + 1) % a.pool.length;
+    try {
+      el.currentTime = 0;
+      el.volume = VOLUME_MESTRE;
+      el.play().catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   return {
     /** Cria o contexto. Chamar no primeiro gesto do usuário, nunca antes. */
     init() {
+      carregarAmostras();
       if (ctx) {
         if (ctx.state === "suspended") ctx.resume();
         return;
@@ -239,8 +333,14 @@ export function createAudio(opts = {}) {
      * não faz nada — áudio nunca deve derrubar o laço do jogo.
      */
     tocar(nome) {
+      if (mudo) return false;
       const som = SONS[nome];
-      if (!som || !ctx || mudo) return false;
+      // Amostra ganha do sintetizado quando existe. Alguns nomes (os gritos) só
+      // têm amostra: sem arquivo eles são silêncio, e silêncio é melhor que um
+      // bipe fingindo ser voz.
+      if (!som) return COM_AMOSTRA.includes(nome) ? tocarAmostra(nome) : false;
+      if (COM_AMOSTRA.includes(nome) && tocarAmostra(nome)) return true;
+      if (!ctx) return false;
       // Cinco inimigos morrendo no mesmo quadro viram um estouro em vez de
       // cinco quedas. A janela mínima corta a repetição sem cortar o ritmo.
       const t = agora();
