@@ -15,6 +15,18 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["kung fu castle", "beat em up", "jogo de luta online", "side scroller", "jogo de ação grátis", "beat em up navegador"]
       : ["kung fu castle", "beat em up", "side scroller", "free fighting game", "action game browser", "beat em up online"],
+    // FORA DO ÍNDICE ENQUANTO ESTIVER EM TESTE.
+    //
+    // O jogo não está no menu da home nem no sitemap: chega-se a ele só por
+    // link direto, que é como está sendo passado para quem vai testar. Só que
+    // esta página tem título, keywords, canonical e JSON-LD completos — ela foi
+    // montada para ranquear, e basta um link de fora para o Google achá-la.
+    // Um beat-em-up inacabado ranqueando é pior do que não ranquear: gasta a
+    // primeira impressão do visitante num jogo que ainda vai mudar.
+    //
+    // PARA PUBLICAR: apague este bloco `robots`, acrescente a rota ao
+    // src/app/sitemap.js e o card ao menu em src/app/[locale]/page.js.
+    robots: { index: false, follow: false },
     alternates: {
       canonical: "/jogos/kungfucastle",
       languages: {

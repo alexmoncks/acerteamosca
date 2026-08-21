@@ -208,3 +208,14 @@ check("the hero looks at what each panel is about", () => {
     assert.ok(f.olhaPara != null, `${id}: o herói não declara para onde olha`);
   }
 });
+
+check("the game stays out of the index while it is only for testers", () => {
+  // Fora do menu e fora do sitemap já era verdade; faltava o robots. A página
+  // tem SEO completo e um link de fora bastaria para indexá-la.
+  const pagina = source("src/app/[locale]/jogos/kungfucastle/page.js");
+  assert.match(pagina, /robots: \{ index: false, follow: false \}/);
+  const home = source("src/app/[locale]/page.js");
+  assert.ok(!/kungfucastle/.test(home), "o jogo voltou ao menu da home");
+  const sitemap = source("src/app/sitemap.js");
+  assert.ok(!/kungfucastle/.test(sitemap), "o jogo entrou no sitemap");
+});
