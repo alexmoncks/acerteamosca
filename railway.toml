@@ -1,0 +1,14 @@
+# Railway — como este repositório deve ser construído.
+#
+# Sem este arquivo o Railway escolhe o builder sozinho, e um `Dockerfile` na
+# raiz ganha do Nixpacks. O Dockerfile daqui foi escrito para teste LOCAL (o
+# próprio cabeçalho dele diz "Not used by Railway"), mas o Railway não lê
+# comentário: desde que ele apareceu na raiz, em 13/08, o site parou de receber
+# build novo. O que está no ar hoje é daquele dia.
+#
+# `builder` é a única coisa declarada aqui de propósito. Um `startCommand`
+# valeria para TODOS os serviços do projeto que usam este repositório — e o
+# ws-server é um deles, com start command próprio (`node server/ws-unified.js`).
+# Declarar start aqui derrubaria o WebSocket dos jogos multiplayer.
+[build]
+builder = "NIXPACKS"
