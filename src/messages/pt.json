@@ -639,6 +639,14 @@
         "4": "Torre de Vigia",
         "5": "Topo do Castelo"
       },
+      "historia": {
+        "skip": "ESPAÇO PARA PULAR",
+        "castelo": "Cinco andares. Em cada um, um mestre. No topo, o Senhor do Castelo.",
+        "trono": "Ele mandou buscar a princesa. Os capangas a arrastaram pelo pátio, e o portão se fechou atrás dela.",
+        "portao": "Ninguém do vilarejo atravessou aquele arco e voltou. Um homem foi assim mesmo.",
+        "mestres": "Cada andar tem seu dono. Nenhum deles vai abrir passagem.",
+        "heroi": "Sem arma. Sem exército. Só o que ele aprendeu a fazer com as mãos."
+      },
       "phaseClear": {
         "title": "FASE COMPLETA",
         "continue": "ESPAÇO PARA CONTINUAR"

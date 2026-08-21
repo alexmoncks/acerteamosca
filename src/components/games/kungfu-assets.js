@@ -280,7 +280,7 @@ const BOSS_MANIFEST = {
  * standing still. Speeds are deliberately unequal — flames synchronised across
  * a level read as machinery, not as fire.
  */
-const ANIMATED_PROPS = {
+export const ANIMATED_PROPS = {
   "tocha-fogo":     { frames: 9, speed: 0.22 },
   "braseiro-fogo":  { frames: 9, speed: 0.18 },
   "lanterna-papel": { frames: 9, speed: 0.12 },

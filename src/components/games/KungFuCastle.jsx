@@ -24,6 +24,10 @@ import {
   escadaDeSaida, caminhoDeSubida, pontoNoCaminho,
 } from "./kungfu-scenery-lib";
 
+// A abertura carrega a própria Application do PixiJS. Fora do bundle inicial:
+// quem cai no menu e não aperta INICIAR não paga por ela.
+const KungFuHistoria = dynamic(() => import("./KungFuHistoria"), { ssr: false });
+
 const KungFuSpriteTest = dynamic(() => import("./KungFuSpriteTest"), { ssr: false });
 const KungFuFaseEditor = dynamic(() => import("./KungFuFaseEditor"), { ssr: false });
 
@@ -1769,7 +1773,16 @@ export default function KungFuCastle() {
   const handleStart = () => {
     setStartPhase(1);
     setStartAtBoss(false);
-    setScreen("playing");
+    // Só o INICIAR passa pela abertura. O modo de teste e o "jogar de novo"
+    // entram direto: quem está depurando a fase 4 ou acabou de perder não quer
+    // ver a história de novo.
+    bgm()?.tocar("abertura");
+    setScreen("historia");
+  };
+
+  /** Fim da abertura, por tempo ou porque pularam. */
+  const handleHistoriaFim = () => {
+    setScreen((atual) => (atual === "historia" ? "playing" : atual));
   };
 
   /** Test mode: drop straight into `phase`, optionally with the boss already due. */
@@ -1918,6 +1931,22 @@ export default function KungFuCastle() {
           <p style={{ fontSize: 9, color: "#4a5568", marginTop: 16 }}>
             {t("controlsHint")}
           </p>
+        </div>
+      )}
+
+      {screen === "historia" && (
+        <div style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}>
+          <KungFuHistoria
+            textos={{
+              skip: t("historia.skip"),
+              castelo: t("historia.castelo"),
+              trono: t("historia.trono"),
+              portao: t("historia.portao"),
+              mestres: t("historia.mestres"),
+              heroi: t("historia.heroi"),
+            }}
+            onFim={handleHistoriaFim}
+          />
         </div>
       )}
 

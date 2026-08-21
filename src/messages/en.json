@@ -639,6 +639,14 @@
         "4": "Watchtower",
         "5": "Castle Top"
       },
+      "historia": {
+        "skip": "SPACE TO SKIP",
+        "castelo": "Five floors. A master on each one. At the top, the Lord of the Castle.",
+        "trono": "He sent for the princess. His thugs dragged her across the courtyard, and the gate closed behind her.",
+        "portao": "Nobody from the village ever walked through that arch and came back. One man went anyway.",
+        "mestres": "Every floor has its owner. Not one of them will step aside.",
+        "heroi": "No weapon. No army. Only what he learned to do with his hands."
+      },
       "phaseClear": {
         "title": "STAGE CLEAR",
         "continue": "PRESS SPACE TO CONTINUE"
