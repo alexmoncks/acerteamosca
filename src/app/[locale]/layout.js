@@ -78,7 +78,7 @@ export async function generateMetadata({ params }) {
       googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
     },
     icons: {
-      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩴</text></svg>",
+      icon: "/icons/icon-192.svg",
     },
   };
 }

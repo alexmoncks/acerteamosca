@@ -11,7 +11,8 @@
 // arquivo escapa do next-intl e casa com o segmento [locale]. Aí
 // generateMetadata importava `../../messages/favicon.ico.json` e estourava.
 import assert from "node:assert/strict";
-import { check, source } from "./helpers.mjs";
+import fs from "node:fs";
+import { check, source, repoPath } from "./helpers.mjs";
 
 // Sem comentários: o comentário do próprio layout explica o defeito e cita o
 // import: procurar a palavra acharia a explicação, não o código.
@@ -61,4 +62,21 @@ check("the middleware still lets dotted root paths through", () => {
   // mexer no matcher tem de ler o outro teste antes.
   assert.match(MIDDLEWARE, /\.\*\\\\?\.\.\*/,
     "o matcher deixou de excluir caminhos com ponto");
+});
+
+check("the declared favicon points at a file that exists", () => {
+  // Caminho de ícone errado não quebra build, não aparece em log e não falha
+  // teste nenhum: o navegador pede, leva 404 e mostra o ícone genérico. A única
+  // forma de descobrir é reparar que sumiu. Este teste é essa reparada.
+  const declarado = LAYOUT.match(/icon:\s*"([^"]+)"/)?.[1];
+  assert.ok(declarado, "o metadata não declara ícone nenhum");
+
+  // Um data: URI se basta e não tem arquivo para conferir.
+  if (declarado.startsWith("data:")) return;
+
+  assert.ok(declarado.startsWith("/"),
+    `caminho de ícone tem de ser absoluto: ${declarado}`);
+  const arquivo = repoPath("public" + declarado);
+  assert.ok(fs.existsSync(arquivo),
+    `o ícone declarado não existe em public/: ${declarado}`);
 });
