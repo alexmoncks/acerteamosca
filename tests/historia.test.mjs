@@ -219,3 +219,30 @@ check("the game stays out of the index while it is only for testers", () => {
   const sitemap = source("src/app/sitemap.js");
   assert.ok(!/kungfucastle/.test(sitemap), "o jogo entrou no sitemap");
 });
+
+check("touch controls reach every action the keyboard has", () => {
+  // Vieram de um ramo paralelo e foram portados: o risco é portar metade. Um
+  // celular sem botão de pulo não passa da primeira fase.
+  const overlay = GAME.match(/\{isTouch && \([\s\S]*?\n          \)\}/)?.[0];
+  assert.ok(overlay, "overlay de toque não encontrado");
+  for (const code of ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "KeyZ", "KeyX"]) {
+    assert.ok(overlay.includes(`"${code}"`), `sem botão para ${code}`);
+  }
+  // O contêiner não pode comer o toque destinado ao canvas.
+  assert.match(overlay, /pointerEvents: "none"/);
+  assert.match(overlay, /pointerEvents: "auto"/);
+});
+
+check("a slipping finger releases the key", () => {
+  // Dedo que escorrega para fora do botão sem soltar deixaria o personagem
+  // andando para sempre — o pior bug possível num controle de toque.
+  const botao = GAME.match(/function TouchButton\([\s\S]*?\n\}/)[0];
+  for (const ev of ["onPointerUp", "onPointerCancel", "onPointerLeave"]) {
+    assert.match(botao, new RegExp(`${ev}=\\{release\\}`), `${ev} não solta a tecla`);
+  }
+});
+
+check("the touch overlay never renders on the server", () => {
+  // matchMedia não existe no servidor: ler fora do efeito quebraria o SSR.
+  assert.match(GAME, /useState\(false\);\n\s*useEffect\(\(\) => \{ setIsTouch\(window\.matchMedia/);
+});

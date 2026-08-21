@@ -3,9 +3,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import AdBanner from "@/components/AdBanner";
-import AdsTerraPopunder from "@/components/AdsTerraPopunder";
-import AdsTerraBanner from "@/components/AdsTerraBanner";
-import AdsTerraSocialBar from "@/components/AdsTerraSocialBar";
 
 const slugs = [
   { slug: "acerteamosca", emoji: "🦟", cor: "#00f0ff", destaque: true },
@@ -74,8 +71,6 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageLd) }}
       />
-      <AdsTerraPopunder />
-      <AdsTerraSocialBar />
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
         style={{
@@ -212,7 +207,6 @@ export default function Home() {
       `}</style>
 
       <AdBanner slot="home_top" style={{ marginBottom: 20, maxWidth: 900, width: "100%" }} />
-      <AdsTerraBanner style={{ marginBottom: 20, maxWidth: 900 }} />
 
       <div
         style={{
@@ -311,7 +305,6 @@ export default function Home() {
         ))}
       </section>
 
-      <AdsTerraBanner style={{ marginTop: 30, maxWidth: 900 }} />
 
     </div>
   );

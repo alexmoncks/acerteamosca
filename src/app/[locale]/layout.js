@@ -152,6 +152,7 @@ export default async function LocaleLayout({ children, params }) {
               src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
               strategy="afterInteractive"
               crossOrigin="anonymous"
+              data-overlays="bottom"
             />
           )}
           <Script id="load-fonts" strategy="afterInteractive">

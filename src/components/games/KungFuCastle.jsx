@@ -1578,6 +1578,45 @@ function update(game, keys, dt) {
 // ============================================================
 // COMPONENT
 // ============================================================
+
+/**
+ * Botão de toque. Alimenta o MESMO keysRef que o teclado, então o laço do jogo
+ * não sabe nem precisa saber de onde veio o comando.
+ *
+ * `onPointerLeave` solta a tecla junto com `onPointerUp`: o dedo escorregando
+ * para fora do botão, num celular, deixaria o personagem andando para sempre.
+ */
+function TouchButton({ code, label, keysRef, size = 56, color = "#dc2626" }) {
+  const codes = Array.isArray(code) ? code : [code];
+  const press = (e) => {
+    e.preventDefault();
+    for (const c of codes) keysRef.current.add(c);
+  };
+  const release = () => {
+    for (const c of codes) keysRef.current.delete(c);
+  };
+  return (
+    <button
+      onPointerDown={press}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onPointerLeave={release}
+      aria-label={typeof code === "string" ? code : codes.join("+")}
+      style={{
+        width: size, height: size, borderRadius: "50%",
+        background: `${color}33`, border: `2px solid ${color}aa`,
+        color: "#ccd6f6", fontFamily: "monospace",
+        fontSize: size > 50 ? 15 : 12,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        touchAction: "none", userSelect: "none",
+        WebkitUserSelect: "none", WebkitTapHighlightColor: "transparent",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function KungFuCastle() {
   const t = useTranslations("games.kungfucastle");
   const containerRef = useRef(null);
@@ -1608,6 +1647,11 @@ export default function KungFuCastle() {
   if (audioRef.current === null && typeof window !== "undefined") {
     audioRef.current = createAudio({ storage: window.localStorage });
   }
+  // Ponteiro grosso = dedo. `matchMedia` só existe no cliente, então a leitura
+  // fica no efeito — no servidor isto é false e o overlay não vai no HTML.
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => { setIsTouch(window.matchMedia("(pointer: coarse)").matches); }, []);
+
   const audio = () => audioRef.current;
 
   // A trilha vive no componente, como os efeitos: precisa existir no menu,
@@ -1951,10 +1995,44 @@ export default function KungFuCastle() {
       )}
 
       {screen === "playing" && (
-        <div
-          ref={containerRef}
-          style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}
-        />
+        <>
+          <div
+            ref={containerRef}
+            style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}
+          />
+          {isTouch && (
+            <div
+              style={{
+                position: "fixed", left: 0, right: 0, bottom: 16,
+                display: "flex", justifyContent: "space-between", alignItems: "flex-end",
+                padding: "0 16px",
+                // O contêiner não intercepta: só os botões. Senão a faixa
+                // inteira comeria o toque que deveria chegar ao canvas.
+                pointerEvents: "none",
+                zIndex: 30,
+              }}
+            >
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 52px)", gridTemplateRows: "repeat(2, 52px)", gap: 4, pointerEvents: "auto" }}>
+                <div />
+                <TouchButton code="ArrowUp" label="▲" keysRef={keysRef} size={52} color="#00f0ff" />
+                <div />
+                <TouchButton code="ArrowLeft" label="◀" keysRef={keysRef} size={52} color="#00f0ff" />
+                <TouchButton code="ArrowDown" label="▼" keysRef={keysRef} size={52} color="#00f0ff" />
+                <TouchButton code="ArrowRight" label="▶" keysRef={keysRef} size={52} color="#00f0ff" />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end", pointerEvents: "auto" }}>
+                {/* Pulo é Espaço no teclado; no celular precisa de botão próprio,
+                    senão a pirueta e o salto ficam inalcançáveis. */}
+                <TouchButton code="Space" label="⤴" keysRef={keysRef} size={48} color="#ffd700" />
+                <div style={{ display: "flex", gap: 10 }}>
+                  <TouchButton code="KeyZ" label="Z" keysRef={keysRef} size={58} color="#dc2626" />
+                  <TouchButton code="KeyX" label="X" keysRef={keysRef} size={58} color="#b026ff" />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {screen === "gameover" && (
