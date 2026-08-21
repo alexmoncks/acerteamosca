@@ -188,6 +188,7 @@ export const COM_AMOSTRA = [
   "socoAcerta",
   "chuteAcerta",
   "jogadorApanha",
+  "passoEscada",
   "gritoAtaque",   // kiai do jogador ao socar
   "gritoEsforco",  // ao levar dano
   "gritoChefe",    // o chefe carregando o poder
@@ -221,6 +222,7 @@ export function createAudio(opts = {}) {
   const ultimaVez = new Map();
   let ruidoBuf = null;
   const amostras = new Map(); // nome -> pool de <audio>, quando o arquivo existe
+  const sondados = new Set(); // nomes já pedidos ao servidor, deram certo ou não
 
   const agora = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
@@ -277,11 +279,17 @@ export function createAudio(opts = {}) {
    *
    * Falha em silêncio de propósito: arquivo ausente é o caso NORMAL enquanto as
    * gravações não chegam, e o sintetizado cobre. Não é erro, é o padrão.
+   *
+   * Sondar UMA vez por nome, não uma por chamada. init() roda a cada tecla —
+   * é o único momento em que o navegador deixa destravar o áudio — e marcar só
+   * os que carregaram fazia os ausentes voltarem ao servidor a cada tecla
+   * pressionada: três 404 por tecla, centenas numa partida.
    */
   function carregarAmostras() {
     if (typeof Audio === "undefined") return;
     for (const nome of COM_AMOSTRA) {
-      if (amostras.has(nome)) continue;
+      if (sondados.has(nome)) continue;
+      sondados.add(nome);
       const src = `${PASTA_AMOSTRAS}/${nome}.mp3`;
       const sonda = new Audio();
       sonda.addEventListener("canplaythrough", () => {

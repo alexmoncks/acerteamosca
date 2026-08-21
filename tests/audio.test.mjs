@@ -5,7 +5,9 @@
 // navegador — a tabela e as regras de disparo são conferíveis aqui; só o
 // barulho em si precisa de ouvido.
 import assert from "node:assert/strict";
-import { check, source, loadModule } from "./helpers.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { check, source, loadModule, repoPath } from "./helpers.mjs";
 
 const { SONS, duracaoDe, createAudio, VOLUME_MESTRE, COM_AMOSTRA, PASTA_AMOSTRAS } =
   await loadModule("src/components/games/kungfu-audio.js");
@@ -219,4 +221,61 @@ check("the whiff only fires when the attack truly touched nobody", () => {
   assert.match(GAME, /!player\.acertou[\s\S]{0,80}golpeNoVazio/);
   const zerados = [...GAME.matchAll(/player\.acertou = false;/g)].length;
   assert.ok(zerados >= 4, `só ${zerados} ataques zeram a marca — os outros nunca soariam no vazio`);
+});
+
+// ── a camada de amostras ───────────────────────────────────────────────────
+
+check("each sample name is asked of the server once, not once per keypress", () => {
+  // init() roda a cada tecla, porque é o único momento em que o navegador
+  // deixa destravar o áudio. Marcar só os nomes que CARREGARAM fazia os
+  // ausentes — os gritos, que ainda não existem — voltarem ao servidor a cada
+  // tecla: três 404 por tecla, centenas numa partida.
+  const pedidos = [];
+  class AudioFalso {
+    constructor(src) { if (src) pedidos.push(src); }
+    addEventListener(evento, fn) { if (evento === "error") this.falhar = fn; }
+    set src(v) { pedidos.push(v); queueMicrotask(() => this.falhar?.()); }
+    play() { return Promise.resolve(); }
+  }
+  const antes = globalThis.Audio;
+  globalThis.Audio = AudioFalso;
+  try {
+    const a = createAudio({ storage: null });
+    a.init();
+    const primeiraRodada = pedidos.length;
+    assert.equal(primeiraRodada, COM_AMOSTRA.length,
+      "a primeira sondagem tem de pedir cada nome uma vez");
+    for (let tecla = 0; tecla < 20; tecla++) a.init();
+    assert.equal(pedidos.length, primeiraRodada,
+      `20 teclas depois, ${pedidos.length - primeiraRodada} pedidos a mais`);
+  } finally {
+    globalThis.Audio = antes;
+  }
+});
+
+check("the sourced samples are on disk where the loader looks for them", () => {
+  // O caminho é montado em código e os arquivos vivem em public/: renomear um
+  // dos dois lados deixa o jogo cair no sintetizado sem avisar ninguém.
+  const dir = repoPath(path.join("public", PASTA_AMOSTRAS));
+  const presentes = fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => f.endsWith(".mp3")).map((f) => f.replace(/\.mp3$/, ""))
+    : [];
+  assert.ok(presentes.length > 0, `nenhuma amostra em ${dir}`);
+  for (const nome of presentes) {
+    assert.ok(COM_AMOSTRA.includes(nome),
+      `${nome}.mp3 está no disco mas não em COM_AMOSTRA — nunca vai tocar`);
+  }
+});
+
+check("the samples come with their licence recorded next to them", () => {
+  // São arquivos de terceiros num site com anúncios. Sem o registro, provar a
+  // licença depois significa refazer a pesquisa inteira.
+  const doc = repoPath(path.join("public", PASTA_AMOSTRAS, "PROVENIENCIA.md"));
+  assert.ok(fs.existsSync(doc), "falta PROVENIENCIA.md junto das amostras");
+  const texto = fs.readFileSync(doc, "utf8");
+  assert.match(texto, /CC0/, "a licença precisa estar escrita");
+  const dir = repoPath(path.join("public", PASTA_AMOSTRAS));
+  for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".mp3"))) {
+    assert.ok(texto.includes(f), `${f} não está registrado na proveniência`);
+  }
 });
