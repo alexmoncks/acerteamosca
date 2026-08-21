@@ -9,7 +9,14 @@ let passes = 0;
 
 export function check(name, fn) {
   try {
-    fn();
+    const r = fn();
+    // Um teste que devolve promessa não é esperado por ninguém aqui: suas
+    // asserções escapariam e ele "passaria" sem ter conferido nada. Falhar
+    // alto é melhor do que um PASS mentiroso.
+    if (r && typeof r.then === "function") {
+      r.catch(() => {});
+      throw new Error("o corpo do teste é assíncrono; check() é síncrono");
+    }
     passes++;
     console.log(`  PASS  ${name}`);
   } catch (err) {

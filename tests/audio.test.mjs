@@ -9,7 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { check, source, loadModule, repoPath } from "./helpers.mjs";
 
-const { SONS, duracaoDe, createAudio, VOLUME_MESTRE, COM_AMOSTRA, PASTA_AMOSTRAS } =
+const { SONS, duracaoDe, createAudio, VOLUME_MESTRE, COM_AMOSTRA, PASTA_AMOSTRAS,
+  INTERVALO_PADRAO } =
   await loadModule("src/components/games/kungfu-audio.js");
 const GAME = source("src/components/games/KungFuCastle.jsx");
 
@@ -274,8 +275,52 @@ check("the samples come with their licence recorded next to them", () => {
   assert.ok(fs.existsSync(doc), "falta PROVENIENCIA.md junto das amostras");
   const texto = fs.readFileSync(doc, "utf8");
   assert.match(texto, /CC0/, "a licença precisa estar escrita");
+  // A fonte primária, não só a citação dela: o site pode mudar, o zip não.
+  const licenca = repoPath(path.join("public", PASTA_AMOSTRAS, "LICENSE-kenney-impact-sounds.txt"));
+  assert.ok(fs.existsSync(licenca), "falta o License.txt original do pacote");
+  assert.match(fs.readFileSync(licenca, "utf8"), /Creative Commons Zero/);
   const dir = repoPath(path.join("public", PASTA_AMOSTRAS));
   for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".mp3"))) {
     assert.ok(texto.includes(f), `${f} não está registrado na proveniência`);
+  }
+});
+
+check("the minimum window gates the sample path too, not only the synth", () => {
+  // A janela existia para cortar metralhadora, mas a amostra retornava ANTES
+  // dela — e amostra reinicia com currentTime = 0, que é exatamente o efeito
+  // que a janela corta. O resultado era uma janela decorativa justo nos sons
+  // que mais se repetem: os impactos.
+  let tocadas = 0;
+  class AudioFalso {
+    constructor() {}
+    addEventListener(evento, fn) { if (evento === "canplaythrough") this.pronto = fn; }
+    set src(v) { this.pronto?.(); } // pronto na hora: o teste é do gate, não da rede
+    play() { tocadas++; return Promise.resolve(); }
+  }
+  const antes = globalThis.Audio;
+  globalThis.Audio = AudioFalso;
+  try {
+    let relogio = 0;
+    const a = createAudio({ storage: null, agora: () => relogio });
+    a.init();
+    tocadas = 0;
+    for (let i = 0; i < 6; i++) a.tocar("socoAcerta"); // seis no mesmo instante
+    assert.equal(tocadas, 1, `${tocadas} amostras no mesmo quadro; a janela não segurou`);
+    relogio += SONS.socoAcerta.minIntervalo + 1;
+    a.tocar("socoAcerta");
+    assert.equal(tocadas, 2, "passada a janela, o som seguinte tem de sair");
+  } finally {
+    globalThis.Audio = antes;
+  }
+});
+
+check("a name that exists only as a sample still gets a window", () => {
+  // Os gritos não têm entrada em SONS, então não têm janela própria. Sem um
+  // padrão, um kiai por soco com o botão martelado cansa em dez segundos.
+  assert.ok(INTERVALO_PADRAO >= 200,
+    `${INTERVALO_PADRAO}ms é curto demais para voz humana`);
+  for (const nome of COM_AMOSTRA) {
+    if (SONS[nome]) continue;
+    assert.match(nome, /^grito/, `${nome} não tem síntese nem é grito`);
   }
 });

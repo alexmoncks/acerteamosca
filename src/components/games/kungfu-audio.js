@@ -197,6 +197,15 @@ export const COM_AMOSTRA = [
 /** Onde as amostras moram. */
 export const PASTA_AMOSTRAS = "/audio/kungfucastle/sfx";
 
+/**
+ * Janela mínima para os nomes que só existem como amostra — os gritos.
+ *
+ * Sem entrada em SONS eles não têm janela própria, e voz humana é o pior caso
+ * para repetição: um kiai por soco, com o jogador martelando o botão, cansa em
+ * dez segundos. 400ms deixa passar mais ou menos um grito a cada dois golpes.
+ */
+export const INTERVALO_PADRAO = 400;
+
 /** Duração total de um som, incluindo atrasos. Usada nos testes e no mixer. */
 export function duracaoDe(som) {
   return Math.max(...som.vozes.map((v) => (v.atraso || 0) + v.dur));
@@ -224,7 +233,10 @@ export function createAudio(opts = {}) {
   const amostras = new Map(); // nome -> pool de <audio>, quando o arquivo existe
   const sondados = new Set(); // nomes já pedidos ao servidor, deram certo ou não
 
-  const agora = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+  // Injetável como o storage: sem isso, testar a janela mínima exigiria esperar
+  // de verdade os 45ms, e um teste que dorme é um teste que às vezes mente.
+  const agora = opts.agora
+    ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
 
   function bufferDeRuido() {
     if (ruidoBuf) return ruidoBuf;
@@ -346,13 +358,24 @@ export function createAudio(opts = {}) {
       // Amostra ganha do sintetizado quando existe. Alguns nomes (os gritos) só
       // têm amostra: sem arquivo eles são silêncio, e silêncio é melhor que um
       // bipe fingindo ser voz.
-      if (!som) return COM_AMOSTRA.includes(nome) ? tocarAmostra(nome) : false;
-      if (COM_AMOSTRA.includes(nome) && tocarAmostra(nome)) return true;
-      if (!ctx) return false;
-      // Cinco inimigos morrendo no mesmo quadro viram um estouro em vez de
-      // cinco quedas. A janela mínima corta a repetição sem cortar o ritmo.
+      const temAmostra = COM_AMOSTRA.includes(nome);
+      if (!som && !temAmostra) return false;
+
+      // A janela mínima vale para os DOIS caminhos, e vem antes de escolher
+      // entre eles. Cinco inimigos morrendo no mesmo quadro viram um estouro em
+      // vez de cinco quedas — e a amostra reinicia com `currentTime = 0`, que é
+      // exatamente o efeito de metralhadora que a janela existe para cortar.
+      // Deixar a amostra passar por fora tornava a janela decorativa justo nos
+      // sons que mais se repetem: os impactos.
+      const janela = som?.minIntervalo ?? INTERVALO_PADRAO;
       const t = agora();
-      if (t - (ultimaVez.get(nome) ?? -Infinity) < som.minIntervalo) return false;
+      if (t - (ultimaVez.get(nome) ?? -Infinity) < janela) return false;
+
+      if (temAmostra && tocarAmostra(nome)) {
+        ultimaVez.set(nome, t);
+        return true;
+      }
+      if (!som || !ctx) return false;
       ultimaVez.set(nome, t);
       const t0 = ctx.currentTime;
       for (const v of som.vozes) voz(v, t0);
