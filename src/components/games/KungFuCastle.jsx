@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
 import dynamic from "next/dynamic";
@@ -26,7 +26,12 @@ import {
 
 // A abertura carrega a própria Application do PixiJS. Fora do bundle inicial:
 // quem cai no menu e não aperta INICIAR não paga por ela.
+//
+// A TABELA de cenas, ao contrário, entra: são algumas dezenas de linhas sem
+// dependência nenhuma, e é ela que diz quais textos a abertura precisa. Montar
+// essa lista à mão aqui foi o que deixaria uma cena nova sem legenda.
 const KungFuHistoria = dynamic(() => import("./KungFuHistoria"), { ssr: false });
+import { chavesDaHistoria, faixasDaHistoria } from "./kungfu-historia";
 
 import KungFuVitrine from "./KungFuVitrine";
 
@@ -1826,6 +1831,25 @@ export default function KungFuCastle() {
     setScreen("historia");
   };
 
+  /**
+   * Os textos da abertura, montados a partir da tabela de cenas.
+   *
+   * Memoizado porque `textos` é dependência do efeito que constrói a
+   * Application do PixiJS da abertura: um objeto novo a cada render derrubaria
+   * e remontaria a tela inteira — recarregando as doze imagens e voltando a
+   * história para o segundo zero — a cada vez que qualquer estado do jogo
+   * mudasse. A versão anterior passava um literal inline e tinha exatamente
+   * esse defeito; com cinco painéis compostos de sprites já carregados ele
+   * quase não aparecia, com doze PNGs apareceria.
+   */
+  const historiaTextos = useMemo(() => {
+    const fora = { skip: t("historia.skip") };
+    for (const chave of [...chavesDaHistoria(), ...faixasDaHistoria()]) {
+      fora[chave.replace("historia.", "")] = t(chave);
+    }
+    return fora;
+  }, [t]);
+
   /** Fim da abertura, por tempo ou porque pularam. */
   const handleHistoriaFim = () => {
     setScreen((atual) => (atual === "historia" ? "playing" : atual));
@@ -1981,17 +2005,7 @@ export default function KungFuCastle() {
 
       {screen === "historia" && (
         <div style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}>
-          <KungFuHistoria
-            textos={{
-              skip: t("historia.skip"),
-              castelo: t("historia.castelo"),
-              trono: t("historia.trono"),
-              portao: t("historia.portao"),
-              mestres: t("historia.mestres"),
-              heroi: t("historia.heroi"),
-            }}
-            onFim={handleHistoriaFim}
-          />
+          <KungFuHistoria textos={historiaTextos} onFim={handleHistoriaFim} />
         </div>
       )}
 

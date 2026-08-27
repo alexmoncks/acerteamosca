@@ -642,10 +642,20 @@
       "historia": {
         "skip": "SPACE TO SKIP",
         "castelo": "Five floors. A master on each one. At the top, the Lord of the Castle.",
-        "trono": "He sent for the princess. His thugs dragged her across the courtyard, and the gate closed behind her.",
+        "trono": "He sent for the princess, and she had no way to refuse.",
+        "rapto": "His thugs dragged her across the courtyard, and the gate closed behind her.",
         "portao": "Nobody from the village ever walked through that arch and came back. One man went anyway.",
-        "mestres": "Every floor has its owner. Not one of them will step aside.",
-        "heroi": "No weapon. No army. Only what he learned to do with his hands."
+        "heroi": "No weapon. No army. Only what he learned to do with his hands.",
+        "andar1": "The Master of Thugs. Pure weight, and no hurry at all.",
+        "andar2": "The Gate Guardian, and the chui he carries.",
+        "andar3": "The Shadow Lord. You never see the strike coming.",
+        "andar4": "General Yaksha. A dao in one hand, a jian in the other.",
+        "andar5": "The Lord of the Castle. He knows every move you have.",
+        "faixa1": "FLOOR 1 · FRONT COURTYARD",
+        "faixa2": "FLOOR 2 · MOUNTAIN GATE",
+        "faixa3": "FLOOR 3 · GREAT HALL",
+        "faixa4": "FLOOR 4 · THE TOWER",
+        "faixa5": "FLOOR 5 · SUMMIT PAVILION"
       },
       "phaseClear": {
         "title": "STAGE CLEAR",

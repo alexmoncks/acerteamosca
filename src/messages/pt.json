@@ -642,10 +642,20 @@
       "historia": {
         "skip": "ESPAÇO PARA PULAR",
         "castelo": "Cinco andares. Em cada um, um mestre. No topo, o Senhor do Castelo.",
-        "trono": "Ele mandou buscar a princesa. Os capangas a arrastaram pelo pátio, e o portão se fechou atrás dela.",
+        "trono": "Ele mandou buscar a princesa, e ela não tinha como dizer não.",
+        "rapto": "Os capangas a arrastaram pelo pátio, e o portão se fechou atrás dela.",
         "portao": "Ninguém do vilarejo atravessou aquele arco e voltou. Um homem foi assim mesmo.",
-        "mestres": "Cada andar tem seu dono. Nenhum deles vai abrir passagem.",
-        "heroi": "Sem arma. Sem exército. Só o que ele aprendeu a fazer com as mãos."
+        "heroi": "Sem arma. Sem exército. Só o que ele aprendeu a fazer com as mãos.",
+        "andar1": "O Mestre dos Capangas. Puro peso, e nenhuma pressa.",
+        "andar2": "O Guardião do Portão, e o chuí que ele carrega.",
+        "andar3": "O Senhor das Sombras. Você não vê o golpe chegar.",
+        "andar4": "O General Yaksha. Dao numa mão, jian na outra.",
+        "andar5": "O Senhor do Castelo. Ele conhece todos os seus golpes.",
+        "faixa1": "ANDAR 1 · PÁTIO DA FRENTE",
+        "faixa2": "ANDAR 2 · PORTÃO DA MONTANHA",
+        "faixa3": "ANDAR 3 · SALÃO PRINCIPAL",
+        "faixa4": "ANDAR 4 · TORRE",
+        "faixa5": "ANDAR 5 · PAVILHÃO DO TOPO"
       },
       "phaseClear": {
         "title": "FASE COMPLETA",

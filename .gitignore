@@ -11,3 +11,9 @@ prisma/*.db-journal
 .superpowers/
 .claude/worktrees/
 src/data/kungfu/.backup/
+
+# Os brutos da abertura, direto do gerador de imagem: 53MB de PNG 2752x1536
+# que NÃO são a entrega. A entrega é o que sai de scripts/msx2-quantize.mjs —
+# `apresentacao/` (mestres 1920x1080) e `historia/` (o que o jogo carrega).
+# Regerar um bruto é uma chamada de API; versionar 53MB é para sempre.
+public/images/kungfucastle/apresentacao/bruto/
