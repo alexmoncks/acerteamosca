@@ -56,8 +56,10 @@ export default function CookieConsent() {
   function decidir(gdprApplies) {
     const d = grantDecision({ regiao: readRegion(window), gdprApplies, cmpPresent: typeof window.__tcfapi === "function" });
     if (d === "deny") markGdprApplies(window);
-    else if (d === "grant" || d === "grant-pagina") grantConsent(window);
-    else if (d === "grant-lembrar") grantConsent(window, { lembrar: true });
+    else if (d === "grant-pagina") grantConsent(window);
+    // fora do EEE, ou "não se aplica" explícito: lembra G=0 (apaga um G=1
+    // antigo de quem esteve no EEE e voltou)
+    else if (d === "grant" || d === "grant-lembrar") grantConsent(window, { lembrar: true });
   }
 
   useEffect(() => {

@@ -281,6 +281,7 @@ check("privacy policy (PT/EN): consent as the legal basis, Accept/Decline notice
     "reopens the site's cookie notice", "Privacy & cookies",
     // AJ2: nada carregado antes do aceite, sem legítimo interesse para anúncios/medição, revogação apaga cookies
     "Até você aceitar, o site não carrega o Google Analytics nem o Google AdSense, nenhum cookie deles é gravado",
+    "o país do acesso, informado pela Cloudflare a partir do endereço IP", "the country of the visit, provided by Cloudflare from the IP address",
     "Não usamos o legítimo interesse como base para cookies de publicidade ou de medição",
     "o site apaga os cookies do Google Analytics e do AdSense gravados no domínio dele",
     "ele reabre o aviso de cookies do site, com o botão Recusar", "o Modo de consentimento do Google fica em",
@@ -350,7 +351,8 @@ check("CookieConsent: Accept loads the tags and grants only through grantOnAccep
   assert.match(comp, /acceptSiteChoice\(window\);/);
   assert.match(comp, /if \(grantOnAccept\(\{ regiao: readRegion\(window\), gdprFlag: readGdprFlag\(window\) \}\)\) grantConsent\(window\);/);
   assert.match(comp, /const d = grantDecision\(\{ regiao: readRegion\(window\), gdprApplies, cmpPresent: typeof window\.__tcfapi === "function" \}\);/);
-  assert.match(comp, /if \(d === "deny"\) markGdprApplies\(window\);\s*else if \(d === "grant" \|\| d === "grant-pagina"\) grantConsent\(window\);\s*else if \(d === "grant-lembrar"\) grantConsent\(window, \{ lembrar: true \}\);/);
+  assert.match(comp, /if \(d === "deny"\) markGdprApplies\(window\);\s*else if \(d === "grant-pagina"\) grantConsent\(window\);/);
+  assert.match(comp, /else if \(d === "grant" \|\| d === "grant-lembrar"\) grantConsent\(window, \{ lembrar: true \}\);/);
   assert.match(comp, /if \(escolha === "granted"\) acompanharCmp\(\);/);
   assert.match(comp, /if \(escolha === "denied"\) \{\s*if \(declineSiteChoice\(window\)\) window\.location\.reload\(\);/);
   // nenhum outro caminho concede, nem chama gtag direto
@@ -363,7 +365,8 @@ check("QA AJ2: region from CF-IPCountry: EEA/UK/CH -> eee, other valid codes -> 
   for (const p of ["DE", "fr", " PT ", "GB", "CH", "NO", "IS", "LI"]) assert.equal(consent.regiaoConsentimento(p), "eee", p);
   for (const p of ["BR", "US", "AR", "JP"]) assert.equal(consent.regiaoConsentimento(p), "fora", p);
   for (const p of [null, undefined, "", "XX", "T1", "BRA", "1A", "<s"]) assert.equal(consent.regiaoConsentimento(p), null, String(p));
-  assert.equal(consent.GDPR_COUNTRIES.length, 32);
+  for (const p of ["RE", "GF", "GP", "MQ", "YT", "MF", "AX", "GI"]) assert.equal(consent.regiaoConsentimento(p), "eee", p);
+  assert.equal(consent.GDPR_COUNTRIES.length, 40);
 });
 
 check("QA AJ2: head with region: 'fora' grants a stored Accept before the tags (unless the CMP said GDPR, G=1); 'eee' never grants, not even with G=0", () => {

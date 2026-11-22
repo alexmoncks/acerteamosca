@@ -44,13 +44,19 @@ const ACCEPTED_FLAG = "__aamAccepted";
 
 const SINAIS = ["ad_storage", "ad_user_data", "ad_personalization", "analytics_storage"];
 
-/** EEE (27 + Islândia, Liechtenstein, Noruega), Reino Unido e Suíça. */
+/**
+ * EEE (27 + Islândia, Liechtenstein, Noruega), Reino Unido e Suíça, mais os
+ * territórios da UE que a Cloudflare marca com código próprio (Guiana
+ * Francesa, Guadalupe, Martinica, Reunião, Mayotte, São Martinho, Åland) e
+ * Gibraltar, por cautela.
+ */
 export const GDPR_COUNTRIES = [
   "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
   "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
   "IS", "LI", "NO",
   "GB",
   "CH",
+  "GF", "GP", "MQ", "RE", "YT", "MF", "AX", "GI",
 ];
 
 /**
