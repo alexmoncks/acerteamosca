@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { localeUrl } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
-import { jsonLdHtml } from "@/lib/json-ld";
+import JsonLd from "@/components/JsonLd";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -154,10 +154,7 @@ export default async function KungFuCastlePage({ params }) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <GameClient />
       <GameInfo content={content} locale={locale} />
     </>

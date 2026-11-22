@@ -3,7 +3,7 @@ import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
-import { jsonLdHtml } from "@/lib/json-ld";
+import JsonLd from "@/components/JsonLd";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -193,10 +193,7 @@ export default async function ThreeInvaderPage({ params }) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <GameClient />
       <GameInfo content={content} locale={locale} />
       <AdBanner placement="game_footer" />

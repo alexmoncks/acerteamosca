@@ -4,7 +4,7 @@
 // (definidos no .env.local, fora do repo). A CSP só acrescenta origens ws:// (sem TLS) que estejam nos
 // NEXT_PUBLIC_WS_*; em produção eles são wss:// e a CSP tem que ficar igual.
 import assert from "node:assert/strict";
-import { check, source } from "./helpers.mjs";
+import { check, source, loadModule } from "./helpers.mjs";
 
 const WS_VARS = [
   "NEXT_PUBLIC_WS_URL",
@@ -14,23 +14,14 @@ const WS_VARS = [
   "NEXT_PUBLIC_WS_BATALHA_URL",
 ];
 
-// Reavalia o trecho de next.config.js que monta as origens com o ambiente
-// pedido, sem carregar o plugin do next-intl.
+const csp = await loadModule("src/lib/csp.js");
+
+// connect-src da CSP montada como o middleware monta (src/middleware.js):
+// as origens vêm dos NEXT_PUBLIC_WS_*, nesta ordem.
 function connectSrc(env) {
-  const salvo = {};
-  for (const k of WS_VARS) {
-    salvo[k] = process.env[k];
-    if (env[k] === undefined) delete process.env[k];
-    else process.env[k] = env[k];
-  }
-  const src = source("next.config.js");
-  const trecho = src.slice(src.indexOf("const WS_DEV_ORIGINS"), src.indexOf("const CONTENT_SECURITY_POLICY"));
-  const origens = new Function(`${trecho}; return WS_DEV_ORIGINS;`)();
-  for (const k of WS_VARS) {
-    if (salvo[k] === undefined) delete process.env[k];
-    else process.env[k] = salvo[k];
-  }
-  return ["connect-src 'self' https: wss:", ...origens].join(" ");
+  const origens = csp.wsDevOrigins(WS_VARS.map((k) => env[k]));
+  const d = csp.parseCsp(csp.buildCsp({ nonce: csp.generateNonce(), wsOrigins: origens }));
+  return ["connect-src", ...d["connect-src"]].join(" ");
 }
 
 check("production CSP connect-src is unchanged with wss:// WebSocket URLs", () => {
@@ -51,8 +42,10 @@ check("dev ws:// WebSocket origin is allowed once in connect-src", () => {
   assert.equal(connectSrc(env), "connect-src 'self' https: wss: ws://127.0.0.1:3002");
 });
 
-check("next.config.js builds connect-src from WS_DEV_ORIGINS", () => {
-  assert.ok(/\["connect-src 'self' https: wss:", \.\.\.WS_DEV_ORIGINS\]/.test(source("next.config.js")));
+check("the middleware builds connect-src from every NEXT_PUBLIC_WS_* (inlined at build time)", () => {
+  const mw = source("src/middleware.js");
+  for (const k of WS_VARS) assert.ok(mw.includes(`process.env.${k},`), `middleware sem ${k}`);
+  assert.match(mw, /buildCsp\(\{ nonce, wsOrigins: WS_ORIGINS \}\)/);
 });
 
 check("ws-unified binds to WS_HOST only when it is set (Railway keeps all interfaces)", () => {

@@ -32,6 +32,10 @@ check("every application/ld+json script uses jsonLdHtml, never JSON.stringify", 
   };
   walk(repoPath("src"));
   assert.deepEqual(ofensores, []);
-  assert.match(source("src/app/[locale]/layout.js"), /__html: jsonLdHtml\(/);
-  assert.match(source("src/app/[locale]/HomeClient.jsx"), /__html: jsonLdHtml\(webPageLd\)/);
+  // lote 2: todo JSON-LD passa pelo <JsonLd> (servidor, com o nonce da CSP),
+  // que serializa com jsonLdHtml
+  assert.match(source("src/components/JsonLd.jsx"), /__html: jsonLdHtml\(data\)/);
+  assert.equal((source("src/app/[locale]/layout.js").match(/<JsonLd\b/g) || []).length, 2);
+  assert.match(source("src/app/[locale]/page.js"), /<JsonLd data=\{webPageLd\} \/>/);
+  assert.match(source("src/app/[locale]/page.js"), /<JsonLd data=\{faqPageLd\} \/>/);
 });

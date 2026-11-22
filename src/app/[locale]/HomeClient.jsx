@@ -1,9 +1,8 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import AdBanner from "@/components/AdBanner";
-import { jsonLdHtml } from "@/lib/json-ld";
 
 const slugs = [
   { slug: "acerteamosca", emoji: "🦟", cor: "#00f0ff", destaque: true },
@@ -24,35 +23,7 @@ const slugs = [
 export default function HomeClient() {
   const t = useTranslations("home");
   const tc = useTranslations("common");
-  const tm = useTranslations("metadata");
-  const locale = useLocale();
   const faqItems = t.raw("faq.items");
-  const siteUrl = locale === "en" ? "https://nailedthefly.com" : "https://acerteamosca.com.br";
-  const inLanguage = locale === "pt" ? "pt-BR" : "en";
-
-  const webPageLd = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": tm("title"),
-    "description": tm("description"),
-    "url": siteUrl,
-    "inLanguage": inLanguage,
-    "isPartOf": { "@id": `${siteUrl}/#website` },
-    "about": { "@id": "https://acerteamosca.com.br/#organization" },
-    "primaryImageOfPage": `${siteUrl}/opengraph-image`,
-  };
-
-  const faqPageLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "inLanguage": inLanguage,
-    "mainEntity": faqItems.map((item) => ({
-      "@type": "Question",
-      "name": item.q,
-      "acceptedAnswer": { "@type": "Answer", "text": item.a },
-    })),
-  };
-
   return (
     <div
       style={{
@@ -64,14 +35,6 @@ export default function HomeClient() {
         padding: "8px 12px",
       }}
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdHtml(webPageLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdHtml(faqPageLd) }}
-      />
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
         style={{

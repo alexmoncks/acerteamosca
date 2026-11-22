@@ -84,19 +84,16 @@ check("the AdSense tag has no undocumented attributes", () => {
   assert.match(layout, /isValidAdClient\(process\.env\.NEXT_PUBLIC_ADSENSE_ID\)/);
 });
 
-check("the CSP lets the AdSense domains in", () => {
-  const src = source("next.config.js");
-  const script = src.slice(src.indexOf("const ADSENSE_SCRIPT_SRC"), src.indexOf("const ADSENSE_FRAME_SRC"));
-  const frame = src.slice(src.indexOf("const ADSENSE_FRAME_SRC"), src.indexOf("const CONTENT_SECURITY_POLICY"));
-  for (const d of ["pagead2.googlesyndication.com", "tpc.googlesyndication.com", "googleads.g.doubleclick.net",
-    "adservice.google.com", "fundingchoicesmessages.google.com", "*.adtrafficquality.google",
-    "*.google.com", "*.gstatic.com"]) {
-    assert.ok(script.includes(`https://${d}"`), `script-src sem ${d}`);
-  }
+check("the CSP lets the AdSense code in: strict CSP (nonce + strict-dynamic), creatives in frame-src", () => {
+  // Desde o lote 2 a CSP é a estrita que o AdSense suporta (answer/16283098):
+  // os scripts entram pelo nonce + 'strict-dynamic', sem lista de domínios.
+  const csp = source("src/lib/csp.js");
+  assert.match(csp, /`script-src 'nonce-\$\{nonce\}' 'strict-dynamic'/);
+  const frame = csp.slice(csp.indexOf("export const ADSENSE_FRAME_SRC"), csp.indexOf("];", csp.indexOf("export const ADSENSE_FRAME_SRC")));
   for (const d of ["googleads.g.doubleclick.net", "tpc.googlesyndication.com", "*.safeframe.googlesyndication.com",
     "fundingchoicesmessages.google.com", "*.google.com", "*.gstatic.com"]) {
     assert.ok(frame.includes(`https://${d}"`), `frame-src sem ${d}`);
   }
-  assert.match(src, /\.\.\.ADSENSE_SCRIPT_SRC/);
-  assert.match(src, /"frame-src", \.\.\.ADSENSE_FRAME_SRC/);
+  assert.match(csp, /\["frame-src", \.\.\.ADSENSE_FRAME_SRC\]/);
+  assert.match(source("src/app/[locale]/layout.js"), /async\s+nonce=\{nonce\}\s+src=\{`https:\/\/pagead2\.googlesyndication\.com/);
 });
