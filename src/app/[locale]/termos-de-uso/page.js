@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
+import RichText from "@/components/RichText";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -189,13 +190,13 @@ export default async function TermsPage({ params }) {
     <article style={pageStyle}>
       <h1 style={titleStyle}>{c.title}</h1>
       <p style={metaStyle}>{c.lastUpdated}</p>
-      <p style={pStyle}>{c.intro}</p>
+      <p style={pStyle}><RichText text={c.intro} /></p>
       {c.sections.map((s, i) => (
         <section key={i} style={sectionStyle}>
           <h2 style={h2Style}>{s.h}</h2>
           {s.p.map((para, j) => (
             <p key={j} style={pStyle}>
-              {para}
+              <RichText text={para} />
             </p>
           ))}
         </section>
