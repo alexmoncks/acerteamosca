@@ -28,6 +28,28 @@ const ADSENSE_FRAME_SRC = [
   "https://*.adtrafficquality.google",
 ];
 
+// Servidor WebSocket dos jogos multiplayer em ws:// (sem TLS). Em produção os
+// NEXT_PUBLIC_WS_* são wss:// e já cabem no "wss:" do connect-src, então nada
+// é acrescentado e a CSP de produção fica igual. No ambiente de dev do
+// homeserver (scripts/dev-homeserver.sh) o front fala com ws://127.0.0.1:PORTA
+// pela Tailscale, e sem esta origem a CSP bloqueia a conexão no navegador.
+const WS_DEV_ORIGINS = [
+  process.env.NEXT_PUBLIC_WS_URL,
+  process.env.NEXT_PUBLIC_WS_SHIPS_URL,
+  process.env.NEXT_PUBLIC_WS_MEMORY_URL,
+  process.env.NEXT_PUBLIC_WS_2048_URL,
+  process.env.NEXT_PUBLIC_WS_BATALHA_URL,
+]
+  .map((u) => {
+    try {
+      const url = new URL(u);
+      return url.protocol === "ws:" ? `ws://${url.host}` : null;
+    } catch {
+      return null;
+    }
+  })
+  .filter((o, i, all) => o && all.indexOf(o) === i);
+
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   [
@@ -40,7 +62,7 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https: http:",
-  "connect-src 'self' https: wss:",
+  ["connect-src 'self' https: wss:", ...WS_DEV_ORIGINS].join(" "),
   ["frame-src", ...ADSENSE_FRAME_SRC].join(" "),
   "object-src 'none'",
   "base-uri 'self'",
