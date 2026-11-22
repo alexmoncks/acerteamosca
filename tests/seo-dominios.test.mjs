@@ -124,6 +124,10 @@ check("prefixed URLs on the production domains 301 to the clean URL in one hop",
   // og:image gerado pelo Next carrega o segmento de idioma: serve direto.
   assert.equal(t("nailedthefly.com", "/en/opengraph-image"), null);
   assert.equal(t("acerteamosca.com.br", "/pt/jogos/wordle/opengraph-image"), null);
+  assert.ok(host.isLocalizedOgImage("/en/opengraph-image"));
+  assert.ok(host.isLocalizedOgImage("/pt/jogos/wordle/opengraph-image"));
+  assert.ok(!host.isLocalizedOgImage("/opengraph-image"));
+  assert.ok(!host.isLocalizedOgImage("/en/sobre"));
 });
 
 check("the host is read like next-intl reads it, without the port", () => {

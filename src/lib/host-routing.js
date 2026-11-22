@@ -12,6 +12,16 @@ export function requestHost(headers) {
   return raw.split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
 }
 
+/**
+ * Imagem Open Graph gerada pelo Next com o segmento de idioma no caminho
+ * (/pt/opengraph-image, /en/jogos/x/opengraph-image?hash). É a URL que vai no
+ * og:image; o caminho interno existe tal qual, então deve servir direto, sem
+ * o 301 de prefixo nem o 307 do next-intl.
+ */
+export function isLocalizedOgImage(pathname) {
+  return /^\/(pt|en)(\/.*)?\/(opengraph|twitter)-image$/.test(pathname);
+}
+
 /** acerteamosca.com.br ou nailedthefly.com (já normalizado). */
 export function isProductionHost(host) {
   return PROD_HOSTS.has(host);
@@ -47,7 +57,7 @@ export function prefixRedirectTarget(host, pathname, search = "") {
   // As imagens Open Graph geradas pelo Next saem no og:image com o segmento
   // de idioma (/pt/opengraph-image, /en/jogos/x/opengraph-image). Elas não
   // são página nem entram no índice: servem direto, sem salto.
-  if (/\/(opengraph|twitter)-image$/.test(pathname)) return null;
+  if (isLocalizedOgImage(pathname)) return null;
   const m = pathname.match(/^\/(en|pt)(\/.*)?$/);
   if (!m) return null;
   const rest = m[2] && m[2] !== "/" ? m[2] : "";
