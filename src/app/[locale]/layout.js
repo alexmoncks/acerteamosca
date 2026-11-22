@@ -9,6 +9,7 @@ import CookieConsent from "@/components/CookieConsent";
 import Footer from "@/components/Footer";
 import { SITE_URL, localeUrl, siteName } from "@/lib/seo";
 import { ADSENSE_PUBLISHER, isValidAdClient } from "@/lib/ads";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 // Anúncios Automáticos: só o script do AdSense, com o publisher do ads.txt.
@@ -126,7 +127,7 @@ export default async function LocaleLayout({ children, params }) {
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
+              __html: jsonLdHtml({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "@id": "https://acerteamosca.com.br/#organization",
@@ -147,7 +148,7 @@ export default async function LocaleLayout({ children, params }) {
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
+              __html: jsonLdHtml({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 "@id": `${localeUrl(locale, "/")}/#website`,

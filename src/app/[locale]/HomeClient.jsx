@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import AdBanner from "@/components/AdBanner";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 const slugs = [
   { slug: "acerteamosca", emoji: "🦟", cor: "#00f0ff", destaque: true },
@@ -65,11 +66,11 @@ export default function HomeClient() {
     >
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(webPageLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(faqPageLd) }}
       />
       <div style={{ fontSize: 32, marginBottom: 4 }}>🩴</div>
       <h1
