@@ -44,6 +44,10 @@ export function wwwRedirectTarget(host, pathname, search = "") {
  */
 export function prefixRedirectTarget(host, pathname, search = "") {
   if (!PROD_HOSTS.has(host)) return null;
+  // As imagens Open Graph geradas pelo Next saem no og:image com o segmento
+  // de idioma (/pt/opengraph-image, /en/jogos/x/opengraph-image). Elas não
+  // são página nem entram no índice: servem direto, sem salto.
+  if (/\/(opengraph|twitter)-image$/.test(pathname)) return null;
   const m = pathname.match(/^\/(en|pt)(\/.*)?$/);
   if (!m) return null;
   const rest = m[2] && m[2] !== "/" ? m[2] : "";

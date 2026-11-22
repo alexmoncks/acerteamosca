@@ -121,6 +121,9 @@ check("prefixed URLs on the production domains 301 to the clean URL in one hop",
   // Fora de produção (prévia, localhost) /en continua servindo.
   assert.equal(t("127.0.0.1", "/en"), null);
   assert.equal(t("localhost", "/en/sobre"), null);
+  // og:image gerado pelo Next carrega o segmento de idioma: serve direto.
+  assert.equal(t("nailedthefly.com", "/en/opengraph-image"), null);
+  assert.equal(t("acerteamosca.com.br", "/pt/jogos/wordle/opengraph-image"), null);
 });
 
 check("the host is read like next-intl reads it, without the port", () => {

@@ -21,6 +21,9 @@ export async function generateMetadata({ params }) {
       siteName: siteName(locale),
       title,
       description,
+      // O openGraph da página substitui o do layout por inteiro; sem isto a
+      // página ficaria sem og:image.
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: siteName(locale) }],
     },
   };
 }
