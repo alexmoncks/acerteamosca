@@ -64,3 +64,13 @@ body.game-active iframe[src*="profitablecpmratenetwork"],
 body.game-active iframe[src*="highperformanceformat"] {
   pointer-events: none !important;
 }
+
+/* AdSense: bloco sem anúncio some pelo método suportado pelo Google
+   (data-ad-status="unfilled"), junto com o rótulo "Publicidade". Nada de
+   esconder o bloco por opacity/altura antes de o anúncio carregar. */
+ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
+}
+.ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+  display: none;
+}

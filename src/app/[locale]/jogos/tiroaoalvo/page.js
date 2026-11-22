@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
+import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
 
 export async function generateMetadata({ params }) {
@@ -146,6 +147,7 @@ export default async function TiroAoAlvoPage({ params }) {
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />
+      <AdBanner placement="game_footer" />
     </>
   );
 }

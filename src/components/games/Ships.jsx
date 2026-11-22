@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { ShipsMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
@@ -362,7 +361,6 @@ function ShipsGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, rem
           <button onClick={onMenu} style={{ padding: "12px 28px", background: "transparent", border: "1px solid #555", borderRadius: 8, color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: "pointer" }}>{t("menu")}</button>
         </div>
         {isRemote && opponentWants && <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: "#b026ff", marginTop: 10 }}>{t("opponentWantsRematch")}</p>}
-        <AdBanner slot="ships_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
   );
@@ -889,10 +887,6 @@ export default function Ships() {
         @keyframes shipBlink { 0%,100%{opacity:1} 50%{opacity:0.2} }
       `}</style>
 
-      {/* Top ad - hidden during active play */}
-      {screen !== "playing" && (
-        <AdBanner slot="ships_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
-      )}
 
       {screen !== "menu" && screen !== "lobby" && <>
         <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h1>
@@ -1012,7 +1006,6 @@ export default function Ships() {
       {screen === "playing" && (
         <ShipsMobileControls keysRef={keysRef} mode={mode} playerNum={playerNum} />
       )}
-      <AdBanner slot="ships_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>
   );
 }

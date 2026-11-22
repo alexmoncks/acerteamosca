@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -1841,10 +1840,6 @@ export default function JogoDoJacare() {
       overflow: "hidden",
       padding: 12,
     }}>
-      {/* Top ad - hidden during active play */}
-      {!isPlaying && (
-        <AdBanner slot="jacare_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
-      )}
 
       <h1 style={{
         fontFamily: "'Press Start 2P', monospace",
@@ -2111,7 +2106,6 @@ export default function JogoDoJacare() {
                 {t("menuButton")}
               </button>
 
-              <AdBanner slot="jacare_between" style={{ marginTop: 16, maxWidth: CANVAS_W - 40 }} />
             </div>
           )}
 
@@ -2307,7 +2301,6 @@ export default function JogoDoJacare() {
         </div>
       )}
 
-      <AdBanner slot="jacare_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>
   );
 }

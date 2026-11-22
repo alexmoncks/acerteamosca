@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -4460,10 +4459,6 @@ export default function ThreeInvader() {
         }
       `}</style>
 
-      {/* Top ad - only on sub-menu screens that have space */}
-      {!isPlaying && screen !== "intro" && screen !== "menu" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && (
-        <AdBanner slot="3invader_top" style={{ marginBottom: 8, maxWidth: CW }} />
-      )}
 
       {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
         <>
@@ -5509,7 +5504,6 @@ export default function ThreeInvader() {
                 {t("btnMenu")}
               </button>
 
-              <AdBanner slot="3invader_between" style={{ marginTop: 12, maxWidth: 300 }} />
             </div>
           )}
 
@@ -5705,7 +5699,6 @@ export default function ThreeInvader() {
         </div>
       )}
 
-      <AdBanner slot="3invader_bottom" style={{ marginTop: 16, maxWidth: CW }} />
     </div>
   );
 }

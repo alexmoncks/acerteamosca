@@ -672,6 +672,7 @@
   },
   "common": {
     "playFree": "Play free at acerteamosca.com.br",
-    "mainGame": "FEATURED GAME"
+    "mainGame": "FEATURED GAME",
+    "adLabel": "Advertisement"
   }
 }

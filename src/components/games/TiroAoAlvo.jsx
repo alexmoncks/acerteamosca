@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -1728,10 +1727,6 @@ export default function TiroAoAlvo() {
         }
       `}</style>
 
-      {/* Top ad */}
-      {!isPlaying && (
-        <AdBanner slot="tiroaoalvo_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
-      )}
 
       {/* Title */}
       {screen !== "result" && (
@@ -1937,8 +1932,6 @@ export default function TiroAoAlvo() {
                 </div>
               )}
 
-              {/* Ad between */}
-              <AdBanner slot="tiroaoalvo_between" style={{ marginBottom: 12, maxWidth: 300 }} />
 
               {/* Buttons */}
               <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 280 }}>
@@ -2154,8 +2147,6 @@ export default function TiroAoAlvo() {
         </div>
       )}
 
-      {/* Bottom ad */}
-      <AdBanner slot="tiroaoalvo_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>
   );
 }

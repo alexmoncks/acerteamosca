@@ -672,6 +672,7 @@
   },
   "common": {
     "playFree": "Jogue grátis em acerteamosca.com.br",
-    "mainGame": "JOGO PRINCIPAL"
+    "mainGame": "JOGO PRINCIPAL",
+    "adLabel": "Publicidade"
   }
 }

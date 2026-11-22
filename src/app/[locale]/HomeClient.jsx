@@ -206,7 +206,7 @@ export default function HomeClient() {
         }
       `}</style>
 
-      <AdBanner slot="home_top" style={{ marginBottom: 20, maxWidth: 900, width: "100%" }} />
+      <AdBanner placement="home_top" />
 
       <div
         style={{
@@ -281,7 +281,7 @@ export default function HomeClient() {
         ))}
       </div>
 
-      <AdBanner slot="home_bottom" style={{ marginTop: 30, maxWidth: 900, width: "100%" }} />
+      <AdBanner placement="home_bottom" />
 
       {/* FAQ Section */}
       <section style={{ maxWidth: 900, width: "100%", marginTop: 40, padding: "0 16px" }}>

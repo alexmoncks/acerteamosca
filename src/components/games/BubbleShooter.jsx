@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { BubbleShooterMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
@@ -1052,10 +1051,6 @@ export default function BubbleShooter() {
         padding: 12,
       }}
     >
-      {/* Top ad - hidden during active play */}
-      {screen !== "playing" && (
-        <AdBanner slot="bubbleshooter_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
-      )}
 
       {screen !== "menu" && (
         <>
@@ -1284,7 +1279,6 @@ export default function BubbleShooter() {
               >
                 JOGAR NOVAMENTE
               </button>
-              <AdBanner slot="bubbleshooter_between" style={{ marginTop: 12, maxWidth: 300 }} />
             </div>
           )}
 
@@ -1437,7 +1431,6 @@ export default function BubbleShooter() {
         </div>
       )}
 
-      <AdBanner slot="bubbleshooter_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
 
       <style>{`
         @keyframes menuBubbleBounce {

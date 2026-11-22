@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
 import dynamic from "next/dynamic";
-import AdBanner from "@/components/AdBanner";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
 import { createBgm } from "./kungfu-bgm";
@@ -2135,7 +2134,6 @@ export default function KungFuCastle() {
         <KungFuSpriteTest onBack={() => setScreen("menu")} />
       )}
 
-      <AdBanner slot="kungfucastle_bottom" style={{ marginTop: 16, maxWidth: 960 }} />
     </div>
   );
 }

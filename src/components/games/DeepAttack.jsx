@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { DeepAttackMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
@@ -1070,10 +1069,6 @@ export default function DeepAttack() {
         }
       `}</style>
 
-      {/* Top ad - hidden during active play */}
-      {screen !== "playing" && (
-        <AdBanner slot="deepattack_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
-      )}
 
       {screen !== "menu" && (
         <>
@@ -1303,7 +1298,6 @@ export default function DeepAttack() {
               >
                 {t("playAgain")}
               </button>
-              <AdBanner slot="deepattack_between" style={{ marginTop: 12, maxWidth: 300 }} />
             </div>
           )}
         </div>
@@ -1334,7 +1328,6 @@ export default function DeepAttack() {
         </div>
       )}
 
-      <AdBanner slot="deepattack_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>
   );
 }
