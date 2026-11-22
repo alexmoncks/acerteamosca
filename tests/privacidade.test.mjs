@@ -75,3 +75,17 @@ check("paragraphs are split into text, URLs and emails, without trailing punctua
   ]);
   assert.deepEqual(rt.tokenize("sem nada"), [{ type: "text", value: "sem nada" }]);
 });
+
+check("the cookie notice is translated and does not claim consent by browsing", () => {
+  const comp = semComentarios(source("src/components/CookieConsent.jsx"));
+  assert.match(comp, /useTranslations\("cookieConsent"\)/);
+  assert.match(comp, /href="\/politica-de-privacidade"/);
+  // nada de texto fixo em português no componente
+  assert.ok(!/cookies|navegando|concorda|ACEITAR|LGPD/i.test(comp.replace(/acerteamosca_cookie_consent|cookieConsent/g, "")), "texto fixo no CookieConsent");
+  for (const loc of ["pt", "en"]) {
+    const m = JSON.parse(source(`src/messages/${loc}.json`)).cookieConsent;
+    assert.ok(m && m.text && m.policy && m.ok && m.label, `${loc}.json sem cookieConsent completo`);
+    const tudo = Object.values(m).join(" ");
+    assert.ok(!/continuar navegando|concorda|by continuing|you agree|aceitar|accept/i.test(tudo), `${loc}: consentimento presumido`);
+  }
+});

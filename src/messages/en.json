@@ -674,5 +674,11 @@
     "playFree": "Play free at acerteamosca.com.br",
     "mainGame": "FEATURED GAME",
     "adLabel": "Advertisement"
+  },
+  "cookieConsent": {
+    "text": "We use cookies and local storage to keep your player registration, measure audience (Google Analytics) and show ads from Google AdSense, which also uses cookies. See what is collected, the legal bases and how to opt out in our",
+    "policy": "Privacy Policy",
+    "ok": "GOT IT",
+    "label": "Cookie notice"
   }
 }
