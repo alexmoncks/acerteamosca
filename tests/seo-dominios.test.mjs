@@ -137,6 +137,25 @@ check("the host is read like next-intl reads it, without the port", () => {
   assert.equal(host.requestHost(h({})), "");
 });
 
+check("a client X-Forwarded-Host never overrides a production Host", () => {
+  const h = (o) => ({ get: (k) => o[k] ?? null });
+  const rh = host.requestHost;
+  // Host de produção manda: o XFH do cliente não troca o idioma.
+  assert.equal(rh(h({ host: "acerteamosca.com.br", "x-forwarded-host": "nailedthefly.com" })), "acerteamosca.com.br");
+  assert.equal(rh(h({ host: "nailedthefly.com", "x-forwarded-host": "acerteamosca.com.br" })), "nailedthefly.com");
+  assert.equal(rh(h({ host: "www.acerteamosca.com.br", "x-forwarded-host": "nailedthefly.com" })), "www.acerteamosca.com.br");
+  assert.equal(rh(h({ host: "acerteamosca.com.br", "x-forwarded-host": "evil.example" })), "acerteamosca.com.br");
+  // Host interno (Railway atrás da Cloudflare): XFH só se for domínio público.
+  assert.equal(rh(h({ host: "web-production-1.up.railway.app", "x-forwarded-host": "nailedthefly.com" })), "nailedthefly.com");
+  assert.equal(rh(h({ host: "web-production-1.up.railway.app", "x-forwarded-host": "NailedTheFly.com:443, x" })), "nailedthefly.com");
+  assert.equal(rh(h({ host: "web-production-1.up.railway.app", "x-forwarded-host": "evil.example" })), "web-production-1.up.railway.app");
+  assert.equal(rh(h({ host: "127.0.0.1:3000", "x-forwarded-host": "nailedthefly.com.evil.example" })), "127.0.0.1");
+  // O middleware reescreve Host e XFH com o host decidido antes do next-intl.
+  const mw = semComentarios(source("src/middleware.js"));
+  assert.match(mw, /headers\.set\("host", host\)/);
+  assert.match(mw, /headers\.set\("x-forwarded-host", host\)/);
+});
+
 check("www on a production domain 301s to the apex, keeping path and query", () => {
   const t = host.wwwRedirectTarget;
   assert.equal(t("www.acerteamosca.com.br", "/jogos/pong", "?x=1"), "https://acerteamosca.com.br/jogos/pong?x=1");

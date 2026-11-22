@@ -19,7 +19,11 @@ const handleI18n = createMiddleware(routing);
 //   - /en/... e /pt/... nos domínios de produção -> 301 para a URL limpa;
 //   - o host é normalizado (sem porta, minúsculo): o next-intl compara o
 //     cabeçalho cru com `domains`, e "nailedthefly.com:443" cairia no
-//     português (ver src/lib/host-routing.js).
+//     português (ver src/lib/host-routing.js);
+//   - o X-Forwarded-Host só vale quando o Host não é de produção, e só se
+//     for um domínio público (requestHost). Quando o host decidido é de
+//     produção, Host e X-Forwarded-Host são reescritos com ele antes do
+//     next-intl, que lê o X-Forwarded-Host primeiro.
 export default function middleware(request) {
   const host = requestHost(request.headers);
   const { pathname, search } = request.nextUrl;
