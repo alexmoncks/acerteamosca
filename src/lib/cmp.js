@@ -97,19 +97,34 @@ export function shouldShowNotice({ dismissed, gdprApplies, delayElapsed }) {
 /**
  * O que um "Aceitar" do aviso do site pode fazer (opção "denied global").
  * No EEE/Reino Unido/Suíça só a CMP certificada do Google pode colher o
- * consentimento, então o aviso só concede quando sabe que não está lá:
+ * consentimento, então o aviso só concede quando sabe que ela não está lá:
  *   - "cmp":   a CMP diz que o GDPR se aplica: a escolha é dela, o site não
  *              concede nada;
- *   - "grant": a CMP diz que não se aplica, ou não há CMP na página;
- *   - "wait":  há CMP (window.__tcfapi) e ela ainda não respondeu: espera a
- *              resposta (watchGdprCmp) antes de conceder.
- * `gdprApplies` é o que o watchGdprCmp já sabe; `pingNow`, a pergunta feita
- * na hora do clique (pingGdprAppliesNow); `cmpPresent`, se há __tcfapi.
+ *   - "grant": a CMP diz que não se aplica, ou o watchGdprCmp já esgotou o
+ *              prazo sem CMP nenhuma na página;
+ *   - "wait":  qualquer outro caso: espera a resposta da CMP até o fim do
+ *              prazo. Inclui "ainda não há __tcfapi": quem instala o stub é
+ *              o script do Funding Choices, que o adsbygoogle carrega, e em
+ *              rede lenta ele chega depois do aviso.
+ * `gdprApplies` é o que o watchGdprCmp já sabe (undefined enquanto ele
+ * pergunta, null quando desistiu); `pingNow`, a pergunta feita na hora do
+ * clique (pingGdprAppliesNow); `cmpPresent`, se há __tcfapi agora.
  */
 export function acceptDecision({ gdprApplies, pingNow, cmpPresent }) {
   if (gdprApplies === true || pingNow === true) return "cmp";
   if (gdprApplies === false || pingNow === false) return "grant";
-  return cmpPresent ? "wait" : "grant";
+  if (gdprApplies === null && !cmpPresent) return "grant";
+  return "wait";
+}
+
+/**
+ * Resultado da espera do "wait": concede só com "não se aplica" explícito,
+ * ou quando o prazo acabou (null) sem nenhum __tcfapi na página (bloqueador
+ * de anúncios, ou fora do EEE sem Funding Choices). CMP presente e muda não
+ * concede.
+ */
+export function grantAfterWait(gdprApplies, cmpPresent) {
+  return gdprApplies === false || (gdprApplies === null && !cmpPresent);
 }
 
 /** A API de revogação do Google está carregada? */

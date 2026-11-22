@@ -3,7 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { CMP_NOTICE_DELAY_MS, acceptDecision, pingGdprAppliesNow, shouldShowNotice, watchGdprCmp } from "@/lib/cmp";
+import {
+  CMP_NOTICE_DELAY_MS,
+  CMP_WATCH_TIMEOUT_MS,
+  acceptDecision,
+  grantAfterWait,
+  pingGdprAppliesNow,
+  shouldShowNotice,
+  watchGdprCmp,
+} from "@/lib/cmp";
 import { CONSENT_REOPEN_EVENT, applyConsentChoice, dropSiteChoiceForGdpr, readConsentChoice } from "@/lib/consent";
 
 // OPÇÃO "denied global" (feat/consent-lote2-br-opcao): aviso de cookies que
@@ -18,8 +26,9 @@ import { CONSENT_REOPEN_EVENT, applyConsentChoice, dropSiteChoiceForGdpr, readCo
 // banners: lá quem pede a escolha é a CMP do Google. Ele espera a CMP até
 // CMP_NOTICE_DELAY_MS antes de aparecer e some se ela responder depois.
 // E não concede nada por lá, nem com a CMP lenta: o Aceitar só concede
-// quando a CMP disse que o GDPR não se aplica ou não há CMP (acceptDecision);
-// com a CMP carregando, espera a resposta. Se a CMP disser depois que o GDPR
+// quando a CMP disse que o GDPR não se aplica, ou quando o prazo dela
+// (CMP_WATCH_TIMEOUT_MS desde a carga) acaba sem CMP nenhuma (acceptDecision,
+// grantAfterWait). Até lá, espera. Se a CMP disser depois que o GDPR
 // se aplica, a escolha do site é descartada (dropSiteChoiceForGdpr).
 // O link "Privacidade e cookies" do rodapé reabre este aviso
 // (CONSENT_REOPEN_EVENT) fora dessas regiões.
@@ -34,6 +43,8 @@ export default function CookieConsent() {
   // anunciar e o teclado chegar nele
   const [focar, setFocar] = useState(false);
   const primeiroBotao = useRef(null);
+  // o prazo da CMP conta da carga da página, não do clique
+  const inicio = useRef(Date.now());
 
   useEffect(() => {
     let vivo = true;
@@ -82,10 +93,11 @@ export default function CookieConsent() {
     });
     if (decisao === "grant") applyConsentChoice(window, "granted");
     else if (decisao === "wait") {
-      // só com um "não se aplica" explícito; CMP muda até o fim do prazo não
-      // concede (fica negado, e a pessoa pode aceitar de novo depois)
-      watchGdprCmp(window).then((gdprApplies) => {
-        if (gdprApplies === false) applyConsentChoice(window, "granted");
+      // espera a CMP pelo que resta do prazo; só concede com "não se aplica"
+      // explícito ou sem CMP nenhuma no fim (grantAfterWait)
+      const resta = Math.max(0, CMP_WATCH_TIMEOUT_MS - (Date.now() - inicio.current));
+      watchGdprCmp(window, { timeoutMs: resta }).then((gdprApplies) => {
+        if (grantAfterWait(gdprApplies, typeof window.__tcfapi === "function")) applyConsentChoice(window, "granted");
       });
     }
     // "cmp": nada; a mensagem do Google pede a escolha

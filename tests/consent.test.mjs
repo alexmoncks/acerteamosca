@@ -232,12 +232,19 @@ check("acceptDecision: the site's Accept never grants where the Google CMP says 
   // CMP diz que não se aplica: concede
   assert.equal(d(false, undefined, true), "grant");
   assert.equal(d(undefined, false, true), "grant");
-  // sem CMP nenhuma (Brasil sem Funding Choices): concede
-  assert.equal(d(undefined, undefined, false), "grant");
+  // o watcher já desistiu e não há CMP nenhuma (bloqueador, Brasil sem Funding Choices): concede
   assert.equal(d(null, undefined, false), "grant");
-  // CMP carregando, ainda sem resposta (o caso do EEE com CMP lenta): espera
+  // sem resposta definitiva: espera, haja __tcfapi ou não (o stub do Funding
+  // Choices pode chegar depois do aviso, em rede lenta)
   assert.equal(d(undefined, undefined, true), "wait");
+  assert.equal(d(undefined, undefined, false), "wait");
   assert.equal(d(null, undefined, true), "wait");
+  // fim da espera
+  assert.equal(cmp.grantAfterWait(false, true), true);
+  assert.equal(cmp.grantAfterWait(null, false), true, "prazo acabou sem CMP nenhuma");
+  assert.equal(cmp.grantAfterWait(null, true), false, "CMP presente e muda não concede");
+  assert.equal(cmp.grantAfterWait(true, true), false);
+  assert.equal(cmp.grantAfterWait(true, false), false);
 });
 
 check("dropSiteChoiceForGdpr: where GDPR applies, a stored 'granted' becomes update denied and is erased; 'denied' is just erased", () => {
@@ -275,7 +282,9 @@ check("CookieConsent (BR option): Accept goes through acceptDecision, a CMP stil
   assert.match(comp, /pingNow: pingGdprAppliesNow\(window\)/);
   assert.match(comp, /cmpPresent: typeof window\.__tcfapi === "function"/);
   assert.match(comp, /if \(decisao === "grant"\) applyConsentChoice\(window, "granted"\);/);
-  assert.match(comp, /if \(gdprApplies === false\) applyConsentChoice\(window, "granted"\);/);
+  assert.match(comp, /if \(grantAfterWait\(gdprApplies, typeof window\.__tcfapi === "function"\)\) applyConsentChoice\(window, "granted"\);/);
+  // a espera usa o que resta do prazo desde a carga da página
+  assert.match(comp, /watchGdprCmp\(window, \{ timeoutMs: resta \}\)/);
   assert.match(comp, /if \(gdprApplies === true\) dropSiteChoiceForGdpr\(window\);/);
   // Recusar não depende da CMP
   assert.match(comp, /if \(escolha === "denied"\) \{\s*applyConsentChoice\(window, "denied"\);/);
