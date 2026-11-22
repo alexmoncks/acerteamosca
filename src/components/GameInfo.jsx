@@ -23,25 +23,29 @@ export default async function GameInfo({ slug, content, locale }) {
   const t = await getTranslations({ locale, namespace: "gameHeadings" });
 
   return (
-    <section style={wrapperStyle} aria-labelledby="game-info-title">
+    // O <h1> é da página, não da seção "Sobre o jogo": fica fora da <section>
+    // (que é rotulada pelo <h2>), no mesmo bloco visual.
+    <div style={wrapperStyle}>
       <h1 style={h1Style}>{t(slug)}</h1>
-      <h2 id="game-info-title" style={h2Style}>
-        {c.title}
-      </h2>
-      <p style={introStyle}>{c.intro}</p>
-      {c.details.map((d, i) => (
-        <section key={i} style={sectionStyle}>
-          <h3 style={h3Style}>{d.summary}</h3>
-          <div style={bodyStyle}>
-            {d.body.map((para, j) => (
-              <p key={j} style={paraStyle}>
-                {para}
-              </p>
-            ))}
-          </div>
-        </section>
-      ))}
-    </section>
+      <section aria-labelledby="game-info-title">
+        <h2 id="game-info-title" style={h2Style}>
+          {c.title}
+        </h2>
+        <p style={introStyle}>{c.intro}</p>
+        {c.details.map((d, i) => (
+          <section key={i} style={sectionStyle}>
+            <h3 style={h3Style}>{d.summary}</h3>
+            <div style={bodyStyle}>
+              {d.body.map((para, j) => (
+                <p key={j} style={paraStyle}>
+                  {para}
+                </p>
+              ))}
+            </div>
+          </section>
+        ))}
+      </section>
+    </div>
   );
 }
 

@@ -1926,7 +1926,7 @@ export default function MemoryGame() {
       )}
 
 
-      {/* Title H1 above game area */}
+      {/* Título do jogo (h2: o h1 da página vem do GameInfo) */}
       {screen !== "menu" && (
         <>
           <h2
