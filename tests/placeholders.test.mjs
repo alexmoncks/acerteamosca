@@ -57,3 +57,28 @@ check("both languages keep the same keys for the Acerte a Mosca game", () => {
   assert.deepEqual(Object.keys(pt).sort(), Object.keys(en).sort());
   assert.ok(pt.winMessage && en.winMessage, "a mensagem de vitória sumiu");
 });
+
+check("no dead Adsterra code is left in src/ (only comments may mention it)", () => {
+  for (const f of [
+    "src/config/ads.js",
+    "src/components/AdsTerraBanner.jsx",
+    "src/components/AdsTerraPopunder.jsx",
+    "src/components/AdsTerraSocialBar.jsx",
+  ]) {
+    assert.ok(!fs.existsSync(repoPath(f)), `${f} voltou`);
+  }
+  const semComentarios = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "").replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, "");
+  const ofensores = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (/\.(js|jsx|css|json)$/.test(e.name)) {
+        const codigo = semComentarios(fs.readFileSync(full, "utf8"));
+        if (/adsterra|adsConfig|profitablecpmratenetwork|highperformanceformat|turnstilesocially/i.test(codigo)) ofensores.push(full);
+      }
+    }
+  };
+  walk(repoPath("src"));
+  assert.deepEqual(ofensores, []);
+});
