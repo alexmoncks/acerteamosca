@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
+import PrivacyChoicesLink from "@/components/PrivacyChoicesLink";
 
 export default async function Footer() {
   const t = await getTranslations("footer");
@@ -44,6 +45,9 @@ export default async function Footer() {
         <Link href="/termos-de-uso" style={linkStyle}>
           {t("terms")}
         </Link>
+        {/* Reabre a mensagem de consentimento do Google no EEE/UK/CH; nas
+            outras regiões leva à seção de cookies da política. */}
+        <PrivacyChoicesLink label={t("privacyChoices")} style={linkStyle} />
       </nav>
       <p
         style={{

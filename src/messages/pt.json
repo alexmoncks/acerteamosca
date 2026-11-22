@@ -667,6 +667,7 @@
     "contact": "Contato",
     "privacy": "Política de Privacidade",
     "terms": "Termos de Uso",
+    "privacyChoices": "Privacidade e cookies",
     "tagline": "© 2026 Acerte a Mosca · v1.0 powered by chineladas"
   },
   "common": {
@@ -675,7 +676,7 @@
     "adLabel": "Publicidade"
   },
   "cookieConsent": {
-    "text": "Usamos cookies e armazenamento local para manter seu cadastro de jogador, medir a audiência (Google Analytics) e exibir anúncios do Google AdSense, que também usa cookies. Saiba o que é coletado, as bases legais e como recusar na",
+    "text": "Usamos cookies para cadastro, audiência e anúncios do Google. Veja a",
     "policy": "Política de Privacidade",
     "ok": "ENTENDI",
     "label": "Aviso sobre cookies"

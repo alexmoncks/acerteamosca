@@ -1,12 +1,14 @@
-// Modo de consentimento v2 (lote 2).
+// Modo de consentimento v2 e mensagem de consentimento do Google (lote 2).
 //
 // Comportamento: o script do <head> é executado num contexto isolado (vm),
-// como o navegador faria, e o dataLayer resultante é conferido.
+// como o navegador faria, e o dataLayer resultante é conferido; a detecção
+// da CMP (TCF v2) e o link de revogação rodam contra janelas falsas.
 import assert from "node:assert/strict";
 import vm from "node:vm";
 import { check, source, loadModule } from "./helpers.mjs";
 
 const consent = await loadModule("src/lib/consent.js");
+const cmp = await loadModule("src/lib/cmp.js");
 
 const EU27 = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV",
   "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE"];
@@ -65,4 +67,73 @@ check("the consent default runs before the AdSense tag and before gtag.js in the
   assert.ok(iConsent < layout.indexOf("googletagmanager.com/gtag/js"), "consent depois do gtag");
   assert.ok(layout.indexOf("<head>") < iConsent && iConsent < layout.indexOf("</head>"), "consent fora do <head>");
   assert.match(layout, /__html: consentDefaultScript\(\)/);
+});
+
+// ── CMP (TCF v2) e revogação ───────────────────────────────────────────────
+function janelaComCmp({ gdprApplies, prontaDepois = 0, nunca = false } = {}) {
+  let chamadas = 0;
+  return {
+    __tcfapi(cmd, ver, cb) {
+      assert.equal(cmd, "ping");
+      assert.equal(ver, 2);
+      chamadas++;
+      if (nunca) return;
+      cb(chamadas > prontaDepois ? { gdprApplies, cmpLoaded: true } : { cmpLoaded: false });
+    },
+  };
+}
+
+const rapido = { timeoutMs: 400, pollMs: 20 };
+const [semCmp, cmpGdpr, cmpSemGdpr, cmpLenta, cmpMuda, stubMudo] = await Promise.all([
+  cmp.watchGdprCmp({}, rapido),
+  cmp.watchGdprCmp(janelaComCmp({ gdprApplies: true }), rapido),
+  cmp.watchGdprCmp(janelaComCmp({ gdprApplies: false }), rapido),
+  cmp.watchGdprCmp(janelaComCmp({ gdprApplies: true, prontaDepois: 3 }), rapido),
+  cmp.watchGdprCmp({ __tcfapi() { throw new Error("quebrada"); } }, rapido),
+  cmp.pingGdprApplies(janelaComCmp({ nunca: true })),
+]);
+
+check("CMP detection: GDPR message active, not applicable, slow to load, absent or broken", () => {
+  assert.equal(cmpGdpr, true);
+  assert.equal(cmpSemGdpr, false);
+  assert.equal(cmpLenta, true, "CMP que responde depois de 3 tentativas");
+  assert.equal(semCmp, null, "sem __tcfapi");
+  assert.equal(cmpMuda, null, "__tcfapi que lança erro");
+  assert.equal(stubMudo, undefined, "stub que nunca chama o callback não trava");
+});
+
+check("revocation link: reopens the Google message only where GDPR applies and the API is loaded", () => {
+  const comApi = { googlefc: { showRevocationMessage() {} } };
+  assert.equal(cmp.privacyChoicesAction(comApi, true), "google");
+  assert.equal(cmp.privacyChoicesAction(comApi, false), "policy");
+  assert.equal(cmp.privacyChoicesAction(comApi, null), "policy");
+  assert.equal(cmp.privacyChoicesAction({}, true), "policy", "API do Google ainda não carregou");
+  assert.equal(cmp.privacyChoicesAction({ googlefc: {} }, true), "policy");
+});
+
+check("revocation link: goes through googlefc.callbackQueue and calls showRevocationMessage once", () => {
+  let vezes = 0;
+  const win = { googlefc: { showRevocationMessage() { vezes++; } } };
+  assert.equal(cmp.showGoogleRevocation(win), true);
+  assert.equal(win.googlefc.callbackQueue.length, 1);
+  assert.equal(vezes, 0, "só roda quando a fila do Google executa");
+  win.googlefc.callbackQueue[0].CONSENT_DATA_READY();
+  assert.equal(vezes, 1);
+  assert.equal(cmp.showGoogleRevocation({}), false);
+});
+
+check("footer has the fixed 'Privacidade e cookies' link, with the policy section as fallback", () => {
+  assert.match(source("src/components/Footer.jsx"), /<PrivacyChoicesLink label=\{t\("privacyChoices"\)\}/);
+  const link = source("src/components/PrivacyChoicesLink.jsx");
+  assert.match(link, /PRIVACY_CHOICES_HREF = "\/politica-de-privacidade#cookies"/);
+  assert.match(link, /href=\{PRIVACY_CHOICES_HREF\}/);
+  assert.equal(JSON.parse(source("src/messages/pt.json")).footer.privacyChoices, "Privacidade e cookies");
+  assert.equal(JSON.parse(source("src/messages/en.json")).footer.privacyChoices, "Privacy & cookies");
+});
+
+check("cookie notice stays hidden while the Google CMP shows the GDPR message", () => {
+  const comp = source("src/components/CookieConsent.jsx");
+  assert.match(comp, /watchGdprCmp\(window\)/);
+  assert.match(comp, /gdprApplies === true\) \{\s*cmpRespondeu = true;\s*setVisible\(false\)/);
+  assert.match(comp, /minHeight: 44/);
 });
