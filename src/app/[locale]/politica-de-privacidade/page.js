@@ -36,6 +36,9 @@ export async function generateMetadata({ params }) {
 // EEE/Reino Unido/Suíça, Modo de consentimento e o link "Privacidade e
 // cookies" do rodapé para revogar. A seção 4 tem id="cookies": é o destino
 // desse link fora do EEE (src/components/PrivacyChoicesLink.jsx).
+// Revisada em 22/11/2026 (AJ2, decisão do Alexander): consentimento prévio
+// em todo lugar; GA e AdSense só carregam depois do Aceitar; base legal
+// consentimento, sem legítimo interesse para cookies de anúncio/medição.
 const EMAIL = "alex@marramoncks.com.br";
 
 const contentPT = {
@@ -63,7 +66,7 @@ const contentPT = {
       p: [
         "• Cadastro de jogador, pontuações e rankings — base legal: consentimento, dado na caixa de seleção do cadastro (LGPD, art. 7º, I; GDPR, art. 6(1)(a)). O cookie técnico acerteamosca_jogador (válido por 1 ano) mantém você identificado depois do cadastro.",
         "• Funcionamento, segurança e prevenção de abuso do site, incluindo registros de acesso — base legal: legítimo interesse (LGPD, art. 7º, IX; GDPR, art. 6(1)(f)) e cumprimento de obrigação legal quando aplicável (Marco Civil da Internet, Lei nº 12.965/2014).",
-        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: consentimento (LGPD, art. 7º, I; GDPR, art. 6(1)(a)), pedido pelo aviso de cookies do site ou, no EEE, no Reino Unido e na Suíça, pela mensagem de consentimento do Google (seção 4). Sem ele, o Google exibe apenas anúncios não personalizados ou limitados, e a medição de audiência não usa cookies.",
+        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: consentimento (LGPD, art. 7º, I; GDPR, art. 6(1)(a)), pedido pelo aviso de cookies do site e, no EEE, no Reino Unido e na Suíça, também pela mensagem de consentimento do Google (seção 4). Não usamos o legítimo interesse como base para cookies de publicidade ou de medição. Sem o seu aceite, o site não carrega o Google Analytics nem o Google AdSense.",
         "• Responder às mensagens que você envia — base legal: legítimo interesse e, quando for o caso, exercício regular de direitos.",
         "Não vendemos nem alugamos dados pessoais.",
       ],
@@ -73,16 +76,16 @@ const contentPT = {
       h: "4. Cookies e tecnologias semelhantes",
       p: [
         "Usamos cookies e armazenamento local para manter o cadastro de jogador, lembrar preferências, medir a audiência e exibir anúncios. Cookies de terceiros são definidos pelo Google nos domínios dele, conforme as seções 5 e 6.",
-        "No Espaço Econômico Europeu, no Reino Unido e na Suíça, uma mensagem de consentimento do Google (a ferramenta Privacidade e mensagens do Google AdSense, uma plataforma de gestão de consentimento certificada pelo Google) pede a sua escolha antes de usarmos cookies e identificadores para anúncios personalizados e medição. Até você escolher, o site informa ao Google que o consentimento foi negado (Modo de consentimento do Google), e só são exibidos anúncios não personalizados ou limitados.",
-        "Fora dessas regiões, o aviso de cookies do site pede a sua escolha, com os botões Aceitar e Recusar. Até você aceitar, o site também informa ao Google que o consentimento foi negado, e o resultado é o mesmo: só anúncios não personalizados ou limitados. A escolha fica gravada no seu navegador.",
-        "Você pode mudar ou revogar a sua escolha a qualquer momento pelo link \"Privacidade e cookies\", no rodapé de todas as páginas. Nas regiões do parágrafo anterior, ele reabre a mensagem de consentimento do Google; nas demais, reabre o aviso de cookies do site. As opções da seção 6 continuam valendo.",
+        "Na primeira visita, em qualquer país, o aviso de cookies do site pede a sua escolha, com os botões Aceitar e Recusar. Até você aceitar, o site não carrega o Google Analytics nem o Google AdSense, nenhum cookie deles é gravado e não exibimos anúncios; o site também informa ao Google que o consentimento foi negado (Modo de consentimento do Google). Se você recusar, continua assim. A escolha fica gravada no seu navegador.",
+        "Se você aceitar, o site passa a carregar o Google Analytics e o Google AdSense. No Espaço Econômico Europeu, no Reino Unido e na Suíça, uma mensagem de consentimento do Google (a ferramenta Privacidade e mensagens do Google AdSense, uma plataforma de gestão de consentimento certificada pelo Google) aparece em seguida e pede a sua escolha sobre cookies e identificadores para anúncios personalizados e medição; até você responder a ela, o consentimento continua negado para o Google, e só são exibidos anúncios não personalizados ou limitados.",
+        "Você pode mudar ou revogar a sua escolha a qualquer momento pelo link \"Privacidade e cookies\", no rodapé de todas as páginas. No EEE, no Reino Unido e na Suíça, depois do aceite, ele reabre a mensagem de consentimento do Google; nos demais casos, reabre o aviso de cookies do site. Se você recusar depois de ter aceitado, o site apaga os cookies do Google Analytics e do AdSense gravados no domínio dele e recarrega a página sem carregar essas ferramentas. Os cookies que o Google grava nos domínios dele podem ser apagados nas configurações do navegador. As opções da seção 6 continuam valendo.",
         "Você também pode bloquear ou apagar cookies nas configurações do navegador. Bloquear cookies pode impedir que pontuações e preferências sejam salvas.",
       ],
     },
     {
       h: "5. Google AdSense: cookies de publicidade de terceiros",
       p: [
-        "Este site exibe anúncios do Google AdSense. Fornecedores terceiros, incluindo o Google, usam cookies para veicular anúncios com base em visitas anteriores do usuário a este e a outros sites.",
+        "Depois do seu aceite no aviso de cookies (seção 4), este site exibe anúncios do Google AdSense. Fornecedores terceiros, incluindo o Google, usam cookies para veicular anúncios com base em visitas anteriores do usuário a este e a outros sites.",
         "Com os cookies de publicidade, o Google e os parceiros dele podem veicular anúncios para você com base nas suas visitas a este e/ou a outros sites na Internet.",
         "Saiba como o Google usa dados de sites e apps parceiros: https://policies.google.com/technologies/partner-sites",
         "Política de publicidade do Google: https://policies.google.com/technologies/ads",
@@ -94,8 +97,8 @@ const contentPT = {
         "Você pode desativar a publicidade personalizada nas Configurações de anúncios do Google: https://adssettings.google.com",
         "Para desativar cookies de publicidade personalizada de outros fornecedores: https://www.aboutads.info/choices (e, na Europa, https://www.youronlinechoices.eu).",
         "Para não ser medido pelo Google Analytics, use o complemento de desativação: https://tools.google.com/dlpage/gaoptout",
-        "No EEE, no Reino Unido e na Suíça, você também pode recusar ou revogar o consentimento pela mensagem do Google, reaberta pelo link \"Privacidade e cookies\" no rodapé (seção 4).",
-        "Se você recusar, ainda poderá ver anúncios, mas eles não serão personalizados com base no seu histórico.",
+        "Você também pode recusar ou revogar o consentimento pelo botão Recusar do aviso de cookies do site ou, no EEE, no Reino Unido e na Suíça, pela mensagem do Google, ambos reabertos pelo link \"Privacidade e cookies\" no rodapé (seção 4).",
+        "Se você recusar no aviso do site, o site não carrega o Google Analytics nem o AdSense. Se aceitar no aviso do site e recusar na mensagem do Google, ainda poderá ver anúncios, mas eles não serão personalizados com base no seu histórico.",
       ],
     },
     {
@@ -171,7 +174,7 @@ const contentEN = {
       p: [
         "• Player registration, scores and rankings — legal basis: consent, given in the registration checkbox (LGPD, art. 7, I; GDPR, art. 6(1)(a)). The technical cookie acerteamosca_jogador (valid for 1 year) keeps you identified after registering.",
         "• Operation, security and abuse prevention, including access logs — legal basis: legitimate interests (LGPD, art. 7, IX; GDPR, art. 6(1)(f)) and compliance with legal obligations where applicable (Brazilian Internet Civil Framework, Law No. 12,965/2014).",
-        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: consent (LGPD, art. 7, I; GDPR, art. 6(1)(a)), asked for by the site's cookie notice or, in the EEA, the UK and Switzerland, by the Google consent message (section 4). Without it, Google shows only non-personalized or limited ads, and audience measurement does not use cookies.",
+        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: consent (LGPD, art. 7, I; GDPR, art. 6(1)(a)), asked for by the site's cookie notice and, in the EEA, the UK and Switzerland, also by the Google consent message (section 4). We do not rely on legitimate interests for advertising or measurement cookies. Without your consent, the site does not load Google Analytics or Google AdSense.",
         "• Replying to messages you send — legal basis: legitimate interests and, where applicable, the exercise of legal rights.",
         "We do not sell or rent personal data.",
       ],
@@ -181,16 +184,16 @@ const contentEN = {
       h: "4. Cookies and similar technologies",
       p: [
         "We use cookies and local storage to keep your player registration, remember preferences, measure audience and serve ads. Third-party cookies are set by Google on its own domains, as described in sections 5 and 6.",
-        "In the European Economic Area, the United Kingdom and Switzerland, a Google consent message (the Privacy & messaging tool in Google AdSense, a Google-certified consent management platform) asks for your choice before we use cookies and identifiers for personalized ads and measurement. Until you choose, the site tells Google that consent is denied (Google consent mode), and only non-personalized or limited ads are shown.",
-        "Outside those regions, the site's cookie notice asks for your choice, with Accept and Decline buttons. Until you accept, the site also tells Google that consent is denied, with the same result: only non-personalized or limited ads. Your choice is saved in your browser.",
-        "You can change or withdraw your choice at any time through the \"Privacy & cookies\" link in the footer of every page. In the regions in the previous paragraph it reopens the Google consent message; elsewhere it reopens the site's cookie notice. The options in section 6 still apply.",
+        "On your first visit, in any country, the site's cookie notice asks for your choice, with Accept and Decline buttons. Until you accept, the site does not load Google Analytics or Google AdSense, none of their cookies are set and no ads are shown; the site also tells Google that consent is denied (Google consent mode). If you decline, it stays that way. Your choice is saved in your browser.",
+        "If you accept, the site loads Google Analytics and Google AdSense. In the European Economic Area, the United Kingdom and Switzerland, a Google consent message (the Privacy & messaging tool in Google AdSense, a Google-certified consent management platform) then asks for your choice about cookies and identifiers for personalized ads and measurement; until you answer it, consent stays denied for Google, and only non-personalized or limited ads are shown.",
+        "You can change or withdraw your choice at any time through the \"Privacy & cookies\" link in the footer of every page. In the EEA, the UK and Switzerland, after you accept, it reopens the Google consent message; otherwise it reopens the site's cookie notice. If you decline after accepting, the site deletes the Google Analytics and AdSense cookies set on its own domain and reloads the page without those tools. Cookies that Google sets on its own domains can be deleted in your browser settings. The options in section 6 still apply.",
         "You can also block or delete cookies in your browser settings. Blocking cookies may prevent scores and preferences from being saved.",
       ],
     },
     {
       h: "5. Google AdSense: third-party advertising cookies",
       p: [
-        "This site shows ads from Google AdSense. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this website or other websites.",
+        "After you accept in the cookie notice (section 4), this site shows ads from Google AdSense. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this website or other websites.",
         "Google's use of advertising cookies enables it and its partners to serve ads to you based on your visits to this site and/or other sites on the Internet.",
         "Learn how Google uses data from sites or apps that use its services: https://policies.google.com/technologies/partner-sites",
         "Google's advertising policy: https://policies.google.com/technologies/ads",
@@ -202,8 +205,8 @@ const contentEN = {
         "You can opt out of personalized advertising in Google's Ads Settings: https://adssettings.google.com",
         "To opt out of other vendors' cookies for personalized advertising: https://www.aboutads.info/choices (and, in Europe, https://www.youronlinechoices.eu).",
         "To opt out of Google Analytics measurement, use the opt-out add-on: https://tools.google.com/dlpage/gaoptout",
-        "In the EEA, the UK and Switzerland you can also refuse or withdraw consent through the Google message, reopened by the \"Privacy & cookies\" link in the footer (section 4).",
-        "If you opt out, you may still see ads, but they will not be personalized based on your browsing history.",
+        "You can also refuse or withdraw consent with the Decline button of the site's cookie notice or, in the EEA, the UK and Switzerland, through the Google message, both reopened by the \"Privacy & cookies\" link in the footer (section 4).",
+        "If you decline in the site's notice, the site does not load Google Analytics or AdSense. If you accept in the site's notice and refuse in the Google message, you may still see ads, but they will not be personalized based on your browsing history.",
       ],
     },
     {

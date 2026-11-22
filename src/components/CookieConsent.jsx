@@ -3,75 +3,72 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { grantAfterWait, shouldShowNotice, watchGdprCmp } from "@/lib/cmp";
 import {
-  CMP_NOTICE_DELAY_MS,
-  CMP_WATCH_TIMEOUT_MS,
-  acceptDecision,
-  grantAfterWait,
-  pingGdprAppliesNow,
-  shouldShowNotice,
-  watchGdprCmp,
-} from "@/lib/cmp";
-import { CONSENT_REOPEN_EVENT, applyConsentChoice, dropSiteChoiceForGdpr, readConsentChoice } from "@/lib/consent";
+  CONSENT_REOPEN_EVENT,
+  GOOGLE_TAGS_FLAG,
+  acceptSiteChoice,
+  declineSiteChoice,
+  grantConsent,
+  markGdprApplies,
+  readConsentChoice,
+  readGdprFlag,
+} from "@/lib/consent";
 
-// OPÇÃO "denied global" (feat/consent-lote2-br-opcao): aviso de cookies que
-// PEDE a escolha, com Aceitar e Recusar do mesmo tamanho. Até a escolha, o
-// Modo de consentimento do Google fica negado em todo lugar
-// (src/lib/consent.js). Aceitar manda o gtag('consent', 'update', granted);
-// Recusar grava a recusa (e manda o update "denied", caso a pessoa tenha
-// aceitado antes e esteja revogando pelo link do rodapé).
-//
-// Onde a mensagem do Google está ativa (a CMP responde gdprApplies = true:
-// EEE, Reino Unido, Suíça) este aviso não aparece, para não haver dois
-// banners: lá quem pede a escolha é a CMP do Google. Ele espera a CMP até
-// CMP_NOTICE_DELAY_MS antes de aparecer e some se ela responder depois.
-// E não concede nada por lá, nem com a CMP lenta: o Aceitar só concede
-// quando a CMP disse que o GDPR não se aplica, ou quando o prazo dela
-// (CMP_WATCH_TIMEOUT_MS desde a carga) acaba sem CMP nenhuma (acceptDecision,
-// grantAfterWait). Até lá, espera. Se a CMP disser depois que o GDPR
-// se aplica, a escolha do site é descartada (dropSiteChoiceForGdpr).
+// Aviso de cookies que PEDE a escolha, com Aceitar e Recusar do mesmo
+// tamanho, em todo lugar (decisão de 22/11/2026: consentimento prévio também
+// no Brasil). Até o Aceitar, nenhuma tag do Google entra na página e o Modo
+// de consentimento fica "denied" (src/lib/consent.js).
+//   - Aceitar: grava a escolha e carrega o adsbygoogle.js e o gtag.js. O
+//     "granted" vai para o Google quando a CMP diz que o GDPR não se aplica,
+//     ou quando o prazo dela (CMP_WATCH_TIMEOUT_MS) acaba sem CMP nenhuma
+//     (grantAfterWait). No EEE/Reino Unido/Suíça a mensagem do Google, que o
+//     adsbygoogle.js traz, pede a escolha e manda no consentimento; o site
+//     não concede nada lá (markGdprApplies).
+//   - Recusar: grava a recusa, manda "denied" e apaga os cookies do Google do
+//     domínio do site. Se as tags já estavam na página (revogação pelo link
+//     do rodapé), recarrega, para nenhuma tag do Google continuar rodando.
 // O link "Privacidade e cookies" do rodapé reabre este aviso
-// (CONSENT_REOPEN_EVENT) fora dessas regiões.
+// (CONSENT_REOPEN_EVENT) fora do EEE.
 
 export default function CookieConsent() {
   const t = useTranslations("cookieConsent");
   // dismissed: true até ler o localStorage, para o servidor não renderizar
   // o aviso. "dismissed" aqui é "já escolheu". A decisão é de
   // shouldShowNotice (src/lib/cmp.js, testada).
-  const [estado, setEstado] = useState({ dismissed: true, gdprApplies: undefined, delayElapsed: false });
+  const [estado, setEstado] = useState({ dismissed: true, gdprApplies: undefined });
   // reaberto pelo rodapé: o foco vai para o aviso, para o leitor de tela
   // anunciar e o teclado chegar nele
   const [focar, setFocar] = useState(false);
   const primeiroBotao = useRef(null);
-  // o prazo da CMP conta da carga da página, não do clique
-  const inicio = useRef(Date.now());
+  const vivo = useRef(true);
+
+  // Com as tags na página: pergunta à CMP do Google e decide o "granted".
+  function acompanharCmp() {
+    watchGdprCmp(window).then((gdprApplies) => {
+      if (gdprApplies === true) markGdprApplies(window);
+      else if (grantAfterWait(gdprApplies, typeof window.__tcfapi === "function")) grantConsent(window);
+      if (vivo.current) setEstado((s) => ({ ...s, gdprApplies }));
+    });
+  }
 
   useEffect(() => {
-    let vivo = true;
-    // reabrir pelo link do rodapé: aparece na hora, sem esperar a CMP
+    vivo.current = true;
+    // reabrir pelo link do rodapé
     const reabrir = () => {
-      setEstado((s) => ({ ...s, dismissed: false, delayElapsed: true }));
+      setEstado((s) => ({ ...s, dismissed: false }));
       setFocar(true);
     };
     window.addEventListener(CONSENT_REOPEN_EVENT, reabrir);
-    let timer;
-    if (!readConsentChoice(window)) {
-      setEstado((s) => ({ ...s, dismissed: false }));
-      timer = setTimeout(() => {
-        if (vivo) setEstado((s) => ({ ...s, delayElapsed: true }));
-      }, CMP_NOTICE_DELAY_MS);
-    }
-    watchGdprCmp(window).then((gdprApplies) => {
-      // a CMP do Google manda no EEE: a escolha do site não vale ali
-      if (gdprApplies === true) dropSiteChoiceForGdpr(window);
-      if (vivo) setEstado((s) => ({ ...s, gdprApplies }));
-    });
+    const escolha = readConsentChoice(window);
+    if (!escolha) setEstado((s) => ({ ...s, dismissed: false }));
+    // aceitou numa visita anterior: o <head> já carregou as tags
+    if (escolha === "granted") acompanharCmp();
     return () => {
-      vivo = false;
-      clearTimeout(timer);
+      vivo.current = false;
       window.removeEventListener(CONSENT_REOPEN_EVENT, reabrir);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (focar && primeiroBotao.current) {
@@ -83,24 +80,16 @@ export default function CookieConsent() {
   function escolher(escolha) {
     setEstado((s) => ({ ...s, dismissed: true }));
     if (escolha === "denied") {
-      applyConsentChoice(window, "denied");
+      if (declineSiteChoice(window)) window.location.reload();
       return;
     }
-    const decisao = acceptDecision({
-      gdprApplies: estado.gdprApplies,
-      pingNow: pingGdprAppliesNow(window),
-      cmpPresent: typeof window.__tcfapi === "function",
-    });
-    if (decisao === "grant") applyConsentChoice(window, "granted");
-    else if (decisao === "wait") {
-      // espera a CMP pelo que resta do prazo; só concede com "não se aplica"
-      // explícito ou sem CMP nenhuma no fim (grantAfterWait)
-      const resta = Math.max(0, CMP_WATCH_TIMEOUT_MS - (Date.now() - inicio.current));
-      watchGdprCmp(window, { timeoutMs: resta }).then((gdprApplies) => {
-        if (grantAfterWait(gdprApplies, typeof window.__tcfapi === "function")) applyConsentChoice(window, "granted");
-      });
-    }
-    // "cmp": nada; a mensagem do Google pede a escolha
+    const jaTinhaTags = !!window[GOOGLE_TAGS_FLAG];
+    acceptSiteChoice(window);
+    // o site já viu, numa visita anterior, que a mensagem GDPR não se aplica
+    // aqui: concede logo (se a CMP aparecer agora, markGdprApplies desfaz)
+    if (readGdprFlag(window) === "0") grantConsent(window);
+    if (!jaTinhaTags) acompanharCmp();
+    else if (grantAfterWait(estado.gdprApplies, typeof window.__tcfapi === "function")) grantConsent(window);
   }
 
   const visible = shouldShowNotice(estado);

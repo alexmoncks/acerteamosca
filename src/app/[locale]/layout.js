@@ -10,11 +10,12 @@ import Footer from "@/components/Footer";
 import { SITE_URL, localeUrl, siteName } from "@/lib/seo";
 import { ADSENSE_PUBLISHER, isValidAdClient } from "@/lib/ads";
 import JsonLd from "@/components/JsonLd";
-import AdSenseScript from "@/components/AdSenseScript";
 import { getNonce } from "@/lib/nonce";
-import { consentDefaultScript } from "@/lib/consent";
+import { consentDefaultScript, isValidGaId } from "@/lib/consent";
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+// GA4 e AdSense só entram na página depois do Aceitar do aviso de cookies:
+// quem os injeta é o script consent-default (src/lib/consent.js).
+const GA_ID = isValidGaId(process.env.NEXT_PUBLIC_GA_ID) ? process.env.NEXT_PUBLIC_GA_ID.trim() : null;
 // Anúncios Automáticos: só o script do AdSense, com o publisher do ads.txt.
 // ID fora do formato ca-pub-XXXXXXXXXXXXXXXX não liga nada.
 const ADSENSE_ID = isValidAdClient(process.env.NEXT_PUBLIC_ADSENSE_ID)
@@ -121,23 +122,19 @@ export default async function LocaleLayout({ children, params }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-        {/* Modo de consentimento do Google: o estado padrão ANTES do
-            adsbygoogle.js e do gtag.js (src/lib/consent.js). Negado em todo
-            lugar até a escolha: a mensagem do Google no EEE/Reino Unido/
-            Suíça, o aviso do site (Aceitar/Recusar) no resto. Quem já
-            aceitou volta com o update "granted" já neste script. */}
+        {/* Modo de consentimento do Google e as tags do Google
+            (src/lib/consent.js): default "denied" no mundo todo, sem região.
+            O adsbygoogle.js (como o painel entrega: async + crossorigin) e o
+            gtag.js só são injetados por este script, com o nonce dele,
+            depois do Aceitar do aviso de cookies; quem já aceitou numa
+            visita anterior recebe as tags já aqui. A tag do AdSense também
+            traz a mensagem de consentimento do Google (EEE/UK/CH). A conta
+            continua verificada pela meta google-adsense-account acima. */}
         <script
           id="consent-default"
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: consentDefaultScript() }}
+          dangerouslySetInnerHTML={{ __html: consentDefaultScript({ adsClient: ADSENSE_ID, gaId: GA_ID }) }}
         />
-        {/* A tag como o AdSense entrega, no <head>: async + crossorigin, sem
-            atributos extras além do nonce da CSP. Ela também carrega a
-            mensagem de consentimento do Google (Funding Choices). Formatos
-            de sobreposição (vinheta, âncora, intersticial) se controlam no
-            painel de Anúncios Automáticos, não com atributo no script — o
-            antigo data-overlays não é documentado. */}
-        {ADSENSE_ID && <AdSenseScript client={ADSENSE_ID} nonce={nonce} />}
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>
@@ -174,18 +171,6 @@ export default async function LocaleLayout({ children, params }) {
               },
             }}
           />
-          {GA_ID && (
-            <>
-              <Script
-                src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-                strategy="afterInteractive"
-                nonce={nonce}
-              />
-              <Script id="google-analytics" strategy="afterInteractive" nonce={nonce}>
-                {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
-              </Script>
-            </>
-          )}
           <Script id="load-fonts" strategy="afterInteractive" nonce={nonce}>
             {`var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap';document.head.appendChild(l);`}
           </Script>

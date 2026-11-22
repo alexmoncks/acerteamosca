@@ -80,7 +80,7 @@ check("the cookie notice is translated and does not claim consent by browsing", 
   const comp = semComentarios(source("src/components/CookieConsent.jsx"));
   assert.match(comp, /useTranslations\("cookieConsent"\)/);
   assert.match(comp, /href="\/politica-de-privacidade"/);
-  // opção BR: a escolha fica em CONSENT_STORAGE_KEY (src/lib/consent.js)
+  // a escolha fica em CONSENT_STORAGE_KEY (src/lib/consent.js)
   assert.match(source("src/lib/consent.js"), /CONSENT_STORAGE_KEY = "acerteamosca_consent_v1"/);
   // nada de texto fixo em português no componente
   assert.ok(!/cookies|navegando|concorda|ACEITAR|RECUSAR|LGPD/i.test(comp.replace(/cookieConsent/g, "")), "texto fixo no CookieConsent");

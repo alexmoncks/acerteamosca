@@ -6,12 +6,12 @@
 // A tag do AdSense já carrega a CMP do Google. Nas regiões em que a mensagem
 // GDPR se aplica (EEE, Reino Unido, Suíça), ela expõe a API do IAB TCF v2
 // (window.__tcfapi) e responde gdprApplies = true. Fora delas, ou com
-// bloqueador de anúncios, pode nem carregar.
+// bloqueador de anúncios, pode nem carregar. Desde a decisão de 22/11 a tag
+// só entra depois do Aceitar do aviso do site (src/lib/consent.js): antes
+// disso, não existe CMP nenhuma na página.
 
 export const CMP_POLL_MS = 250;
-/** Quanto o aviso do site espera a CMP antes de aparecer. */
-export const CMP_NOTICE_DELAY_MS = 2500;
-/** Até quando o site continua perguntando à CMP. */
+/** Até quando o site continua perguntando à CMP (contado da carga das tags). */
 export const CMP_WATCH_TIMEOUT_MS = 10000;
 
 /**
@@ -79,49 +79,24 @@ export function pingGdprAppliesNow(win) {
 
 /**
  * O aviso de cookies do site aparece? Função pura, para o CookieConsent e
- * para os testes:
- *   - fechado antes (localStorage)  -> não;
+ * para os testes. Antes da escolha não há tag do Google na página, então
+ * não há CMP para esperar: o aviso aparece logo.
+ *   - já escolheu (localStorage), e não foi reaberto pelo rodapé -> não;
  *   - a CMP do Google diz que o GDPR se aplica -> não (a mensagem dela já
- *     cobre isso; dois banners, não);
- *   - a CMP diz que não se aplica -> sim, logo;
- *   - nenhuma resposta ainda (undefined) ou nenhuma CMP (null) -> só depois
- *     de CMP_NOTICE_DELAY_MS.
+ *     pede a escolha; dois banners, não);
+ *   - qualquer outro caso -> sim.
  */
-export function shouldShowNotice({ dismissed, gdprApplies, delayElapsed }) {
+export function shouldShowNotice({ dismissed, gdprApplies }) {
   if (dismissed) return false;
-  if (gdprApplies === true) return false;
-  if (gdprApplies === false) return true;
-  return !!delayElapsed;
+  return gdprApplies !== true;
 }
 
 /**
- * O que um "Aceitar" do aviso do site pode fazer (opção "denied global").
- * No EEE/Reino Unido/Suíça só a CMP certificada do Google pode colher o
- * consentimento, então o aviso só concede quando sabe que ela não está lá:
- *   - "cmp":   a CMP diz que o GDPR se aplica: a escolha é dela, o site não
- *              concede nada;
- *   - "grant": a CMP diz que não se aplica, ou o watchGdprCmp já esgotou o
- *              prazo sem CMP nenhuma na página;
- *   - "wait":  qualquer outro caso: espera a resposta da CMP até o fim do
- *              prazo. Inclui "ainda não há __tcfapi": quem instala o stub é
- *              o script do Funding Choices, que o adsbygoogle carrega, e em
- *              rede lenta ele chega depois do aviso.
- * `gdprApplies` é o que o watchGdprCmp já sabe (undefined enquanto ele
- * pergunta, null quando desistiu); `pingNow`, a pergunta feita na hora do
- * clique (pingGdprAppliesNow); `cmpPresent`, se há __tcfapi agora.
- */
-export function acceptDecision({ gdprApplies, pingNow, cmpPresent }) {
-  if (gdprApplies === true || pingNow === true) return "cmp";
-  if (gdprApplies === false || pingNow === false) return "grant";
-  if (gdprApplies === null && !cmpPresent) return "grant";
-  return "wait";
-}
-
-/**
- * Resultado da espera do "wait": concede só com "não se aplica" explícito,
- * ou quando o prazo acabou (null) sem nenhum __tcfapi na página (bloqueador
- * de anúncios, ou fora do EEE sem Funding Choices). CMP presente e muda não
- * concede.
+ * Depois do Aceitar do site (tags carregadas), o "granted" pode ir para o
+ * Google? Só com "não se aplica" explícito da CMP, ou quando o prazo acabou
+ * (null) sem nenhum __tcfapi na página (bloqueador de anúncios, ou fora do
+ * EEE, onde o Funding Choices não carrega). CMP presente e muda não concede:
+ * no EEE só a CMP certificada do Google pode colher o consentimento.
  */
 export function grantAfterWait(gdprApplies, cmpPresent) {
   return gdprApplies === false || (gdprApplies === null && !cmpPresent);

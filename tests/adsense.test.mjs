@@ -80,12 +80,16 @@ check("the AdSense tag has no undocumented attributes", () => {
     assert.ok(!/data-overlays/.test(semComentarios(source(f))), `${f} usa data-overlays`);
   }
   const layout = semComentarios(source("src/app/[locale]/layout.js"));
-  assert.match(layout, /<AdSenseScript client=\{ADSENSE_ID\} nonce=\{nonce\} \/>/);
-  const tag = semComentarios(source("src/components/AdSenseScript.jsx"));
-  assert.match(tag, /adsbygoogle\.js\?client=\$\{client\}/);
-  assert.match(tag, /<script\s+async\s+nonce=\{nonce\}\s+src=/);
-  assert.match(tag, /crossOrigin="anonymous"/);
+  // desde o AJ2 a tag não está no HTML: o script consent-default a injeta
+  // depois do Aceitar, como o painel entrega (async + crossorigin) e com o
+  // nonce dele (tests/consent.test.mjs roda o injetor)
+  assert.ok(!/AdSenseScript|adsbygoogle\.js/.test(layout), "tag do AdSense de volta no HTML");
+  assert.match(layout, /consentDefaultScript\(\{ adsClient: ADSENSE_ID, gaId: GA_ID \}\)/);
+  const consent = semComentarios(source("src/lib/consent.js"));
+  assert.match(consent, /https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=\$\{ads\}",1\)/);
+  assert.match(consent, /s\.async=true;s\.src=u;if\(n\)s\.nonce=n;if\(c\)s\.crossOrigin="anonymous"/);
   assert.match(layout, /isValidAdClient\(process\.env\.NEXT_PUBLIC_ADSENSE_ID\)/);
+  assert.match(layout, /<meta name="google-adsense-account" content=\{ADSENSE_PUBLISHER\} \/>/);
 });
 
 check("the CSP lets the AdSense code in: strict CSP (nonce + strict-dynamic), creatives in frame-src", () => {
@@ -99,5 +103,4 @@ check("the CSP lets the AdSense code in: strict CSP (nonce + strict-dynamic), cr
     assert.ok(frame.includes(`https://${d}"`), `frame-src sem ${d}`);
   }
   assert.match(csp, /\["frame-src", \.\.\.ADSENSE_FRAME_SRC\]/);
-  assert.match(source("src/components/AdSenseScript.jsx"), /async\s+nonce=\{nonce\}\s+src=\{`https:\/\/pagead2\.googlesyndication\.com/);
 });

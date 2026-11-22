@@ -261,10 +261,12 @@ check("every <script> rendered by the layout and pages carries the nonce", () =>
     t.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
   const layout = semComentarios(source("src/app/[locale]/layout.js"));
   const scripts = layout.match(/<(?:script|Script)\b[^>]*?>/gs) || [];
-  assert.ok(scripts.length >= 5, `achei ${scripts.length} scripts no layout`);
+  assert.ok(scripts.length >= 3, `achei ${scripts.length} scripts no layout`);
   for (const tag of scripts) assert.match(tag, /nonce=\{nonce\}/, tag);
-  assert.match(layout, /<AdSenseScript client=\{ADSENSE_ID\} nonce=\{nonce\} \/>/);
-  assert.match(source("src/components/AdSenseScript.jsx"), /nonce=\{nonce\}/);
+  // adsbygoogle.js e gtag.js: injetados pelo consent-default (que tem o
+  // nonce) com o nonce dele; nenhuma tag do Google direto no layout
+  assert.ok(!/googletagmanager|adsbygoogle\.js|AdSenseScript/.test(layout), "tag do Google direto no layout");
+  assert.match(source("src/lib/consent.js"), /var n=document\.currentScript&&document\.currentScript\.nonce;/);
   assert.match(source("src/components/JsonLd.jsx"), /nonce=\{getNonce\(\)\}/);
   const dir = repoPath("src/app/[locale]/jogos");
   for (const jogo of fs.readdirSync(dir)) {

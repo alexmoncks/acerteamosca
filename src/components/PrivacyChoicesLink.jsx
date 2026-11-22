@@ -9,7 +9,8 @@ import { CONSENT_REOPEN_EVENT } from "@/lib/consent";
 // Google se aplica (EEE, Reino Unido, Suíça) e a API dela está carregada, o
 // clique reabre a mensagem de consentimento (googlefc.showRevocationMessage)
 // para a pessoa mudar ou revogar a escolha, como o Google exige.
-// OPÇÃO "denied global": no resto do mundo o clique reabre o aviso do site
+// Nos demais casos (fora do EEE, ou antes do Aceitar, quando não há tag do
+// Google na página) o clique reabre o aviso do site
 // (Aceitar/Recusar), que é onde a escolha foi feita. Sem JavaScript, ou no
 // EEE sem a API do Google carregada, vai para a seção de cookies da política.
 export const PRIVACY_CHOICES_HREF = "/politica-de-privacidade#cookies";
