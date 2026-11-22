@@ -456,13 +456,6 @@ function SplashScreen({ onStart, t }) {
         </p>
       </div>
 
-      <div style={{ opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.5s", marginTop: 10, textAlign: "center" }}>
-        <div style={{ fontSize: 14, letterSpacing: 2 }}>⭐⭐⭐⭐⭐</div>
-        <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: "#555", fontStyle: "italic", marginTop: 4 }}>
-          {t("testimonial")}
-        </p>
-      </div>
-
       <button onClick={onStart} style={{
         marginTop: 28, padding: "16px 44px",
         background: phase >= 4 ? "linear-gradient(135deg, #00f0ff, #39ff14)" : "transparent",

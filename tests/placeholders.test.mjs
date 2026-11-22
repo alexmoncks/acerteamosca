@@ -82,3 +82,18 @@ check("no dead Adsterra code is left in src/ (only comments may mention it)", ()
   walk(repoPath("src"));
   assert.deepEqual(ofensores, []);
 });
+
+// Depoimento fictício: a intro do Acerte a Mosca exibia cinco estrelas e
+// "Melhor que raquete eletrica" - Maria, 67 anos. Não existe essa pessoa;
+// avaliação inventada atribuída a alguém conta como conteúdo enganoso.
+// Decisão do Alexander em 22/11/2026: tirar.
+check("no fake testimonial or star rating attributed to a person", () => {
+  for (const lang of ["pt", "en"]) {
+    const txt = source(`src/messages/${lang}.json`);
+    assert.ok(!/testimonial/i.test(txt), `${lang}.json voltou a ter chave de depoimento`);
+    assert.ok(!/raquete el[eé]trica|electric racket/i.test(txt), `${lang}.json voltou a ter o depoimento da Maria`);
+  }
+  const jogo = source("src/components/games/AcerteAMosca.jsx");
+  assert.ok(!/t\("testimonial"\)/.test(jogo), "a intro voltou a renderizar o depoimento");
+  assert.ok(!/⭐{3,}/u.test(jogo), "a intro voltou a mostrar a nota em estrelas");
+});
