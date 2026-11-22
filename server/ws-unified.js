@@ -1274,10 +1274,11 @@ wssBatalha.on("connection", (ws) => {
 // ===== START UNIFIED SERVER =====
 // =============================================================================
 
-// HOST opcional: sem ele o servidor escuta em todas as interfaces, como
-// sempre foi no Railway. O ambiente de dev do homeserver passa HOST=127.0.0.1
-// para o WebSocket ficar só na Tailscale.
-const HOST = process.env.HOST || undefined;
+// WS_HOST opcional: sem ele o servidor escuta em todas as interfaces, como
+// sempre foi no Railway. O ambiente de dev do homeserver passa
+// WS_HOST=127.0.0.1 para o WebSocket ficar só na Tailscale. Nome próprio
+// (e não HOST) para nenhuma variável genérica da plataforma mudar o bind.
+const HOST = process.env.WS_HOST || undefined;
 
 server.listen(PORT, HOST, () => {
   console.log(`Acerte a Mosca unified WS server on ${HOST || "*"}:${PORT}`);

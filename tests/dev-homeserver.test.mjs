@@ -55,10 +55,25 @@ check("next.config.js builds connect-src from WS_DEV_ORIGINS", () => {
   assert.ok(/\["connect-src 'self' https: wss:", \.\.\.WS_DEV_ORIGINS\]/.test(source("next.config.js")));
 });
 
-check("ws-unified listens on HOST only when HOST is set (Railway keeps all interfaces)", () => {
+check("ws-unified binds to WS_HOST only when it is set (Railway keeps all interfaces)", () => {
   const src = source("server/ws-unified.js");
-  assert.ok(/const HOST = process\.env\.HOST \|\| undefined;/.test(src));
+  assert.ok(/const HOST = process\.env\.WS_HOST \|\| undefined;/.test(src));
+  assert.ok(!/process\.env\.HOST\b/.test(src), "HOST genérico da plataforma não pode mudar o bind");
   assert.ok(/server\.listen\(PORT, HOST,/.test(src));
+});
+
+check("dev-homeserver.sh calls tmux only with a clean environment (no secret in tmux global env)", () => {
+  const sh = source("scripts/dev-homeserver.sh");
+  // junta continuações de linha e ignora comentários e textos entre aspas
+  const codigo = sh
+    .replace(/\\\n/g, " ")
+    .split("\n")
+    .filter((l) => !/^\s*#/.test(l))
+    .map((l) => l.replace(/"[^"]*"/g, '""'))
+    .join("\n");
+  assert.ok(/env -i [^\n]*tmux ""/.test(codigo), "o wrapper tmuxl precisa de env -i");
+  const diretos = codigo.split("\n").filter((l) => /(^|[\s;(])tmux\s/.test(l) && !/env -i/.test(l));
+  assert.deepEqual(diretos, [], "chamada de tmux fora do wrapper tmuxl");
 });
 
 check("dev-homeserver.sh never prints the database password and keeps secrets 600", () => {

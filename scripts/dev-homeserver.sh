@@ -41,6 +41,7 @@ DB_NAME="acerteamosca"
 DB_USER="acerteamosca"
 SESSAO_APP="aam-preview"
 SESSAO_WS="aam-ws"
+PROXY_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/acerteamosca-dev"
 
 # Padrões (podem ser sobrescritos no .env.local, que o script cria na 1ª vez)
 AAM_DEV_HOST_PADRAO="127.0.0.1"
@@ -49,6 +50,15 @@ AAM_EN_PORT_PADRAO="3001"
 AAM_WS_PORT_PADRAO="3002"
 AAM_DB_PORT_PADRAO="5433"
 ADSENSE_PADRAO="ca-pub-4148140889800778"   # ID público do publisher (está no ads.txt)
+
+# tmux com ambiente LIMPO. Este script exporta DATABASE_URL e NEXT_PUBLIC_*
+# (carregar_env); se o tmux herdasse isso, o servidor tmux criado aqui (ex.:
+# depois de um reboot) guardaria a senha no ambiente global e todo painel de
+# qualquer outro projeto herdaria o banco e as variáveis do acerteamosca.
+tmuxl() {
+  env -i HOME="$HOME" USER="${USER:-$(id -un)}" PATH="$PATH" TERM="${TERM:-xterm-256color}" \
+    LANG="${LANG:-C.UTF-8}" ${TMUX_TMPDIR:+TMUX_TMPDIR="$TMUX_TMPDIR"} tmux "$@"
+}
 
 log() { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 erro() { printf '\033[1;31mERRO:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -142,6 +152,7 @@ subir_banco() {
     local envfile senha
     senha="$(printf '%s' "$DATABASE_URL" | sed -E 's#^postgresql://[^:]+:([^@]+)@.*#\1#')"
     envfile="$(umask 077; mktemp /tmp/aam-dev-db-env-XXXXXX)"
+    trap 'rm -f "$envfile"' EXIT
     printf 'POSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nPOSTGRES_DB=%s\n' "$DB_USER" "$senha" "$DB_NAME" > "$envfile"
     unset senha
     docker volume create "$DB_VOLUME" >/dev/null
@@ -155,6 +166,7 @@ subir_banco() {
       --label "projeto=acerteamosca" --label "ambiente=dev-homeserver" \
       "$DB_IMAGE" >/dev/null
     rm -f "$envfile"
+    trap - EXIT
   fi
   log "esperando o Postgres responder"
   for _ in $(seq 1 60); do
@@ -207,19 +219,25 @@ build() {
 # ── serviços (tmux) ─────────────────────────────────────────────────────────
 
 porta_livre() {
-  ! ss -ltn "( sport = :$2 )" 2>/dev/null | grep -q "$1:$2\|0.0.0.0:$2\|\*:$2\|\[::\]:$2"
+  # espera até 10 s (logo depois de um kill-session a porta ainda pode estar presa)
+  for _ in $(seq 1 10); do
+    ss -ltn "( sport = :$2 )" 2>/dev/null | grep -q "$1:$2\|0.0.0.0:$2\|\*:$2\|\[::\]:$2" || return 0
+    sleep 1
+  done
+  return 1
 }
 
-# Os comandos dentro do tmux recarregam o .env sozinhos: a senha nunca entra
-# na linha de comando nem no ambiente global do tmux.
+# Os comandos dentro do tmux recarregam o .env sozinhos e o tmux é chamado com
+# ambiente limpo (tmuxl): a senha nunca entra na linha de comando nem no
+# ambiente global do tmux.
 CARREGA='set -a; . ./.env; . ./.env.local; set +a'
 
 subir_ws() {
-  if tmux has-session -t "$SESSAO_WS" 2>/dev/null; then log "$SESSAO_WS já existe"; return; fi
+  if tmuxl has-session -t "$SESSAO_WS" 2>/dev/null; then log "$SESSAO_WS já existe"; return; fi
   porta_livre "$AAM_DEV_HOST" "$AAM_WS_PORT" || erro "porta $AAM_WS_PORT ocupada"
   log "subindo WebSocket em ws://$AAM_DEV_HOST:$AAM_WS_PORT (tmux $SESSAO_WS)"
-  tmux new-session -d -s "$SESSAO_WS" -n ws -c "$RAIZ" \
-    "bash -c '$CARREGA; while true; do NODE_ENV=production HOST=\"\$AAM_DEV_HOST\" PORT=\"\$AAM_WS_PORT\" node server/ws-unified.js; echo \"[ws caiu (\$?) — reinicia em 5 s; Ctrl-C para parar]\"; sleep 5; done'"
+  tmuxl new-session -d -s "$SESSAO_WS" -n ws -c "$RAIZ" \
+    "bash -c '$CARREGA; while true; do NODE_ENV=production WS_HOST=\"\$AAM_DEV_HOST\" PORT=\"\$AAM_WS_PORT\" node server/ws-unified.js; echo \"[ws caiu (\$?) — reinicia em 5 s; Ctrl-C para parar]\"; sleep 5; done'"
 }
 
 PROXY_EN_JS='
@@ -242,18 +260,19 @@ http.createServer((req, res) => {
 '
 
 subir_app() {
-  if tmux has-session -t "$SESSAO_APP" 2>/dev/null; then log "$SESSAO_APP já existe"; return; fi
+  if tmuxl has-session -t "$SESSAO_APP" 2>/dev/null; then log "$SESSAO_APP já existe"; return; fi
   [ -f .next/BUILD_ID ] || erro "não há build (.next/BUILD_ID). Rode: $0 build"
   porta_livre "$AAM_DEV_HOST" "$AAM_APP_PORT" || erro "porta $AAM_APP_PORT ocupada"
   porta_livre "$AAM_DEV_HOST" "$AAM_EN_PORT" || erro "porta $AAM_EN_PORT ocupada"
   log "subindo app em http://$AAM_DEV_HOST:$AAM_APP_PORT (tmux $SESSAO_APP, janela app)"
-  tmux new-session -d -s "$SESSAO_APP" -n app -c "$RAIZ" \
+  tmuxl new-session -d -s "$SESSAO_APP" -n app -c "$RAIZ" \
     "bash -c '$CARREGA; while true; do NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 ./node_modules/.bin/next start -H \"\$AAM_DEV_HOST\" -p \"\$AAM_APP_PORT\"; echo \"[app caiu (\$?) — reinicia em 5 s; Ctrl-C para parar]\"; sleep 5; done'"
   local proxy
-  proxy="$(umask 077; mktemp /tmp/aam-dev-proxy-en-XXXXXX.mjs)"
-  printf '%s' "$PROXY_EN_JS" > "$proxy"
+  # Fora do /tmp: o Debian limpa o /tmp e o laço de reinício perderia o arquivo.
+  proxy="$PROXY_DIR/proxy-en.mjs"
+  ( umask 077; mkdir -p "$PROXY_DIR"; printf '%s' "$PROXY_EN_JS" > "$proxy" )
   log "subindo proxy EN em http://$AAM_DEV_HOST:$AAM_EN_PORT (janela proxy-en)"
-  tmux new-window -t "$SESSAO_APP" -n proxy-en -c "$RAIZ" \
+  tmuxl new-window -t "$SESSAO_APP" -n proxy-en -c "$RAIZ" \
     "bash -c '$CARREGA; while true; do node \"$proxy\"; echo \"[proxy caiu — reinicia em 5 s]\"; sleep 5; done'"
 }
 
@@ -268,9 +287,9 @@ esperar_http() {
 
 derrubar() {
   for s in "$SESSAO_APP" "$SESSAO_WS"; do
-    if tmux has-session -t "$s" 2>/dev/null; then log "derrubando tmux $s"; tmux kill-session -t "$s"; fi
+    if tmuxl has-session -t "$s" 2>/dev/null; then log "derrubando tmux $s"; tmuxl kill-session -t "$s"; fi
   done
-  rm -f /tmp/aam-dev-proxy-en-*.mjs
+  rm -f "$PROXY_DIR/proxy-en.mjs"
   if [ "${1:-}" = "--db" ]; then
     log "parando $DB_CONTAINER (o volume $DB_VOLUME fica)"
     docker stop "$DB_CONTAINER" >/dev/null 2>&1 || true
@@ -280,18 +299,19 @@ derrubar() {
 status() {
   echo "banco : $(docker inspect -f '{{.State.Status}} ({{if .State.Health}}{{.State.Health.Status}}{{end}}) restart={{.HostConfig.RestartPolicy.Name}}' "$DB_CONTAINER" 2>/dev/null || echo 'não existe')"
   for s in "$SESSAO_WS" "$SESSAO_APP"; do
-    echo "tmux  : $s $(tmux has-session -t "$s" 2>/dev/null && echo '(de pé)' || echo '(fora)')"
+    echo "tmux  : $s $(tmuxl has-session -t "$s" 2>/dev/null && echo '(de pé)' || echo '(fora)')"
   done
-  if [ -f .env.local ]; then
+  if [ -f .env ] && [ -f .env.local ]; then
     carregar_env
-    printf 'app   : http://%s:%s  -> %s\n' "$AAM_DEV_HOST" "$AAM_APP_PORT" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://$AAM_DEV_HOST:$AAM_APP_PORT/" || echo erro)"
-    printf 'EN    : http://%s:%s  -> %s\n' "$AAM_DEV_HOST" "$AAM_EN_PORT" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://$AAM_DEV_HOST:$AAM_EN_PORT/" || echo erro)"
-    printf 'ws    : ws://%s:%s    -> %s\n' "$AAM_DEV_HOST" "$AAM_WS_PORT" "$(curl -s --max-time 5 "http://$AAM_DEV_HOST:$AAM_WS_PORT/" || echo erro)"
+    printf 'app   : http://%s:%s  -> %s\n' "$AAM_DEV_HOST" "$AAM_APP_PORT" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://$AAM_DEV_HOST:$AAM_APP_PORT/" || true)"
+    printf 'EN    : http://%s:%s  -> %s\n' "$AAM_DEV_HOST" "$AAM_EN_PORT" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://$AAM_DEV_HOST:$AAM_EN_PORT/" || true)"
+    printf 'ws    : ws://%s:%s    -> %s\n' "$AAM_DEV_HOST" "$AAM_WS_PORT" "$(curl -s --max-time 5 "http://$AAM_DEV_HOST:$AAM_WS_PORT/" || echo 'sem resposta')"
   fi
 }
 
 case "${1:-}" in
   up)
+    case "${2:-}" in ""|--no-build) ;; *) erro "opção desconhecida: ${2} (use --no-build)" ;; esac
     garantir_env; carregar_env
     subir_banco
     dependencias
@@ -314,9 +334,9 @@ case "${1:-}" in
     status ;;
   logs)
     case "${2:-app}" in
-      ws) tmux capture-pane -p -S -200 -t "$SESSAO_WS:ws" ;;
-      proxy-en) tmux capture-pane -p -S -200 -t "$SESSAO_APP:proxy-en" ;;
-      *) tmux capture-pane -p -S -200 -t "$SESSAO_APP:app" ;;
+      ws) tmuxl capture-pane -p -S -200 -t "$SESSAO_WS:ws" ;;
+      proxy-en) tmuxl capture-pane -p -S -200 -t "$SESSAO_APP:proxy-en" ;;
+      *) tmuxl capture-pane -p -S -200 -t "$SESSAO_APP:app" ;;
     esac ;;
   *)
     sed -n '2,32p' "$0"; exit 1 ;;
