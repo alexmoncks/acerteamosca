@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { privacyChoicesAction, showGoogleRevocation, watchGdprCmp } from "@/lib/cmp";
+import { pingGdprAppliesNow, privacyChoicesAction, showGoogleRevocation, watchGdprCmp } from "@/lib/cmp";
 
 // Link fixo "Privacidade e cookies" do rodapé (lote 2). Onde a mensagem GDPR
 // do Google se aplica (EEE, Reino Unido, Suíça) e a API dela está carregada,
@@ -26,7 +26,10 @@ export default function PrivacyChoicesLink({ label, style }) {
   }, []);
 
   function onClick(e) {
-    if (privacyChoicesAction(window, gdprApplies) !== "google") return;
+    // pergunta de novo na hora: a CMP pode ter ficado pronta depois que o
+    // watchGdprCmp desistiu (rede lenta no EEE)
+    const applies = gdprApplies === true ? true : pingGdprAppliesNow(window);
+    if (privacyChoicesAction(window, applies) !== "google") return;
     if (showGoogleRevocation(window)) e.preventDefault();
   }
 

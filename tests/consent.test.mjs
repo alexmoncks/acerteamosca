@@ -143,9 +143,36 @@ check("privacy policy (PT/EN) explains the Google consent message, consent mode 
   assert.match(pol, /November 22, 2026/);
 });
 
-check("cookie notice stays hidden while the Google CMP shows the GDPR message", () => {
+check("cookie notice decision (shouldShowNotice): hidden with the GDPR message, after dismissal, and until the CMP delay", () => {
+  const ver = (dismissed, gdprApplies, delayElapsed) => cmp.shouldShowNotice({ dismissed, gdprApplies, delayElapsed });
+  // CMP do Google com GDPR: nunca, nem depois do tempo de espera
+  assert.equal(ver(false, true, false), false);
+  assert.equal(ver(false, true, true), false);
+  // CMP diz que não se aplica (Brasil com Funding Choices): logo
+  assert.equal(ver(false, false, false), true);
+  // sem resposta ainda / sem CMP: só depois da espera
+  assert.equal(ver(false, undefined, false), false);
+  assert.equal(ver(false, undefined, true), true);
+  assert.equal(ver(false, null, false), false);
+  assert.equal(ver(false, null, true), true);
+  // fechado: nunca
+  for (const g of [true, false, null, undefined]) assert.equal(ver(true, g, true), false);
+  assert.ok(cmp.CMP_NOTICE_DELAY_MS >= 1000 && cmp.CMP_NOTICE_DELAY_MS <= 3000);
+});
+
+check("the CookieConsent component decides with shouldShowNotice and starts hidden (no SSR flash)", () => {
   const comp = source("src/components/CookieConsent.jsx");
-  assert.match(comp, /watchGdprCmp\(window\)/);
-  assert.match(comp, /gdprApplies === true\) \{\s*cmpRespondeu = true;\s*setVisible\(false\)/);
+  assert.match(comp, /const visible = shouldShowNotice\(estado\);/);
+  assert.match(comp, /useState\(\{ dismissed: true, gdprApplies: undefined, delayElapsed: false \}\)/);
   assert.match(comp, /minHeight: 44/);
+});
+
+check("revocation link re-asks the CMP on click (CMP ready after the watcher gave up)", () => {
+  const pronta = (gdprApplies) => ({ __tcfapi: (c, v, cb) => cb({ gdprApplies, cmpLoaded: true }) });
+  assert.equal(cmp.pingGdprAppliesNow(pronta(true)), true);
+  assert.equal(cmp.pingGdprAppliesNow(pronta(false)), false);
+  assert.equal(cmp.pingGdprAppliesNow({ __tcfapi: () => {} }), undefined, "callback assíncrono/mudo");
+  assert.equal(cmp.pingGdprAppliesNow({ __tcfapi: () => { throw new Error("x"); } }), undefined);
+  assert.equal(cmp.pingGdprAppliesNow({}), undefined);
+  assert.match(source("src/components/PrivacyChoicesLink.jsx"), /gdprApplies === true \? true : pingGdprAppliesNow\(window\)/);
 });

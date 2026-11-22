@@ -36,12 +36,14 @@ async function carregarMiddleware() {
         .replace(/from "\.\/lib\/([a-z-]+)"/g, 'from "./$1.mjs"');
       fs.writeFileSync(path.join(dir, path.basename(f, ".js") + ".mjs"), out);
     }
-    return (await import(path.join(dir, "middleware.mjs"))).default;
+    return await import(path.join(dir, "middleware.mjs"));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }
-const middleware = await carregarMiddleware();
+const mwModulo = await carregarMiddleware();
+const middleware = mwModulo.default;
+const mwConfig = mwModulo.config;
 
 function pedir(url, headers = {}) {
   const host = new URL(url).host;
@@ -152,8 +154,33 @@ check("middleware: 301s (www, /en on a production domain) are untouched", () => 
   assert.equal(en.headers.get("location"), "https://nailedthefly.com/sobre");
 });
 
-check("next.config.js no longer sends a static CSP (two CSPs would both apply and block the nonce)", () => {
-  assert.ok(!/Content-Security-Policy/.test(source("next.config.js").replace(/^\s*\/\/.*$/gm, "")));
+// next.config.js carregado de verdade (o plugin do next-intl só embrulha a
+// config) e o casador de rotas do próprio Next (getPathMatch), o mesmo que
+// ele usa para "source" de headers e para o matcher do middleware.
+const { getPathMatch } = require("next/dist/shared/lib/router/utils/path-match.js");
+const nextConfig = require(repoPath("next.config.js"));
+const regrasHeaders = await nextConfig.headers();
+function cspsDaConfig(caminho) {
+  return regrasHeaders
+    .filter((r) => getPathMatch(r.source)(caminho) !== false)
+    .flatMap((r) => r.headers.filter((h) => h.key.toLowerCase() === "content-security-policy").map((h) => h.value));
+}
+
+check("each path gets exactly one CSP: the nonce one from the middleware (pages) or the fixed one (paths with a dot)", () => {
+  const paginas = mwConfig.matcher.filter((m) => typeof m === "string").map((m) => getPathMatch(m));
+  const passaNoMiddleware = (c) => paginas.some((casa) => casa(c) !== false);
+  for (const c of ["/", "/jogos/wordle", "/en/sobre", "/politica-de-privacidade", "/en"]) {
+    assert.ok(passaNoMiddleware(c), `${c} devia passar no middleware`);
+    assert.deepEqual(cspsDaConfig(c), [], `${c}: CSP fixa junto da CSP com nonce`);
+  }
+  for (const c of ["/ads.txt", "/sw.js", "/icons/icon-192.svg", "/jogos/x.y", "/pt/jogos/x.y", "/_next/static/chunks/a.js"]) {
+    assert.ok(!passaNoMiddleware(c), `${c} não devia passar no middleware`);
+    const csps = cspsDaConfig(c);
+    assert.equal(csps.length, 1, `${c}: ${csps.length} CSPs`);
+    assert.equal(csps[0], csp.STATIC_CSP, `${c}: CSP fixa diferente da de src/lib/csp.js`);
+    const ss = csp.parseCsp(csps[0])["script-src"];
+    assert.deepEqual(ss, ["'self'"], `${c}: script-src da CSP fixa`);
+  }
 });
 
 check("every <script> rendered by the layout and pages carries the nonce", () => {

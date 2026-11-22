@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { CMP_NOTICE_DELAY_MS, watchGdprCmp } from "@/lib/cmp";
+import { CMP_NOTICE_DELAY_MS, shouldShowNotice, watchGdprCmp } from "@/lib/cmp";
 
 // Aviso de cookies: só informa e aponta para a política. NÃO é coleta de
 // consentimento. Pela política de privacidade, anúncios e medição usam
@@ -24,26 +24,19 @@ const STORAGE_KEY = "acerteamosca_cookie_notice_v2";
 
 export default function CookieConsent() {
   const t = useTranslations("cookieConsent");
-  const [visible, setVisible] = useState(false);
-  const fechado = useRef(false);
+  // dismissed: true até ler o localStorage, para o servidor não renderizar
+  // o aviso. A decisão é de shouldShowNotice (src/lib/cmp.js, testada).
+  const [estado, setEstado] = useState({ dismissed: true, gdprApplies: undefined, delayElapsed: false });
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
+    setEstado((s) => ({ ...s, dismissed: false }));
     let vivo = true;
-    let cmpRespondeu = false;
     const timer = setTimeout(() => {
-      if (vivo && !cmpRespondeu && !fechado.current) setVisible(true);
+      if (vivo) setEstado((s) => ({ ...s, delayElapsed: true }));
     }, CMP_NOTICE_DELAY_MS);
     watchGdprCmp(window).then((gdprApplies) => {
-      if (!vivo || fechado.current) return;
-      if (gdprApplies === true) {
-        cmpRespondeu = true;
-        setVisible(false);
-      } else if (gdprApplies === false) {
-        cmpRespondeu = true;
-        setVisible(true);
-      }
-      // null: nenhuma CMP respondeu; o timer já cuidou de mostrar
+      if (vivo) setEstado((s) => ({ ...s, gdprApplies }));
     });
     return () => {
       vivo = false;
@@ -52,11 +45,11 @@ export default function CookieConsent() {
   }, []);
 
   function dismiss() {
-    fechado.current = true;
     localStorage.setItem(STORAGE_KEY, "dismissed");
-    setVisible(false);
+    setEstado((s) => ({ ...s, dismissed: true }));
   }
 
+  const visible = shouldShowNotice(estado);
   if (!visible) return null;
 
   return (

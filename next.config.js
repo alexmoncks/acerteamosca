@@ -1,10 +1,16 @@
 const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.js");
 
-// A Content-Security-Policy NÃO fica aqui desde o lote 2: ela leva um nonce
-// novo a cada pedido e é montada no middleware (src/middleware.js, com
-// src/lib/csp.js). Um header fixo aqui seria uma segunda CSP, e o navegador
-// aplica as duas: a sem nonce bloquearia os scripts.
+// CSP fixa (sem nonce, sem script inline) para o que não passa pelo
+// middleware. src/lib/csp.js é ESM; a cópia aqui é conferida pelo teste.
+const STATIC_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'";
+
+// A Content-Security-Policy das PÁGINAS não fica aqui desde o lote 2: ela
+// leva um nonce novo a cada pedido e é montada no middleware
+// (src/middleware.js, com src/lib/csp.js). Um header fixo para todas as
+// rotas seria uma segunda CSP, e o navegador aplica as duas: a sem nonce
+// bloquearia os scripts. Aqui só vai a CSP fixa dos caminhos com ponto, que
+// o matcher do middleware exclui (arquivos estáticos e a 404 de "/x.y").
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -26,6 +32,10 @@ const nextConfig = {
             value: "same-origin-allow-popups",
           },
         ],
+      },
+      {
+        source: "/:path(.*\\..*)",
+        headers: [{ key: "Content-Security-Policy", value: STATIC_CSP }],
       },
     ];
   },

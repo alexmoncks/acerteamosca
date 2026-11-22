@@ -10,7 +10,9 @@ export default async function Footer() {
     fontSize: 11,
     fontFamily: "'Fira Code', monospace",
     textDecoration: "none",
-    padding: "4px 8px",
+    // alvo de toque de 27 px (WCAG 2.2, 2.5.8 pede 24 px no mínimo)
+    display: "inline-block",
+    padding: "6px 8px",
     transition: "color 0.2s",
   };
 

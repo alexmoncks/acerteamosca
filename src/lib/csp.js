@@ -93,6 +93,22 @@ export function buildCsp({ nonce, wsOrigins = [] }) {
   ].join("; ");
 }
 
+/**
+ * CSP fixa das respostas que NÃO passam pelo middleware (caminhos com ponto:
+ * ads.txt, ícones, sw.js e a página 404 de um "/x.y" qualquer). Não há nonce
+ * ali, então nenhum script inline roda: script-src 'self' basta para o
+ * service worker e os arquivos do site, e a 404 aparece sem hidratar.
+ * Vai no next.config.js só para esses caminhos (nunca junto da CSP com nonce).
+ */
+export const STATIC_CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join("; ");
+
 /** Lê os directives de uma CSP: { "script-src": ["'nonce-…'", …], … }. */
 export function parseCsp(csp) {
   const out = {};

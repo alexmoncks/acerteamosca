@@ -58,6 +58,42 @@ export function watchGdprCmp(win, { timeoutMs = CMP_WATCH_TIMEOUT_MS, pollMs = C
   });
 }
 
+/**
+ * Ping ao __tcfapi esperando resposta na hora (CMP carregada responde de
+ * forma síncrona). Para o clique no link, que precisa decidir na hora: se a
+ * CMP só ficou pronta depois que o watchGdprCmp desistiu, o clique ainda
+ * acha a mensagem do Google. true/false, ou undefined se não deu para saber.
+ */
+export function pingGdprAppliesNow(win) {
+  if (!win || typeof win.__tcfapi !== "function") return undefined;
+  let applies;
+  try {
+    win.__tcfapi("ping", 2, (ping) => {
+      if (ping && typeof ping.gdprApplies === "boolean") applies = ping.gdprApplies;
+    });
+  } catch {
+    return undefined;
+  }
+  return applies;
+}
+
+/**
+ * O aviso de cookies do site aparece? Função pura, para o CookieConsent e
+ * para os testes:
+ *   - fechado antes (localStorage)  -> não;
+ *   - a CMP do Google diz que o GDPR se aplica -> não (a mensagem dela já
+ *     cobre isso; dois banners, não);
+ *   - a CMP diz que não se aplica -> sim, logo;
+ *   - nenhuma resposta ainda (undefined) ou nenhuma CMP (null) -> só depois
+ *     de CMP_NOTICE_DELAY_MS.
+ */
+export function shouldShowNotice({ dismissed, gdprApplies, delayElapsed }) {
+  if (dismissed) return false;
+  if (gdprApplies === true) return false;
+  if (gdprApplies === false) return true;
+  return !!delayElapsed;
+}
+
 /** A API de revogação do Google está carregada? */
 export function canShowGoogleRevocation(win) {
   return !!(win && win.googlefc && typeof win.googlefc.showRevocationMessage === "function");
