@@ -150,9 +150,9 @@ export default async function LocaleLayout({ children, params }) {
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
-                "@id": "https://acerteamosca.com.br/#website",
-                "name": "Acerte a Mosca",
-                "url": "https://acerteamosca.com.br",
+                "@id": `${localeUrl(locale, "/")}/#website`,
+                "name": siteName(locale),
+                "url": localeUrl(locale, "/"),
                 "description": messages.metadata.description,
                 "inLanguage": locale === "pt" ? "pt-BR" : "en",
                 "publisher": {

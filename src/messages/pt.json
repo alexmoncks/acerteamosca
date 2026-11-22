@@ -84,9 +84,9 @@
       "statAccuracy": "PRECISAO",
       "statMaxCombo": "MAX COMBO",
       "tryAgain": "TENTAR DE NOVO",
-      "youWon": "VOCE GANHOU!",
+      "youWon": "MOSQUITO ELIMINADO!",
       "playAgain": "JOGAR DE NOVO",
-      "winMessage": "🎉 Mosquito eliminado! Jogue de novo e tente bater sua pontuação.",
+      "winMessage": "🎉 Acertou em cheio! Jogue de novo e tente bater sua pontuação.",
       "hudPoints": "PONTOS",
       "hudSpeed": "VELOC.",
       "hudTime": "TEMPO"

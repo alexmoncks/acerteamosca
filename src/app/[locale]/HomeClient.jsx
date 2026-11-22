@@ -36,7 +36,7 @@ export default function HomeClient() {
     "description": tm("description"),
     "url": siteUrl,
     "inLanguage": inLanguage,
-    "isPartOf": { "@id": "https://acerteamosca.com.br/#website" },
+    "isPartOf": { "@id": `${siteUrl}/#website` },
     "about": { "@id": "https://acerteamosca.com.br/#organization" },
     "primaryImageOfPage": `${siteUrl}/opengraph-image`,
   };

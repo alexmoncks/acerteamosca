@@ -84,9 +84,9 @@
       "statAccuracy": "ACCURACY",
       "statMaxCombo": "MAX COMBO",
       "tryAgain": "TRY AGAIN",
-      "youWon": "YOU WON!",
+      "youWon": "MOSQUITO DOWN!",
       "playAgain": "PLAY AGAIN",
-      "winMessage": "🎉 Mosquito down! Play again and try to beat your score.",
+      "winMessage": "🎉 Direct hit! Play again and try to beat your score.",
       "hudPoints": "POINTS",
       "hudSpeed": "SPEED",
       "hudTime": "TIME"

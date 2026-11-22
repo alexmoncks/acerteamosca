@@ -82,6 +82,8 @@ export default function Navbar() {
         <a
           href={switchHref}
           hrefLang={nextLocale === "pt" ? "pt-BR" : "en"}
+          lang={nextLocale === "pt" ? "pt-BR" : "en"}
+          aria-label={nextLocale === "pt" ? "Versão em português" : "English version"}
           onClick={onSwitchClick}
           style={{
             display: "flex",
