@@ -1,13 +1,25 @@
+// Texto editorial de cada página de jogo: intro + seções (como jogar,
+// controles, dicas, origem).
+//
+// Fica ABERTO, sem <details>/<summary>. A auditoria AdSense de 21/11/2026
+// achou o texto recolhido: quem revisa a página vê só o canvas e a página
+// parece "conteúdo de baixo valor" (motivo exato do aviso no nailedthefly.com).
+// Este é um componente de servidor (sem "use client"), então o texto inteiro
+// sai no HTML que o servidor entrega, visível sem clique e sem JavaScript.
+// A chave `summary` dos dados continua com esse nome só para não mexer nas
+// 14 páginas; aqui ela vira o título <h3> da seção.
 export default function GameInfo({ content, locale }) {
   const c = locale === "en" ? content.en : content.pt;
 
   return (
-    <aside style={asideStyle}>
-      <h2 style={h2Style}>{c.title}</h2>
+    <section style={wrapperStyle} aria-labelledby="game-info-title">
+      <h2 id="game-info-title" style={h2Style}>
+        {c.title}
+      </h2>
       <p style={introStyle}>{c.intro}</p>
       {c.details.map((d, i) => (
-        <details key={i} style={detailsStyle}>
-          <summary style={summaryStyle}>{d.summary}</summary>
+        <section key={i} style={sectionStyle}>
+          <h3 style={h3Style}>{d.summary}</h3>
           <div style={bodyStyle}>
             {d.body.map((para, j) => (
               <p key={j} style={paraStyle}>
@@ -15,13 +27,13 @@ export default function GameInfo({ content, locale }) {
               </p>
             ))}
           </div>
-        </details>
+        </section>
       ))}
-    </aside>
+    </section>
   );
 }
 
-const asideStyle = {
+const wrapperStyle = {
   maxWidth: 800,
   margin: "40px auto 0",
   padding: "0 20px",
@@ -45,7 +57,7 @@ const introStyle = {
   marginBottom: 24,
 };
 
-const detailsStyle = {
+const sectionStyle = {
   marginBottom: 12,
   background: "rgba(0,240,255,0.04)",
   borderLeft: "2px solid rgba(0,240,255,0.4)",
@@ -53,18 +65,19 @@ const detailsStyle = {
   overflow: "hidden",
 };
 
-const summaryStyle = {
+const h3Style = {
   fontFamily: "'Press Start 2P', monospace",
   fontSize: 11,
+  fontWeight: "normal",
   color: "#00f0ff",
-  padding: "12px 16px",
-  cursor: "pointer",
+  padding: "12px 16px 0",
+  margin: 0,
   letterSpacing: 0.5,
-  userSelect: "none",
+  lineHeight: 1.6,
 };
 
 const bodyStyle = {
-  padding: "4px 16px 14px",
+  padding: "8px 16px 14px",
 };
 
 const paraStyle = {
