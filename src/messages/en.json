@@ -47,7 +47,7 @@
     }
   },
   "register": {
-    "subtitle": "Sign up to play and enter the contest!",
+    "subtitle": "Sign up to play!",
     "nameLabel": "NAME",
     "namePlaceholder": "Your full name",
     "nameError": "Invalid name. Use at least 3 real letters.",
@@ -57,7 +57,7 @@
     "phoneError": "Invalid phone number.",
     "whatsappLabel": "PHONE",
     "whatsappPlaceholder": "+1 555 1234567",
-    "consent": "I agree to the collection of my data to participate in the promotion in accordance with LGPD.",
+    "consent": "I agree to the collection of my data to register for the game, as described in the Privacy Policy and under the LGPD.",
     "registering": "REGISTERING...",
     "play": "PLAY!"
   },
@@ -65,7 +65,7 @@
     "acerteamosca": {
       "title": "NAILED THE FLY",
       "subtitle": "REVENGE IS SWEET... AND LOUD",
-      "tagline": "KILL THE MOSQUITO - WIN PRIZES",
+      "tagline": "SWAT THE MOSQUITO BEFORE IT GETS YOU",
       "audio3dActive": "🎧 3D AUDIO ON - USE HEADPHONES!",
       "tip1": "🩴 Ultimate weapon: grandma's flip-flop",
       "tip2": "🦟 No mosquitoes were spared in this production",
@@ -78,8 +78,6 @@
       "version": "v1.0 - powered by flip-flops",
       "almostHit": "CLOSE!",
       "combo": "COMBO!",
-      "sponsoredBy": "SPONSORED BY",
-      "sponsorName": "YOUR BRAND HERE",
       "timeUp": "TIME'S UP!",
       "statPoints": "POINTS",
       "statHits": "HITS",
@@ -87,9 +85,8 @@
       "statMaxCombo": "MAX COMBO",
       "tryAgain": "TRY AGAIN",
       "youWon": "YOU WON!",
-      "checkEmail": "Check your email to redeem!",
       "playAgain": "PLAY AGAIN",
-      "winPrize": "🎉 20% discount coupon at XYZ Store!",
+      "winMessage": "🎉 Mosquito down! Play again and try to beat your score.",
       "hudPoints": "POINTS",
       "hudSpeed": "SPEED",
       "hudTime": "TIME"
@@ -484,8 +481,6 @@
       "introScreen2": "Europa: silence.\nGanymede: 'THEY HAVE INVADED THE FACILITY'.\nCallisto: transmission interrupted.\nIo: converted into a war forge.\nJupiter's moons fell in 72 hours.",
       "introScreen3": "You pilot ARROW-7, the only experimental Aleste-class star fighter that managed to take off.\nMission: from Earth orbit to Jupiter.\nObjective: destroy the invader 3I/ATLAS.\n\n\nHumanity depends on you.\n\nPRESS SPACE OR CLICK TO START",
       "introContinueHint": "TOUCH OR PRESS TO CONTINUE",
-      "sponsorMessage": "Our sponsor keeps the game free",
-      "sponsorContinue": "CONTINUE",
       "menuStart": "START MISSION",
       "menuInstructions": "HOW TO PLAY",
       "menuStory": "STORY",

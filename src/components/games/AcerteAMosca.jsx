@@ -373,19 +373,6 @@ function ComboMeter({ combo, color, t }) {
   );
 }
 
-function SponsorBanner({ sponsor, t }) {
-  return (
-    <div style={{
-      width: "100%", padding: "10px 16px", background: "rgba(0,0,0,0.6)",
-      borderTop: "1px solid rgba(0,240,255,0.1)",
-      display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-    }}>
-      <span style={{ color: "#555", fontSize: 10, fontFamily: "'Press Start 2P', monospace", letterSpacing: 1 }}>{t("sponsoredBy")}</span>
-      <span style={{ color: "#00f0ff", fontSize: 13, fontFamily: "'Press Start 2P', monospace", textShadow: "0 0 8px #00f0ff" }}>{sponsor}</span>
-    </div>
-  );
-}
-
 // ---- Splash Screen ----
 function SplashScreen({ onStart, t }) {
   const [phase, setPhase] = useState(0);
@@ -530,14 +517,13 @@ function GameOverScreen({ score, hits, misses, bestCombo, onRestart, t }) {
   );
 }
 
-function WinModal({ prize, onClose, t }) {
+function WinModal({ message, onClose, t }) {
   return (
     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, backdropFilter: "blur(8px)" }}>
       <div style={{ textAlign: "center", animation: "winBounce 0.6s ease-out" }}>
         <div style={{ fontSize: 80, marginBottom: 16, animation: "winSpin 1s ease-out" }}>🏆</div>
         <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: "#ffe600", textShadow: "0 0 20px #ffe600, 0 0 40px #ff6b35", marginBottom: 12 }}>{t("youWon")}</h2>
-        <p style={{ color: "#00f0ff", fontFamily: "'Fira Code', monospace", fontSize: 16, marginBottom: 8 }}>{prize}</p>
-        <p style={{ color: "#8892b0", fontFamily: "'Fira Code', monospace", fontSize: 12, marginBottom: 24 }}>{t("checkEmail")}</p>
+        <p style={{ color: "#00f0ff", fontFamily: "'Fira Code', monospace", fontSize: 16, marginBottom: 24 }}>{message}</p>
         <button onClick={onClose} style={{ padding: "12px 32px", background: "linear-gradient(135deg, #ffe600, #ff6b35)", border: "none", borderRadius: 8, color: "#000", fontFamily: "'Press Start 2P', monospace", fontSize: 11, cursor: "pointer", fontWeight: 900 }}>{t("playAgain")}</button>
       </div>
     </div>
@@ -1030,13 +1016,9 @@ export default function AcerteAMosca() {
         {screen === "splash" && <SplashScreen onStart={handleSplashStart} t={t} />}
         {screen === "register" && <RegisterModal onRegister={handleRegister} loading={registering} jogoNome={t("title")} accentColor="#00f0ff" />}
         {screen === "gameover" && <GameOverScreen score={score} hits={hits} misses={misses} bestCombo={bestCombo} onRestart={restartGame} t={t} />}
-        {screen === "winner" && <WinModal prize={t("winPrize")} onClose={restartGame} t={t} />}
+        {screen === "winner" && <WinModal message={t("winMessage")} onClose={restartGame} t={t} />}
       </div>
       </div>
-
-      {screen !== "splash" && <div style={{ width: CANVAS_W * gameScale, borderRadius: "0 0 12px 12px", overflow: "hidden", marginTop: -2 }}>
-        <SponsorBanner sponsor={t("sponsorName")} t={t} />
-      </div>}
 
       {user && screen === "playing" && (
         <div style={{ width: CANVAS_W, display: "flex", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>

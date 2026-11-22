@@ -7,7 +7,6 @@ import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
 import useLockScroll from "@/hooks/useLockScroll";
-import { adsConfig } from "@/config/ads";
 
 // ── i18n ref (set inside component, used by canvas drawing functions) ──
 let _t = (k) => k;
@@ -32,8 +31,6 @@ const MAX_PARTICLES = 150;
 const POWERUP_FALL_SPEED = 1.5;
 const INVULN_TIME = 240; // 4s at 60fps
 const RESPAWN_TIME = 120;
-const SPONSOR_STORAGE_KEY = "3invader_sponsor_last";
-const SPONSOR_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 // ── Enemy type constants ───────────────────────────────────────────────
 const ET_SCOUT = 0;
@@ -4322,23 +4319,9 @@ export default function ThreeInvader() {
     }
   };
 
+  // Não há mais tela de "patrocinador" antes do jogo: não existia patrocinador
+  // nenhum, e o botão CONTINUAR dela injetava o popunder do Adsterra.
   const handleMenuStart = () => {
-    // Check sponsor gate (once per day)
-    let sponsorSeen = false;
-    try {
-      const last = localStorage.getItem(SPONSOR_STORAGE_KEY);
-      if (last && Date.now() - Number(last) < SPONSOR_COOLDOWN_MS) sponsorSeen = true;
-    } catch {}
-
-    if (!sponsorSeen) {
-      setScreen("sponsor");
-      return;
-    }
-
-    proceedAfterSponsor();
-  };
-
-  const proceedAfterSponsor = () => {
     if (user) {
       // Check if intro has been seen
       let introSeen = false;
@@ -4359,19 +4342,6 @@ export default function ThreeInvader() {
     } else {
       setScreen("register");
     }
-  };
-
-  const handleSponsorContinue = () => {
-    // Mark sponsor as seen
-    try { localStorage.setItem(SPONSOR_STORAGE_KEY, String(Date.now())); } catch {}
-    // Inject popunder script
-    try {
-      const s = document.createElement("script");
-      s.src = adsConfig.adsterra.popunder.src;
-      document.body.appendChild(s);
-    } catch {}
-    // Proceed
-    proceedAfterSponsor();
   };
 
   const handleRegister = async (userData) => {
@@ -4645,8 +4615,6 @@ export default function ThreeInvader() {
               </div>
             </div>
           )}
-
-          {/* sponsor banner moved outside canvas wrapper */}
 
           {/* ── MENU ───────────────────────────────────── */}
           {screen === "menu" && (
@@ -5734,54 +5702,6 @@ export default function ThreeInvader() {
               ⏸
             </button>
           </div>
-        </div>
-      )}
-
-      {screen === "sponsor" && (
-        <div
-          style={{
-            width: CW * gameScale,
-            background: "rgba(2,8,36,0.95)",
-            borderTop: "1px solid #00f0ff44",
-            border: "1px solid #00f0ff22",
-            borderRadius: 8,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            padding: "10px 16px",
-            marginTop: 8,
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "'Fira Code', monospace",
-              fontSize: 10,
-              color: "#8892b0",
-              textAlign: "center",
-              margin: 0,
-            }}
-          >
-            {t("sponsorMessage")}
-          </p>
-          <button
-            onClick={handleSponsorContinue}
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 9,
-              color: "#020824",
-              background: "#00f0ff",
-              border: "none",
-              borderRadius: 6,
-              padding: "8px 16px",
-              cursor: "pointer",
-              boxShadow: "0 0 10px rgba(0,240,255,0.3)",
-              letterSpacing: 1,
-              flexShrink: 0,
-            }}
-          >
-            {t("sponsorContinue")}
-          </button>
         </div>
       )}
 
