@@ -198,7 +198,7 @@ export default async function ThreeInvaderPage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="3invader" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

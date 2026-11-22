@@ -1072,7 +1072,7 @@ export default function DeepAttack() {
 
       {screen !== "menu" && (
         <>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 18,
@@ -1084,7 +1084,7 @@ export default function DeepAttack() {
             }}
           >
             DEEP ATTACK
-          </h1>
+          </h2>
           <p
             style={{
               color: "#4a5568",
@@ -1139,7 +1139,7 @@ export default function DeepAttack() {
                 zIndex: 100,
               }}
             >
-              <h1
+              <h2
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 24,
@@ -1153,7 +1153,7 @@ export default function DeepAttack() {
                 DEEP
                 <br />
                 ATTACK
-              </h1>
+              </h2>
 
               {/* Decorative ship */}
               <div style={{ animation: "menuFloat 2s ease-in-out infinite", marginBottom: 30, marginTop: 10 }}>

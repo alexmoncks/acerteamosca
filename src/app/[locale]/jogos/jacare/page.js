@@ -147,7 +147,7 @@ export default async function JacarePage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="jacare" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

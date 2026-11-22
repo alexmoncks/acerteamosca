@@ -61,6 +61,22 @@
     "registering": "REGISTERING...",
     "play": "PLAY!"
   },
+  "gameHeadings": {
+    "2048": "2048 Online — Play Free Multiplayer",
+    "3invader": "3INVADER — Free Vertical Shoot 'em Up Online",
+    "acerteamosca": "Nailed The Fly — Play Free Online",
+    "batalha-naval": "Battleship — Play Free Online",
+    "brickbreaker": "Brick Breaker — Free Arkanoid Game Online",
+    "bubbleshooter": "Bubble Shooter Online — Play Free",
+    "deepattack": "Deep Attack — Free Online Space Shooter",
+    "jacare": "Jacare Online — Frogger-Style Game Free",
+    "kungfucastle": "Kung Fu Castle — Free Beat-em-up Online",
+    "memory": "Memory Game Online — Play Free",
+    "pong": "Pong Online — Play Free Multiplayer",
+    "ships": "Ships — Free Online Ship Battle Game",
+    "tiroaoalvo": "Target Shooter Online — Play Free",
+    "wordle": "Wordle in Portuguese — Play Free Online"
+  },
   "games": {
     "acerteamosca": {
       "title": "NAILED THE FLY",

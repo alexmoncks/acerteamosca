@@ -145,7 +145,7 @@ export default async function AcerteAMoscaPage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="acerteamosca" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

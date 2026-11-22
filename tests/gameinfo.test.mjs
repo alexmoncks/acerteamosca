@@ -39,7 +39,7 @@ check("every indexable game page renders GameInfo from its server page.js", () =
     const rel = path.join("src/app/[locale]/jogos", slug, "page.js");
     if (!fs.existsSync(repoPath(rel))) continue;
     const page = source(rel);
-    if (!/<GameInfo\s+content=\{content\}\s+locale=\{locale\}\s*\/>/.test(page)) semTexto.push(slug);
+    if (!/<GameInfo\s+slug="[\w-]+"\s+content=\{content\}\s+locale=\{locale\}\s*\/>/.test(page)) semTexto.push(slug);
     if (/^\s*["']use client["']/m.test(page)) semTexto.push(`${slug} (page.js é client)`);
   }
   assert.deepEqual(semTexto, []);

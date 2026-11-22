@@ -4455,7 +4455,7 @@ export default function ThreeInvader() {
 
       {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
         <>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 18,
@@ -4467,7 +4467,7 @@ export default function ThreeInvader() {
             }}
           >
             3INVADER
-          </h1>
+          </h2>
           <p
             style={{
               color: "#4a5568",

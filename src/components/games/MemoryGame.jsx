@@ -161,7 +161,7 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
         zIndex: 50,
       }}
     >
-      <h1
+      <h2
         style={{
           fontFamily: "'Press Start 2P', monospace",
           fontSize: 22,
@@ -173,7 +173,7 @@ function MenuScreen({ difficulty, setDifficulty, timedMode, setTimedMode, onStar
         }}
       >
         MEMORY
-      </h1>
+      </h2>
       <h2
         style={{
           fontFamily: "'Press Start 2P', monospace",
@@ -1929,7 +1929,7 @@ export default function MemoryGame() {
       {/* Title H1 above game area */}
       {screen !== "menu" && (
         <>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 22,
@@ -1941,7 +1941,7 @@ export default function MemoryGame() {
             }}
           >
             MEMORY GAME
-          </h1>
+          </h2>
           <p
             style={{
               color: "#4a5568",
