@@ -124,7 +124,7 @@ check("consent default: keeps whatever was already in the dataLayer and defines 
   assert.deepEqual(dl.at(-1), ["consent", "update", { ad_storage: "granted" }]);
 });
 
-check("AJ2: Accept stores the choice and loads the tags, without granting by itself; grantConsent grants once and remembers G=0", () => {
+check("AJ2: Accept stores the choice and loads the tags, without granting by itself; grantConsent grants once and remembers G=0 only when asked", () => {
   const n = rodarHead();
   assert.equal(n.tags.length, 0);
   assert.equal(consent.acceptSiteChoice(n.ctx), true);
@@ -134,6 +134,9 @@ check("AJ2: Accept stores the choice and loads the tags, without granting by its
   assert.ok(!consentDe(n.dl()).some((c) => c[1] === "update"), "aceitar sozinho não concede");
   assert.equal(consent.grantConsent(n.ctx), true);
   assert.deepEqual(n.dl().at(-1), ["consent", "update", todos("granted")]);
+  assert.ok(!(G in n.guardado), "sem lembrar: concessão só desta página (CMP muda/lenta não vira G=0)");
+  assert.equal(rodarHead({ storage: { ...n.guardado } }).dl().length, 4, "página seguinte, região desconhecida: sem granted (só js/config)");
+  consent.grantConsent(n.ctx, { lembrar: true });
   assert.equal(n.guardado[G], "0");
   assert.equal(consent.grantConsent(n.ctx), false, "um granted por página");
   assert.equal(consentDe(n.dl()).filter((c) => c[1] === "update").length, 1);
@@ -199,7 +202,8 @@ check("the layout: consent-default is the only Google script and gets the valida
   const iConsent = layout.indexOf('id="consent-default"');
   assert.ok(iConsent > 0, "sem o script consent-default");
   assert.ok(layout.indexOf("<head>") < iConsent && iConsent < layout.indexOf("</head>"), "consent fora do <head>");
-  assert.match(layout, /__html: consentDefaultScript\(\{ adsClient: ADSENSE_ID, gaId: GA_ID \}\)/);
+  assert.match(layout, /__html: consentDefaultScript\(\{ adsClient: ADSENSE_ID, gaId: GA_ID, regiao \}\)/);
+  assert.match(layout, /const regiao = regiaoConsentimento\(headers\(\)\.get\("cf-ipcountry"\)\);/);
   assert.match(layout, /const GA_ID = isValidGaId\(process\.env\.NEXT_PUBLIC_GA_ID\)/);
   const codigo = layout.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/^\s*\/\/.*$/gm, "");
   assert.ok(!/googletagmanager|adsbygoogle|AdSenseScript/.test(codigo), "tag do Google direto no HTML");
@@ -279,17 +283,18 @@ check("privacy policy (PT/EN): consent as the legal basis, Accept/Decline notice
     "Até você aceitar, o site não carrega o Google Analytics nem o Google AdSense, nenhum cookie deles é gravado",
     "Não usamos o legítimo interesse como base para cookies de publicidade ou de medição",
     "o site apaga os cookies do Google Analytics e do AdSense gravados no domínio dele",
-    "pelo botão Recusar do aviso de cookies do site",
+    "ele reabre o aviso de cookies do site, com o botão Recusar", "o Modo de consentimento do Google fica em",
     "Until you accept, the site does not load Google Analytics or Google AdSense, none of their cookies are set",
     "We do not rely on legitimate interests for advertising or measurement cookies",
     "the site deletes the Google Analytics and AdSense cookies set on its own domain",
-    "with the Decline button of the site's cookie notice"]) {
+    "it reopens the site's cookie notice, with the Decline button", "Google consent mode stays at"]) {
     assert.ok(pol.includes(t), `política sem "${t}"`);
   }
   // nada da versão "legítimo interesse" para anúncios/medição, nem aviso "apenas informativo"
   for (const t of ["anúncios e medição se apoiam no legítimo interesse", "apenas informativo", "ads and measurement rely on legitimate interests", "informational only",
     "Fora dessas regiões, o aviso de cookies", "Outside those regions, the site's cookie notice",
-    "Se você recusar, ainda poderá ver anúncios", "If you opt out, you may still see ads"]) {
+    "Se você recusar, ainda poderá ver anúncios", "If you opt out, you may still see ads",
+    "o site também informa ao Google que o consentimento foi negado", "the site also tells Google that consent is denied", "ambos reabertos", "both reopened"]) {
     assert.ok(!pol.includes(t), `política ainda diz "${t}"`);
   }
   assert.match(pol, /22 de novembro de 2026/);
@@ -340,17 +345,79 @@ check("the CookieConsent component: Accept/Decline of the same size, starts hidd
   assert.equal(JSON.parse(source("src/messages/en.json")).cookieConsent.decline, "DECLINE");
 });
 
-check("CookieConsent: Accept loads the tags and grants only through grantAfterWait / G=0; GDPR goes to markGdprApplies; Decline reloads only with tags on the page", () => {
+check("CookieConsent: Accept loads the tags and grants only through grantOnAccept / grantDecision; GDPR goes to markGdprApplies; Decline reloads only with tags on the page", () => {
   const comp = source("src/components/CookieConsent.jsx");
   assert.match(comp, /acceptSiteChoice\(window\);/);
-  assert.match(comp, /if \(readGdprFlag\(window\) === "0"\) grantConsent\(window\);/);
-  assert.match(comp, /if \(gdprApplies === true\) markGdprApplies\(window\);\s*else if \(grantAfterWait\(gdprApplies, typeof window\.__tcfapi === "function"\)\) grantConsent\(window\);/);
+  assert.match(comp, /if \(grantOnAccept\(\{ regiao: readRegion\(window\), gdprFlag: readGdprFlag\(window\) \}\)\) grantConsent\(window\);/);
+  assert.match(comp, /const d = grantDecision\(\{ regiao: readRegion\(window\), gdprApplies, cmpPresent: typeof window\.__tcfapi === "function" \}\);/);
+  assert.match(comp, /if \(d === "deny"\) markGdprApplies\(window\);\s*else if \(d === "grant" \|\| d === "grant-pagina"\) grantConsent\(window\);\s*else if \(d === "grant-lembrar"\) grantConsent\(window, \{ lembrar: true \}\);/);
   assert.match(comp, /if \(escolha === "granted"\) acompanharCmp\(\);/);
   assert.match(comp, /if \(escolha === "denied"\) \{\s*if \(declineSiteChoice\(window\)\) window\.location\.reload\(\);/);
   // nenhum outro caminho concede, nem chama gtag direto
-  assert.equal((comp.match(/grantConsent\(window\)/g) || []).length, 3);
+  assert.equal((comp.match(/grantConsent\(window[,)]/g) || []).length, 3);
   assert.ok(!/gtag\(/.test(comp), "o componente não fala com o gtag direto");
   assert.ok(!/applyConsentChoice|dropSiteChoiceForGdpr|acceptDecision/.test(comp), "API antiga sobrando");
+});
+
+check("QA AJ2: region from CF-IPCountry: EEA/UK/CH -> eee, other valid codes -> fora, missing/XX/T1/garbage -> null", () => {
+  for (const p of ["DE", "fr", " PT ", "GB", "CH", "NO", "IS", "LI"]) assert.equal(consent.regiaoConsentimento(p), "eee", p);
+  for (const p of ["BR", "US", "AR", "JP"]) assert.equal(consent.regiaoConsentimento(p), "fora", p);
+  for (const p of [null, undefined, "", "XX", "T1", "BRA", "1A", "<s"]) assert.equal(consent.regiaoConsentimento(p), null, String(p));
+  assert.equal(consent.GDPR_COUNTRIES.length, 32);
+});
+
+check("QA AJ2: head with region: 'fora' grants a stored Accept before the tags (unless the CMP said GDPR, G=1); 'eee' never grants, not even with G=0", () => {
+  const fora = rodarHead({ storage: { [K]: "granted" } }, { adsClient: ADS, gaId: GA, regiao: "fora" });
+  assert.deepEqual(fora.dl()[2], ["consent", "update", todos("granted")]);
+  assert.equal(fora.ctx.__aamRegiao, "fora");
+  const foraG1 = rodarHead({ storage: { [K]: "granted", [G]: "1" } }, { adsClient: ADS, regiao: "fora" });
+  assert.ok(!consentDe(foraG1.dl()).some((c) => c[1] === "update"));
+  for (const g of [undefined, "0", "1"]) {
+    const eee = rodarHead({ storage: g ? { [K]: "granted", [G]: g } : { [K]: "granted" } }, { adsClient: ADS, gaId: GA, regiao: "eee" });
+    assert.ok(!consentDe(eee.dl()).some((c) => c[1] === "update"), `eee G=${g}`);
+    assert.equal(eee.tags.length, 2, "as tags carregam (trazem a mensagem do Google)");
+    assert.equal(consent.grantConsent(eee.ctx), false, "grantConsent recusa no eee");
+  }
+  // sem aceite, região nenhuma injeta tag
+  for (const regiao of ["fora", "eee", null]) assert.equal(rodarHead({}, { adsClient: ADS, gaId: GA, regiao }).tags.length, 0);
+  // região estranha vira null
+  assert.equal(rodarHead({}, { adsClient: ADS, regiao: '"</script>' }).ctx.__aamRegiao, null);
+});
+
+check("QA AJ2: grantDecision / grantOnAccept: EEA never grants; unknown region remembers only an explicit 'not applicable'", () => {
+  const d = (regiao, gdprApplies, cmpPresent) => cmp.grantDecision({ regiao, gdprApplies, cmpPresent });
+  for (const r of ["eee", "fora", null]) assert.equal(d(r, true, true), "deny");
+  for (const g of [false, null, undefined]) for (const p of [true, false]) assert.equal(d("eee", g, p), "none");
+  for (const g of [false, null]) assert.equal(d("fora", g, true), "grant");
+  assert.equal(d(null, false, true), "grant-lembrar");
+  assert.equal(d(null, null, false), "grant-pagina", "CMP lenta/bloqueada: só esta página");
+  assert.equal(d(null, null, true), "none", "CMP presente e muda");
+  const a = (regiao, gdprFlag) => cmp.grantOnAccept({ regiao, gdprFlag });
+  assert.equal(a("fora", null), true);
+  assert.equal(a("fora", "1"), false);
+  assert.equal(a(null, "0"), true);
+  assert.equal(a(null, null), false);
+  for (const g of [null, "0", "1"]) assert.equal(a("eee", g), false);
+});
+
+check("QA AJ2: the slow-CMP EEA case (no CF header) no longer becomes a remembered grant", () => {
+  // aceite, nenhuma CMP no prazo: concede só nesta página
+  const n = rodarHead();
+  consent.acceptSiteChoice(n.ctx);
+  const dec = cmp.grantDecision({ regiao: null, gdprApplies: null, cmpPresent: false });
+  assert.equal(dec, "grant-pagina");
+  consent.grantConsent(n.ctx, { lembrar: dec === "grant-lembrar" });
+  assert.ok(!(G in n.guardado));
+  // página seguinte: a CMP agora aparece; o <head> não concedeu nada antes dela
+  const seguinte = rodarHead({ storage: { ...n.guardado } });
+  assert.ok(!consentDe(seguinte.dl()).some((c) => c[1] === "update"));
+  assert.equal(cmp.grantOnAccept({ regiao: null, gdprFlag: consent.readGdprFlag(seguinte.ctx) }), false);
+});
+
+check("QA AJ2: revocation also deletes the Google CMP cookies on the site's domain (FCCDCF, FCNEC, __gsas)", () => {
+  const n = rodarHead({ cookie: "FCCDCF=x; FCNEC=y; __gsas=z; outro=1" });
+  consent.declineSiteChoice(n.ctx);
+  assert.deepEqual([...new Set(n.cookiesGravados.map((c) => c.split("=")[0]))].sort(), ["FCCDCF", "FCNEC", "__gsas"]);
 });
 
 check("footer link: Google message in the EEA, the site's notice elsewhere", () => {

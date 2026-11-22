@@ -11,7 +11,8 @@ import { SITE_URL, localeUrl, siteName } from "@/lib/seo";
 import { ADSENSE_PUBLISHER, isValidAdClient } from "@/lib/ads";
 import JsonLd from "@/components/JsonLd";
 import { getNonce } from "@/lib/nonce";
-import { consentDefaultScript, isValidGaId } from "@/lib/consent";
+import { headers } from "next/headers";
+import { consentDefaultScript, isValidGaId, regiaoConsentimento } from "@/lib/consent";
 
 // GA4 e AdSense só entram na página depois do Aceitar do aviso de cookies:
 // quem os injeta é o script consent-default (src/lib/consent.js).
@@ -108,6 +109,10 @@ export default async function LocaleLayout({ children, params }) {
   const messages = await getMessages();
   // Nonce da CSP deste pedido (src/middleware.js). Vai em todo <script>.
   const nonce = getNonce();
+  // País do visitante pela Cloudflare (CF-IPCountry): decide se o Aceitar do
+  // aviso concede (fora do EEE/UK/CH) ou se a mensagem do Google decide.
+  // Sem o cabeçalho, null: o site segue a resposta da CMP (src/lib/consent.js).
+  const regiao = regiaoConsentimento(headers().get("cf-ipcountry"));
 
   return (
     <html lang={locale === "pt" ? "pt-BR" : "en"}>
@@ -133,7 +138,7 @@ export default async function LocaleLayout({ children, params }) {
         <script
           id="consent-default"
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: consentDefaultScript({ adsClient: ADSENSE_ID, gaId: GA_ID }) }}
+          dangerouslySetInnerHTML={{ __html: consentDefaultScript({ adsClient: ADSENSE_ID, gaId: GA_ID, regiao }) }}
         />
       </head>
       <body>

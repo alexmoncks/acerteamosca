@@ -14,9 +14,15 @@
 //     Suíça, quem pede e manda o consentimento continua sendo a mensagem do
 //     Google (Privacidade e mensagens do AdSense), que o adsbygoogle.js
 //     carrega depois do aceite do site.
-//   - O que o site descobriu sobre a CMP fica em GDPR_STORAGE_KEY: com "0"
-//     (sem GDPR aqui), o script do <head> já repete o "granted" nas páginas
-//     seguintes, antes das tags.
+//   - Região (revisão do QA do AJ2): o layout lê o país do cabeçalho
+//     CF-IPCountry da Cloudflare (regiaoConsentimento). No EEE/Reino Unido/
+//     Suíça ("eee") o site nunca concede; fora deles ("fora") o Aceitar
+//     concede na hora e o <head> repete o "granted" nas páginas seguintes.
+//     Sem o cabeçalho (null: prévia, acesso direto à origem), vale o que a
+//     CMP disser: concede com "não se aplica" explícito (lembrado em
+//     GDPR_STORAGE_KEY = "0") ou, sem CMP nenhuma no prazo, só naquela
+//     página (não lembrado: CMP lenta ou bloqueada no EEE não vira
+//     concessão nas páginas seguintes).
 
 /** A escolha do aviso do site (localStorage): "granted" ou "denied". */
 export const CONSENT_STORAGE_KEY = "acerteamosca_consent_v1";
@@ -31,14 +37,41 @@ export const GOOGLE_TAGS_LOADER = "__aamLoadGoogleTags";
 export const GOOGLE_TAGS_FLAG = "__aamGoogleTags";
 /** Marca de que esta página já mandou o update "granted". */
 export const GRANTED_FLAG = "__aamGranted";
+/** A região do pedido, gravada pelo script do <head>. */
+export const REGION_GLOBAL = "__aamRegiao";
 /** Marca do Aceitar feito nesta página (vale mesmo com o storage bloqueado). */
 const ACCEPTED_FLAG = "__aamAccepted";
 
 const SINAIS = ["ad_storage", "ad_user_data", "ad_personalization", "analytics_storage"];
 
+/** EEE (27 + Islândia, Liechtenstein, Noruega), Reino Unido e Suíça. */
+export const GDPR_COUNTRIES = [
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
+  "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+  "IS", "LI", "NO",
+  "GB",
+  "CH",
+];
+
+/**
+ * A região do pedido para o consentimento, pelo CF-IPCountry: "eee", "fora"
+ * ou null (sem cabeçalho, ou XX/T1/código estranho: não dá para saber).
+ */
+export function regiaoConsentimento(pais) {
+  const p = typeof pais === "string" ? pais.trim().toUpperCase() : "";
+  if (!/^[A-Z]{2}$/.test(p) || p === "XX" || p === "T1") return null;
+  return GDPR_COUNTRIES.includes(p) ? "eee" : "fora";
+}
+
+/** A região que o script do <head> recebeu do servidor. */
+export function readRegion(win) {
+  const r = win[REGION_GLOBAL];
+  return r === "eee" || r === "fora" ? r : null;
+}
+
 // Cookies que o GA e o AdSense gravam no domínio do site. Apagados quando a
 // pessoa revoga (os de domínios do Google, o site não alcança).
-const COOKIE_GOOGLE_PRIMEIRA_PARTE = /^(_ga|_ga_[A-Za-z0-9_]+|_gid|_gat[A-Za-z0-9_]*|_gcl_[a-z]+|_gac_[A-Za-z0-9_]+|__gads|__gpi|__eoi)$/;
+const COOKIE_GOOGLE_PRIMEIRA_PARTE = /^(_ga|_ga_[A-Za-z0-9_]+|_gid|_gat[A-Za-z0-9_]*|_gcl_[a-z]+|_gac_[A-Za-z0-9_]+|__gads|__gpi|__eoi|__gsas|FCCDCF|FCNEC)$/;
 
 function todos(valor) {
   return Object.fromEntries(SINAIS.map((s) => [s, valor]));
@@ -118,13 +151,16 @@ export function acceptSiteChoice(win) {
 }
 
 /**
- * Manda o update "granted" (uma vez por página) e lembra que aqui a mensagem
- * GDPR do Google não se aplica. Só para quem já aceitou no aviso do site e
- * fora do EEE (quem chama decide, com grantAfterWait de src/lib/cmp.js).
+ * Manda o update "granted" (uma vez por página). Só para quem já aceitou no
+ * aviso do site e fora do EEE (quem chama decide, com grantDecision de
+ * src/lib/cmp.js). `lembrar`: grava que a CMP disse "não se aplica" (G=0),
+ * para o <head> conceder nas páginas seguintes quando a região é
+ * desconhecida; só com resposta explícita da CMP.
  */
-export function grantConsent(win) {
+export function grantConsent(win, { lembrar = false } = {}) {
   if (!win[ACCEPTED_FLAG] && readConsentChoice(win) !== "granted") return false;
-  gravar(win, GDPR_STORAGE_KEY, "0");
+  if (readRegion(win) === "eee") return false;
+  if (lembrar) gravar(win, GDPR_STORAGE_KEY, "0");
   if (win[GRANTED_FLAG]) return false;
   win[GRANTED_FLAG] = true;
   gtagDe(win)(...consentUpdateCommand("granted"));
@@ -184,11 +220,13 @@ export function declineSiteChoice(win) {
  *   2. define window.__aamLoadGoogleTags, que injeta o adsbygoogle.js (como
  *      o painel entrega: async + crossorigin) e o gtag.js, com o nonce deste
  *      script (a CSP tem 'strict-dynamic');
- *   3. se a pessoa já aceitou: repete o "granted" quando o site já sabe que
- *      a mensagem GDPR do Google não se aplica ali, e carrega as tags.
+ *   3. se a pessoa já aceitou: repete o "granted" fora do EEE (região
+ *      "fora", salvo se a CMP já disse que o GDPR se aplica, G=1; ou região
+ *      desconhecida com G=0) e carrega as tags. No EEE, nunca concede.
  * Sem aceite gravado, nenhuma tag do Google entra na página.
  */
-export function consentDefaultScript({ adsClient = null, gaId = null } = {}) {
+export function consentDefaultScript({ adsClient = null, gaId = null, regiao = null } = {}) {
+  const reg = regiao === "eee" || regiao === "fora" ? regiao : null;
   const chamadas = consentDefaultCommands()
     .map((args) => `gtag(${args.map((a) => JSON.stringify(a)).join(",")});`)
     .join("");
@@ -206,7 +244,9 @@ export function consentDefaultScript({ adsClient = null, gaId = null } = {}) {
     `${injeta}return true;};`;
   const lembrada =
     `try{if(localStorage.getItem(${JSON.stringify(CONSENT_STORAGE_KEY)})==="granted"){` +
-    `if(localStorage.getItem(${JSON.stringify(GDPR_STORAGE_KEY)})==="0"){window.${GRANTED_FLAG}=true;gtag(${update});}` +
+    `var g=localStorage.getItem(${JSON.stringify(GDPR_STORAGE_KEY)});` +
+    `if((r==="fora"&&g!=="1")||(r===null&&g==="0")){window.${GRANTED_FLAG}=true;gtag(${update});}` +
     `window.${GOOGLE_TAGS_LOADER}();}}catch(e){}`;
-  return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}${chamadas}(function(){${carregador}${lembrada}})();`;
+  const regiaoJs = `var r=${JSON.stringify(reg)};window.${REGION_GLOBAL}=r;`;
+  return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}${chamadas}(function(){${regiaoJs}${carregador}${lembrada}})();`;
 }

@@ -84,7 +84,7 @@ check("the AdSense tag has no undocumented attributes", () => {
   // depois do Aceitar, como o painel entrega (async + crossorigin) e com o
   // nonce dele (tests/consent.test.mjs roda o injetor)
   assert.ok(!/AdSenseScript|adsbygoogle\.js/.test(layout), "tag do AdSense de volta no HTML");
-  assert.match(layout, /consentDefaultScript\(\{ adsClient: ADSENSE_ID, gaId: GA_ID \}\)/);
+  assert.match(layout, /consentDefaultScript\(\{ adsClient: ADSENSE_ID, gaId: GA_ID, regiao \}\)/);
   const consent = semComentarios(source("src/lib/consent.js"));
   assert.match(consent, /https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=\$\{ads\}",1\)/);
   assert.match(consent, /s\.async=true;s\.src=u;if\(n\)s\.nonce=n;if\(c\)s\.crossOrigin="anonymous"/);

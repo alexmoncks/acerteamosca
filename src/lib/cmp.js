@@ -102,6 +102,33 @@ export function grantAfterWait(gdprApplies, cmpPresent) {
   return gdprApplies === false || (gdprApplies === null && !cmpPresent);
 }
 
+/**
+ * O que fazer quando o watcher da CMP termina, para quem já aceitou no aviso
+ * do site. `regiao`: "eee", "fora" ou null (src/lib/consent.js,
+ * regiaoConsentimento).
+ *   - "deny":          a CMP diz que o GDPR se aplica (markGdprApplies);
+ *   - "none":          região "eee": o site nunca concede, a CMP decide;
+ *   - "grant":         região "fora";
+ *   - "grant-lembrar": região desconhecida e "não se aplica" explícito
+ *                      (grava G=0 para as páginas seguintes);
+ *   - "grant-pagina":  região desconhecida e nenhuma CMP no prazo: concede
+ *                      só nesta página (não grava: CMP lenta ou bloqueada no
+ *                      EEE não pode virar concessão lembrada).
+ */
+export function grantDecision({ regiao, gdprApplies, cmpPresent }) {
+  if (gdprApplies === true) return "deny";
+  if (regiao === "eee") return "none";
+  if (regiao === "fora") return "grant";
+  if (gdprApplies === false) return "grant-lembrar";
+  return grantAfterWait(gdprApplies, cmpPresent) ? "grant-pagina" : "none";
+}
+
+/** No clique em Aceitar, já dá para conceder? (fora do EEE, ou G=0 lembrado) */
+export function grantOnAccept({ regiao, gdprFlag }) {
+  if (regiao === "eee" || gdprFlag === "1") return false;
+  return regiao === "fora" || gdprFlag === "0";
+}
+
 /** A API de revogação do Google está carregada? */
 export function canShowGoogleRevocation(win) {
   return !!(win && win.googlefc && typeof win.googlefc.showRevocationMessage === "function");
