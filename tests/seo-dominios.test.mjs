@@ -185,7 +185,7 @@ check("www + language prefix 301s straight to the right domain in one hop", () =
   assert.equal(t("www.nailedthefly.com", "/en/opengraph-image"), "https://nailedthefly.com/en/opengraph-image");
 });
 
-check("dotted files reach the middleware only on www, and skip next-intl", () => {
+check("dotted files reach the middleware only on www (or with a client CSP header), and skip next-intl", () => {
   assert.ok(host.isPagePath("/"));
   assert.ok(host.isPagePath("/jogos/wordle"));
   assert.ok(host.isPagePath("/en/opengraph-image"));
@@ -209,7 +209,8 @@ check("dotted files reach the middleware only on www, and skip next-intl", () =>
   assert.ok(!vals[1].test("www.nailedthefly.com.evil.example"));
   // www é decidido antes de qualquer saída antecipada
   assert.ok(mw.indexOf("wwwRedirectTarget(") < mw.indexOf("isPagePath(pathname)"));
-  assert.match(mw, /!isPagePath\(pathname\)[^\n]*NextResponse\.next\(\)/);
+  // ...e saem sem next-intl, só sem os cabeçalhos de CSP do cliente (csp-nonce.test.mjs)
+  assert.match(mw, /if \(!isPagePath\(pathname\)[^\n]*\{\s*return NextResponse\.next\(\{ request: \{ headers: stripClientCspHeaders\(request\.headers\) \} \}\);\s*\}/);
 });
 
 check("the middleware normalizes the host before next-intl matches domains", () => {

@@ -6,11 +6,13 @@ import { isValidNonce } from "@/lib/csp";
 // torna a página dinâmica, e é o que se quer: HTML pré-gerado teria um
 // nonce fixo.
 //
-// Em caminho com ponto (que não passa pelo middleware, ex.: a 404 de
-// "/x.y") o x-nonce, se existir, veio do cliente. Por isso: só um nonce em
-// formato válido, e só se a CSP do pedido (que o middleware escreve junto)
-// trouxer o mesmo nonce. Fora disso, nenhum nonce; e esses caminhos levam a
-// CSP fixa sem script inline (src/lib/csp.js, STATIC_CSP).
+// O middleware descarta x-nonce/CSP mandados pelo cliente em qualquer
+// caminho (src/middleware.js, matcher; src/lib/csp.js, CSP_REQUEST_HEADERS),
+// inclusive nos caminhos com ponto (a 404 de "/x.y"), que só passam por ele
+// quando trazem um desses cabeçalhos. Defesa extra: só um nonce em formato
+// válido, e só se a CSP do pedido (que o middleware escreve junto) trouxer o
+// mesmo nonce. Fora disso, nenhum nonce; e esses caminhos levam a CSP fixa
+// sem script inline (src/lib/csp.js, STATIC_CSP).
 export function getNonce() {
   const h = headers();
   const nonce = h.get("x-nonce");

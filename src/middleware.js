@@ -10,7 +10,7 @@ import {
   requestHost,
   wwwRedirectTarget,
 } from "./lib/host-routing";
-import { buildCsp, generateNonce, wsDevOrigins } from "./lib/csp";
+import { buildCsp, generateNonce, stripClientCspHeaders, wsDevOrigins } from "./lib/csp";
 
 const handleI18n = createMiddleware(routing);
 
@@ -44,8 +44,14 @@ export default function middleware(request) {
   const www = wwwRedirectTarget(host, pathname, search);
   if (www) return NextResponse.redirect(www, 301);
 
-  // Arquivo estático, /api e /_next só chegam aqui pelo matcher do www.
-  if (!isPagePath(pathname) || isLocalizedOgImage(pathname)) return NextResponse.next();
+  // Arquivo estático, /api e /_next só chegam aqui pelo matcher do www ou
+  // porque o cliente mandou x-nonce/content-security-policy (matcher abaixo).
+  // Esses dois cabeçalhos nunca seguem do cliente para o render: num caminho
+  // com ponto (a 404 de "/x.y"), o Next tiraria o nonce dos chunks dele da
+  // CSP do pedido e o getNonce() o leria do x-nonce.
+  if (!isPagePath(pathname) || isLocalizedOgImage(pathname)) {
+    return NextResponse.next({ request: { headers: stripClientCspHeaders(request.headers) } });
+  }
 
   const target = prefixRedirectTarget(host, pathname, search);
   if (target) return NextResponse.redirect(target, 301);
@@ -56,12 +62,12 @@ export default function middleware(request) {
   //     consent default, no adsbygoogle.js, no gtag e nos JSON-LD;
   //   - content-security-policy: o Next tira o nonce daqui e o põe nos
   //     próprios <script> (chunks e dados do RSC).
-  // Qualquer x-nonce ou CSP que o cliente mande é sobrescrito.
+  // Qualquer x-nonce ou CSP que o cliente mande é descartado antes.
   // Ler headers() torna as páginas dinâmicas (render por pedido, sem SSG):
   // um HTML pré-gerado teria um nonce fixo, que a CSP não aceitaria.
   const nonce = generateNonce();
   const csp = buildCsp({ nonce, wsOrigins: WS_ORIGINS });
-  const headers = new Headers(request.headers);
+  const headers = stripClientCspHeaders(request.headers);
   headers.set("x-nonce", nonce);
   headers.set("content-security-policy", csp);
   if (isProductionHost(host) && rawRequestHost(request.headers) !== host) {
@@ -79,9 +85,16 @@ export default function middleware(request) {
 //     ponto. Aceitam ponto final no host e, no XFH, porta e lista ("a, b").
 //     O Next já compara o Host em minúsculas e sem porta. No apex os
 //     estáticos continuam fora do middleware.
+// 4º a 6º: qualquer caminho em que o CLIENTE mandou um dos cabeçalhos que o
+//     render lê como nonce/CSP (CSP_REQUEST_HEADERS em src/lib/csp.js). O
+//     middleware os descarta. Pedido normal não traz nenhum deles, então os
+//     estáticos continuam sem passar pelo middleware.
 export const config = {
   matcher: [
     "/((?!api|_next|.*\\..*).*)",
+    { source: "/:path*", has: [{ type: "header", key: "x-nonce" }] },
+    { source: "/:path*", has: [{ type: "header", key: "content-security-policy" }] },
+    { source: "/:path*", has: [{ type: "header", key: "content-security-policy-report-only" }] },
     {
       source: "/:path*",
       has: [{ type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)\\.?" }],

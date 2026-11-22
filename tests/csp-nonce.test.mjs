@@ -135,6 +135,74 @@ check("middleware: a client-sent x-nonce or CSP request header is overwritten", 
   assert.ok(!/unsafe-inline/.test(repassado(res, "content-security-policy").split(";").find((d) => d.trim().startsWith("script-src"))));
 });
 
+// Cabeçalhos forjados que, juntos, fariam o render refletir o nonce do
+// cliente (o x-nonce e uma CSP com o mesmo nonce, como o getNonce() exige).
+const FORJADO = "AAAAAAAAAAAAAAAAAAAAAA==";
+const FORJADOS = {
+  "x-nonce": FORJADO,
+  "content-security-policy": `script-src 'nonce-${FORJADO}'`,
+  "content-security-policy-report-only": `script-src 'nonce-${FORJADO}'`,
+};
+// O que o Next faz com x-middleware-override-headers (resolve-routes.js):
+// apaga do pedido todo cabeçalho fora da lista e grava os repassados.
+function cabecalhosDoRender(original, res) {
+  const lista = res.headers.get("x-middleware-override-headers");
+  if (lista === null) return { ...original };
+  const out = {};
+  for (const k of lista.split(",").map((s) => s.trim())) out[k] = res.headers.get(`x-middleware-request-${k}`);
+  return out;
+}
+
+check("middleware: client-sent x-nonce/CSP never reach the render, on any path (dotted 404, static, /api, page)", () => {
+  const casar = require("next/dist/shared/lib/router/utils/path-match.js").getPathMatch;
+  // um cabeçalho forjado basta para o pedido passar pelo middleware
+  const casadores = mwConfig.matcher.filter((m) => typeof m === "object" && m.has?.[0]?.type === "header" && !("value" in m.has[0]));
+  const cobertos = casadores.map((m) => m.has[0].key).sort();
+  assert.deepEqual(cobertos, [...csp.CSP_REQUEST_HEADERS].sort(), "matcher sem algum cabeçalho de CSP_REQUEST_HEADERS");
+  for (const m of casadores) {
+    for (const c of ["/jogos/x.y", "/foo.bar", "/ads.txt", "/api/scores", "/_next/static/chunks/a.js", "/"]) {
+      assert.notEqual(casar(m.source)(c), false, `${m.has[0].key}: ${c} fora do matcher`);
+    }
+  }
+  for (const url of [
+    "https://acerteamosca.com.br/jogos/x.y",
+    "https://nailedthefly.com/foo.bar",
+    "http://127.0.0.1:3000/pt/jogos/x.y",
+    "https://acerteamosca.com.br/ads.txt",
+    "https://acerteamosca.com.br/api/scores",
+    "https://acerteamosca.com.br/sobre",
+    "https://nailedthefly.com/",
+  ]) {
+    // cada cabeçalho sozinho e os três juntos
+    const combinacoes = [...Object.keys(FORJADOS).map((k) => [k]), Object.keys(FORJADOS)];
+    for (const chaves of combinacoes) {
+      const nome = chaves.join("+");
+      const valor = Object.fromEntries(chaves.map((k) => [k, FORJADOS[k]]));
+      const original = { host: new URL(url).host, ...valor };
+      const res = pedir(url, valor);
+      assert.equal(res.status, 200, url);
+      const render = cabecalhosDoRender(original, res);
+      for (const k of csp.CSP_REQUEST_HEADERS) {
+        assert.ok(!String(render[k] ?? "").includes(FORJADO), `${url} (${nome}): ${k} forjado chegou ao render`);
+      }
+      // nem o Next (getScriptNonceFromHeader) nem o getNonce() acham o nonce forjado
+      const cspRender = render["content-security-policy"] || render["content-security-policy-report-only"];
+      assert.notEqual(cspRender ? getScriptNonceFromHeader(cspRender) : undefined, FORJADO, `${url} (${nome})`);
+      assert.notEqual(render["x-nonce"], FORJADO, `${url} (${nome})`);
+      assert.ok(!String(res.headers.get("content-security-policy") ?? "").includes(FORJADO), `${url}: na resposta`);
+    }
+  }
+});
+
+check("stripClientCspHeaders removes the three headers (any case) and keeps the rest", () => {
+  const h = csp.stripClientCspHeaders(new Headers({
+    Host: "acerteamosca.com.br", "X-Nonce": FORJADO, "Content-Security-Policy": "x", "content-security-policy-report-only": "y", Cookie: "a=1",
+  }));
+  for (const k of csp.CSP_REQUEST_HEADERS) assert.equal(h.get(k), null, k);
+  assert.equal(h.get("host"), "acerteamosca.com.br");
+  assert.equal(h.get("cookie"), "a=1");
+});
+
 check("middleware: the production CSP has no ws:// origin; the routing still works with the nonce", () => {
   const res = pedir("https://nailedthefly.com/");
   const d = csp.parseCsp(res.headers.get("content-security-policy"));

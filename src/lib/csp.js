@@ -45,6 +45,22 @@ export function isValidNonce(nonce) {
   return typeof nonce === "string" && NONCE_RE.test(nonce);
 }
 
+/**
+ * Cabeçalhos do PEDIDO que o render lê como nonce/CSP: o x-nonce (getNonce,
+ * src/lib/nonce.js) e as duas CSPs, de onde o Next tira o nonce dos chunks
+ * dele (a report-only quando não há a outra). Só o middleware os escreve;
+ * vindos do cliente, são descartados (o matcher do middleware pega todo
+ * pedido que traga um deles, em qualquer caminho).
+ */
+export const CSP_REQUEST_HEADERS = ["x-nonce", "content-security-policy", "content-security-policy-report-only"];
+
+/** Cópia dos cabeçalhos do pedido sem nenhum CSP_REQUEST_HEADERS do cliente. */
+export function stripClientCspHeaders(requestHeaders) {
+  const headers = new Headers(requestHeaders);
+  for (const nome of CSP_REQUEST_HEADERS) headers.delete(nome);
+  return headers;
+}
+
 /** 128 bits aleatórios em base64. Um por pedido: nunca reaproveitar. */
 export function generateNonce() {
   const bytes = new Uint8Array(16);
