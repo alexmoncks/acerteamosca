@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { pageAlternates } from "@/lib/seo";
+import { localeUrl } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -28,7 +28,10 @@ export async function generateMetadata({ params }) {
     // PARA PUBLICAR: apague este bloco `robots`, acrescente a rota ao
     // src/app/sitemap.js e o card ao menu em src/app/[locale]/page.js.
     robots: { index: false, follow: false },
-    alternates: pageAlternates(locale, "/jogos/kungfucastle"),
+    // Só o canonical, sem hreflang: página noindex não entra em grupo de
+    // idiomas (o Google ignora o par e o sitemap não a lista). Ao publicar,
+    // volte para pageAlternates(locale, "/jogos/kungfucastle").
+    alternates: { canonical: localeUrl(locale, "/jogos/kungfucastle") },
     openGraph: {
       title: isPt ? "Kung Fu Castle - Beat-em-up Online Grátis" : "Kung Fu Castle - Free Beat-em-up Online",
       description: isPt

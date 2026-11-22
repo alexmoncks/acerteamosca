@@ -79,6 +79,14 @@ check("every public page declares its own canonical, for its own route", () => {
   assert.ok(lista.length >= 19, `só ${lista.length} páginas encontradas`);
   for (const { file, route } of lista) {
     const src = semComentarios(source(file));
+    // Página noindex: só canonical, sem hreflang (fora do grupo de idiomas).
+    if (/robots:\s*\{\s*index:\s*false/.test(src)) {
+      const c = src.match(/alternates:\s*\{\s*canonical:\s*localeUrl\(locale,\s*"([^"]+)"\)\s*\}/);
+      assert.ok(c, `${file} (noindex) deve declarar só alternates: { canonical: localeUrl(locale, ...) }`);
+      assert.equal(c[1], route, `${file} declara o canonical de outra rota`);
+      assert.ok(!/pageAlternates\(|languages:/.test(src), `${file} é noindex e ainda declara hreflang`);
+      continue;
+    }
     const m = src.match(/alternates:\s*pageAlternates\(locale,\s*"([^"]+)"\)/);
     assert.ok(m, `${file} não declara alternates: pageAlternates(locale, ...)`);
     assert.equal(m[1], route, `${file} declara o canonical de outra rota`);
