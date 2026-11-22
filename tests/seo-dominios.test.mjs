@@ -138,7 +138,7 @@ check("prefixed URLs on the production domains 301 to the clean URL in one hop",
   assert.ok(!host.isLocalizedOgImage("/en/sobre"));
 });
 
-check("the host is read like next-intl reads it, without the port", () => {
+check("the host is normalized (lowercase, no port) and the Host header comes first", () => {
   const h = (o) => ({ get: (k) => o[k] ?? null });
   assert.equal(host.requestHost(h({ host: "NailedTheFly.com:443" })), "nailedthefly.com");
   assert.equal(host.requestHost(h({ host: "x", "x-forwarded-host": "acerteamosca.com.br" })), "acerteamosca.com.br");
@@ -197,7 +197,16 @@ check("dotted files reach the middleware only on www, and skip next-intl", () =>
   // o 1º matcher continua igual (apex: estáticos fora do middleware)
   assert.ok(mw.includes(String.raw`"/((?!api|_next|.*\\..*).*)"`));
   // matcher extra só para o www
-  assert.ok(mw.includes(String.raw`type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)"`));
+  assert.ok(mw.includes(String.raw`type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)\\.?"`));
+  // as regex do has, como o Next as compila (^...$, sem flags)
+  const re = (v) => new RegExp("^" + v + "$");
+  const vals = [...mw.matchAll(/value: "(www[^"]+)"/g)].map((m) => re(m[1].replace(/\\\\/g, "\\")));
+  assert.equal(vals.length, 2);
+  for (const h of ["www.acerteamosca.com.br", "www.nailedthefly.com", "www.acerteamosca.com.br."]) assert.ok(vals[0].test(h), h);
+  assert.ok(!vals[0].test("acerteamosca.com.br"));
+  assert.ok(!vals[0].test("www.acerteamosca.com.br.evil.example"));
+  for (const h of ["www.nailedthefly.com", "www.nailedthefly.com:443", "www.acerteamosca.com.br, proxy"]) assert.ok(vals[1].test(h), h);
+  assert.ok(!vals[1].test("www.nailedthefly.com.evil.example"));
   // www é decidido antes de qualquer saída antecipada
   assert.ok(mw.indexOf("wwwRedirectTarget(") < mw.indexOf("isPagePath(pathname)"));
   assert.match(mw, /!isPagePath\(pathname\)[^\n]*NextResponse\.next\(\)/);

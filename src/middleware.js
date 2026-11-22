@@ -49,15 +49,17 @@ export default function middleware(request) {
 }
 
 // 1º: páginas (sem /api, /_next e arquivos com ponto), como antes.
-// 2º: tudo no www dos domínios, para o 301 valer também em ads.txt,
-//     robots.txt e outros arquivos com ponto. No apex os estáticos continuam
-//     fora do middleware.
+// 2º e 3º: tudo no www dos domínios (pelo Host ou pelo X-Forwarded-Host),
+//     para o 301 valer também em ads.txt, robots.txt e outros arquivos com
+//     ponto. Aceitam ponto final no host e, no XFH, porta e lista ("a, b").
+//     O Next já compara o Host em minúsculas e sem porta. No apex os
+//     estáticos continuam fora do middleware.
 export const config = {
   matcher: [
     "/((?!api|_next|.*\\..*).*)",
     {
       source: "/:path*",
-      has: [{ type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)" }],
+      has: [{ type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)\\.?" }],
     },
     {
       source: "/:path*",
@@ -65,7 +67,7 @@ export const config = {
         {
           type: "header",
           key: "x-forwarded-host",
-          value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)(?::\\d+)?",
+          value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)\\.?(?::\\d+)?(?:\\s*,.*)?",
         },
       ],
     },
