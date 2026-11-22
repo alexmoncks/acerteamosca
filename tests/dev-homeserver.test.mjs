@@ -1,7 +1,7 @@
 // Ambiente de dev do homeserver (scripts/dev-homeserver.sh).
 //
-// O front da prévia fala com o WebSocket em ws://127.0.0.1:PORTA pela
-// Tailscale. A CSP só acrescenta origens ws:// (sem TLS) que estejam nos
+// O front da prévia fala com o WebSocket em ws://<host>:<porta>
+// (definidos no .env.local, fora do repo). A CSP só acrescenta origens ws:// (sem TLS) que estejam nos
 // NEXT_PUBLIC_WS_*; em produção eles são wss:// e a CSP tem que ficar igual.
 import assert from "node:assert/strict";
 import { check, source } from "./helpers.mjs";
@@ -85,4 +85,18 @@ check("dev-homeserver.sh never prints the database password and keeps secrets 60
   assert.ok(!/echo[^\n]*\$\{?DATABASE_URL/.test(sh), "o script ecoa o DATABASE_URL");
   assert.ok(/127\.0\.0\.1:\$\{AAM_DB_PORT\}:5432/.test(sh), "o banco tem que ficar só em 127.0.0.1");
   assert.ok(/--restart unless-stopped/.test(sh));
+});
+
+check("dev-homeserver.sh and its doc keep the private IP and real ports out of the repo", () => {
+  const sh = source("scripts/dev-homeserver.sh");
+  const doc = source("docs/dev-homeserver.md");
+  // Faixa CGNAT 100.64.0.0/10 (Tailscale) e IPs privados não podem aparecer.
+  const privado = /\b(?:100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])|10\.\d{1,3}|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}\b/;
+  assert.ok(!privado.test(sh), "IP de rede privada no script");
+  assert.ok(!privado.test(doc), "IP de rede privada no doc");
+  // Padrões neutros, sobrescritos pelo ambiente na 1ª execução.
+  assert.match(sh, /AAM_DEV_HOST_PADRAO="\$\{AAM_DEV_HOST:-127\.0\.0\.1\}"/);
+  for (const v of ["AAM_APP_PORT", "AAM_EN_PORT", "AAM_WS_PORT", "AAM_DB_PORT"]) {
+    assert.match(sh, new RegExp(`${v}_PADRAO="\\$\\{${v}:-\\d+\\}"`), `${v} sem padrão vindo do ambiente`);
+  }
 });

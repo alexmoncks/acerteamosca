@@ -43,12 +43,17 @@ SESSAO_APP="aam-preview"
 SESSAO_WS="aam-ws"
 PROXY_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/acerteamosca-dev"
 
-# Padrões (podem ser sobrescritos no .env.local, que o script cria na 1ª vez)
-AAM_DEV_HOST_PADRAO="127.0.0.1"
-AAM_APP_PORT_PADRAO="3000"
-AAM_EN_PORT_PADRAO="3001"
-AAM_WS_PORT_PADRAO="3002"
-AAM_DB_PORT_PADRAO="5433"
+# Host e portas: vêm do ambiente na 1ª execução (quando o script cria o
+# .env.local) e depois ficam no .env.local, que não vai para o git. Os padrões
+# são neutros (só a própria máquina); o IP da rede privada do servidor e as
+# portas reais nunca ficam no repositório. Exemplo, na 1ª vez:
+#   AAM_DEV_HOST=<ip-da-vpn> AAM_APP_PORT=4000 AAM_EN_PORT=4001 AAM_WS_PORT=4002 \
+#     scripts/dev-homeserver.sh up
+AAM_DEV_HOST_PADRAO="${AAM_DEV_HOST:-127.0.0.1}"
+AAM_APP_PORT_PADRAO="${AAM_APP_PORT:-3000}"
+AAM_EN_PORT_PADRAO="${AAM_EN_PORT:-3001}"
+AAM_WS_PORT_PADRAO="${AAM_WS_PORT:-3002}"
+AAM_DB_PORT_PADRAO="${AAM_DB_PORT:-5433}"
 ADSENSE_PADRAO="ca-pub-4148140889800778"   # ID público do publisher (está no ads.txt)
 
 # tmux com ambiente LIMPO. Este script exporta DATABASE_URL e NEXT_PUBLIC_*
@@ -88,14 +93,14 @@ EOF
       local h="$AAM_DEV_HOST_PADRAO" w="$AAM_WS_PORT_PADRAO"
       cat > .env.local <<EOF
 # Gerado por scripts/dev-homeserver.sh em $(date -Iseconds). NÃO versionar.
-# Ambiente de dev do homeserver (prévia pela Tailscale).
+# Ambiente de dev do homeserver (prévia na rede privada).
 AAM_DEV_HOST="${h}"
 AAM_APP_PORT="${AAM_APP_PORT_PADRAO}"
 AAM_EN_PORT="${AAM_EN_PORT_PADRAO}"
 AAM_WS_PORT="${w}"
 
 # WebSocket dos jogos multiplayer: entram no bundle no BUILD (NEXT_PUBLIC_*).
-# O navegador conecta direto em ws://${h}:${w}, pela Tailscale.
+# O navegador conecta direto em ws://${h}:${w}.
 NEXT_PUBLIC_WS_URL="ws://${h}:${w}/pong"
 NEXT_PUBLIC_WS_SHIPS_URL="ws://${h}:${w}/ships"
 NEXT_PUBLIC_WS_MEMORY_URL="ws://${h}:${w}/memory"

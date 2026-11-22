@@ -31,8 +31,8 @@ const ADSENSE_FRAME_SRC = [
 // Servidor WebSocket dos jogos multiplayer em ws:// (sem TLS). Em produção os
 // NEXT_PUBLIC_WS_* são wss:// e já cabem no "wss:" do connect-src, então nada
 // é acrescentado e a CSP de produção fica igual. No ambiente de dev do
-// homeserver (scripts/dev-homeserver.sh) o front fala com ws://127.0.0.1:PORTA
-// pela Tailscale, e sem esta origem a CSP bloqueia a conexão no navegador.
+// homeserver (scripts/dev-homeserver.sh) o front fala com ws://<host>:<porta>
+// (host e porta locais, fora do repo), e sem esta origem a CSP bloqueia a conexão no navegador.
 const WS_DEV_ORIGINS = [
   process.env.NEXT_PUBLIC_WS_URL,
   process.env.NEXT_PUBLIC_WS_SHIPS_URL,
