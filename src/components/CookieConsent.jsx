@@ -11,7 +11,9 @@ import { Link } from "@/i18n/navigation";
 // mensagens do AdSense). Por isso nada de "ao continuar navegando você
 // concorda" nem de botão "aceitar". A CMP e o Consent Mode v2 no código são o
 // lote 2, que depende de aprovação.
-const STORAGE_KEY = "acerteamosca_cookie_consent";
+// _v2: quem fechou o aviso antigo (que presumia consentimento) vê o texto
+// corrigido uma vez.
+const STORAGE_KEY = "acerteamosca_cookie_notice_v2";
 
 export default function CookieConsent() {
   const t = useTranslations("cookieConsent");
