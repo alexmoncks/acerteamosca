@@ -13,6 +13,10 @@
 // (seleção, grade, régua), num contêiner separado que nunca entra no que salva.
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Application, Container, Graphics, Sprite } from "pixi.js";
+// CSP sem 'unsafe-eval' (lote 2): o PixiJS v8 gera os shaders/uniforms com
+// new Function por padrão, e a CSP estrita bloqueia. Este módulo do próprio
+// PixiJS troca isso por funções prontas, sem eval.
+import "pixi.js/unsafe-eval";
 import {
   buildScene,
   buildScenery,

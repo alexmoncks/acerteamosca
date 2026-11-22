@@ -18,6 +18,10 @@
 
 import { useEffect, useRef } from "react";
 import { Application, Container, Graphics, Sprite, Assets, Text, TextStyle } from "pixi.js";
+// CSP sem 'unsafe-eval' (lote 2): o PixiJS v8 gera os shaders/uniforms com
+// new Function por padrão, e a CSP estrita bloqueia. Este módulo do próprio
+// PixiJS troca isso por funções prontas, sem eval.
+import "pixi.js/unsafe-eval";
 import {
   CENAS, LARGURA, ALTURA, BASE_CENAS, FADE,
   duracaoTotal, cenaEm, opacidadeDaCena, flashEm, letrasEm, arquivosDaHistoria,

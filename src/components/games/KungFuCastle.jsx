@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
+// CSP sem 'unsafe-eval' (lote 2): o PixiJS v8 gera os shaders/uniforms com
+// new Function por padrão, e a CSP estrita bloqueia. Este módulo do próprio
+// PixiJS troca isso por funções prontas, sem eval.
+import "pixi.js/unsafe-eval";
 import dynamic from "next/dynamic";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
