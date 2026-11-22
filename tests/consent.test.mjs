@@ -129,6 +129,18 @@ check("footer has the fixed 'Privacidade e cookies' link, with the policy sectio
   assert.match(link, /href=\{PRIVACY_CHOICES_HREF\}/);
   assert.equal(JSON.parse(source("src/messages/pt.json")).footer.privacyChoices, "Privacidade e cookies");
   assert.equal(JSON.parse(source("src/messages/en.json")).footer.privacyChoices, "Privacy & cookies");
+  assert.match(source("src/app/[locale]/politica-de-privacidade/page.js"), /id: "cookies",\n\s+h: "4\. Cookies e/);
+  assert.match(source("src/app/[locale]/politica-de-privacidade/page.js"), /id: "cookies",\n\s+h: "4\. Cookies and/);
+});
+
+check("privacy policy (PT/EN) explains the Google consent message, consent mode and how to withdraw", () => {
+  const pol = source("src/app/[locale]/politica-de-privacidade/page.js");
+  for (const t of ["mensagem de consentimento do Google", "Modo de consentimento do Google", "revogar a sua escolha",
+    "Privacidade e cookies", "Google consent message", "Google consent mode", "withdraw your choice", "Privacy & cookies"]) {
+    assert.ok(pol.includes(t), `política sem "${t}"`);
+  }
+  assert.match(pol, /22 de novembro de 2026/);
+  assert.match(pol, /November 22, 2026/);
 });
 
 check("cookie notice stays hidden while the Google CMP shows the GDPR message", () => {

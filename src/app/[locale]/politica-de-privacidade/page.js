@@ -32,11 +32,15 @@ export async function generateMetadata({ params }) {
 // do site em 01/08/2026); entram bases legais (LGPD e GDPR), direitos do
 // titular, cookies de terceiros do Google e o link "Como o Google usa dados
 // de sites parceiros", que a política do AdSense pede.
+// Revisada em 22/11/2026 (lote 2): mensagem de consentimento do Google no
+// EEE/Reino Unido/Suíça, Modo de consentimento e o link "Privacidade e
+// cookies" do rodapé para revogar. A seção 4 tem id="cookies": é o destino
+// desse link fora do EEE (src/components/PrivacyChoicesLink.jsx).
 const EMAIL = "alex@marramoncks.com.br";
 
 const contentPT = {
   title: "Política de Privacidade",
-  lastUpdated: "Última atualização: 21 de novembro de 2026",
+  lastUpdated: "Última atualização: 22 de novembro de 2026",
   intro:
     "Esta Política de Privacidade explica como o Acerte a Mosca (acerteamosca.com.br) e sua versão em inglês, Nailed The Fly (nailedthefly.com), operados pela MMSoft Digital, coletam, usam, compartilham e protegem dados pessoais, em conformidade com a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018) e, para visitantes do Espaço Econômico Europeu, do Reino Unido e da Suíça, com o Regulamento Geral sobre a Proteção de Dados (GDPR/RGPD).",
   sections: [
@@ -65,10 +69,14 @@ const contentPT = {
       ],
     },
     {
+      id: "cookies",
       h: "4. Cookies e tecnologias semelhantes",
       p: [
         "Usamos cookies e armazenamento local para manter o cadastro de jogador, lembrar preferências, medir a audiência e exibir anúncios. Cookies de terceiros são definidos pelo Google nos domínios dele, conforme as seções 5 e 6.",
-        "Você pode bloquear ou apagar cookies nas configurações do navegador. Bloquear cookies pode impedir que pontuações e preferências sejam salvas.",
+        "No Espaço Econômico Europeu, no Reino Unido e na Suíça, uma mensagem de consentimento do Google (a ferramenta Privacidade e mensagens do Google AdSense, uma plataforma de gestão de consentimento certificada pelo Google) pede a sua escolha antes de usarmos cookies e identificadores para anúncios personalizados e medição. Até você escolher, o site informa ao Google que o consentimento foi negado (Modo de consentimento do Google), e só são exibidos anúncios não personalizados ou limitados.",
+        "Você pode mudar ou revogar a sua escolha a qualquer momento pelo link \"Privacidade e cookies\", no rodapé de todas as páginas. Nessas regiões, ele reabre a mensagem de consentimento do Google. Nas demais, ele traz você para esta seção, e as opções de recusa estão na seção 6.",
+        "Fora dessas regiões, anúncios e medição se apoiam no legítimo interesse (seção 3), sempre com as opções de recusa da seção 6. O aviso de cookies que aparece no site é apenas informativo: fechá-lo não é aceitar nada.",
+        "Você também pode bloquear ou apagar cookies nas configurações do navegador. Bloquear cookies pode impedir que pontuações e preferências sejam salvas.",
       ],
     },
     {
@@ -86,6 +94,7 @@ const contentPT = {
         "Você pode desativar a publicidade personalizada nas Configurações de anúncios do Google: https://adssettings.google.com",
         "Para desativar cookies de publicidade personalizada de outros fornecedores: https://www.aboutads.info/choices (e, na Europa, https://www.youronlinechoices.eu).",
         "Para não ser medido pelo Google Analytics, use o complemento de desativação: https://tools.google.com/dlpage/gaoptout",
+        "No EEE, no Reino Unido e na Suíça, você também pode recusar ou revogar o consentimento pela mensagem do Google, reaberta pelo link \"Privacidade e cookies\" no rodapé (seção 4).",
         "Se você recusar, ainda poderá ver anúncios, mas eles não serão personalizados com base no seu histórico.",
       ],
     },
@@ -139,7 +148,7 @@ const contentPT = {
 
 const contentEN = {
   title: "Privacy Policy",
-  lastUpdated: "Last updated: November 21, 2026",
+  lastUpdated: "Last updated: November 22, 2026",
   intro:
     "This Privacy Policy explains how Nailed The Fly (nailedthefly.com) and its Portuguese version, Acerte a Mosca (acerteamosca.com.br), operated by MMSoft Digital, collect, use, share and protect personal data, in accordance with Brazil's General Data Protection Law (LGPD, Law No. 13,709/2018) and, for visitors from the European Economic Area, the United Kingdom and Switzerland, the General Data Protection Regulation (GDPR).",
   sections: [
@@ -168,10 +177,14 @@ const contentEN = {
       ],
     },
     {
+      id: "cookies",
       h: "4. Cookies and similar technologies",
       p: [
         "We use cookies and local storage to keep your player registration, remember preferences, measure audience and serve ads. Third-party cookies are set by Google on its own domains, as described in sections 5 and 6.",
-        "You can block or delete cookies in your browser settings. Blocking cookies may prevent scores and preferences from being saved.",
+        "In the European Economic Area, the United Kingdom and Switzerland, a Google consent message (the Privacy & messaging tool in Google AdSense, a Google-certified consent management platform) asks for your choice before we use cookies and identifiers for personalized ads and measurement. Until you choose, the site tells Google that consent is denied (Google consent mode), and only non-personalized or limited ads are shown.",
+        "You can change or withdraw your choice at any time through the \"Privacy & cookies\" link in the footer of every page. In those regions it reopens the Google consent message. Elsewhere it brings you to this section, and the opt-out options are in section 6.",
+        "Outside those regions, ads and measurement rely on legitimate interests (section 3), always with the opt-out options in section 6. The cookie notice shown on the site is informational only: closing it does not mean you accept anything.",
+        "You can also block or delete cookies in your browser settings. Blocking cookies may prevent scores and preferences from being saved.",
       ],
     },
     {
@@ -189,6 +202,7 @@ const contentEN = {
         "You can opt out of personalized advertising in Google's Ads Settings: https://adssettings.google.com",
         "To opt out of other vendors' cookies for personalized advertising: https://www.aboutads.info/choices (and, in Europe, https://www.youronlinechoices.eu).",
         "To opt out of Google Analytics measurement, use the opt-out add-on: https://tools.google.com/dlpage/gaoptout",
+        "In the EEA, the UK and Switzerland you can also refuse or withdraw consent through the Google message, reopened by the \"Privacy & cookies\" link in the footer (section 4).",
         "If you opt out, you may still see ads, but they will not be personalized based on your browsing history.",
       ],
     },
@@ -251,7 +265,7 @@ export default async function PrivacyPage({ params }) {
       <p style={metaStyle}>{c.lastUpdated}</p>
       <p style={pStyle}><RichText text={c.intro} /></p>
       {c.sections.map((s, i) => (
-        <section key={i} style={sectionStyle}>
+        <section key={i} id={s.id} style={sectionStyle}>
           <h2 style={h2Style}>{s.h}</h2>
           {s.p.map((para, j) => (
             <p key={j} style={pStyle}>
@@ -288,7 +302,8 @@ const metaStyle = {
   marginBottom: 30,
 };
 
-const sectionStyle = { marginBottom: 24 };
+// scrollMarginTop: o link "#cookies" não para embaixo da barra fixa do topo.
+const sectionStyle = { marginBottom: 24, scrollMarginTop: 64 };
 
 const h2Style = {
   fontFamily: "'Press Start 2P', monospace",
