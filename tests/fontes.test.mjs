@@ -104,7 +104,8 @@ check("the OFL license of both families ships next to the files", () => {
   }
 });
 
-check("/fonts/* is cached for a year as immutable (file names carry the font version)", () => {
+check("/fonts/*.woff2 is cached for a year as immutable (file names carry the font version)", () => {
   const cfg = source("next.config.js");
-  assert.match(cfg, /source: "\/fonts\/:file\*"[\s\S]{0,200}public, max-age=31536000, immutable/);
+  // só os .woff2 (versionados no nome); os textos da licença ficam com o padrão
+  assert.match(cfg, /source: "\/fonts\/:file\(\.\*\\\\\.woff2\)"[\s\S]{0,200}public, max-age=31536000, immutable/);
 });

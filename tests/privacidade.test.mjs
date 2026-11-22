@@ -96,10 +96,13 @@ check("the cookie notice is translated and does not claim consent by browsing", 
 // AJ3 (decisão do Alexander em 22/11/2026: "opção (b), manter e explicar na
 // política §4"). No EEE/UK/CH, entre o Aceitar do aviso do site e a resposta
 // à mensagem do Google, o AdSense já está carregado com o consentimento
-// negado e pode gravar cookies técnicos do Google, como o test_cookie em
-// doubleclick.net. A §4 explica isso só com o que o Google documenta: a
-// lista de cookies dele (test_cookie = funcionalidade, 15 minutos) e o Modo
-// de consentimento (negado = sem cookies de publicidade, sem personalização).
+// negado e pode gravar cookies do Google em doubleclick.net. A revisão do QA
+// mediu na prévia (IP do Brasil, região EEE simulada) o test_cookie na 1ª
+// página e o IDE (publicidade) na 2ª: a §4 não pode dizer que só entram
+// cookies técnicos nem que não entra cookie de publicidade. Fica só o que o
+// Google documenta: a lista de cookies (test_cookie = funcionalidade, 15 min;
+// IDE = publicidade) e a página de anúncios não personalizados (sem cookies
+// para segmentação; cookies para frequência e relatórios agregados).
 const secao4 = (c) => {
   const i = c.indexOf('id: "cookies"');
   const j = c.indexOf('h: "5.', i);
@@ -107,32 +110,39 @@ const secao4 = (c) => {
   return c.slice(i, j);
 };
 
-check("§4 (PT/EN) explains the Google technical cookies between the site's Accept and the Google message, in the EEA/UK/CH", () => {
+check("§4 (PT/EN) explains the Google cookies set between the site's Accept and the Google message, in the EEA/UK/CH", () => {
   const pt = secao4(PT), en = secao4(EN);
   for (const t of [
     "Nessas regiões, entre o Aceitar do aviso do site e a sua resposta à mensagem do Google",
-    "pode gravar cookies técnicos do Google nos domínios do próprio Google, por exemplo o test_cookie em doubleclick.net",
-    "enquanto o consentimento para anúncios continua negado",
+    "pode gravar cookies do Google nos domínios dele enquanto o consentimento para anúncios continua negado",
+    "o test_cookie, que o Google classifica como cookie de funcionalidade, com validade de 15 minutos",
+    "o IDE, que o Google classifica como cookie de publicidade",
     "https://business.safety.google/adscookies/",
-    "como cookie de funcionalidade, com validade de 15 minutos",
     "esses cookies não são usados para personalizar anúncios",
+    "anúncios não personalizados não usam cookies para segmentação, mas ainda podem usá-los para limitar a frequência de exibição e para relatórios agregados",
     "use o botão Recusar do aviso do site",
   ]) assert.ok(pt.includes(t), `§4 PT sem "${t}"`);
   for (const t of [
-    "between Accept in the site's notice and your answer to the Google message",
-    "may set Google technical cookies on Google's own domains, for example test_cookie on doubleclick.net",
-    "while consent for ads remains denied",
+    "In those regions, between Accept in the site's notice and your answer to the Google message",
+    "may set Google cookies on its own domains while consent for ads remains denied",
+    "test_cookie, which Google classifies as a functionality cookie that lasts 15 minutes",
+    "IDE, which Google classifies as an advertising cookie",
     "https://business.safety.google/adscookies/",
-    "as a functionality cookie that lasts 15 minutes",
     "these cookies are not used to personalize ads",
+    "non-personalized ads do not use cookies for ad targeting, but may still use them for frequency capping and aggregated ad reporting",
     "use the Decline button in the site's notice",
   ]) assert.ok(en.includes(t), `§4 EN sem "${t}"`);
   // o parágrafo vem logo depois do que apresenta a mensagem do Google
   for (const [c, a, b] of [[pt, "Se você aceitar, o site passa a carregar", "entre o Aceitar do aviso do site"], [en, "If you accept, the site loads", "between Accept in the site's notice"]]) {
     assert.ok(c.indexOf(a) >= 0 && c.indexOf(a) < c.indexOf(b), "ordem dos parágrafos da §4");
   }
-  // nada de finalidade que o Google não documenta para o test_cookie
-  for (const c of [pt, en]) assert.ok(!/test_cookie[^"]*(fraude|fraud|segurança|security|estritamente necess|strictly necessary)/i.test(c), "finalidade não documentada");
+  // nada que a medição desmente nem finalidade que o Google não documenta
+  for (const c of [pt, en]) {
+    for (const t of ["não são gravados nem lidos cookies de publicidade", "no advertising cookies are set or read", "cookies técnicos", "technical cookies"]) {
+      assert.ok(!c.includes(t), `§4 ainda diz "${t}"`);
+    }
+    assert.ok(!/test_cookie[^"]*(fraude|fraud|estritamente necess|strictly necessary)/i.test(c), "finalidade não documentada");
+  }
 });
 
 check("the Google cookie list URL in §4 renders as a link without the closing parenthesis", () => {

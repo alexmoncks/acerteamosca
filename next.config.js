@@ -37,7 +37,8 @@ const nextConfig = {
         // Fontes auto-hospedadas (src/app/fonts.css): o nome do arquivo leva
         // a versão da fonte (ex.: press-start-2p-v16-latin.woff2), então o
         // cache pode ser longo e imutável. Fonte nova = arquivo com nome novo.
-        source: "/fonts/:file*",
+        // Só os .woff2: os textos da licença (OFL-*.txt) ficam com o padrão.
+        source: "/fonts/:file(.*\\.woff2)",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       {
