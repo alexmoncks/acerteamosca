@@ -114,22 +114,22 @@ check("§4 (PT/EN) explains the Google cookies set between the site's Accept and
   const pt = secao4(PT), en = secao4(EN);
   for (const t of [
     "Nessas regiões, entre o Aceitar do aviso do site e a sua resposta à mensagem do Google",
-    "pode gravar cookies do Google nos domínios dele enquanto o consentimento para anúncios continua negado",
+    "pode gravar cookies do Google nos domínios dele enquanto o consentimento de anúncios continua negado para o Google",
     "o test_cookie, que o Google classifica como cookie de funcionalidade, com validade de 15 minutos",
-    "o IDE, que o Google classifica como cookie de publicidade",
+    "o IDE, que o Google classifica como cookie de publicidade e de segurança, com validade de 13 meses no EEE e no Reino Unido",
     "https://business.safety.google/adscookies/",
-    "esses cookies não são usados para personalizar anúncios",
-    "anúncios não personalizados não usam cookies para segmentação, mas ainda podem usá-los para limitar a frequência de exibição e para relatórios agregados",
+    "Segundo o Google, enquanto esse consentimento estiver negado, ele exibe apenas anúncios não personalizados ou limitados",
+    "anúncios não personalizados não usam cookies para segmentação nem dados para personalização, mas ainda podem usar cookies para limitar a frequência de exibição e para relatórios agregados de anúncios",
     "use o botão Recusar do aviso do site",
   ]) assert.ok(pt.includes(t), `§4 PT sem "${t}"`);
   for (const t of [
     "In those regions, between Accept in the site's notice and your answer to the Google message",
-    "may set Google cookies on its own domains while consent for ads remains denied",
+    "may set Google cookies on its own domains while consent for ads remains denied for Google",
     "test_cookie, which Google classifies as a functionality cookie that lasts 15 minutes",
-    "IDE, which Google classifies as an advertising cookie",
+    "IDE, which Google classifies as an advertising and security cookie that lasts 13 months in the EEA and the UK",
     "https://business.safety.google/adscookies/",
-    "these cookies are not used to personalize ads",
-    "non-personalized ads do not use cookies for ad targeting, but may still use them for frequency capping and aggregated ad reporting",
+    "According to Google, while that consent is denied, it shows only non-personalized or limited ads",
+    "non-personalized ads do not use cookies for ad targeting or data for personalization, but may still use cookies for frequency capping and aggregated ad reporting",
     "use the Decline button in the site's notice",
   ]) assert.ok(en.includes(t), `§4 EN sem "${t}"`);
   // o parágrafo vem logo depois do que apresenta a mensagem do Google
@@ -138,7 +138,10 @@ check("§4 (PT/EN) explains the Google cookies set between the site's Accept and
   }
   // nada que a medição desmente nem finalidade que o Google não documenta
   for (const c of [pt, en]) {
-    for (const t of ["não são gravados nem lidos cookies de publicidade", "no advertising cookies are set or read", "cookies técnicos", "technical cookies"]) {
+    // "não usados para personalizar" só na voz do Google: a prévia mediu o
+    // IDE gravado e lido sem sinal de recusa (revisão do QA, 2ª rodada)
+    for (const t of ["não são gravados nem lidos cookies de publicidade", "no advertising cookies are set or read", "cookies técnicos", "technical cookies",
+      "e esses cookies não são usados para personalizar anúncios", "and these cookies are not used to personalize ads"]) {
       assert.ok(!c.includes(t), `§4 ainda diz "${t}"`);
     }
     assert.ok(!/test_cookie[^"]*(fraude|fraud|estritamente necess|strictly necessary)/i.test(c), "finalidade não documentada");
