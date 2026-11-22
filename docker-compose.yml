@@ -23,16 +23,16 @@ services:
       dockerfile: Dockerfile
       args:
         # Baked into the client bundle — point them at the host you browse from.
-        NEXT_PUBLIC_WS_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/pong"
-        NEXT_PUBLIC_WS_SHIPS_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/ships"
-        NEXT_PUBLIC_WS_MEMORY_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/memory"
-        NEXT_PUBLIC_WS_2048_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/2048"
-        NEXT_PUBLIC_WS_BATALHA_URL: "ws://${HOST_ADDR:-100.64.0.2}:53302/batalha-naval"
+        NEXT_PUBLIC_WS_URL: "ws://${HOST_ADDR:-localhost}:53302/pong"
+        NEXT_PUBLIC_WS_SHIPS_URL: "ws://${HOST_ADDR:-localhost}:53302/ships"
+        NEXT_PUBLIC_WS_MEMORY_URL: "ws://${HOST_ADDR:-localhost}:53302/memory"
+        NEXT_PUBLIC_WS_2048_URL: "ws://${HOST_ADDR:-localhost}:53302/2048"
+        NEXT_PUBLIC_WS_BATALHA_URL: "ws://${HOST_ADDR:-localhost}:53302/batalha-naval"
     container_name: acerteamosca-app
     restart: unless-stopped
     environment:
       DATABASE_URL: "postgresql://acerteamosca:acerteamosca123@db:5432/acerteamosca"
-    # Published on 0.0.0.0, so it is reachable over Tailscale at 100.64.0.2:53300
+    # Published on 0.0.0.0 (port 53300). Set HOST_ADDR to the address you browse from.
     ports:
       - "53300:3000"
     depends_on:
