@@ -1,39 +1,33 @@
+import { INDEXABLE_PATHS, languageAlternates, localeUrl } from "@/lib/seo";
+
+// Um sitemap só, servido igual nos dois domínios, com as páginas indexáveis
+// nas duas línguas (uma <url> por versão, cada uma com o grupo hreflang
+// completo, como pede a documentação do Google).
+//
+// As URLs do nailedthefly.com podem morar aqui porque o robots.txt dos dois
+// domínios aponta para este arquivo — é o método do Google para sitemap de
+// vários sites ("cross-site submission" via robots.txt).
+function priorityFor(path) {
+  if (path === "/") return 1.0;
+  if (path.startsWith("/jogos/")) return 0.8;
+  return 0.4;
+}
+
+function changeFrequencyFor(path) {
+  if (path === "/") return "weekly";
+  if (path.startsWith("/jogos/")) return "monthly";
+  return "yearly";
+}
+
 export default function sitemap() {
-  const ptBase = "https://acerteamosca.com.br";
-  const enBase = "https://nailedthefly.com";
-
-  const jogos = [
-    "acerteamosca", "pong", "ships", "wordle", "memory",
-    "2048", "bubbleshooter", "deepattack", "jacare",
-    "tiroaoalvo", "batalha-naval", "brickbreaker", "3invader",
-  ];
-
-  return [
-    {
-      url: ptBase,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1.0,
-      alternates: {
-        languages: {
-          "pt-BR": ptBase,
-          en: enBase,
-          "x-default": ptBase,
-        },
-      },
-    },
-    ...jogos.map((slug) => ({
-      url: `${ptBase}/jogos/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-      alternates: {
-        languages: {
-          "pt-BR": `${ptBase}/jogos/${slug}`,
-          en: `${enBase}/jogos/${slug}`,
-          "x-default": `${ptBase}/jogos/${slug}`,
-        },
-      },
-    })),
-  ];
+  const lastModified = new Date();
+  return ["pt", "en"].flatMap((locale) =>
+    INDEXABLE_PATHS.map((path) => ({
+      url: localeUrl(locale, path),
+      lastModified,
+      changeFrequency: changeFrequencyFor(path),
+      priority: priorityFor(path),
+      alternates: { languages: languageAlternates(path) },
+    }))
+  );
 }
