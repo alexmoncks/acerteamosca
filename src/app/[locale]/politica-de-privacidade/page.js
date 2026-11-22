@@ -56,7 +56,7 @@ const contentPT = {
       p: [
         "• Cadastro de jogador, pontuações e rankings — base legal: consentimento, dado na caixa de seleção do cadastro (LGPD, art. 7º, I; GDPR, art. 6(1)(a)). O cookie técnico acerteamosca_jogador (válido por 1 ano) mantém você identificado depois do cadastro.",
         "• Funcionamento, segurança e prevenção de abuso do site, incluindo registros de acesso — base legal: legítimo interesse (LGPD, art. 7º, IX; GDPR, art. 6(1)(f)) e cumprimento de obrigação legal quando aplicável (Marco Civil da Internet, Lei nº 12.965/2014).",
-        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: consentimento, quando exigido pela legislação aplicável (como no EEE, Reino Unido e Suíça); nos demais casos, legítimo interesse (LGPD, art. 7º, IX), sempre com as opções de recusa da seção 6.",
+        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: legítimo interesse (LGPD, art. 7º, IX), sempre com as opções de recusa da seção 6. Para visitantes do EEE, do Reino Unido e da Suíça, cookies de publicidade personalizada dependem de consentimento (GDPR, art. 6(1)(a)); sem ele, o Google exibe apenas anúncios não personalizados ou limitados.",
         "• Responder às mensagens que você envia — base legal: legítimo interesse e, quando for o caso, exercício regular de direitos.",
         "Não vendemos nem alugamos dados pessoais.",
       ],
@@ -159,7 +159,7 @@ const contentEN = {
       p: [
         "• Player registration, scores and rankings — legal basis: consent, given in the registration checkbox (LGPD, art. 7, I; GDPR, art. 6(1)(a)). The technical cookie acerteamosca_jogador (valid for 1 year) keeps you identified after registering.",
         "• Operation, security and abuse prevention, including access logs — legal basis: legitimate interests (LGPD, art. 7, IX; GDPR, art. 6(1)(f)) and compliance with legal obligations where applicable (Brazilian Internet Civil Framework, Law No. 12,965/2014).",
-        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: consent, where required by applicable law (such as in the EEA, UK and Switzerland); otherwise, legitimate interests (LGPD, art. 7, IX), always with the opt-out options in section 6.",
+        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: legitimate interests (LGPD, art. 7, IX), always with the opt-out options in section 6. For visitors from the EEA, the UK and Switzerland, personalized advertising cookies depend on consent (GDPR, art. 6(1)(a)); without it, Google shows only non-personalized or limited ads.",
         "• Replying to messages you send — legal basis: legitimate interests and, where applicable, the exercise of legal rights.",
         "We do not sell or rent personal data.",
       ],
