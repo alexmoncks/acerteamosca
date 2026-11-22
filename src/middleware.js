@@ -45,10 +45,12 @@ export default function middleware(request) {
   if (www) return NextResponse.redirect(www, 301);
 
   // Arquivo estático, /api e /_next só chegam aqui pelo matcher do www ou
-  // porque o cliente mandou x-nonce/content-security-policy (matcher abaixo).
-  // Esses dois cabeçalhos nunca seguem do cliente para o render: num caminho
-  // com ponto (a 404 de "/x.y"), o Next tiraria o nonce dos chunks dele da
-  // CSP do pedido e o getNonce() o leria do x-nonce.
+  // porque o cliente mandou um dos CSP_REQUEST_HEADERS (x-nonce,
+  // content-security-policy ou content-security-policy-report-only; matcher
+  // abaixo). Esses três cabeçalhos nunca seguem do cliente para o render: num
+  // caminho com ponto (a 404 de "/x.y"), o Next tiraria o nonce dos chunks
+  // dele da CSP do pedido (ou da report-only, sem a outra) e o getNonce() o
+  // leria do x-nonce.
   if (!isPagePath(pathname) || isLocalizedOgImage(pathname)) {
     return NextResponse.next({ request: { headers: stripClientCspHeaders(request.headers) } });
   }
