@@ -164,6 +164,37 @@ check("www on a production domain 301s to the apex, keeping path and query", () 
   assert.equal(t("www.example.com", "/"), null);
 });
 
+check("www + language prefix 301s straight to the right domain in one hop", () => {
+  const t = host.wwwRedirectTarget;
+  assert.equal(t("www.acerteamosca.com.br", "/en"), "https://nailedthefly.com/");
+  assert.equal(t("www.acerteamosca.com.br", "/en/jogos/wordle", "?a=1"), "https://nailedthefly.com/jogos/wordle?a=1");
+  assert.equal(t("www.nailedthefly.com", "/en/sobre"), "https://nailedthefly.com/sobre");
+  assert.equal(t("www.nailedthefly.com", "/pt/sobre"), "https://acerteamosca.com.br/sobre");
+  // arquivo com ponto também sai do www
+  assert.equal(t("www.acerteamosca.com.br", "/ads.txt"), "https://acerteamosca.com.br/ads.txt");
+  assert.equal(t("www.nailedthefly.com", "/robots.txt"), "https://nailedthefly.com/robots.txt");
+  // og:image no www vai para o apex com o mesmo caminho (lá serve direto)
+  assert.equal(t("www.nailedthefly.com", "/en/opengraph-image"), "https://nailedthefly.com/en/opengraph-image");
+});
+
+check("dotted files reach the middleware only on www, and skip next-intl", () => {
+  assert.ok(host.isPagePath("/"));
+  assert.ok(host.isPagePath("/jogos/wordle"));
+  assert.ok(host.isPagePath("/en/opengraph-image"));
+  assert.ok(!host.isPagePath("/ads.txt"));
+  assert.ok(!host.isPagePath("/robots.txt"));
+  assert.ok(!host.isPagePath("/api/jogadores"));
+  assert.ok(!host.isPagePath("/_next/static/chunks/x.js"));
+  const mw = semComentarios(source("src/middleware.js"));
+  // o 1º matcher continua igual (apex: estáticos fora do middleware)
+  assert.ok(mw.includes(String.raw`"/((?!api|_next|.*\\..*).*)"`));
+  // matcher extra só para o www
+  assert.ok(mw.includes(String.raw`type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)"`));
+  // www é decidido antes de qualquer saída antecipada
+  assert.ok(mw.indexOf("wwwRedirectTarget(") < mw.indexOf("isPagePath(pathname)"));
+  assert.match(mw, /!isPagePath\(pathname\)[^\n]*NextResponse\.next\(\)/);
+});
+
 check("the middleware normalizes the host before next-intl matches domains", () => {
   const mw = semComentarios(source("src/middleware.js"));
   assert.match(mw, /isProductionHost\(host\) && rawRequestHost\(request\.headers\) !== host/);

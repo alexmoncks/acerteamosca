@@ -54,7 +54,11 @@ export function rawRequestHost(headers) {
 }
 
 /**
- * www.<domínio de produção> -> 301 para o domínio raiz, com caminho e query.
+ * www.<domínio de produção> -> 301 para o domínio raiz, com caminho e query,
+ * num salto só: www + /en/... já vai direto para o nailedthefly.com (e
+ * www + /pt/... para o acerteamosca.com.br), sem passar pelo apex.
+ * Vale também para arquivo com ponto (ads.txt, robots.txt), que entra no
+ * middleware por um matcher só do www (src/middleware.js).
  * A regra principal fica na Cloudflare (o www nem tem DNS hoje); esta é a
  * rede de segurança caso o pedido chegue ao app.
  */
@@ -62,7 +66,17 @@ export function wwwRedirectTarget(host, pathname, search = "") {
   if (!host.startsWith("www.")) return null;
   const apex = host.slice(4);
   if (!PROD_HOSTS.has(apex)) return null;
-  return `https://${apex}${pathname || "/"}${search}`;
+  return prefixRedirectTarget(apex, pathname, search) ?? `https://${apex}${pathname || "/"}${search}`;
+}
+
+/**
+ * Caminho que o middleware trata como página (o mesmo filtro do primeiro
+ * matcher): fora /api, /_next e qualquer coisa com ponto. O resto só chega
+ * ao middleware pelo matcher do www e, se não for redirecionado, segue sem
+ * passar pelo next-intl.
+ */
+export function isPagePath(pathname) {
+  return /^\/(?!api|_next|.*\..*)/.test(pathname);
 }
 
 /**

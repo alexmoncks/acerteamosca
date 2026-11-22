@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
 import {
   isLocalizedOgImage,
+  isPagePath,
   isProductionHost,
   prefixRedirectTarget,
   rawRequestHost,
@@ -28,10 +29,14 @@ export default function middleware(request) {
   const host = requestHost(request.headers);
   const { pathname, search } = request.nextUrl;
 
-  if (isLocalizedOgImage(pathname)) return NextResponse.next();
+  // www primeiro, para qualquer caminho (inclusive ads.txt e og:image).
+  const www = wwwRedirectTarget(host, pathname, search);
+  if (www) return NextResponse.redirect(www, 301);
 
-  const target =
-    wwwRedirectTarget(host, pathname, search) ?? prefixRedirectTarget(host, pathname, search);
+  // Arquivo estático, /api e /_next só chegam aqui pelo matcher do www.
+  if (!isPagePath(pathname) || isLocalizedOgImage(pathname)) return NextResponse.next();
+
+  const target = prefixRedirectTarget(host, pathname, search);
   if (target) return NextResponse.redirect(target, 301);
 
   if (isProductionHost(host) && rawRequestHost(request.headers) !== host) {
@@ -43,6 +48,26 @@ export default function middleware(request) {
   return handleI18n(request);
 }
 
+// 1º: páginas (sem /api, /_next e arquivos com ponto), como antes.
+// 2º: tudo no www dos domínios, para o 301 valer também em ads.txt,
+//     robots.txt e outros arquivos com ponto. No apex os estáticos continuam
+//     fora do middleware.
 export const config = {
-  matcher: ["/((?!api|_next|.*\\..*).*)"],
+  matcher: [
+    "/((?!api|_next|.*\\..*).*)",
+    {
+      source: "/:path*",
+      has: [{ type: "host", value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)" }],
+    },
+    {
+      source: "/:path*",
+      has: [
+        {
+          type: "header",
+          key: "x-forwarded-host",
+          value: "www\\.(?:acerteamosca\\.com\\.br|nailedthefly\\.com)(?::\\d+)?",
+        },
+      ],
+    },
+  ],
 };
