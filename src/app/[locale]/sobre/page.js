@@ -52,7 +52,7 @@ const contentPT = {
     {
       h: "Quem está por trás",
       p: [
-        "Acerte a Mosca é um projeto da MMSoft Digital, fundada e operada por Alex Marra (alex@marramoncks.com.br). É um projeto pessoal, sustentado pela receita de publicidade da própria plataforma e por parceiros patrocinadores.",
+        "Acerte a Mosca é um projeto da MMSoft Digital, fundada e operada por Alex Marra (alex@marramoncks.com.br). É um projeto pessoal, sustentado pela receita de publicidade da própria plataforma.",
       ],
     },
     {
@@ -92,7 +92,7 @@ const contentEN = {
     {
       h: "Who is behind it",
       p: [
-        "Nailed The Fly is a project by MMSoft Digital, founded and operated by Alex Marra (alex@marramoncks.com.br). It is a personal project, sustained by ad revenue from the platform itself and by sponsor partners.",
+        "Nailed The Fly is a project by MMSoft Digital, founded and operated by Alex Marra (alex@marramoncks.com.br). It is a personal project, sustained by ad revenue from the platform itself.",
       ],
     },
     {
