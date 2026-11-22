@@ -16,8 +16,10 @@ const [PT, EN] = (() => {
   return [PRIV.slice(0, i), PRIV.slice(i)];
 })();
 
-check("the privacy policy no longer lists Adsterra", () => {
-  assert.ok(!/adsterra/i.test(PRIV));
+check("no institutional page lists Adsterra (removed from the site in Aug/2026)", () => {
+  for (const p of ["sobre", "contato", "politica-de-privacidade", "termos-de-uso"]) {
+    assert.ok(!/adsterra/i.test(semComentarios(source(`src/app/[locale]/${p}/page.js`))), `${p} cita o Adsterra`);
+  }
 });
 
 check("the privacy policy links Google's partner-sites page in both languages", () => {

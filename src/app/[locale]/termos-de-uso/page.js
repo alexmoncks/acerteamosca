@@ -27,7 +27,7 @@ export async function generateMetadata({ params }) {
 
 const contentPT = {
   title: "Termos de Uso",
-  lastUpdated: "Última atualização: 27 de abril de 2026",
+  lastUpdated: "Última atualização: 21 de novembro de 2026",
   intro:
     "Estes Termos de Uso regulam o acesso e a utilização do site Acerte a Mosca (acerteamosca.com.br). Ao usar o site, você concorda integralmente com estas condições. Se não concordar, por favor não utilize a plataforma.",
   sections: [
@@ -67,7 +67,7 @@ const contentPT = {
     {
       h: "6. Publicidade",
       p: [
-        "O site exibe anúncios de redes parceiras (Google AdSense, Adsterra) para sustentar a operação gratuita. Não nos responsabilizamos pelo conteúdo dos anúncios nem pelos sites de terceiros para os quais os anúncios redirecionam.",
+        "O site exibe anúncios do Google AdSense para sustentar a operação gratuita. Não nos responsabilizamos pelo conteúdo dos anúncios nem pelos sites de terceiros para os quais os anúncios redirecionam.",
       ],
     },
     {
@@ -105,7 +105,7 @@ const contentPT = {
 
 const contentEN = {
   title: "Terms of Use",
-  lastUpdated: "Last updated: April 27, 2026",
+  lastUpdated: "Last updated: November 21, 2026",
   intro:
     "These Terms of Use govern access to and use of Nailed The Fly (nailedthefly.com / acerteamosca.com.br). By using the site, you fully agree to these conditions. If you do not agree, please do not use the platform.",
   sections: [
@@ -145,7 +145,7 @@ const contentEN = {
     {
       h: "6. Advertising",
       p: [
-        "The site displays ads from partner networks (Google AdSense, Adsterra) to sustain free operation. We are not responsible for the content of the ads nor for the third-party sites to which the ads redirect.",
+        "The site displays ads from Google AdSense to sustain free operation. We are not responsible for the content of the ads nor for the third-party sites to which the ads redirect.",
       ],
     },
     {
