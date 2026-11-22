@@ -203,6 +203,11 @@ check("stripClientCspHeaders removes the three headers (any case) and keeps the 
   assert.equal(h.get("cookie"), "a=1");
 });
 
+check("img-src: https only (no http:), with data: and blob: for the games", () => {
+  const img = csp.parseCsp(csp.buildCsp({ nonce: csp.generateNonce() }))["img-src"];
+  assert.deepEqual([...img].sort(), ["'self'", "blob:", "data:", "https:"].sort());
+});
+
 check("middleware: the production CSP has no ws:// origin; the routing still works with the nonce", () => {
   const res = pedir("https://nailedthefly.com/");
   const d = csp.parseCsp(res.headers.get("content-security-policy"));

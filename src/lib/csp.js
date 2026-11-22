@@ -98,7 +98,9 @@ export function buildCsp({ nonce, wsOrigins = [] }) {
     `script-src 'nonce-${nonce}' 'strict-dynamic' 'self' https:`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https: http:",
+    // Sem http: (conteúdo misto). Criativos do AdSense rodam em iframe
+    // (frame-src); pixels do Google e do GA são https.
+    "img-src 'self' data: blob: https:",
     ["connect-src 'self' https: wss:", ...wsOrigins].join(" "),
     ["frame-src", ...ADSENSE_FRAME_SRC].join(" "),
     // service worker (/sw.js) e workers em blob: de jogos; sem esta linha o
