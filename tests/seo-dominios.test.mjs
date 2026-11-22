@@ -129,3 +129,17 @@ check("the host is read like next-intl reads it, without the port", () => {
   assert.equal(host.requestHost(h({ host: "x", "x-forwarded-host": "acerteamosca.com.br" })), "acerteamosca.com.br");
   assert.equal(host.requestHost(h({})), "");
 });
+
+check("www on a production domain 301s to the apex, keeping path and query", () => {
+  const t = host.wwwRedirectTarget;
+  assert.equal(t("www.acerteamosca.com.br", "/jogos/pong", "?x=1"), "https://acerteamosca.com.br/jogos/pong?x=1");
+  assert.equal(t("www.nailedthefly.com", "/"), "https://nailedthefly.com/");
+  assert.equal(t("acerteamosca.com.br", "/"), null);
+  assert.equal(t("www.example.com", "/"), null);
+});
+
+check("the middleware normalizes the host before next-intl matches domains", () => {
+  const mw = semComentarios(source("src/middleware.js"));
+  assert.match(mw, /isProductionHost\(host\) && rawRequestHost\(request\.headers\) !== host/);
+  assert.match(mw, /handleI18n\(new NextRequest\(request, \{ headers \}\)\)/);
+});
