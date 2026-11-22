@@ -1,29 +1,23 @@
 // Modo de consentimento do Google (Consent Mode v2): o estado padrão, antes
-// de qualquer tag do Google (lote 2). Sem import nenhum: o layout e os
+// de qualquer tag do Google. Sem import nenhum: o layout, os componentes e os
 // testes carregam este arquivo.
 //
-// Coerente com a política de privacidade (seção 3):
-//   - EEE, Reino Unido e Suíça: tudo "denied" até a mensagem de
-//     consentimento do Google (Privacidade e mensagens do AdSense) receber a
-//     escolha. Com a integração da mensagem com o Consent Mode ligada no
-//     painel, a própria CMP do Google faz o gtag('consent', 'update', …).
-//     wait_for_update: as tags esperam até 500 ms por essa atualização.
-//   - Resto do mundo (Brasil incluído): "granted", porque anúncios e medição
-//     se apoiam no legítimo interesse, com as opções de recusa da seção 6.
-//
-// Precedência (developers.google.com/tag-platform/security/guides/consent):
-// o default com região vale para a região; o default sem região vale para
-// todo o resto. A ordem dos dois comandos não muda isso.
+// OPÇÃO "denied global" (branch feat/consent-lote2-br-opcao, pendente de
+// decisão do Alexander). Coerente com a política de privacidade desta opção:
+//   - em todo lugar, Brasil incluído: tudo "denied" até a pessoa escolher.
+//     wait_for_update: as tags esperam até 500 ms por uma atualização;
+//   - EEE, Reino Unido e Suíça: quem pede a escolha é a mensagem de
+//     consentimento do Google (Privacidade e mensagens do AdSense), que faz o
+//     gtag('consent', 'update', …) com a integração ligada no painel;
+//   - no resto do mundo: o aviso do site (CookieConsent) com Aceitar e
+//     Recusar. Aceitar faz o gtag('consent', 'update', granted) e grava a
+//     escolha; na visita seguinte, o script do <head> repete o update antes
+//     do adsbygoogle.js, para a pessoa não voltar ao "denied".
 
-/** UE (27) + Islândia, Liechtenstein e Noruega (EEE) + Reino Unido + Suíça. ISO 3166-1 alfa-2. */
-export const CONSENT_DENIED_REGIONS = [
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
-  "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
-  "IS", "LI", "NO",
-  "GB",
-  "CH",
-];
-
+/** Onde a escolha do aviso do site fica gravada (localStorage). */
+export const CONSENT_STORAGE_KEY = "acerteamosca_consent_v1";
+/** Evento que o link "Privacidade e cookies" dispara para reabrir o aviso. */
+export const CONSENT_REOPEN_EVENT = "acerteamosca:consent-reopen";
 export const CONSENT_WAIT_FOR_UPDATE_MS = 500;
 
 const SINAIS = ["ad_storage", "ad_user_data", "ad_personalization", "analytics_storage"];
@@ -32,15 +26,11 @@ function todos(valor) {
   return Object.fromEntries(SINAIS.map((s) => [s, valor]));
 }
 
-/** Os comandos, na ordem em que vão para o dataLayer. */
+/** Os comandos do padrão, na ordem em que vão para o dataLayer. */
 export function consentDefaultCommands() {
   return [
-    ["consent", "default", {
-      ...todos("denied"),
-      region: CONSENT_DENIED_REGIONS,
-      wait_for_update: CONSENT_WAIT_FOR_UPDATE_MS,
-    }],
-    ["consent", "default", todos("granted")],
+    // sem região: vale para o mundo todo
+    ["consent", "default", { ...todos("denied"), wait_for_update: CONSENT_WAIT_FOR_UPDATE_MS }],
     // Com ad_storage negado, identificadores de clique saem redigidos e os
     // pedidos vão por domínio sem cookie de terceiro. Sem efeito quando
     // ad_storage é "granted". url_passthrough fica desligado.
@@ -48,13 +38,53 @@ export function consentDefaultCommands() {
   ];
 }
 
+/** O update de uma escolha do aviso do site: "granted" ou "denied". */
+export function consentUpdateCommand(escolha) {
+  if (escolha !== "granted" && escolha !== "denied") throw new Error(`escolha inválida: ${escolha}`);
+  return ["consent", "update", todos(escolha)];
+}
+
+/** A escolha gravada, ou null (nenhuma, valor estranho ou storage bloqueado). */
+export function readConsentChoice(win) {
+  try {
+    const v = win.localStorage.getItem(CONSENT_STORAGE_KEY);
+    return v === "granted" || v === "denied" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Grava a escolha e manda o update ao Google. Usa o gtag do script do <head>
+ * (o mesmo `gtag` global do snippet do GA); se não houver, cria um igual.
+ */
+export function applyConsentChoice(win, escolha) {
+  const comando = consentUpdateCommand(escolha);
+  try {
+    win.localStorage.setItem(CONSENT_STORAGE_KEY, escolha);
+  } catch {
+    // storage bloqueado: vale só para esta página
+  }
+  if (typeof win.gtag !== "function") {
+    win.dataLayer = win.dataLayer || [];
+    win.gtag = function gtag() {
+      win.dataLayer.push(arguments); // eslint-disable-line prefer-rest-params
+    };
+  }
+  win.gtag(...comando);
+  return comando;
+}
+
 /**
  * O <script> inline do <head>, que roda antes do adsbygoogle.js e do gtag.js.
- * Define o mesmo `gtag` que o snippet do Google Analytics define depois.
+ * Define o mesmo `gtag` que o snippet do Google Analytics define depois e,
+ * se a pessoa já aceitou numa visita anterior, repete o update "granted".
  */
 export function consentDefaultScript() {
   const chamadas = consentDefaultCommands()
     .map((args) => `gtag(${args.map((a) => JSON.stringify(a)).join(",")});`)
     .join("");
-  return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}${chamadas}`;
+  const update = consentUpdateCommand("granted").map((a) => JSON.stringify(a)).join(",");
+  const lembrada = `try{if(localStorage.getItem(${JSON.stringify(CONSENT_STORAGE_KEY)})==="granted")gtag(${update});}catch(e){}`;
+  return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}${chamadas}${lembrada}`;
 }

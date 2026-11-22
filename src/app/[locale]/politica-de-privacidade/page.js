@@ -63,7 +63,7 @@ const contentPT = {
       p: [
         "• Cadastro de jogador, pontuações e rankings — base legal: consentimento, dado na caixa de seleção do cadastro (LGPD, art. 7º, I; GDPR, art. 6(1)(a)). O cookie técnico acerteamosca_jogador (válido por 1 ano) mantém você identificado depois do cadastro.",
         "• Funcionamento, segurança e prevenção de abuso do site, incluindo registros de acesso — base legal: legítimo interesse (LGPD, art. 7º, IX; GDPR, art. 6(1)(f)) e cumprimento de obrigação legal quando aplicável (Marco Civil da Internet, Lei nº 12.965/2014).",
-        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: legítimo interesse (LGPD, art. 7º, IX), sempre com as opções de recusa da seção 6. Para visitantes do EEE, do Reino Unido e da Suíça, cookies de publicidade personalizada dependem de consentimento (GDPR, art. 6(1)(a)); sem ele, o Google exibe apenas anúncios não personalizados ou limitados.",
+        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: consentimento (LGPD, art. 7º, I; GDPR, art. 6(1)(a)), pedido pelo aviso de cookies do site ou, no EEE, no Reino Unido e na Suíça, pela mensagem de consentimento do Google (seção 4). Sem ele, o Google exibe apenas anúncios não personalizados ou limitados, e a medição de audiência não usa cookies.",
         "• Responder às mensagens que você envia — base legal: legítimo interesse e, quando for o caso, exercício regular de direitos.",
         "Não vendemos nem alugamos dados pessoais.",
       ],
@@ -74,8 +74,8 @@ const contentPT = {
       p: [
         "Usamos cookies e armazenamento local para manter o cadastro de jogador, lembrar preferências, medir a audiência e exibir anúncios. Cookies de terceiros são definidos pelo Google nos domínios dele, conforme as seções 5 e 6.",
         "No Espaço Econômico Europeu, no Reino Unido e na Suíça, uma mensagem de consentimento do Google (a ferramenta Privacidade e mensagens do Google AdSense, uma plataforma de gestão de consentimento certificada pelo Google) pede a sua escolha antes de usarmos cookies e identificadores para anúncios personalizados e medição. Até você escolher, o site informa ao Google que o consentimento foi negado (Modo de consentimento do Google), e só são exibidos anúncios não personalizados ou limitados.",
-        "Você pode mudar ou revogar a sua escolha a qualquer momento pelo link \"Privacidade e cookies\", no rodapé de todas as páginas. Nessas regiões, ele reabre a mensagem de consentimento do Google. Nas demais, ele traz você para esta seção, e as opções de recusa estão na seção 6.",
-        "Fora dessas regiões, anúncios e medição se apoiam no legítimo interesse (seção 3), sempre com as opções de recusa da seção 6. O aviso de cookies que aparece no site é apenas informativo: fechá-lo não é aceitar nada.",
+        "Fora dessas regiões, o aviso de cookies do site pede a sua escolha, com os botões Aceitar e Recusar. Até você aceitar, o site também informa ao Google que o consentimento foi negado, e o resultado é o mesmo: só anúncios não personalizados ou limitados. A escolha fica gravada no seu navegador.",
+        "Você pode mudar ou revogar a sua escolha a qualquer momento pelo link \"Privacidade e cookies\", no rodapé de todas as páginas. Nas regiões do parágrafo anterior, ele reabre a mensagem de consentimento do Google; nas demais, reabre o aviso de cookies do site. As opções da seção 6 continuam valendo.",
         "Você também pode bloquear ou apagar cookies nas configurações do navegador. Bloquear cookies pode impedir que pontuações e preferências sejam salvas.",
       ],
     },
@@ -171,7 +171,7 @@ const contentEN = {
       p: [
         "• Player registration, scores and rankings — legal basis: consent, given in the registration checkbox (LGPD, art. 7, I; GDPR, art. 6(1)(a)). The technical cookie acerteamosca_jogador (valid for 1 year) keeps you identified after registering.",
         "• Operation, security and abuse prevention, including access logs — legal basis: legitimate interests (LGPD, art. 7, IX; GDPR, art. 6(1)(f)) and compliance with legal obligations where applicable (Brazilian Internet Civil Framework, Law No. 12,965/2014).",
-        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: legitimate interests (LGPD, art. 7, IX), always with the opt-out options in section 6. For visitors from the EEA, the UK and Switzerland, personalized advertising cookies depend on consent (GDPR, art. 6(1)(a)); without it, Google shows only non-personalized or limited ads.",
+        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: consent (LGPD, art. 7, I; GDPR, art. 6(1)(a)), asked for by the site's cookie notice or, in the EEA, the UK and Switzerland, by the Google consent message (section 4). Without it, Google shows only non-personalized or limited ads, and audience measurement does not use cookies.",
         "• Replying to messages you send — legal basis: legitimate interests and, where applicable, the exercise of legal rights.",
         "We do not sell or rent personal data.",
       ],
@@ -182,8 +182,8 @@ const contentEN = {
       p: [
         "We use cookies and local storage to keep your player registration, remember preferences, measure audience and serve ads. Third-party cookies are set by Google on its own domains, as described in sections 5 and 6.",
         "In the European Economic Area, the United Kingdom and Switzerland, a Google consent message (the Privacy & messaging tool in Google AdSense, a Google-certified consent management platform) asks for your choice before we use cookies and identifiers for personalized ads and measurement. Until you choose, the site tells Google that consent is denied (Google consent mode), and only non-personalized or limited ads are shown.",
-        "You can change or withdraw your choice at any time through the \"Privacy & cookies\" link in the footer of every page. In those regions it reopens the Google consent message. Elsewhere it brings you to this section, and the opt-out options are in section 6.",
-        "Outside those regions, ads and measurement rely on legitimate interests (section 3), always with the opt-out options in section 6. The cookie notice shown on the site is informational only: closing it does not mean you accept anything.",
+        "Outside those regions, the site's cookie notice asks for your choice, with Accept and Decline buttons. Until you accept, the site also tells Google that consent is denied, with the same result: only non-personalized or limited ads. Your choice is saved in your browser.",
+        "You can change or withdraw your choice at any time through the \"Privacy & cookies\" link in the footer of every page. In the regions in the previous paragraph it reopens the Google consent message; elsewhere it reopens the site's cookie notice. The options in section 6 still apply.",
         "You can also block or delete cookies in your browser settings. Blocking cookies may prevent scores and preferences from being saved.",
       ],
     },

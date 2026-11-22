@@ -122,9 +122,10 @@ export default async function LocaleLayout({ children, params }) {
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         {/* Modo de consentimento do Google: o estado padrão ANTES do
-            adsbygoogle.js e do gtag.js (src/lib/consent.js). Negado no
-            EEE/Reino Unido/Suíça até a mensagem do Google responder;
-            concedido no resto, como diz a política. */}
+            adsbygoogle.js e do gtag.js (src/lib/consent.js). Negado em todo
+            lugar até a escolha: a mensagem do Google no EEE/Reino Unido/
+            Suíça, o aviso do site (Aceitar/Recusar) no resto. Quem já
+            aceitou volta com o update "granted" já neste script. */}
         <script
           id="consent-default"
           nonce={nonce}

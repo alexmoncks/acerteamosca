@@ -80,14 +80,15 @@ check("the cookie notice is translated and does not claim consent by browsing", 
   const comp = semComentarios(source("src/components/CookieConsent.jsx"));
   assert.match(comp, /useTranslations\("cookieConsent"\)/);
   assert.match(comp, /href="\/politica-de-privacidade"/);
-  // chave nova: quem fechou o aviso antigo vê o texto corrigido
-  assert.match(comp, /STORAGE_KEY = "acerteamosca_cookie_notice_v2"/);
+  // opção BR: a escolha fica em CONSENT_STORAGE_KEY (src/lib/consent.js)
+  assert.match(source("src/lib/consent.js"), /CONSENT_STORAGE_KEY = "acerteamosca_consent_v1"/);
   // nada de texto fixo em português no componente
-  assert.ok(!/cookies|navegando|concorda|ACEITAR|LGPD/i.test(comp.replace(/acerteamosca_cookie_notice_v2|cookieConsent/g, "")), "texto fixo no CookieConsent");
+  assert.ok(!/cookies|navegando|concorda|ACEITAR|RECUSAR|LGPD/i.test(comp.replace(/cookieConsent/g, "")), "texto fixo no CookieConsent");
   for (const loc of ["pt", "en"]) {
     const m = JSON.parse(source(`src/messages/${loc}.json`)).cookieConsent;
-    assert.ok(m && m.text && m.policy && m.ok && m.label, `${loc}.json sem cookieConsent completo`);
+    assert.ok(m && m.text && m.policy && m.accept && m.decline && m.label, `${loc}.json sem cookieConsent completo`);
+    // consentimento só pelo botão: nada de "ao continuar navegando"
     const tudo = Object.values(m).join(" ");
-    assert.ok(!/continuar navegando|concorda|by continuing|you agree|aceitar|accept/i.test(tudo), `${loc}: consentimento presumido`);
+    assert.ok(!/continuar navegando|concorda|by continuing|you agree/i.test(tudo), `${loc}: consentimento presumido`);
   }
 });

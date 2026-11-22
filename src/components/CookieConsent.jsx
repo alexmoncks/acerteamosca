@@ -4,48 +4,53 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { CMP_NOTICE_DELAY_MS, shouldShowNotice, watchGdprCmp } from "@/lib/cmp";
+import { CONSENT_REOPEN_EVENT, applyConsentChoice, readConsentChoice } from "@/lib/consent";
 
-// Aviso de cookies: só informa e aponta para a política. NÃO é coleta de
-// consentimento. Pela política de privacidade, anúncios e medição usam
-// legítimo interesse no Brasil (com opção de recusa) e, no EEE/Reino Unido/
-// Suíça, o consentimento é pedido pela mensagem do Google (Privacidade e
-// mensagens do AdSense), com o Modo de consentimento negado por padrão
-// (src/lib/consent.js). Por isso nada de "ao continuar navegando você
-// concorda" nem de botão "aceitar".
+// OPÇÃO "denied global" (feat/consent-lote2-br-opcao): aviso de cookies que
+// PEDE a escolha, com Aceitar e Recusar do mesmo tamanho. Até a escolha, o
+// Modo de consentimento do Google fica negado em todo lugar
+// (src/lib/consent.js). Aceitar manda o gtag('consent', 'update', granted);
+// Recusar grava a recusa (e manda o update "denied", caso a pessoa tenha
+// aceitado antes e esteja revogando pelo link do rodapé).
 //
-// Lote 2: onde a mensagem do Google está ativa (a CMP responde
-// gdprApplies = true), este aviso não aparece, para não haver dois banners.
-// Ele espera a CMP até CMP_NOTICE_DELAY_MS antes de aparecer e some se ela
-// responder depois. No celular ele é uma faixa baixa (≤ ~12% da tela em
-// 360 px): texto curto, uma linha de botão.
-// _v2: quem fechou o aviso antigo (que presumia consentimento) vê o texto
-// corrigido uma vez.
-const STORAGE_KEY = "acerteamosca_cookie_notice_v2";
+// Onde a mensagem do Google está ativa (a CMP responde gdprApplies = true:
+// EEE, Reino Unido, Suíça) este aviso não aparece, para não haver dois
+// banners: lá quem pede a escolha é a CMP do Google. Ele espera a CMP até
+// CMP_NOTICE_DELAY_MS antes de aparecer e some se ela responder depois.
+// O link "Privacidade e cookies" do rodapé reabre este aviso
+// (CONSENT_REOPEN_EVENT) fora dessas regiões.
 
 export default function CookieConsent() {
   const t = useTranslations("cookieConsent");
   // dismissed: true até ler o localStorage, para o servidor não renderizar
-  // o aviso. A decisão é de shouldShowNotice (src/lib/cmp.js, testada).
+  // o aviso. "dismissed" aqui é "já escolheu". A decisão é de
+  // shouldShowNotice (src/lib/cmp.js, testada).
   const [estado, setEstado] = useState({ dismissed: true, gdprApplies: undefined, delayElapsed: false });
 
   useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY)) return;
-    setEstado((s) => ({ ...s, dismissed: false }));
     let vivo = true;
-    const timer = setTimeout(() => {
-      if (vivo) setEstado((s) => ({ ...s, delayElapsed: true }));
-    }, CMP_NOTICE_DELAY_MS);
+    // reabrir pelo link do rodapé: aparece na hora, sem esperar a CMP
+    const reabrir = () => setEstado((s) => ({ ...s, dismissed: false, delayElapsed: true }));
+    window.addEventListener(CONSENT_REOPEN_EVENT, reabrir);
+    let timer;
+    if (!readConsentChoice(window)) {
+      setEstado((s) => ({ ...s, dismissed: false }));
+      timer = setTimeout(() => {
+        if (vivo) setEstado((s) => ({ ...s, delayElapsed: true }));
+      }, CMP_NOTICE_DELAY_MS);
+    }
     watchGdprCmp(window).then((gdprApplies) => {
       if (vivo) setEstado((s) => ({ ...s, gdprApplies }));
     });
     return () => {
       vivo = false;
       clearTimeout(timer);
+      window.removeEventListener(CONSENT_REOPEN_EVENT, reabrir);
     };
   }, []);
 
-  function dismiss() {
-    localStorage.setItem(STORAGE_KEY, "dismissed");
+  function escolher(escolha) {
+    applyConsentChoice(window, escolha);
     setEstado((s) => ({ ...s, dismissed: true }));
   }
 
@@ -67,7 +72,7 @@ export default function CookieConsent() {
         borderTop: "1px solid #1a1a3e",
         padding: "8px 12px calc(8px + env(safe-area-inset-bottom, 0px))",
         display: "flex",
-        flexWrap: "nowrap",
+        flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "center",
         gap: 12,
@@ -81,7 +86,7 @@ export default function CookieConsent() {
           lineHeight: 1.45,
           margin: 0,
           maxWidth: 640,
-          flex: "0 1 auto",
+          flex: "1 1 260px",
           minWidth: 0,
           fontFamily: "'Fira Code', monospace",
         }}
@@ -92,27 +97,33 @@ export default function CookieConsent() {
         </Link>
         .
       </p>
-      <button
-        type="button"
-        onClick={dismiss}
-        style={{
-          background: "#00f0ff",
-          color: "#050510",
-          border: "none",
-          borderRadius: 6,
-          minHeight: 44,
-          minWidth: 44,
-          padding: "0 14px",
-          fontFamily: "'Press Start 2P', monospace",
-          fontSize: 9,
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-          fontWeight: "bold",
-          flex: "0 0 auto",
-        }}
-      >
-        {t("ok")}
-      </button>
+      <div style={{ display: "flex", gap: 8, flex: "0 0 auto" }}>
+        <button type="button" data-consent="denied" onClick={() => escolher("denied")} style={botao(false)}>
+          {t("decline")}
+        </button>
+        <button type="button" data-consent="granted" onClick={() => escolher("granted")} style={botao(true)}>
+          {t("accept")}
+        </button>
+      </div>
     </div>
   );
+}
+
+// Os dois botões do mesmo tamanho e peso: recusar tem de ser tão fácil quanto
+// aceitar. Só a cor muda (contorno no Recusar).
+function botao(principal) {
+  return {
+    background: principal ? "#00f0ff" : "transparent",
+    color: principal ? "#050510" : "#00f0ff",
+    border: "1px solid #00f0ff",
+    borderRadius: 6,
+    minHeight: 44,
+    minWidth: 96,
+    padding: "0 14px",
+    fontFamily: "'Press Start 2P', monospace",
+    fontSize: 9,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    fontWeight: "bold",
+  };
 }

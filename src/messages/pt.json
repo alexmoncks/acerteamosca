@@ -676,9 +676,10 @@
     "adLabel": "Publicidade"
   },
   "cookieConsent": {
-    "text": "Usamos cookies para cadastro, audiência e anúncios do Google. Veja a",
+    "text": "Usamos cookies para anúncios do Google e medição de audiência, se você permitir. Veja a",
     "policy": "Política de Privacidade",
-    "ok": "ENTENDI",
+    "accept": "ACEITAR",
+    "decline": "RECUSAR",
     "label": "Aviso sobre cookies"
   }
 }
