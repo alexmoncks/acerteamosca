@@ -200,3 +200,10 @@ check("the middleware normalizes the host before next-intl matches domains", () 
   assert.match(mw, /isProductionHost\(host\) && rawRequestHost\(request\.headers\) !== host/);
   assert.match(mw, /handleI18n\(new NextRequest\(request, \{ headers \}\)\)/);
 });
+
+check("sitemap lastModified is a fixed date per route, not the build time", () => {
+  const sm = semComentarios(source("src/app/sitemap.js"));
+  assert.ok(!/new Date\(\s*\)/.test(sm), "sitemap usa new Date() (data do build)");
+  assert.match(sm, /const LAST_MODIFIED_DEFAULT = "\d{4}-\d{2}-\d{2}";/);
+  assert.match(sm, /lastModified: lastModifiedFor\(path\)/);
+});
