@@ -44,6 +44,18 @@ export function consentUpdateCommand(escolha) {
   return ["consent", "update", todos(escolha)];
 }
 
+// O gtag do script do <head> (o mesmo `gtag` global do snippet do GA); se
+// não houver, cria um igual.
+function gtagDe(win) {
+  if (typeof win.gtag !== "function") {
+    win.dataLayer = win.dataLayer || [];
+    win.gtag = function gtag() {
+      win.dataLayer.push(arguments); // eslint-disable-line prefer-rest-params
+    };
+  }
+  return win.gtag;
+}
+
 /** A escolha gravada, ou null (nenhuma, valor estranho ou storage bloqueado). */
 export function readConsentChoice(win) {
   try {
@@ -55,8 +67,8 @@ export function readConsentChoice(win) {
 }
 
 /**
- * Grava a escolha e manda o update ao Google. Usa o gtag do script do <head>
- * (o mesmo `gtag` global do snippet do GA); se não houver, cria um igual.
+ * Grava a escolha e manda o update ao Google. Quem chama decide se pode
+ * conceder (acceptDecision, em src/lib/cmp.js): no EEE, não.
  */
 export function applyConsentChoice(win, escolha) {
   const comando = consentUpdateCommand(escolha);
@@ -65,14 +77,27 @@ export function applyConsentChoice(win, escolha) {
   } catch {
     // storage bloqueado: vale só para esta página
   }
-  if (typeof win.gtag !== "function") {
-    win.dataLayer = win.dataLayer || [];
-    win.gtag = function gtag() {
-      win.dataLayer.push(arguments); // eslint-disable-line prefer-rest-params
-    };
-  }
-  win.gtag(...comando);
+  gtagDe(win)(...comando);
   return comando;
+}
+
+/**
+ * A CMP do Google disse que o GDPR se aplica: a escolha do aviso do site não
+ * vale ali. Apaga a escolha gravada e, se ela era "granted" (aceite feito
+ * antes de a CMP responder, ou numa visita de fora do EEE), manda o update
+ * "denied" na hora. Se a CMP já tiver concedido por conta própria, esse
+ * denied vale só para esta página (falha para o lado da privacidade); na
+ * seguinte, sem escolha gravada, só a CMP decide. Devolve a escolha apagada.
+ */
+export function dropSiteChoiceForGdpr(win) {
+  const tinha = readConsentChoice(win);
+  try {
+    win.localStorage.removeItem(CONSENT_STORAGE_KEY);
+  } catch {
+    // storage bloqueado: nada gravado para apagar
+  }
+  if (tinha === "granted") gtagDe(win)(...consentUpdateCommand("denied"));
+  return tinha;
 }
 
 /**

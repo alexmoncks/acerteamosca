@@ -211,7 +211,6 @@ check("the CookieConsent component (BR option): Accept/Decline of the same size,
   assert.match(comp, /if \(!readConsentChoice\(window\)\)/);
   assert.match(comp, /onClick=\{\(\) => escolher\("granted"\)\}/);
   assert.match(comp, /onClick=\{\(\) => escolher\("denied"\)\}/);
-  assert.match(comp, /applyConsentChoice\(window, escolha\)/);
   assert.match(comp, /addEventListener\(CONSENT_REOPEN_EVENT, reabrir\)/);
   // os dois botões saem do mesmo estilo: só a cor muda
   assert.match(comp, /style=\{botao\(false\)\}/);
@@ -224,9 +223,75 @@ check("the CookieConsent component (BR option): Accept/Decline of the same size,
   }
 });
 
+check("acceptDecision: the site's Accept never grants where the Google CMP says GDPR applies, and waits for a CMP still loading", () => {
+  const d = (gdprApplies, pingNow, cmpPresent) => cmp.acceptDecision({ gdprApplies, pingNow, cmpPresent });
+  // CMP diz GDPR (já sabido ou na hora do clique): a escolha é dela
+  for (const p of [undefined, true, false]) assert.equal(d(true, p, true), "cmp");
+  // a pergunta feita na hora do clique vale mais que o que o watcher achou antes
+  for (const g of [undefined, null, false]) assert.equal(d(g, true, true), "cmp");
+  // CMP diz que não se aplica: concede
+  assert.equal(d(false, undefined, true), "grant");
+  assert.equal(d(undefined, false, true), "grant");
+  // sem CMP nenhuma (Brasil sem Funding Choices): concede
+  assert.equal(d(undefined, undefined, false), "grant");
+  assert.equal(d(null, undefined, false), "grant");
+  // CMP carregando, ainda sem resposta (o caso do EEE com CMP lenta): espera
+  assert.equal(d(undefined, undefined, true), "wait");
+  assert.equal(d(null, undefined, true), "wait");
+});
+
+check("dropSiteChoiceForGdpr: where GDPR applies, a stored 'granted' becomes update denied and is erased; 'denied' is just erased", () => {
+  const K = consent.CONSENT_STORAGE_KEY;
+  const janela = (valor) => {
+    const guardado = valor ? { [K]: valor } : {};
+    const ctx = vm.createContext({ localStorage: {
+      getItem: (k) => guardado[k] ?? null, setItem: (k, v) => { guardado[k] = v; }, removeItem: (k) => { delete guardado[k]; } } });
+    vm.runInContext("var window = globalThis;", ctx);
+    vm.runInContext(consent.consentDefaultScript(), ctx);
+    return { ctx, guardado, dl: () => JSON.parse(vm.runInContext("JSON.stringify(window.dataLayer.map(a => Array.from(a)))", ctx)) };
+  };
+  const g = janela("granted");
+  assert.equal(g.dl().at(-1)[2].ad_storage, "granted", "o <head> repetiu o granted");
+  assert.equal(consent.dropSiteChoiceForGdpr(g.ctx), "granted");
+  assert.deepEqual(g.dl().at(-1), ["consent", "update", Object.fromEntries(SINAIS.map((s) => [s, "denied"]))]);
+  assert.ok(!(K in g.guardado), "escolha apagada");
+  // na visita seguinte o <head> não concede nada
+  assert.equal(rodarNoNavegador(consent.consentDefaultScript(), { storage: { ...g.guardado } }).length, 2);
+  const n = janela("denied");
+  const antes = n.dl().length;
+  assert.equal(consent.dropSiteChoiceForGdpr(n.ctx), "denied");
+  assert.equal(n.dl().length, antes, "recusa: nenhum update extra");
+  assert.ok(!(K in n.guardado));
+  const v = janela(null);
+  assert.equal(consent.dropSiteChoiceForGdpr(v.ctx), null);
+  assert.equal(v.dl().length, 2);
+  // storage que lança: não quebra
+  assert.equal(consent.dropSiteChoiceForGdpr({ localStorage: { getItem() { throw new Error("x"); }, removeItem() { throw new Error("x"); } } }), null);
+});
+
+check("CookieConsent (BR option): Accept goes through acceptDecision, a CMP still loading must say 'not applicable' before granting, GDPR drops the site's choice", () => {
+  const comp = source("src/components/CookieConsent.jsx");
+  assert.match(comp, /const decisao = acceptDecision\(\{/);
+  assert.match(comp, /pingNow: pingGdprAppliesNow\(window\)/);
+  assert.match(comp, /cmpPresent: typeof window\.__tcfapi === "function"/);
+  assert.match(comp, /if \(decisao === "grant"\) applyConsentChoice\(window, "granted"\);/);
+  assert.match(comp, /if \(gdprApplies === false\) applyConsentChoice\(window, "granted"\);/);
+  assert.match(comp, /if \(gdprApplies === true\) dropSiteChoiceForGdpr\(window\);/);
+  // Recusar não depende da CMP
+  assert.match(comp, /if \(escolha === "denied"\) \{\s*applyConsentChoice\(window, "denied"\);/);
+  // nenhum outro caminho concede
+  assert.equal((comp.match(/applyConsentChoice\(window, "granted"\)/g) || []).length, 2);
+  // reaberto pelo rodapé: foco no primeiro botão
+  assert.match(comp, /ref=\{primeiroBotao\}/);
+  assert.match(comp, /primeiroBotao\.current\.focus\(\)/);
+});
+
 check("footer link (BR option): Google message in the EEA, the site's notice elsewhere", () => {
   const link = source("src/components/PrivacyChoicesLink.jsx");
   assert.match(link, /window\.dispatchEvent\(new Event\(CONSENT_REOPEN_EVENT\)\)/);
+  // no EEE sem a API do Google o link segue para a política (o aviso não abre lá)
+  const i = link.indexOf("if (applies === true) return;");
+  assert.ok(i > 0 && i < link.indexOf("window.dispatchEvent("), "EEE sem googlefc: o link tem de navegar");
   assert.match(link, /privacyChoicesAction\(window, applies\) === "google" && showGoogleRevocation\(window\)/);
   assert.equal(consent.CONSENT_REOPEN_EVENT, "acerteamosca:consent-reopen");
 });

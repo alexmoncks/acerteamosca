@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { CMP_NOTICE_DELAY_MS, shouldShowNotice, watchGdprCmp } from "@/lib/cmp";
-import { CONSENT_REOPEN_EVENT, applyConsentChoice, readConsentChoice } from "@/lib/consent";
+import { CMP_NOTICE_DELAY_MS, acceptDecision, pingGdprAppliesNow, shouldShowNotice, watchGdprCmp } from "@/lib/cmp";
+import { CONSENT_REOPEN_EVENT, applyConsentChoice, dropSiteChoiceForGdpr, readConsentChoice } from "@/lib/consent";
 
 // OPÇÃO "denied global" (feat/consent-lote2-br-opcao): aviso de cookies que
 // PEDE a escolha, com Aceitar e Recusar do mesmo tamanho. Até a escolha, o
@@ -17,6 +17,10 @@ import { CONSENT_REOPEN_EVENT, applyConsentChoice, readConsentChoice } from "@/l
 // EEE, Reino Unido, Suíça) este aviso não aparece, para não haver dois
 // banners: lá quem pede a escolha é a CMP do Google. Ele espera a CMP até
 // CMP_NOTICE_DELAY_MS antes de aparecer e some se ela responder depois.
+// E não concede nada por lá, nem com a CMP lenta: o Aceitar só concede
+// quando a CMP disse que o GDPR não se aplica ou não há CMP (acceptDecision);
+// com a CMP carregando, espera a resposta. Se a CMP disser depois que o GDPR
+// se aplica, a escolha do site é descartada (dropSiteChoiceForGdpr).
 // O link "Privacidade e cookies" do rodapé reabre este aviso
 // (CONSENT_REOPEN_EVENT) fora dessas regiões.
 
@@ -26,11 +30,18 @@ export default function CookieConsent() {
   // o aviso. "dismissed" aqui é "já escolheu". A decisão é de
   // shouldShowNotice (src/lib/cmp.js, testada).
   const [estado, setEstado] = useState({ dismissed: true, gdprApplies: undefined, delayElapsed: false });
+  // reaberto pelo rodapé: o foco vai para o aviso, para o leitor de tela
+  // anunciar e o teclado chegar nele
+  const [focar, setFocar] = useState(false);
+  const primeiroBotao = useRef(null);
 
   useEffect(() => {
     let vivo = true;
     // reabrir pelo link do rodapé: aparece na hora, sem esperar a CMP
-    const reabrir = () => setEstado((s) => ({ ...s, dismissed: false, delayElapsed: true }));
+    const reabrir = () => {
+      setEstado((s) => ({ ...s, dismissed: false, delayElapsed: true }));
+      setFocar(true);
+    };
     window.addEventListener(CONSENT_REOPEN_EVENT, reabrir);
     let timer;
     if (!readConsentChoice(window)) {
@@ -40,6 +51,8 @@ export default function CookieConsent() {
       }, CMP_NOTICE_DELAY_MS);
     }
     watchGdprCmp(window).then((gdprApplies) => {
+      // a CMP do Google manda no EEE: a escolha do site não vale ali
+      if (gdprApplies === true) dropSiteChoiceForGdpr(window);
       if (vivo) setEstado((s) => ({ ...s, gdprApplies }));
     });
     return () => {
@@ -49,9 +62,33 @@ export default function CookieConsent() {
     };
   }, []);
 
+  useEffect(() => {
+    if (focar && primeiroBotao.current) {
+      primeiroBotao.current.focus();
+      setFocar(false);
+    }
+  });
+
   function escolher(escolha) {
-    applyConsentChoice(window, escolha);
     setEstado((s) => ({ ...s, dismissed: true }));
+    if (escolha === "denied") {
+      applyConsentChoice(window, "denied");
+      return;
+    }
+    const decisao = acceptDecision({
+      gdprApplies: estado.gdprApplies,
+      pingNow: pingGdprAppliesNow(window),
+      cmpPresent: typeof window.__tcfapi === "function",
+    });
+    if (decisao === "grant") applyConsentChoice(window, "granted");
+    else if (decisao === "wait") {
+      // só com um "não se aplica" explícito; CMP muda até o fim do prazo não
+      // concede (fica negado, e a pessoa pode aceitar de novo depois)
+      watchGdprCmp(window).then((gdprApplies) => {
+        if (gdprApplies === false) applyConsentChoice(window, "granted");
+      });
+    }
+    // "cmp": nada; a mensagem do Google pede a escolha
   }
 
   const visible = shouldShowNotice(estado);
@@ -98,7 +135,7 @@ export default function CookieConsent() {
         .
       </p>
       <div style={{ display: "flex", gap: 8, flex: "0 0 auto" }}>
-        <button type="button" data-consent="denied" onClick={() => escolher("denied")} style={botao(false)}>
+        <button ref={primeiroBotao} type="button" data-consent="denied" onClick={() => escolher("denied")} style={botao(false)}>
           {t("decline")}
         </button>
         <button type="button" data-consent="granted" onClick={() => escolher("granted")} style={botao(true)}>

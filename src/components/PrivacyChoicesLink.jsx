@@ -10,8 +10,8 @@ import { CONSENT_REOPEN_EVENT } from "@/lib/consent";
 // clique reabre a mensagem de consentimento (googlefc.showRevocationMessage)
 // para a pessoa mudar ou revogar a escolha, como o Google exige.
 // OPÇÃO "denied global": no resto do mundo o clique reabre o aviso do site
-// (Aceitar/Recusar), que é onde a escolha foi feita. Sem JavaScript, vai
-// para a seção de cookies da política.
+// (Aceitar/Recusar), que é onde a escolha foi feita. Sem JavaScript, ou no
+// EEE sem a API do Google carregada, vai para a seção de cookies da política.
 export const PRIVACY_CHOICES_HREF = "/politica-de-privacidade#cookies";
 
 export default function PrivacyChoicesLink({ label, style }) {
@@ -35,6 +35,10 @@ export default function PrivacyChoicesLink({ label, style }) {
       e.preventDefault();
       return;
     }
+    // GDPR se aplica, mas a API de revogação do Google não carregou: o aviso
+    // do site não abre ali (a escolha é da CMP), então o link segue para a
+    // política, como no lote 2
+    if (applies === true) return;
     // fora do EEE: reabre o aviso do site (src/components/CookieConsent.jsx)
     e.preventDefault();
     window.dispatchEvent(new Event(CONSENT_REOPEN_EVENT));

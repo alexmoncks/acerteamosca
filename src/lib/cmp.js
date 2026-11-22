@@ -94,6 +94,24 @@ export function shouldShowNotice({ dismissed, gdprApplies, delayElapsed }) {
   return !!delayElapsed;
 }
 
+/**
+ * O que um "Aceitar" do aviso do site pode fazer (opção "denied global").
+ * No EEE/Reino Unido/Suíça só a CMP certificada do Google pode colher o
+ * consentimento, então o aviso só concede quando sabe que não está lá:
+ *   - "cmp":   a CMP diz que o GDPR se aplica: a escolha é dela, o site não
+ *              concede nada;
+ *   - "grant": a CMP diz que não se aplica, ou não há CMP na página;
+ *   - "wait":  há CMP (window.__tcfapi) e ela ainda não respondeu: espera a
+ *              resposta (watchGdprCmp) antes de conceder.
+ * `gdprApplies` é o que o watchGdprCmp já sabe; `pingNow`, a pergunta feita
+ * na hora do clique (pingGdprAppliesNow); `cmpPresent`, se há __tcfapi.
+ */
+export function acceptDecision({ gdprApplies, pingNow, cmpPresent }) {
+  if (gdprApplies === true || pingNow === true) return "cmp";
+  if (gdprApplies === false || pingNow === false) return "grant";
+  return cmpPresent ? "wait" : "grant";
+}
+
 /** A API de revogação do Google está carregada? */
 export function canShowGoogleRevocation(win) {
   return !!(win && win.googlefc && typeof win.googlefc.showRevocationMessage === "function");
