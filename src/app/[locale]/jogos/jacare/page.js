@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["jogo do jacaré", "frogger online", "frogger grátis", "jacaré jogo", "frogger navegador", "jogo de atravessar rua", "jogo retro online"]
       : ["jacare game", "frogger online", "frogger free", "frogger browser", "crossy road style", "dodge cars game", "retro arcade online"],
-    alternates: {
-      canonical: "/jogos/jacare",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/jacare",
-        "en": "https://nailedthefly.com/en/jogos/jacare",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/jacare"),
     openGraph: {
       title: isPt ? "Jogo do Jacaré - Frogger Online Grátis" : "Jacare - Frogger-Style Game Free Online",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "Cross the road and river with the croc! Dodge cars, hop on logs. Free in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/jacare"
-        : "https://nailedthefly.com/en/jogos/jacare",
+        : "https://nailedthefly.com/jogos/jacare",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Play Jacare online for free! Brazilian-themed Frogger-style. Cross the road dodging cars and the river hopping on logs.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/jacare"
-      : "https://nailedthefly.com/en/jogos/jacare",
+      : "https://nailedthefly.com/jogos/jacare",
     genre: ["Arcade", "Action"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

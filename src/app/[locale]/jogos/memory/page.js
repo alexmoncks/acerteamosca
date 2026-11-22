@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["jogo da memória online", "jogo da memória grátis", "memory game", "jogo de pares", "jogo da memória navegador", "memory multiplayer"]
       : ["memory game online", "memory game free", "card matching game", "memory game browser", "concentration game", "memory multiplayer"],
-    alternates: {
-      canonical: "/jogos/memory",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/memory",
-        "en": "https://nailedthefly.com/en/jogos/memory",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/memory"),
     openGraph: {
       title: isPt ? "Jogo da Memória Online - Jogue Grátis" : "Memory Game Online - Play Free",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "Match the card pairs! 3 difficulty levels, timed mode and online multiplayer. Free in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/memory"
-        : "https://nailedthefly.com/en/jogos/memory",
+        : "https://nailedthefly.com/jogos/memory",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Play Memory Game online for free! Match card pairs across 3 difficulty levels, with timed mode and online multiplayer.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/memory"
-      : "https://nailedthefly.com/en/jogos/memory",
+      : "https://nailedthefly.com/jogos/memory",
     genre: ["Puzzle", "Casual"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

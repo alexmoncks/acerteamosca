@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["wordle português", "wordle brasileiro", "wordle online", "jogo de palavras", "adivinhar palavra"]
       : ["wordle portuguese", "wordle brazilian", "wordle online", "word game", "guess the word"],
-    alternates: {
-      canonical: "/jogos/wordle",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/wordle",
-        "en": "https://nailedthefly.com/en/jogos/wordle",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/wordle"),
     openGraph: {
       title: isPt ? "Wordle em Português - Jogue Grátis" : "Wordle in Portuguese - Play Free",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "Guess the 5-letter word in 6 tries! Free online game.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/wordle"
-        : "https://nailedthefly.com/en/jogos/wordle",
+        : "https://nailedthefly.com/jogos/wordle",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Play Wordle in Portuguese! Guess the 5-letter word in 6 tries.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/wordle"
-      : "https://nailedthefly.com/en/jogos/wordle",
+      : "https://nailedthefly.com/jogos/wordle",
     genre: ["Puzzle", "Word Game"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

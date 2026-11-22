@@ -1,14 +1,26 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Sobre o Acerte a Mosca | História e Missão" : "About Nailed The Fly | Story and Mission";
+  const description = isPt
+    ? "Conheça a história, a missão e o time por trás do Acerte a Mosca, plataforma brasileira de jogos HTML5 gratuitos."
+    : "Learn the story, mission and team behind Nailed The Fly, a free HTML5 gaming platform.";
   return {
-    title: isPt ? "Sobre o Acerte a Mosca | História e Missão" : "About Nailed The Fly | Story and Mission",
-    description: isPt
-      ? "Conheça a história, a missão e o time por trás do Acerte a Mosca, plataforma brasileira de jogos HTML5 gratuitos."
-      : "Learn the story, mission and team behind Nailed The Fly, a free HTML5 gaming platform.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/sobre"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/sobre"),
+      siteName: siteName(locale),
+      title,
+      description,
+    },
   };
 }
 

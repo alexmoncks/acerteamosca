@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["ships", "jogo de naves", "batalha de naves", "naves multiplayer", "jogo de tiro online", "jogo online grátis"]
       : ["ships game", "ship battle online", "ricochet shooter", "top-down multiplayer", "free browser game"],
-    alternates: {
-      canonical: "/jogos/ships",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/ships",
-        "en": "https://nailedthefly.com/en/jogos/ships",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/ships"),
     openGraph: {
       title: isPt ? "Ships — Batalha de Naves Online Grátis" : "Ships — Free Online Ship Battle",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "Ricochet shots off walls and destroy the enemy ship! Free online game.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/ships"
-        : "https://nailedthefly.com/en/jogos/ships",
+        : "https://nailedthefly.com/jogos/ships",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Pilot your ship through labyrinths, ricochet shots off walls and destroy the enemy ship!",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/ships"
-      : "https://nailedthefly.com/en/jogos/ships",
+      : "https://nailedthefly.com/jogos/ships",
     genre: ["Arcade", "Shooter"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

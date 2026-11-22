@@ -1,14 +1,26 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Política de Privacidade | Acerte a Mosca" : "Privacy Policy | Nailed The Fly";
+  const description = isPt
+    ? "Saiba como o Acerte a Mosca coleta, usa e protege suas informações pessoais, conforme a LGPD."
+    : "Learn how Nailed The Fly collects, uses and protects your personal information.";
   return {
-    title: isPt ? "Política de Privacidade | Acerte a Mosca" : "Privacy Policy | Nailed The Fly",
-    description: isPt
-      ? "Saiba como o Acerte a Mosca coleta, usa e protege suas informações pessoais, conforme a LGPD."
-      : "Learn how Nailed The Fly collects, uses and protects your personal information.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/politica-de-privacidade"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/politica-de-privacidade"),
+      siteName: siteName(locale),
+      title,
+      description,
+    },
   };
 }
 

@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -37,13 +38,7 @@ export async function generateMetadata({ params }) {
           "shoot em up no download",
           "free online shooter",
         ],
-    alternates: {
-      canonical: "/jogos/3invader",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/3invader",
-        "en": "https://nailedthefly.com/en/jogos/3invader",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/3invader"),
     openGraph: {
       title: isPt
         ? "3INVADER - Jogo de Nave Shoot 'em Up Online Grátis"
@@ -53,7 +48,7 @@ export async function generateMetadata({ params }) {
         : "Pilot the ARROW-7 against the 3I/ATLAS alien invasion! 25 levels, 5 worlds, 5 epic bosses. Play free in your browser!",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/3invader"
-        : "https://nailedthefly.com/en/jogos/3invader",
+        : "https://nailedthefly.com/jogos/3invader",
       type: "website",
       images: [
         {
@@ -87,7 +82,7 @@ function buildJsonLd(locale) {
       : "Pilot the ARROW-7 starfighter and face the 3I/ATLAS alien invasion! Vertical shoot 'em up with 25 levels across 5 epic worlds — from Earth orbit to Jupiter — with 5 colossal bosses. Play free in your browser, no download.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/3invader"
-      : "https://nailedthefly.com/en/jogos/3invader",
+      : "https://nailedthefly.com/jogos/3invader",
     image: "https://acerteamosca.com.br/jogos/3invader/opengraph-image",
     screenshot: "https://acerteamosca.com.br/images/3invader/intro-4.jpg",
     genre: ["Arcade", "Shoot 'em up", "Action"],

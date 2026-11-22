@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["pong online", "pong grátis", "pong multiplayer", "jogo pong", "jogo arcade retro", "pong no navegador"]
       : ["pong online", "pong free", "pong multiplayer", "arcade game", "retro game browser", "classic pong"],
-    alternates: {
-      canonical: "/jogos/pong",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/pong",
-        "en": "https://nailedthefly.com/en/jogos/pong",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/pong"),
     openGraph: {
       title: isPt ? "Pong Online - Jogue Grátis Multiplayer" : "Pong Online - Play Free Multiplayer",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "Classic arcade tennis! Solo vs CPU or online multiplayer. Free in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/pong"
-        : "https://nailedthefly.com/en/jogos/pong",
+        : "https://nailedthefly.com/jogos/pong",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Play Pong online for free! Classic arcade tennis with solo vs CPU and online multiplayer.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/pong"
-      : "https://nailedthefly.com/en/jogos/pong",
+      : "https://nailedthefly.com/jogos/pong",
     genre: ["Arcade", "Sports"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

@@ -1,14 +1,26 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Contato | Acerte a Mosca" : "Contact | Nailed The Fly";
+  const description = isPt
+    ? "Fale com o Acerte a Mosca: suporte, parcerias, sugestões de jogos e direitos LGPD."
+    : "Get in touch with Nailed The Fly: support, partnerships, game suggestions and data rights.";
   return {
-    title: isPt ? "Contato | Acerte a Mosca" : "Contact | Nailed The Fly",
-    description: isPt
-      ? "Fale com o Acerte a Mosca: suporte, parcerias, sugestões de jogos e direitos LGPD."
-      : "Get in touch with Nailed The Fly: support, partnerships, game suggestions and data rights.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/contato"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/contato"),
+      siteName: siteName(locale),
+      title,
+      description,
+    },
   };
 }
 

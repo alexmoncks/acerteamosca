@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["2048 online", "2048 grátis", "jogo 2048", "2048 multiplayer", "puzzle online", "jogo de blocos", "2048 navegador"]
       : ["2048 online", "2048 free", "2048 game", "2048 multiplayer", "puzzle game", "number puzzle", "2048 browser"],
-    alternates: {
-      canonical: "/jogos/2048",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/2048",
-        "en": "https://nailedthefly.com/en/jogos/2048",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/2048"),
     openGraph: {
       title: isPt ? "2048 Online - Jogue Grátis Multiplayer" : "2048 Online - Play Free Multiplayer",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "Slide the tiles and reach 2048! Solo or online multiplayer race. Free in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/2048"
-        : "https://nailedthefly.com/en/jogos/2048",
+        : "https://nailedthefly.com/jogos/2048",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Play 2048 online for free! Slide the tiles, combine numbers and reach 2048. Solo mode and online multiplayer race.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/2048"
-      : "https://nailedthefly.com/en/jogos/2048",
+      : "https://nailedthefly.com/jogos/2048",
     genre: ["Puzzle", "Strategy"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

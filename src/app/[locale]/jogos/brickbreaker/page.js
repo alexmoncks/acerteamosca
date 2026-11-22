@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
 
@@ -15,13 +16,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["brick breaker", "arkanoid", "breakout", "jogo de blocos", "jogo arcade grátis", "jogo no navegador"]
       : ["brick breaker", "arkanoid", "breakout", "block game", "free arcade game", "browser game"],
-    alternates: {
-      canonical: "/jogos/brickbreaker",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/brickbreaker",
-        "en": "https://nailedthefly.com/en/jogos/brickbreaker",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/brickbreaker"),
     openGraph: {
       title: isPt ? "Brick Breaker - Jogo Arkanoid Online Grátis" : "Brick Breaker - Free Arkanoid Game Online",
       description: isPt
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }) {
         : "25 levels, 5 worlds, power-ups and enemies! Free brick-breaking arcade in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/brickbreaker"
-        : "https://nailedthefly.com/en/jogos/brickbreaker",
+        : "https://nailedthefly.com/jogos/brickbreaker",
     },
   };
 }
@@ -45,7 +40,7 @@ function buildJsonLd(locale) {
       : "Smash all the bricks across 25 epic levels! Arkanoid-style arcade with power-ups, enemies and 5 worlds.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/brickbreaker"
-      : "https://nailedthefly.com/en/jogos/brickbreaker",
+      : "https://nailedthefly.com/jogos/brickbreaker",
     genre: ["Arcade", "Puzzle"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",

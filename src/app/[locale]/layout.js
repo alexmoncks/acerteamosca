@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import InstallPrompt from "@/components/InstallPrompt";
 import CookieConsent from "@/components/CookieConsent";
 import Footer from "@/components/Footer";
+import { SITE_URL, localeUrl, siteName } from "@/lib/seo";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
@@ -42,20 +43,16 @@ export async function generateMetadata({ params }) {
     authors: [{ name: "Acerte a Mosca" }],
     creator: "Acerte a Mosca",
     publisher: "Acerte a Mosca",
-    metadataBase: new URL("https://acerteamosca.com.br"),
-    alternates: {
-      canonical: "/",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br",
-        "en": "https://nailedthefly.com",
-        "x-default": "https://acerteamosca.com.br",
-      },
-    },
+    // Cada idioma no próprio domínio (src/lib/seo.js). O canonical NÃO fica
+    // aqui: um canonical no layout é herdado por toda página que não declara
+    // o seu, e foi assim que as institucionais acabaram apontando para a home.
+    // Cada page.js declara `alternates: pageAlternates(locale, "/caminho")`.
+    metadataBase: new URL(SITE_URL[locale] ?? SITE_URL.pt),
     openGraph: {
       type: "website",
       locale: locale === "pt" ? "pt_BR" : "en_US",
-      url: "https://acerteamosca.com.br",
-      siteName: "Acerte a Mosca",
+      url: localeUrl(locale, "/"),
+      siteName: siteName(locale),
       title: m.title,
       description: m.ogDescription,
       images: [

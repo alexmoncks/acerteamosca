@@ -1,14 +1,26 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Termos de Uso | Acerte a Mosca" : "Terms of Use | Nailed The Fly";
+  const description = isPt
+    ? "Termos e condições para uso da plataforma de jogos Acerte a Mosca."
+    : "Terms and conditions for using the Nailed The Fly gaming platform.";
   return {
-    title: isPt ? "Termos de Uso | Acerte a Mosca" : "Terms of Use | Nailed The Fly",
-    description: isPt
-      ? "Termos e condições para uso da plataforma de jogos Acerte a Mosca."
-      : "Terms and conditions for using the Nailed The Fly gaming platform.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/termos-de-uso"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/termos-de-uso"),
+      siteName: siteName(locale),
+      title,
+      description,
+    },
   };
 }
 
