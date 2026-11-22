@@ -125,8 +125,11 @@ export default async function LocaleLayout({ children, params }) {
         <meta name="apple-mobile-web-app-title" content="Acerte a Mosca" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        {/* Fontes do próprio domínio (src/app/fonts.css): o subset latin das
+            duas famílias chega antes da primeira pintura, e o texto não
+            muda de largura depois (CLS). Nada de fonts.googleapis/gstatic. */}
+        <link rel="preload" href="/fonts/press-start-2p-v16-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/fira-code-v27-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         {/* Modo de consentimento do Google e as tags do Google
             (src/lib/consent.js): default "denied" no mundo todo, sem região.
             O adsbygoogle.js (como o painel entrega: async + crossorigin) e o
@@ -176,9 +179,6 @@ export default async function LocaleLayout({ children, params }) {
               },
             }}
           />
-          <Script id="load-fonts" strategy="afterInteractive" nonce={nonce}>
-            {`var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap';document.head.appendChild(l);`}
-          </Script>
           <Script id="register-sw" strategy="afterInteractive" nonce={nonce}>
             {`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}
           </Script>

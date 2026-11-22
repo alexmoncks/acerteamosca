@@ -96,8 +96,10 @@ export function buildCsp({ nonce, wsOrigins = [] }) {
   return [
     "default-src 'self'",
     `script-src 'nonce-${nonce}' 'strict-dynamic' 'self' https:`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    // Fontes auto-hospedadas (src/app/fonts.css, AJ3): nada de
+    // fonts.googleapis.com nem fonts.gstatic.com.
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     // Sem http: (conteúdo misto). Criativos do AdSense rodam em iframe
     // (frame-src); pixels do Google e do GA são https.
     "img-src 'self' data: blob: https:",

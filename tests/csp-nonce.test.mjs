@@ -261,7 +261,9 @@ check("every <script> rendered by the layout and pages carries the nonce", () =>
     t.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
   const layout = semComentarios(source("src/app/[locale]/layout.js"));
   const scripts = layout.match(/<(?:script|Script)\b[^>]*?>/gs) || [];
-  assert.ok(scripts.length >= 3, `achei ${scripts.length} scripts no layout`);
+  // consent-default e register-sw (o load-fonts saiu no AJ3: fontes do
+  // próprio domínio, src/app/fonts.css)
+  assert.ok(scripts.length >= 2, `achei ${scripts.length} scripts no layout`);
   for (const tag of scripts) assert.match(tag, /nonce=\{nonce\}/, tag);
   // adsbygoogle.js e gtag.js: injetados pelo consent-default (que tem o
   // nonce) com o nonce dele; nenhuma tag do Google direto no layout
