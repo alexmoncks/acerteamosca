@@ -89,11 +89,12 @@ check("the CSP lets the AdSense domains in", () => {
   const script = src.slice(src.indexOf("const ADSENSE_SCRIPT_SRC"), src.indexOf("const ADSENSE_FRAME_SRC"));
   const frame = src.slice(src.indexOf("const ADSENSE_FRAME_SRC"), src.indexOf("const CONTENT_SECURITY_POLICY"));
   for (const d of ["pagead2.googlesyndication.com", "tpc.googlesyndication.com", "googleads.g.doubleclick.net",
-    "adservice.google.com", "fundingchoicesmessages.google.com", "*.adtrafficquality.google"]) {
+    "adservice.google.com", "fundingchoicesmessages.google.com", "*.adtrafficquality.google",
+    "*.google.com", "*.gstatic.com"]) {
     assert.ok(script.includes(`https://${d}"`), `script-src sem ${d}`);
   }
   for (const d of ["googleads.g.doubleclick.net", "tpc.googlesyndication.com", "*.safeframe.googlesyndication.com",
-    "fundingchoicesmessages.google.com"]) {
+    "fundingchoicesmessages.google.com", "*.google.com", "*.gstatic.com"]) {
     assert.ok(frame.includes(`https://${d}"`), `frame-src sem ${d}`);
   }
   assert.match(src, /\.\.\.ADSENSE_SCRIPT_SRC/);

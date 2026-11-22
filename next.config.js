@@ -2,18 +2,30 @@ const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.js");
 
 // Domínios do Google AdSense (tag, criativos em iframe/SafeFrame, Funding
-// Choices para a mensagem de consentimento, verificação de tráfego) conforme
-// a documentação do AdSense. Sem eles a CSP bloqueia parte dos anúncios
-// depois da aprovação — e o bloqueio só aparece no console do navegador.
+// Choices / "Privacidade e mensagens" para a mensagem de consentimento,
+// verificação de tráfego). Sem eles a CSP bloqueia parte dos anúncios depois
+// da aprovação — e o bloqueio só aparece no console do navegador.
+//
+// PROVISÓRIO: a documentação do AdSense (support.google.com/adsense/answer/
+// 16283098) só suporta CSP estrita — nonce em todo <script> + 'strict-dynamic'
+// —, porque os domínios usados pelo código de anúncio mudam com o tempo. Esta
+// lista com curingas (*.google.com, *.gstatic.com etc.) cobre o que se sabe
+// hoje; a migração para nonce + 'strict-dynamic' (e a saída de
+// 'unsafe-inline'/'unsafe-eval') está registrada como pendência.
 const ADSENSE_SCRIPT_SRC = [
   "https://pagead2.googlesyndication.com",
   "https://tpc.googlesyndication.com",
   "https://*.googlesyndication.com",
   "https://googleads.g.doubleclick.net",
+  "https://*.doubleclick.net",
   "https://partner.googleadservices.com",
+  "https://*.googleadservices.com",
   "https://www.googletagservices.com",
   "https://adservice.google.com",
   "https://adservice.google.com.br",
+  "https://*.google.com",
+  "https://*.google.com.br",
+  "https://*.gstatic.com",
   "https://fundingchoicesmessages.google.com",
   "https://*.adtrafficquality.google",
 ];
@@ -24,6 +36,9 @@ const ADSENSE_FRAME_SRC = [
   "https://*.safeframe.googlesyndication.com",
   "https://*.googlesyndication.com",
   "https://www.google.com",
+  "https://*.google.com",
+  "https://*.google.com.br",
+  "https://*.gstatic.com",
   "https://fundingchoicesmessages.google.com",
   "https://*.adtrafficquality.google",
 ];
