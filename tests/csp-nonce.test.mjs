@@ -163,6 +163,8 @@ check("every <script> rendered by the layout and pages carries the nonce", () =>
   const scripts = layout.match(/<(?:script|Script)\b[^>]*?>/gs) || [];
   assert.ok(scripts.length >= 5, `achei ${scripts.length} scripts no layout`);
   for (const tag of scripts) assert.match(tag, /nonce=\{nonce\}/, tag);
+  assert.match(layout, /<AdSenseScript client=\{ADSENSE_ID\} nonce=\{nonce\} \/>/);
+  assert.match(source("src/components/AdSenseScript.jsx"), /nonce=\{nonce\}/);
   assert.match(source("src/components/JsonLd.jsx"), /nonce=\{getNonce\(\)\}/);
   const dir = repoPath("src/app/[locale]/jogos");
   for (const jogo of fs.readdirSync(dir)) {

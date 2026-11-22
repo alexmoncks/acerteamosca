@@ -10,7 +10,9 @@ import Footer from "@/components/Footer";
 import { SITE_URL, localeUrl, siteName } from "@/lib/seo";
 import { ADSENSE_PUBLISHER, isValidAdClient } from "@/lib/ads";
 import JsonLd from "@/components/JsonLd";
+import AdSenseScript from "@/components/AdSenseScript";
 import { getNonce } from "@/lib/nonce";
+import { consentDefaultScript } from "@/lib/consent";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 // Anúncios Automáticos: só o script do AdSense, com o publisher do ads.txt.
@@ -119,19 +121,22 @@ export default async function LocaleLayout({ children, params }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        {/* Modo de consentimento do Google: o estado padrão ANTES do
+            adsbygoogle.js e do gtag.js (src/lib/consent.js). Negado no
+            EEE/Reino Unido/Suíça até a mensagem do Google responder;
+            concedido no resto, como diz a política. */}
+        <script
+          id="consent-default"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: consentDefaultScript() }}
+        />
         {/* A tag como o AdSense entrega, no <head>: async + crossorigin, sem
-            atributos extras além do nonce da CSP. Formatos
+            atributos extras além do nonce da CSP. Ela também carrega a
+            mensagem de consentimento do Google (Funding Choices). Formatos
             de sobreposição (vinheta, âncora, intersticial) se controlam no
             painel de Anúncios Automáticos, não com atributo no script — o
             antigo data-overlays não é documentado. */}
-        {ADSENSE_ID && (
-          <script
-            async
-            nonce={nonce}
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
-            crossOrigin="anonymous"
-          />
-        )}
+        {ADSENSE_ID && <AdSenseScript client={ADSENSE_ID} nonce={nonce} />}
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>

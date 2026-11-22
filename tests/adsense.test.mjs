@@ -80,7 +80,11 @@ check("the AdSense tag has no undocumented attributes", () => {
     assert.ok(!/data-overlays/.test(semComentarios(source(f))), `${f} usa data-overlays`);
   }
   const layout = semComentarios(source("src/app/[locale]/layout.js"));
-  assert.match(layout, /adsbygoogle\.js\?client=\$\{ADSENSE_ID\}/);
+  assert.match(layout, /<AdSenseScript client=\{ADSENSE_ID\} nonce=\{nonce\} \/>/);
+  const tag = semComentarios(source("src/components/AdSenseScript.jsx"));
+  assert.match(tag, /adsbygoogle\.js\?client=\$\{client\}/);
+  assert.match(tag, /<script\s+async\s+nonce=\{nonce\}\s+src=/);
+  assert.match(tag, /crossOrigin="anonymous"/);
   assert.match(layout, /isValidAdClient\(process\.env\.NEXT_PUBLIC_ADSENSE_ID\)/);
 });
 
@@ -95,5 +99,5 @@ check("the CSP lets the AdSense code in: strict CSP (nonce + strict-dynamic), cr
     assert.ok(frame.includes(`https://${d}"`), `frame-src sem ${d}`);
   }
   assert.match(csp, /\["frame-src", \.\.\.ADSENSE_FRAME_SRC\]/);
-  assert.match(source("src/app/[locale]/layout.js"), /async\s+nonce=\{nonce\}\s+src=\{`https:\/\/pagead2\.googlesyndication\.com/);
+  assert.match(source("src/components/AdSenseScript.jsx"), /async\s+nonce=\{nonce\}\s+src=\{`https:\/\/pagead2\.googlesyndication\.com/);
 });
