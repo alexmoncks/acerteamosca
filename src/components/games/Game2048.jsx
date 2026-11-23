@@ -223,7 +223,7 @@ function MenuScreen({ onStart, onOnline }) {
         zIndex: 50,
       }}
     >
-      <h1
+      <h2
         style={{
           fontFamily: "'Press Start 2P', monospace",
           fontSize: 36,
@@ -235,7 +235,7 @@ function MenuScreen({ onStart, onOnline }) {
         }}
       >
         2048
-      </h1>
+      </h2>
       <p
         style={{
           fontFamily: "'Fira Code', monospace",
@@ -1419,7 +1419,7 @@ export default function Game2048() {
                 >
                   {"\u2190"}
                 </button>
-                <h1
+                <h2
                   style={{
                     fontFamily: "'Press Start 2P', monospace",
                     fontSize: 20,
@@ -1428,7 +1428,7 @@ export default function Game2048() {
                   }}
                 >
                   2048
-                </h1>
+                </h2>
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>
@@ -1695,7 +1695,7 @@ export default function Game2048() {
                 >
                   {"\u2190"}
                 </button>
-                <h1
+                <h2
                   style={{
                     fontFamily: "'Press Start 2P', monospace",
                     fontSize: 16,
@@ -1704,7 +1704,7 @@ export default function Game2048() {
                   }}
                 >
                   2048
-                </h1>
+                </h2>
               </div>
               <div
                 style={{

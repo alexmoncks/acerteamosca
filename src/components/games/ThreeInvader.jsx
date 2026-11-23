@@ -1576,16 +1576,9 @@ export default function ThreeInvader() {
       bossAtlasPhase2: "/images/3invader/boss-atlas-phase2.png",
       bossAtlasPhase3: "/images/3invader/boss-atlas-phase3.png",
       bossAtlasAnim: "/images/3invader/boss-atlas-anim.png",
-      // Projectiles
-      bulletPlayer: "/images/3invader/bullet-player.png",
-      bulletPlayerHeavy: "/images/3invader/bullet-player-heavy.png",
-      bulletHoming: "/images/3invader/bullet-homing.png",
-      bulletCannon: "/images/3invader/bullet-cannon.png",
-      laserBeam: "/images/3invader/laser-beam.png",
-      bulletEnemy: "/images/3invader/bullet-enemy.png",
-      bulletEnemyAimed: "/images/3invader/bullet-enemy-aimed.png",
-      bulletEnemySpread: "/images/3invader/bullet-enemy-spread.png",
-      novaRing: "/images/3invader/nova-ring.png",
+      // Projectiles: sem sprite. Tiros, laser e nova são desenhados no canvas
+      // (drawHomingMissile / drawBombEffect usam o fallback procedural). Os
+      // 9 PNGs foram apagados em 78854b8 e pedi-los aqui só gerava 404.
       // Backgrounds (per world)
       bgEarth: "/images/3invader/bg-earth.jpg",
       bgPhobos: "/images/3invader/bg-phobos.jpg",
@@ -4462,7 +4455,7 @@ export default function ThreeInvader() {
 
       {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
         <>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 18,
@@ -4474,7 +4467,7 @@ export default function ThreeInvader() {
             }}
           >
             3INVADER
-          </h1>
+          </h2>
           <p
             style={{
               color: "#4a5568",

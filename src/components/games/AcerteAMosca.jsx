@@ -436,9 +436,9 @@ function SplashScreen({ onStart, t }) {
 
       <div style={{ fontSize: 50, opacity: phase >= 0 ? 1 : 0, transform: phase >= 1 ? "translateY(0) rotate(-15deg)" : "translateY(-40px) rotate(0deg)", transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)", marginBottom: 8, filter: "drop-shadow(0 0 20px rgba(255,100,50,0.3))" }}>🩴</div>
 
-      <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 26, color: "#00f0ff", textShadow: "0 0 30px #00f0ff, 0 0 60px rgba(0,240,255,0.3)", letterSpacing: 4, opacity: phase >= 0 ? 1 : 0, transform: phase >= 0 ? "scale(1)" : "scale(0.5)", transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)", textAlign: "center", marginBottom: 4 }}>
+      <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 26, color: "#00f0ff", textShadow: "0 0 30px #00f0ff, 0 0 60px rgba(0,240,255,0.3)", letterSpacing: 4, opacity: phase >= 0 ? 1 : 0, transform: phase >= 0 ? "scale(1)" : "scale(0.5)", transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)", textAlign: "center", marginBottom: 4 }}>
         {t("title")}
-      </h1>
+      </h2>
 
       <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#ff2d95", letterSpacing: 3, opacity: phase >= 1 ? 1 : 0, transform: phase >= 1 ? "translateY(0)" : "translateY(15px)", transition: "all 0.5s ease-out", textShadow: "0 0 10px #ff2d95", marginBottom: 30 }}>
         {t("subtitle")}
@@ -896,9 +896,9 @@ export default function AcerteAMosca() {
 
 
       {screen !== "splash" && <>
-        <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: currentColorStr, textShadow: `0 0 20px ${currentColorStr}, 0 0 40px ${rgbaStr(currentColor, 0.3)}`, marginBottom: 8, letterSpacing: 3, textAlign: "center", transition: "color 1s, text-shadow 1s" }}>
+        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: currentColorStr, textShadow: `0 0 20px ${currentColorStr}, 0 0 40px ${rgbaStr(currentColor, 0.3)}`, marginBottom: 8, letterSpacing: 3, textAlign: "center", transition: "color 1s, text-shadow 1s" }}>
           {t("title")}
-        </h1>
+        </h2>
         <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
           {audioStarted ? t("audio3dActive") : t("tagline")}
         </p>

@@ -634,11 +634,11 @@ function MenuScreen({ onStart, onOnline, difficulty, setDifficulty, t }) {
       padding: "30px 16px", animation: "bn-fadeIn 0.4s ease",
     }}>
       <div style={{ fontSize: 64, marginBottom: 8 }}>⚓</div>
-      <h1 style={{
+      <h2 style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 20,
         color: ACCENT, textShadow: `0 0 20px ${ACCENT}80`,
         marginBottom: 6, textAlign: "center",
-      }}>{t("title")}</h1>
+      }}>{t("title")}</h2>
       <p style={{
         fontFamily: "'Fira Code', monospace", fontSize: 11,
         color: "#64748b", marginBottom: 32,

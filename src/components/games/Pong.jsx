@@ -106,11 +106,11 @@ function PongMenu({ onSelect }) {
       }} />
 
       <div style={{ fontSize: 50, marginBottom: 10 }}>🏓</div>
-      <h1 style={{
+      <h2 style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 32, color: "#00f0ff",
         textShadow: "0 0 30px #00f0ff, 0 0 60px rgba(0,240,255,0.3)",
         letterSpacing: 6, marginBottom: 6, position: "relative",
-      }}>PONG</h1>
+      }}>PONG</h2>
       <p style={{
         fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: "#ff2d95",
         letterSpacing: 3, textShadow: "0 0 10px #ff2d95", marginBottom: 40,
@@ -893,10 +893,10 @@ export default function Pong() {
 
       {screen !== "menu" && screen !== "lobby" && (
         <>
-          <h1 style={{
+          <h2 style={{
             fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#00f0ff",
             textShadow: "0 0 20px #00f0ff", marginBottom: 8, letterSpacing: 3,
-          }}>PONG</h1>
+          }}>PONG</h2>
           <p style={{
             color: "#4a5568", fontSize: 10, marginBottom: 14,
             fontFamily: "'Press Start 2P', monospace",

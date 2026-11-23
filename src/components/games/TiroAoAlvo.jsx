@@ -1731,7 +1731,7 @@ export default function TiroAoAlvo() {
       {/* Title */}
       {screen !== "result" && (
         <>
-          <h1 style={{
+          <h2 style={{
             fontFamily: "'Press Start 2P', monospace",
             fontSize: 20,
             color: ACCENT,
@@ -1741,7 +1741,7 @@ export default function TiroAoAlvo() {
             textAlign: "center",
           }}>
             {t("title")}
-          </h1>
+          </h2>
           <p style={{
             color: "#4a5568",
             fontSize: 9,

@@ -1883,7 +1883,7 @@ export default function KungFuCastle() {
     >
       {screen === "menu" && (
         <div style={{ textAlign: "center" }}>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 24,
@@ -1894,7 +1894,7 @@ export default function KungFuCastle() {
             }}
           >
             {t("title")}
-          </h1>
+          </h2>
           <p style={{ fontSize: 11, color: "#8892b0", marginBottom: 24 }}>
             {t("subtitle")}
           </p>

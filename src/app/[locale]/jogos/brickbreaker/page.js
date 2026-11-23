@@ -145,7 +145,7 @@ export default async function BrickBreakerPage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="brickbreaker" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

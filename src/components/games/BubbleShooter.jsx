@@ -1054,7 +1054,7 @@ export default function BubbleShooter() {
 
       {screen !== "menu" && (
         <>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 18,
@@ -1066,7 +1066,7 @@ export default function BubbleShooter() {
             }}
           >
             BUBBLE SHOOTER
-          </h1>
+          </h2>
           <p
             style={{
               color: "#4a5568",
@@ -1125,7 +1125,7 @@ export default function BubbleShooter() {
                 zIndex: 100,
               }}
             >
-              <h1
+              <h2
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 20,
@@ -1139,7 +1139,7 @@ export default function BubbleShooter() {
                 BUBBLE
                 <br />
                 SHOOTER
-              </h1>
+              </h2>
               <div
                 style={{
                   display: "flex",

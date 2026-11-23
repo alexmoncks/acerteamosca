@@ -147,7 +147,7 @@ export default async function WordlePage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="wordle" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

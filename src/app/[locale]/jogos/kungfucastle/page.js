@@ -159,7 +159,7 @@ export default async function KungFuCastlePage({ params }) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="kungfucastle" content={content} locale={locale} />
     </>
   );
 }
