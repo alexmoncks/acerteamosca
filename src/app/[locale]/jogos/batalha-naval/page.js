@@ -1,6 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
+import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -15,13 +18,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["batalha naval", "battleship online", "jogo de batalha naval", "jogo de estratégia online", "jogo de tabuleiro online grátis"]
       : ["battleship online", "batalha naval", "free battleship game", "strategy board game online", "browser battleship"],
-    alternates: {
-      canonical: "/jogos/batalha-naval",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/batalha-naval",
-        "en": "https://nailedthefly.com/en/jogos/batalha-naval",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/batalha-naval"),
     openGraph: {
       title: isPt ? "Batalha Naval — Jogue Online Grátis" : "Battleship — Play Free Online",
       description: isPt
@@ -29,7 +26,7 @@ export async function generateMetadata({ params }) {
         : "Position your fleet and sink the enemy ships! Free online game.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/batalha-naval"
-        : "https://nailedthefly.com/en/jogos/batalha-naval",
+        : "https://nailedthefly.com/jogos/batalha-naval",
     },
   };
 }
@@ -45,7 +42,7 @@ function buildJsonLd(locale) {
       : "Online Battleship game. Position your fleet and sink enemy ships across 3 difficulty levels.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/batalha-naval"
-      : "https://nailedthefly.com/en/jogos/batalha-naval",
+      : "https://nailedthefly.com/jogos/batalha-naval",
     genre: ["Strategy", "Board Game"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",
@@ -147,10 +144,11 @@ export default async function BatalhaNavalPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />
+      <AdBanner placement="game_footer" />
     </>
   );
 }

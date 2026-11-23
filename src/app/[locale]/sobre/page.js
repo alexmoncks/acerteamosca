@@ -1,14 +1,30 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
+import RichText from "@/components/RichText";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Sobre o Acerte a Mosca | História e Missão" : "About Nailed The Fly | Story and Mission";
+  const description = isPt
+    ? "Conheça a história, a missão e o time por trás do Acerte a Mosca, plataforma brasileira de jogos HTML5 gratuitos."
+    : "Learn the story, mission and team behind Nailed The Fly, a free HTML5 gaming platform.";
   return {
-    title: isPt ? "Sobre o Acerte a Mosca | História e Missão" : "About Nailed The Fly | Story and Mission",
-    description: isPt
-      ? "Conheça a história, a missão e o time por trás do Acerte a Mosca, plataforma brasileira de jogos HTML5 gratuitos."
-      : "Learn the story, mission and team behind Nailed The Fly, a free HTML5 gaming platform.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/sobre"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/sobre"),
+      siteName: siteName(locale),
+      title,
+      description,
+      // O openGraph da página substitui o do layout por inteiro; sem isto a
+      // página ficaria sem og:image.
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: siteName(locale) }],
+    },
   };
 }
 
@@ -40,7 +56,7 @@ const contentPT = {
     {
       h: "Quem está por trás",
       p: [
-        "Acerte a Mosca é um projeto da MMSoft Digital, fundada e operada por Alex Marra (alex@marramoncks.com.br). É um projeto pessoal, sustentado pela receita de publicidade da própria plataforma e por parceiros patrocinadores.",
+        "Acerte a Mosca é um projeto da MMSoft Digital, fundada e operada por Alex Marra (alex@marramoncks.com.br). É um projeto pessoal, sustentado pela receita de publicidade da própria plataforma.",
       ],
     },
     {
@@ -80,7 +96,7 @@ const contentEN = {
     {
       h: "Who is behind it",
       p: [
-        "Nailed The Fly is a project by MMSoft Digital, founded and operated by Alex Marra (alex@marramoncks.com.br). It is a personal project, sustained by ad revenue from the platform itself and by sponsor partners.",
+        "Nailed The Fly is a project by MMSoft Digital, founded and operated by Alex Marra (alex@marramoncks.com.br). It is a personal project, sustained by ad revenue from the platform itself.",
       ],
     },
     {
@@ -100,13 +116,13 @@ export default async function AboutPage({ params }) {
   return (
     <article style={pageStyle}>
       <h1 style={titleStyle}>{c.title}</h1>
-      <p style={pStyle}>{c.intro}</p>
+      <p style={pStyle}><RichText text={c.intro} /></p>
       {c.sections.map((s, i) => (
         <section key={i} style={sectionStyle}>
           <h2 style={h2Style}>{s.h}</h2>
           {s.p.map((para, j) => (
             <p key={j} style={pStyle}>
-              {para}
+              <RichText text={para} />
             </p>
           ))}
         </section>

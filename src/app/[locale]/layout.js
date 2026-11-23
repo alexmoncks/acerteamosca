@@ -7,9 +7,16 @@ import Navbar from "@/components/Navbar";
 import InstallPrompt from "@/components/InstallPrompt";
 import CookieConsent from "@/components/CookieConsent";
 import Footer from "@/components/Footer";
+import { SITE_URL, localeUrl, siteName } from "@/lib/seo";
+import { ADSENSE_PUBLISHER, isValidAdClient } from "@/lib/ads";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
-const ADSENSE_ID = process.env.NEXT_PUBLIC_ADSENSE_ID;
+// Anúncios Automáticos: só o script do AdSense, com o publisher do ads.txt.
+// ID fora do formato ca-pub-XXXXXXXXXXXXXXXX não liga nada.
+const ADSENSE_ID = isValidAdClient(process.env.NEXT_PUBLIC_ADSENSE_ID)
+  ? process.env.NEXT_PUBLIC_ADSENSE_ID.trim()
+  : null;
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -42,20 +49,16 @@ export async function generateMetadata({ params }) {
     authors: [{ name: "Acerte a Mosca" }],
     creator: "Acerte a Mosca",
     publisher: "Acerte a Mosca",
-    metadataBase: new URL("https://acerteamosca.com.br"),
-    alternates: {
-      canonical: "/",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br",
-        "en": "https://nailedthefly.com",
-        "x-default": "https://acerteamosca.com.br",
-      },
-    },
+    // Cada idioma no próprio domínio (src/lib/seo.js). O canonical NÃO fica
+    // aqui: um canonical no layout é herdado por toda página que não declara
+    // o seu, e foi assim que as institucionais acabaram apontando para a home.
+    // Cada page.js declara `alternates: pageAlternates(locale, "/caminho")`.
+    metadataBase: new URL(SITE_URL[locale] ?? SITE_URL.pt),
     openGraph: {
       type: "website",
       locale: locale === "pt" ? "pt_BR" : "en_US",
-      url: "https://acerteamosca.com.br",
-      siteName: "Acerte a Mosca",
+      url: localeUrl(locale, "/"),
+      siteName: siteName(locale),
       title: m.title,
       description: m.ogDescription,
       images: [
@@ -98,7 +101,7 @@ export default async function LocaleLayout({ children, params }) {
     <html lang={locale === "pt" ? "pt-BR" : "en"}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
-        <meta name="google-adsense-account" content="ca-pub-4148140889800778" />
+        <meta name="google-adsense-account" content={ADSENSE_PUBLISHER} />
         <meta name="theme-color" content="#050510" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -107,13 +110,24 @@ export default async function LocaleLayout({ children, params }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        {/* A tag como o AdSense entrega, no <head>: async + crossorigin, sem
+            atributos extras. Formatos de sobreposição (vinheta, âncora,
+            intersticial) se controlam no painel de Anúncios Automáticos, não
+            com atributo no script — o antigo data-overlays não é documentado. */}
+        {ADSENSE_ID && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
+            crossOrigin="anonymous"
+          />
+        )}
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
+              __html: jsonLdHtml({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "@id": "https://acerteamosca.com.br/#organization",
@@ -134,12 +148,12 @@ export default async function LocaleLayout({ children, params }) {
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
+              __html: jsonLdHtml({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
-                "@id": "https://acerteamosca.com.br/#website",
-                "name": "Acerte a Mosca",
-                "url": "https://acerteamosca.com.br",
+                "@id": `${localeUrl(locale, "/")}/#website`,
+                "name": siteName(locale),
+                "url": localeUrl(locale, "/"),
                 "description": messages.metadata.description,
                 "inLanguage": locale === "pt" ? "pt-BR" : "en",
                 "publisher": {
@@ -159,14 +173,6 @@ export default async function LocaleLayout({ children, params }) {
                 {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
               </Script>
             </>
-          )}
-          {ADSENSE_ID && (
-            <Script
-              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
-              strategy="afterInteractive"
-              crossOrigin="anonymous"
-              data-overlays="bottom"
-            />
           )}
           <Script id="load-fonts" strategy="afterInteractive">
             {`var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;700&display=swap';document.head.appendChild(l);`}

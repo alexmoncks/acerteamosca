@@ -47,7 +47,7 @@
     }
   },
   "register": {
-    "subtitle": "Cadastre-se para jogar e concorrer!",
+    "subtitle": "Cadastre-se para jogar!",
     "nameLabel": "NOME",
     "namePlaceholder": "Seu nome completo",
     "nameError": "Nome inválido. Use pelo menos 3 letras reais.",
@@ -57,7 +57,7 @@
     "phoneError": "Número de telefone inválido.",
     "whatsappLabel": "WHATSAPP",
     "whatsappPlaceholder": "(00) 00000-0000",
-    "consent": "Concordo com a coleta dos meus dados para participacao na promocao conforme a LGPD.",
+    "consent": "Concordo com a coleta dos meus dados para o cadastro no jogo, conforme a Política de Privacidade e a LGPD.",
     "registering": "REGISTRANDO...",
     "play": "JOGAR!"
   },
@@ -65,7 +65,7 @@
     "acerteamosca": {
       "title": "ACERTE A MOSCA",
       "subtitle": "A VINGANCA E DOCE... E ESTALA",
-      "tagline": "MATE O MOSQUITO - GANHE PREMIOS",
+      "tagline": "MATE O MOSQUITO ANTES QUE ELE TE PEGUE",
       "audio3dActive": "🎧 AUDIO 3D ATIVADO - USE FONES!",
       "tip1": "🩴 Arma letal: o chinelo da vovo",
       "tip2": "🦟 Nenhum mosquito foi poupado nesta producao",
@@ -73,23 +73,19 @@
       "tip4": "🎧 Use fones pra sentir o mosquito NA ORELHA",
       "tip5": "⚠️ Pode causar vicio e tapas na mesa",
       "tip6": "🏆 Patrocinado pelo seu odio a insetos",
-      "testimonial": "\"Melhor que raquete eletrica\" - Maria, 67 anos",
       "enterButton": "🩴 ENTRAR",
       "version": "v1.0 - powered by chineladas",
       "almostHit": "QUASE!",
       "combo": "COMBO!",
-      "sponsoredBy": "PATROCINADO POR",
-      "sponsorName": "SUA MARCA AQUI",
       "timeUp": "TEMPO ESGOTADO!",
       "statPoints": "PONTOS",
       "statHits": "ACERTOS",
       "statAccuracy": "PRECISAO",
       "statMaxCombo": "MAX COMBO",
       "tryAgain": "TENTAR DE NOVO",
-      "youWon": "VOCE GANHOU!",
-      "checkEmail": "Verifique seu email para resgatar!",
+      "youWon": "MOSQUITO ELIMINADO!",
       "playAgain": "JOGAR DE NOVO",
-      "winPrize": "🎉 Cupom de 20% de desconto na Loja XYZ!",
+      "winMessage": "🎉 Acertou em cheio! Jogue de novo e tente bater sua pontuação.",
       "hudPoints": "PONTOS",
       "hudSpeed": "VELOC.",
       "hudTime": "TEMPO"
@@ -484,8 +480,6 @@
       "introScreen2": "Europa: silencio.\nGanimedes: 'ELES INVADIRAM A INSTALAÇÃO'.\nCalisto: transmissao interrompida.\nIo: convertida em uma forja de guerra.\nAs luas de Jupiter cairam em 72 horas.",
       "introScreen3": "Voce pilota o ARROW-7, único caça estelar experimental da classe Aleste que conseguiu decolar.\nMissão: da orbita terrestre ate Júpiter.\nObjetivo: destruir o invasor 3I/ATLAS.\n\n\nA humanidade depende de voce.\n\nPRESSIONE ESPAÇO OU CLICK PARA INICIAR",
       "introContinueHint": "TOQUE OU PRESSIONE PARA CONTINUAR",
-      "sponsorMessage": "Nosso patrocinador mantém o jogo gratuito",
-      "sponsorContinue": "CONTINUAR",
       "menuStart": "INICIAR MISSAO",
       "menuInstructions": "INSTRUCOES",
       "menuStory": "HISTORIA",
@@ -677,6 +671,13 @@
   },
   "common": {
     "playFree": "Jogue grátis em acerteamosca.com.br",
-    "mainGame": "JOGO PRINCIPAL"
+    "mainGame": "JOGO PRINCIPAL",
+    "adLabel": "Publicidade"
+  },
+  "cookieConsent": {
+    "text": "Usamos cookies e armazenamento local para manter seu cadastro de jogador, medir a audiência (Google Analytics) e exibir anúncios do Google AdSense, que também usa cookies. Saiba o que é coletado, as bases legais e como recusar na",
+    "policy": "Política de Privacidade",
+    "ok": "ENTENDI",
+    "label": "Aviso sobre cookies"
   }
 }

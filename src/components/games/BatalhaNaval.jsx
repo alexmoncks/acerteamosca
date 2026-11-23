@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -1233,7 +1232,6 @@ function GameOverScreen({
         </div>
       </div>
 
-      <AdBanner slot="batalha-naval_between" style={{ marginTop: 4, marginBottom: 12, maxWidth: 300 }} />
 
       <div style={{ display: "flex", gap: 10 }}>
         <button
@@ -2605,10 +2603,6 @@ export default function BatalhaNaval() {
       justifyContent: "center",
       padding: "12px 0",
     }}>
-      {/* Top ad - hidden during battle */}
-      {!isBattleScreen && screen !== "paused" && (
-        <AdBanner slot="batalha-naval_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
-      )}
 
       {/* Game container */}
       <div style={{
@@ -3192,8 +3186,6 @@ export default function BatalhaNaval() {
         )}
       </div>
 
-      {/* Bottom ad */}
-      <AdBanner slot="batalha-naval_bottom" style={{ marginTop: 16, maxWidth: GAME_W }} />
     </div>
   );
 }

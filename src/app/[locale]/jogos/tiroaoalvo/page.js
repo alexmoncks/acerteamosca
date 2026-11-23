@@ -1,6 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
+import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -15,13 +18,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["tiro ao alvo", "skeet shooting online", "tiro ao prato", "jogo de tiro grátis", "tiro ao alvo navegador", "jogo de reflexo online"]
       : ["target shooter online", "skeet shooting game", "clay pigeon game", "shooting game free", "reflex game browser", "target shooting online"],
-    alternates: {
-      canonical: "/jogos/tiroaoalvo",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/tiroaoalvo",
-        "en": "https://nailedthefly.com/en/jogos/tiroaoalvo",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/tiroaoalvo"),
     openGraph: {
       title: isPt ? "Tiro ao Alvo Online - Jogue Grátis" : "Target Shooter Online - Play Free",
       description: isPt
@@ -29,7 +26,7 @@ export async function generateMetadata({ params }) {
         : "Hit the clay disks with perfect timing! Two buttons, pure reflex. Free in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/tiroaoalvo"
-        : "https://nailedthefly.com/en/jogos/tiroaoalvo",
+        : "https://nailedthefly.com/jogos/tiroaoalvo",
     },
   };
 }
@@ -45,7 +42,7 @@ function buildJsonLd(locale) {
       : "Play Target Shooter online for free! Browser skeet shooting with clay disks and pure timing gameplay.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/tiroaoalvo"
-      : "https://nailedthefly.com/en/jogos/tiroaoalvo",
+      : "https://nailedthefly.com/jogos/tiroaoalvo",
     genre: ["Arcade", "Sports"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",
@@ -147,10 +144,11 @@ export default async function TiroAoAlvoPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />
+      <AdBanner placement="game_footer" />
     </>
   );
 }

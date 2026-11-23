@@ -1,6 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
+import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -15,13 +18,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["bubble shooter online", "bubble shooter grátis", "jogo de bolhas", "estoura bolhas", "bubble shooter navegador", "puzzle bubble"]
       : ["bubble shooter online", "bubble shooter free", "bubble game", "pop bubbles", "bubble shooter browser", "puzzle bubble"],
-    alternates: {
-      canonical: "/jogos/bubbleshooter",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/bubbleshooter",
-        "en": "https://nailedthefly.com/en/jogos/bubbleshooter",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/bubbleshooter"),
     openGraph: {
       title: isPt ? "Bubble Shooter Online - Jogue Grátis" : "Bubble Shooter Online - Play Free",
       description: isPt
@@ -29,7 +26,7 @@ export async function generateMetadata({ params }) {
         : "Aim and pop colored bubbles! Classic bubble shooter game free online in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/bubbleshooter"
-        : "https://nailedthefly.com/en/jogos/bubbleshooter",
+        : "https://nailedthefly.com/jogos/bubbleshooter",
     },
   };
 }
@@ -45,7 +42,7 @@ function buildJsonLd(locale) {
       : "Play Bubble Shooter online for free! Aim and shoot bubbles to form groups of 3+ same color and pop them.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/bubbleshooter"
-      : "https://nailedthefly.com/en/jogos/bubbleshooter",
+      : "https://nailedthefly.com/jogos/bubbleshooter",
     genre: ["Arcade", "Puzzle"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",
@@ -147,10 +144,11 @@ export default async function BubbleShooterPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />
+      <AdBanner placement="game_footer" />
     </>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -2248,9 +2247,6 @@ export default function BrickBreaker() {
         }
       `}</style>
 
-      {!isPlaying && (
-        <AdBanner slot="brickbreaker_top" style={{ marginBottom: 12, maxWidth: CW }} />
-      )}
 
       {screen !== "menu" && !selectWorld && !showHowTo && !showTutorial && (
         <>
@@ -3109,7 +3105,6 @@ export default function BrickBreaker() {
                 {t("menu")}
               </button>
 
-              <AdBanner slot="brickbreaker_between" style={{ marginTop: 12, maxWidth: 300 }} />
             </div>
           )}
 
@@ -3234,7 +3229,6 @@ export default function BrickBreaker() {
         </div>
       )}
 
-      <AdBanner slot="brickbreaker_bottom" style={{ marginTop: 16, maxWidth: CW }} />
     </div>
   );
 }

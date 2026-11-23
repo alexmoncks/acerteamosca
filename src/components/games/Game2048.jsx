@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -1344,10 +1343,6 @@ export default function Game2048() {
         />
       )}
 
-      {/* Top ad - hidden during active play */}
-      {screen !== "playing" && screen !== "online-playing" && (
-        <AdBanner slot="2048_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
-      )}
 
       {/* Game container */}
       <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
@@ -1594,7 +1589,6 @@ export default function Game2048() {
                   >
                     {t("playAgain")}
                   </button>
-                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
 
@@ -1656,7 +1650,6 @@ export default function Game2048() {
                   >
                     {t("playAgain")}
                   </button>
-                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
             </div>
@@ -1999,7 +1992,6 @@ export default function Game2048() {
                   >
                     {t("menu")}
                   </button>
-                  <AdBanner slot="2048_between" style={{ marginTop: 12, maxWidth: 300 }} />
                 </div>
               )}
             </div>
@@ -2011,10 +2003,6 @@ export default function Game2048() {
       </div>
       </div>
 
-      {/* Ad Banner */}
-      <div style={{ marginTop: 16 }}>
-        <AdBanner slot="2048_bottom" />
-      </div>
     </div>
   );
 }

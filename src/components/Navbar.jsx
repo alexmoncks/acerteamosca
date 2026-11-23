@@ -1,18 +1,27 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { SITE_HOST, localeUrl } from "@/lib/seo";
 
 export default function Navbar() {
   const t = useTranslations("navbar");
   const locale = useLocale();
   const pathname = usePathname();
-  const router = useRouter();
   const isHome = pathname === "/";
+  const nextLocale = locale === "pt" ? "en" : "pt";
 
-  const switchLocale = () => {
-    const next = locale === "pt" ? "en" : "pt";
-    router.replace(pathname, { locale: next });
+  // Cada idioma mora no próprio domínio, então trocar de idioma é trocar de
+  // site: o link sai absoluto (é o que o buscador e quem não tem JS veem).
+  // Fora dos domínios de produção (localhost, prévia) os dois idiomas estão
+  // no mesmo host, em "/" e "/en", e o clique fica nele.
+  const switchHref = localeUrl(nextLocale, pathname);
+  const onSwitchClick = (e) => {
+    const host = window.location.hostname.replace(/^www\./, "");
+    if (host === SITE_HOST.pt || host === SITE_HOST.en) return;
+    e.preventDefault();
+    const rest = pathname === "/" ? "" : pathname;
+    window.location.assign(nextLocale === "en" ? `/en${rest}` : rest || "/");
   };
 
   return (
@@ -70,8 +79,12 @@ export default function Navbar() {
           </Link>
         )}
 
-        <button
-          onClick={switchLocale}
+        <a
+          href={switchHref}
+          hrefLang={nextLocale === "pt" ? "pt-BR" : "en"}
+          lang={nextLocale === "pt" ? "pt-BR" : "en"}
+          aria-label={nextLocale === "pt" ? "Versão em português" : "English version"}
+          onClick={onSwitchClick}
           style={{
             display: "flex",
             alignItems: "center",
@@ -85,10 +98,11 @@ export default function Navbar() {
             fontSize: 7,
             cursor: "pointer",
             transition: "all 0.2s",
+            textDecoration: "none",
           }}
         >
           {locale === "pt" ? "EN" : "PT"}
-        </button>
+        </a>
       </div>
     </nav>
   );

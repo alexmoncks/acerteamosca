@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -1152,7 +1151,6 @@ function FinishedScreen({ moves, timer, totalPairs, difficulty, timedMode, timed
           {t("changeDifficulty")}
         </button>
       </div>
-      <AdBanner slot="memory_between" style={{ marginTop: 12, maxWidth: 300 }} />
     </div>
   );
 }
@@ -1342,7 +1340,6 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
           {t("mainMenu")}
         </button>
       </div>
-      <AdBanner slot="memory_between" style={{ marginTop: 12, maxWidth: 300 }} />
     </div>
   );
 }
@@ -1928,10 +1925,6 @@ export default function MemoryGame() {
         />
       )}
 
-      {/* Top ad - hidden during active play */}
-      {screen !== "playing" && screen !== "online-playing" && (
-        <AdBanner slot="memory_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
-      )}
 
       {/* Title H1 above game area */}
       {screen !== "menu" && (
@@ -2169,8 +2162,6 @@ export default function MemoryGame() {
         </div>
       </div>
 
-      {/* Ad Banner */}
-      <AdBanner slot="memory_bottom" style={{ marginTop: 16, maxWidth: GAME_W }} />
     </div>
   );
 }

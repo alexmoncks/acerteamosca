@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
 import useGameScale from "@/hooks/useGameScale";
@@ -688,10 +687,6 @@ export default function WordleBR() {
         </div>
       )}
 
-      {/* Top ad - hidden during active play */}
-      {gameStatus !== "playing" && (
-        <AdBanner slot="wordle_top" style={{ marginBottom: 12, maxWidth: GAME_W }} />
-      )}
 
       {/* Title above game area */}
       {hasStarted && (
@@ -837,7 +832,6 @@ export default function WordleBR() {
                   fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace",
                 }}>{t("newWordButton")}</button>
               </div>
-              <AdBanner slot="wordle_between" style={{ marginTop: 4, maxWidth: 300 }} />
             </div>
           )}
 
@@ -886,7 +880,6 @@ export default function WordleBR() {
         </div>
       )}
 
-      <AdBanner slot="wordle_bottom" style={{ marginTop: 16, maxWidth: GAME_W }} />
     </div>
   );
 }

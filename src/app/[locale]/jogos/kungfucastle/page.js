@@ -1,6 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
 import GameClient from "./GameClient";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -27,13 +29,10 @@ export async function generateMetadata({ params }) {
     // PARA PUBLICAR: apague este bloco `robots`, acrescente a rota ao
     // src/app/sitemap.js e o card ao menu em src/app/[locale]/page.js.
     robots: { index: false, follow: false },
-    alternates: {
-      canonical: "/jogos/kungfucastle",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/kungfucastle",
-        "en": "https://nailedthefly.com/en/jogos/kungfucastle",
-      },
-    },
+    // Só o canonical, sem hreflang: página noindex não entra em grupo de
+    // idiomas (o Google ignora o par e o sitemap não a lista). Ao publicar,
+    // volte para pageAlternates(locale, "/jogos/kungfucastle").
+    alternates: { canonical: localeUrl(locale, "/jogos/kungfucastle") },
     openGraph: {
       title: isPt ? "Kung Fu Castle - Beat-em-up Online Grátis" : "Kung Fu Castle - Free Beat-em-up Online",
       description: isPt
@@ -41,7 +40,7 @@ export async function generateMetadata({ params }) {
         : "Climb the castle floor by floor beating up minions and bosses! Free in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/kungfucastle"
-        : "https://nailedthefly.com/en/jogos/kungfucastle",
+        : "https://nailedthefly.com/jogos/kungfucastle",
     },
   };
 }
@@ -57,7 +56,7 @@ function buildJsonLd(locale) {
       : "Side-scroll beat-em-up where you climb the castle floor by floor, defeating minions and brutal bosses. Free online in your browser.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/kungfucastle"
-      : "https://nailedthefly.com/en/jogos/kungfucastle",
+      : "https://nailedthefly.com/jogos/kungfucastle",
     genre: ["Arcade", "Beat 'em up", "Action"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",
@@ -157,7 +156,7 @@ export default async function KungFuCastlePage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />

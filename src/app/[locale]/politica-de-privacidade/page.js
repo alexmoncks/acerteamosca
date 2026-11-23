@@ -1,93 +1,137 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
+import RichText from "@/components/RichText";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Política de Privacidade | Acerte a Mosca" : "Privacy Policy | Nailed The Fly";
+  const description = isPt
+    ? "Saiba como o Acerte a Mosca coleta, usa e protege suas informações pessoais, conforme a LGPD."
+    : "Learn how Nailed The Fly collects, uses and protects your personal information.";
   return {
-    title: isPt ? "Política de Privacidade | Acerte a Mosca" : "Privacy Policy | Nailed The Fly",
-    description: isPt
-      ? "Saiba como o Acerte a Mosca coleta, usa e protege suas informações pessoais, conforme a LGPD."
-      : "Learn how Nailed The Fly collects, uses and protects your personal information.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/politica-de-privacidade"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/politica-de-privacidade"),
+      siteName: siteName(locale),
+      title,
+      description,
+      // O openGraph da página substitui o do layout por inteiro; sem isto a
+      // página ficaria sem og:image.
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: siteName(locale) }],
+    },
   };
 }
 
+// Revisada em 21/11/2026 para a revisão do AdSense: sai o Adsterra (removido
+// do site em 01/08/2026); entram bases legais (LGPD e GDPR), direitos do
+// titular, cookies de terceiros do Google e o link "Como o Google usa dados
+// de sites parceiros", que a política do AdSense pede.
+const EMAIL = "alex@marramoncks.com.br";
+
 const contentPT = {
   title: "Política de Privacidade",
-  lastUpdated: "Última atualização: 27 de abril de 2026",
+  lastUpdated: "Última atualização: 21 de novembro de 2026",
   intro:
-    "Esta Política de Privacidade descreve como o site Acerte a Mosca (acerteamosca.com.br), operado por MMSoft Digital, coleta, utiliza e protege as informações dos usuários. Ao acessar o site, você concorda com as práticas descritas neste documento.",
+    "Esta Política de Privacidade explica como o Acerte a Mosca (acerteamosca.com.br) e sua versão em inglês, Nailed The Fly (nailedthefly.com), operados pela MMSoft Digital, coletam, usam, compartilham e protegem dados pessoais, em conformidade com a Lei Geral de Proteção de Dados (LGPD, Lei nº 13.709/2018) e, para visitantes do Espaço Econômico Europeu, do Reino Unido e da Suíça, com o Regulamento Geral sobre a Proteção de Dados (GDPR/RGPD).",
   sections: [
     {
-      h: "1. Informações que coletamos",
+      h: "1. Quem é o controlador",
       p: [
-        "Coletamos dois tipos de informação: dados fornecidos voluntariamente por você (como nome, e-mail e WhatsApp ao se cadastrar para salvar pontuações) e dados coletados automaticamente (endereço IP, tipo de navegador, sistema operacional, páginas visitadas e tempo de permanência).",
-        "O cadastro é opcional. Você pode jogar todos os jogos do site sem fornecer qualquer informação pessoal.",
+        `O controlador dos dados é a MMSoft Digital, operada por Alex Marra, em São Paulo, Brasil. Para qualquer assunto de privacidade e proteção de dados, inclusive o exercício dos seus direitos, o canal de contato é ${EMAIL}.`,
       ],
     },
     {
-      h: "2. Como usamos suas informações",
+      h: "2. Dados que coletamos",
       p: [
-        "Usamos os dados coletados para: (a) salvar e exibir rankings de pontuação; (b) melhorar a experiência de jogo e identificar problemas técnicos; (c) exibir publicidade relevante por meio de redes parceiras; (d) responder a contatos enviados por você.",
-        "Não vendemos, alugamos ou cedemos seus dados a terceiros para fins de marketing.",
+        "Dados que você fornece: nome, e-mail e, se quiser, WhatsApp, quando faz o cadastro de jogador pedido por alguns jogos para salvar pontuações e rankings; e o conteúdo das mensagens que você nos envia.",
+        "Dados coletados automaticamente: endereço IP, tipo de navegador e de dispositivo, sistema operacional, páginas visitadas, data e hora de acesso e identificadores de cookies e tecnologias semelhantes, inclusive os usados pelo Google para medir audiência e exibir anúncios (seções 5 e 6).",
+        "Dados guardados só no seu aparelho: preferências e progresso de alguns jogos ficam no armazenamento local do navegador (localStorage) e não são enviados para nós.",
       ],
     },
     {
-      h: "3. Cookies e tecnologias semelhantes",
+      h: "3. Para que usamos os dados e com qual base legal",
       p: [
-        "Utilizamos cookies para lembrar suas preferências (idioma, consentimento LGPD), medir o desempenho do site e personalizar anúncios.",
-        "Você pode desabilitar cookies nas configurações do seu navegador. A desabilitação pode prejudicar o funcionamento de algumas funcionalidades, como salvar pontuações.",
+        "• Cadastro de jogador, pontuações e rankings — base legal: consentimento, dado na caixa de seleção do cadastro (LGPD, art. 7º, I; GDPR, art. 6(1)(a)). O cookie técnico acerteamosca_jogador (válido por 1 ano) mantém você identificado depois do cadastro.",
+        "• Funcionamento, segurança e prevenção de abuso do site, incluindo registros de acesso — base legal: legítimo interesse (LGPD, art. 7º, IX; GDPR, art. 6(1)(f)) e cumprimento de obrigação legal quando aplicável (Marco Civil da Internet, Lei nº 12.965/2014).",
+        "• Medição de audiência (Google Analytics) e exibição de anúncios (Google AdSense) — base legal: legítimo interesse (LGPD, art. 7º, IX), sempre com as opções de recusa da seção 6. Para visitantes do EEE, do Reino Unido e da Suíça, cookies de publicidade personalizada dependem de consentimento (GDPR, art. 6(1)(a)); sem ele, o Google exibe apenas anúncios não personalizados ou limitados.",
+        "• Responder às mensagens que você envia — base legal: legítimo interesse e, quando for o caso, exercício regular de direitos.",
+        "Não vendemos nem alugamos dados pessoais.",
       ],
     },
     {
-      h: "4. Google AdSense e cookies DART",
+      h: "4. Cookies e tecnologias semelhantes",
       p: [
-        "Este site é parceiro do Google AdSense. O Google, na qualidade de fornecedor terceiro, utiliza cookies (incluindo o cookie DART) para exibir anúncios em nosso site com base nas visitas anteriores que você fez a este e a outros sites na Internet.",
-        "Você pode desativar o uso do cookie DART acessando a Política de Privacidade da rede de conteúdo e dos anúncios do Google: https://policies.google.com/technologies/ads",
+        "Usamos cookies e armazenamento local para manter o cadastro de jogador, lembrar preferências, medir a audiência e exibir anúncios. Cookies de terceiros são definidos pelo Google nos domínios dele, conforme as seções 5 e 6.",
+        "Você pode bloquear ou apagar cookies nas configurações do navegador. Bloquear cookies pode impedir que pontuações e preferências sejam salvas.",
       ],
     },
     {
-      h: "5. Google Analytics",
+      h: "5. Google AdSense: cookies de publicidade de terceiros",
       p: [
-        "Utilizamos o Google Analytics para entender de forma agregada como os visitantes interagem com o site. Os dados são anonimizados e usados apenas para fins estatísticos.",
-        "Você pode optar por não ser rastreado instalando o Google Analytics Opt-out Browser Add-on: https://tools.google.com/dlpage/gaoptout",
+        "Este site exibe anúncios do Google AdSense. Fornecedores terceiros, incluindo o Google, usam cookies para veicular anúncios com base em visitas anteriores do usuário a este e a outros sites.",
+        "Com os cookies de publicidade, o Google e os parceiros dele podem veicular anúncios para você com base nas suas visitas a este e/ou a outros sites na Internet.",
+        "Saiba como o Google usa dados de sites e apps parceiros: https://policies.google.com/technologies/partner-sites",
+        "Política de publicidade do Google: https://policies.google.com/technologies/ads",
       ],
     },
     {
-      h: "6. Seus direitos sob a LGPD",
+      h: "6. Como recusar anúncios personalizados e medição",
       p: [
-        "Em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você tem o direito de: (a) acessar os dados que mantemos sobre você; (b) corrigir dados incorretos; (c) solicitar a exclusão dos seus dados; (d) revogar o consentimento a qualquer momento; (e) solicitar a portabilidade dos dados.",
-        "Para exercer qualquer um desses direitos, entre em contato pelo e-mail indicado na página de Contato.",
+        "Você pode desativar a publicidade personalizada nas Configurações de anúncios do Google: https://adssettings.google.com",
+        "Para desativar cookies de publicidade personalizada de outros fornecedores: https://www.aboutads.info/choices (e, na Europa, https://www.youronlinechoices.eu).",
+        "Para não ser medido pelo Google Analytics, use o complemento de desativação: https://tools.google.com/dlpage/gaoptout",
+        "Se você recusar, ainda poderá ver anúncios, mas eles não serão personalizados com base no seu histórico.",
       ],
     },
     {
-      h: "7. Compartilhamento com terceiros",
+      h: "7. Compartilhamento e transferência internacional",
       p: [
-        "Compartilhamos dados apenas com prestadores de serviço necessários para a operação do site (ex.: provedores de hospedagem, Google AdSense, Google Analytics, redes de publicidade Adsterra). Esses parceiros possuem suas próprias políticas de privacidade.",
+        "Compartilhamos dados apenas com os fornecedores necessários para operar o site: hospedagem e banco de dados (Railway), rede de distribuição e segurança (Cloudflare) e Google (AdSense e Analytics). Cada um tem a própria política de privacidade.",
+        "Esses fornecedores podem tratar dados fora do Brasil, inclusive nos Estados Unidos. A transferência internacional se apoia nas garantias contratuais oferecidas por eles, como as cláusulas-padrão, nos termos do art. 33 da LGPD e do capítulo V do GDPR.",
       ],
     },
     {
-      h: "8. Segurança",
+      h: "8. Por quanto tempo guardamos os dados",
       p: [
-        "Adotamos medidas técnicas e administrativas para proteger seus dados contra acesso não autorizado, perda ou alteração, incluindo criptografia em trânsito (HTTPS) e armazenamento em servidores com controle de acesso.",
+        "Os dados do cadastro de jogador e as pontuações ficam guardados enquanto o cadastro existir ou até você pedir a exclusão. Registros de acesso são guardados pelo prazo exigido em lei. Mensagens de contato são guardadas pelo tempo necessário para o atendimento.",
       ],
     },
     {
-      h: "9. Crianças",
+      h: "9. Seus direitos (LGPD e GDPR)",
       p: [
-        "O site é destinado ao público geral. Não coletamos intencionalmente dados de menores de 13 anos. Se você é responsável por uma criança e identificou coleta de dados, entre em contato para que possamos remover.",
+        "Você pode, a qualquer momento: confirmar se tratamos seus dados e acessá-los; corrigir dados incompletos ou incorretos; pedir anonimização, bloqueio ou eliminação de dados desnecessários; pedir a portabilidade; pedir a eliminação dos dados tratados com consentimento; saber com quem compartilhamos seus dados; revogar o consentimento; e se opor a tratamento baseado em legítimo interesse (LGPD, art. 18).",
+        "Visitantes do EEE, Reino Unido e Suíça têm ainda os direitos de limitação do tratamento e de oposição previstos nos artigos 15 a 22 do GDPR.",
+        `Para exercer seus direitos, escreva para ${EMAIL} com o assunto \"LGPD\" ou \"GDPR\". Responderemos em até 15 dias. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD, https://www.gov.br/anpd) ou, na Europa, à autoridade de proteção de dados do seu país.`,
       ],
     },
     {
-      h: "10. Alterações desta Política",
+      h: "10. Segurança",
       p: [
-        "Podemos atualizar esta Política periodicamente. A data da última atualização será sempre exibida no topo. Recomendamos revisar este documento regularmente.",
+        "Adotamos medidas técnicas e administrativas para proteger os dados contra acesso não autorizado, perda ou alteração, incluindo criptografia em trânsito (HTTPS) e acesso restrito ao banco de dados.",
       ],
     },
     {
-      h: "11. Contato",
+      h: "11. Crianças",
       p: [
-        "Dúvidas sobre privacidade? Escreva para alex@marramoncks.com.br ou utilize a página de Contato.",
+        "O site é destinado ao público em geral. Não coletamos intencionalmente dados de menores de 13 anos. Se você é responsável por uma criança e identificou um cadastro dela, escreva para nós e removeremos os dados.",
+      ],
+    },
+    {
+      h: "12. Alterações desta Política",
+      p: [
+        "Podemos atualizar esta Política. A data da última atualização fica sempre no topo da página.",
+      ],
+    },
+    {
+      h: "13. Contato",
+      p: [
+        `Dúvidas sobre privacidade? Escreva para ${EMAIL} ou use a página de Contato.`,
       ],
     },
   ],
@@ -95,80 +139,102 @@ const contentPT = {
 
 const contentEN = {
   title: "Privacy Policy",
-  lastUpdated: "Last updated: April 27, 2026",
+  lastUpdated: "Last updated: November 21, 2026",
   intro:
-    "This Privacy Policy describes how Nailed The Fly (nailedthefly.com / acerteamosca.com.br), operated by MMSoft Digital, collects, uses and protects user information. By accessing the site, you agree to the practices described in this document.",
+    "This Privacy Policy explains how Nailed The Fly (nailedthefly.com) and its Portuguese version, Acerte a Mosca (acerteamosca.com.br), operated by MMSoft Digital, collect, use, share and protect personal data, in accordance with Brazil's General Data Protection Law (LGPD, Law No. 13,709/2018) and, for visitors from the European Economic Area, the United Kingdom and Switzerland, the General Data Protection Regulation (GDPR).",
   sections: [
     {
-      h: "1. Information we collect",
+      h: "1. Who the controller is",
       p: [
-        "We collect two types of information: data you voluntarily provide (such as name, email and WhatsApp when registering to save scores) and data collected automatically (IP address, browser type, operating system, pages visited and time spent).",
-        "Registration is optional. You may play all games on the site without providing any personal information.",
+        `The data controller is MMSoft Digital, operated by Alex Marra, in São Paulo, Brazil. For any privacy or data protection matter, including exercising your rights, contact ${EMAIL}.`,
       ],
     },
     {
-      h: "2. How we use your information",
+      h: "2. Data we collect",
       p: [
-        "We use the data collected to: (a) save and display score rankings; (b) improve the gaming experience and identify technical issues; (c) display relevant advertising through partner networks; (d) respond to messages you send us.",
-        "We do not sell, rent or transfer your data to third parties for marketing purposes.",
+        "Data you provide: name, email and, optionally, WhatsApp, when you create the player registration some games ask for to save scores and rankings; and the content of messages you send us.",
+        "Data collected automatically: IP address, browser and device type, operating system, pages visited, date and time of access, and identifiers from cookies and similar technologies, including those used by Google to measure audience and serve ads (sections 5 and 6).",
+        "Data kept only on your device: preferences and progress in some games are stored in your browser's local storage (localStorage) and are not sent to us.",
       ],
     },
     {
-      h: "3. Cookies and similar technologies",
+      h: "3. Why we use data and on what legal basis",
       p: [
-        "We use cookies to remember your preferences (language, consent), measure site performance and personalize ads.",
-        "You may disable cookies in your browser settings. Disabling them may impair some features, such as saving scores.",
+        "• Player registration, scores and rankings — legal basis: consent, given in the registration checkbox (LGPD, art. 7, I; GDPR, art. 6(1)(a)). The technical cookie acerteamosca_jogador (valid for 1 year) keeps you identified after registering.",
+        "• Operation, security and abuse prevention, including access logs — legal basis: legitimate interests (LGPD, art. 7, IX; GDPR, art. 6(1)(f)) and compliance with legal obligations where applicable (Brazilian Internet Civil Framework, Law No. 12,965/2014).",
+        "• Audience measurement (Google Analytics) and advertising (Google AdSense) — legal basis: legitimate interests (LGPD, art. 7, IX), always with the opt-out options in section 6. For visitors from the EEA, the UK and Switzerland, personalized advertising cookies depend on consent (GDPR, art. 6(1)(a)); without it, Google shows only non-personalized or limited ads.",
+        "• Replying to messages you send — legal basis: legitimate interests and, where applicable, the exercise of legal rights.",
+        "We do not sell or rent personal data.",
       ],
     },
     {
-      h: "4. Google AdSense and DART cookies",
+      h: "4. Cookies and similar technologies",
       p: [
-        "This site is a Google AdSense partner. Google, as a third-party vendor, uses cookies (including the DART cookie) to serve ads on our site based on your prior visits to this and other websites.",
-        "You may opt out of the use of the DART cookie by visiting the Google ad and content network privacy policy: https://policies.google.com/technologies/ads",
+        "We use cookies and local storage to keep your player registration, remember preferences, measure audience and serve ads. Third-party cookies are set by Google on its own domains, as described in sections 5 and 6.",
+        "You can block or delete cookies in your browser settings. Blocking cookies may prevent scores and preferences from being saved.",
       ],
     },
     {
-      h: "5. Google Analytics",
+      h: "5. Google AdSense: third-party advertising cookies",
       p: [
-        "We use Google Analytics to understand in aggregate form how visitors interact with the site. The data is anonymized and used only for statistical purposes.",
-        "You may opt out of being tracked by installing the Google Analytics Opt-out Browser Add-on: https://tools.google.com/dlpage/gaoptout",
+        "This site shows ads from Google AdSense. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this website or other websites.",
+        "Google's use of advertising cookies enables it and its partners to serve ads to you based on your visits to this site and/or other sites on the Internet.",
+        "Learn how Google uses data from sites or apps that use its services: https://policies.google.com/technologies/partner-sites",
+        "Google's advertising policy: https://policies.google.com/technologies/ads",
       ],
     },
     {
-      h: "6. Your rights",
+      h: "6. How to opt out of personalized ads and measurement",
       p: [
-        "Subject to applicable law (including Brazil's LGPD for users in Brazil and GDPR-style protections elsewhere), you have the right to: (a) access the data we hold about you; (b) correct inaccurate data; (c) request deletion of your data; (d) withdraw consent at any time; (e) request data portability.",
-        "To exercise any of these rights, contact us at the email shown on the Contact page.",
+        "You can opt out of personalized advertising in Google's Ads Settings: https://adssettings.google.com",
+        "To opt out of other vendors' cookies for personalized advertising: https://www.aboutads.info/choices (and, in Europe, https://www.youronlinechoices.eu).",
+        "To opt out of Google Analytics measurement, use the opt-out add-on: https://tools.google.com/dlpage/gaoptout",
+        "If you opt out, you may still see ads, but they will not be personalized based on your browsing history.",
       ],
     },
     {
-      h: "7. Sharing with third parties",
+      h: "7. Sharing and international transfers",
       p: [
-        "We share data only with service providers necessary to operate the site (e.g., hosting providers, Google AdSense, Google Analytics, Adsterra advertising networks). These partners have their own privacy policies.",
+        "We share data only with the providers needed to run the site: hosting and database (Railway), content delivery and security (Cloudflare) and Google (AdSense and Analytics). Each has its own privacy policy.",
+        "These providers may process data outside Brazil, including in the United States. International transfers rely on the contractual safeguards they offer, such as standard contractual clauses, under article 33 of the LGPD and chapter V of the GDPR.",
       ],
     },
     {
-      h: "8. Security",
+      h: "8. How long we keep data",
       p: [
-        "We adopt technical and administrative measures to protect your data against unauthorized access, loss or alteration, including in-transit encryption (HTTPS) and storage on servers with access control.",
+        "Player registration data and scores are kept while the registration exists or until you ask for deletion. Access logs are kept for the period required by law. Contact messages are kept for as long as needed to handle your request.",
       ],
     },
     {
-      h: "9. Children",
+      h: "9. Your rights (LGPD and GDPR)",
       p: [
-        "The site is intended for general audiences. We do not knowingly collect data from children under 13. If you are a guardian and identify data collection, contact us so we can remove it.",
+        "At any time you may: confirm whether we process your data and access it; correct incomplete or inaccurate data; request anonymization, blocking or deletion of unnecessary data; request portability; request deletion of data processed on the basis of consent; learn with whom we share your data; withdraw consent; and object to processing based on legitimate interests (LGPD, art. 18).",
+        "Visitors from the EEA, UK and Switzerland also have the rights to restriction of processing and to object under articles 15 to 22 of the GDPR.",
+        `To exercise your rights, write to ${EMAIL} with the subject \"LGPD\" or \"GDPR\". We will reply within 15 days. You may also lodge a complaint with Brazil's National Data Protection Authority (ANPD, https://www.gov.br/anpd) or, in Europe, with the data protection authority of your country.`,
       ],
     },
     {
-      h: "10. Changes to this Policy",
+      h: "10. Security",
       p: [
-        "We may update this Policy periodically. The date of the latest update will always be displayed at the top. We recommend reviewing this document regularly.",
+        "We adopt technical and administrative measures to protect data against unauthorized access, loss or alteration, including in-transit encryption (HTTPS) and restricted access to the database.",
       ],
     },
     {
-      h: "11. Contact",
+      h: "11. Children",
       p: [
-        "Questions about privacy? Write to alex@marramoncks.com.br or use the Contact page.",
+        "The site is intended for a general audience. We do not knowingly collect data from children under 13. If you are a guardian and find that your child registered, write to us and we will delete the data.",
+      ],
+    },
+    {
+      h: "12. Changes to this Policy",
+      p: [
+        "We may update this Policy. The date of the latest update is always shown at the top of the page.",
+      ],
+    },
+    {
+      h: "13. Contact",
+      p: [
+        `Questions about privacy? Write to ${EMAIL} or use the Contact page.`,
       ],
     },
   ],
@@ -183,13 +249,13 @@ export default async function PrivacyPage({ params }) {
     <article style={pageStyle}>
       <h1 style={titleStyle}>{c.title}</h1>
       <p style={metaStyle}>{c.lastUpdated}</p>
-      <p style={pStyle}>{c.intro}</p>
+      <p style={pStyle}><RichText text={c.intro} /></p>
       {c.sections.map((s, i) => (
         <section key={i} style={sectionStyle}>
           <h2 style={h2Style}>{s.h}</h2>
           {s.p.map((para, j) => (
             <p key={j} style={pStyle}>
-              {para}
+              <RichText text={para} />
             </p>
           ))}
         </section>

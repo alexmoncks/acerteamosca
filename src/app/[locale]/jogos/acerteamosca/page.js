@@ -1,6 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
+import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -15,13 +18,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["acerte a mosca", "matar mosca", "jogo de reflexo", "whack a mole", "jogo grátis online", "acerte a mosca no navegador"]
       : ["nailed the fly", "swat the fly", "reflex game", "whack a mole", "free online game", "browser arcade"],
-    alternates: {
-      canonical: "/jogos/acerteamosca",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/acerteamosca",
-        "en": "https://nailedthefly.com/en/jogos/acerteamosca",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/acerteamosca"),
     openGraph: {
       title: isPt ? "Acerte a Mosca - Jogue Grátis Online" : "Nailed The Fly - Play Free Online",
       description: isPt
@@ -29,7 +26,7 @@ export async function generateMetadata({ params }) {
         : "Swat the fly with a flip-flop before it disappears! Free reflex game in your browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/acerteamosca"
-        : "https://nailedthefly.com/en/jogos/acerteamosca",
+        : "https://nailedthefly.com/jogos/acerteamosca",
     },
   };
 }
@@ -45,7 +42,7 @@ function buildJsonLd(locale) {
       : "Swat the annoying fly with a flip-flop before it escapes! Free online reflex game.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/acerteamosca"
-      : "https://nailedthefly.com/en/jogos/acerteamosca",
+      : "https://nailedthefly.com/jogos/acerteamosca",
     genre: ["Arcade", "Action"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",
@@ -145,10 +142,11 @@ export default async function AcerteAMoscaPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />
+      <AdBanner placement="game_footer" />
     </>
   );
 }

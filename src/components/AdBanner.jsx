@@ -1,54 +1,86 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
+import { isValidAdClient, isValidAdSlot } from "@/lib/ads";
 
-export default function AdBanner({ slot, format = "auto", responsive = true, style }) {
-  const adRef = useRef(null);
+// Unidade manual do AdSense.
+//
+// O site usa Anúncios Automáticos (só o script no <head>, em
+// src/app/[locale]/layout.js). Unidade manual é opcional e só existe com ID
+// NUMÉRICO de bloco vindo do ambiente; sem ele, não renderiza nada.
+//
+// As variáveis precisam estar escritas por extenso: o Next só embute no
+// bundle do navegador o process.env.NEXT_PUBLIC_* citado literalmente.
+const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_ID;
+const SLOTS = {
+  // Home: entre o destaque e a grade de jogos, e depois do FAQ.
+  home_top: process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP,
+  home_bottom: process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM,
+  // Páginas de jogo: depois do texto editorial (GameInfo), longe do canvas,
+  // dos controles de toque e dos botões de fim de jogo.
+  game_footer: process.env.NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER,
+};
+
+export function adSlotFor(placement) {
+  const slot = SLOTS[placement];
+  return isValidAdSlot(slot) ? slot.trim() : null;
+}
+
+// Regras de colocação (política do AdSense sobre cliques acidentais):
+//   - nunca dentro do jogo nem colado em botão ou controle: a margem mínima
+//     de 48px e o rótulo "Publicidade" separam o bloco do resto da página;
+//   - o bloco não é escondido nem "colapsado" à mão (nada de opacity 0 ou
+//     max-height 0): bloco sem anúncio some pelo CSS suportado pelo Google,
+//     ins.adsbygoogle[data-ad-status="unfilled"], em globals.css.
+export default function AdBanner({ placement, style }) {
+  const t = useTranslations("common");
   const pushed = useRef(false);
-  const [hasAd, setHasAd] = useState(false);
+  const slot = adSlotFor(placement);
+  const enabled = isValidAdClient(CLIENT) && slot !== null;
 
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_ADSENSE_ID || pushed.current) return;
+    if (!enabled || pushed.current) return;
+    pushed.current = true;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
-      pushed.current = true;
     } catch {}
+  }, [enabled]);
 
-    // Check if ad rendered after a delay
-    const timer = setTimeout(() => {
-      if (adRef.current) {
-        const ins = adRef.current.querySelector("ins");
-        if (ins && ins.offsetHeight > 0) {
-          setHasAd(true);
-        }
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!process.env.NEXT_PUBLIC_ADSENSE_ID) return null;
+  if (!enabled) return null;
 
   return (
-    <div
-      ref={adRef}
+    <aside
+      className="ad-slot"
+      aria-label={t("adLabel")}
       style={{
+        width: "100%",
+        maxWidth: 900,
+        margin: "48px auto",
         textAlign: "center",
-        overflow: "hidden",
-        minHeight: hasAd ? 90 : 0,
-        maxHeight: hasAd ? 400 : 0,
-        opacity: hasAd ? 1 : 0,
-        transition: "all 0.3s",
         ...style,
       }}
     >
+      <div
+        style={{
+          fontFamily: "'Fira Code', monospace",
+          fontSize: 10,
+          letterSpacing: 1,
+          color: "#4a5568",
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {t("adLabel")}
+      </div>
       <ins
         className="adsbygoogle"
         style={{ display: "block" }}
-        data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_ID}
+        data-ad-client={CLIENT.trim()}
         data-ad-slot={slot}
-        data-ad-format={format}
-        data-full-width-responsive={responsive ? "true" : "false"}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
       />
-    </div>
+    </aside>
   );
 }

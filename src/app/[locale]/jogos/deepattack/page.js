@@ -1,6 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
+import { pageAlternates } from "@/lib/seo";
 import GameInfo from "@/components/GameInfo";
+import AdBanner from "@/components/AdBanner";
 import GameClient from "./GameClient";
+import { jsonLdHtml } from "@/lib/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -15,13 +18,7 @@ export async function generateMetadata({ params }) {
     keywords: isPt
       ? ["deep attack", "jogo de nave", "space shooter", "river raid online", "nave espacial online grátis", "jogo de tiro online"]
       : ["deep attack", "space shooter", "river raid style", "vertical scrolling shooter", "free browser game online"],
-    alternates: {
-      canonical: "/jogos/deepattack",
-      languages: {
-        "pt-BR": "https://acerteamosca.com.br/jogos/deepattack",
-        "en": "https://nailedthefly.com/en/jogos/deepattack",
-      },
-    },
+    alternates: pageAlternates(locale, "/jogos/deepattack"),
     openGraph: {
       title: isPt ? "Deep Attack — Nave Espacial Online Grátis" : "Deep Attack — Free Online Space Shooter",
       description: isPt
@@ -29,7 +26,7 @@ export async function generateMetadata({ params }) {
         : "Destroy aliens and survive the space corridor! River Raid-style, free in browser.",
       url: isPt
         ? "https://acerteamosca.com.br/jogos/deepattack"
-        : "https://nailedthefly.com/en/jogos/deepattack",
+        : "https://nailedthefly.com/jogos/deepattack",
     },
   };
 }
@@ -45,7 +42,7 @@ function buildJsonLd(locale) {
       : "Pilot your ship through the space corridor, destroy aliens and survive! Free online River Raid-style game.",
     url: isPt
       ? "https://acerteamosca.com.br/jogos/deepattack"
-      : "https://nailedthefly.com/en/jogos/deepattack",
+      : "https://nailedthefly.com/jogos/deepattack",
     genre: ["Arcade", "Shooter"],
     gamePlatform: "Web Browser",
     operatingSystem: "Any",
@@ -147,10 +144,11 @@ export default async function DeepAttackPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <GameClient />
       <GameInfo content={content} locale={locale} />
+      <AdBanner placement="game_footer" />
     </>
   );
 }

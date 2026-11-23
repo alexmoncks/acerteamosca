@@ -1,10 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
-const STORAGE_KEY = "acerteamosca_cookie_consent";
+// Aviso de cookies: só informa e aponta para a política. NÃO é coleta de
+// consentimento. Pela política de privacidade, anúncios e medição usam
+// legítimo interesse no Brasil (com opção de recusa) e, no EEE/Reino Unido/
+// Suíça, o consentimento é pedido pela mensagem do Google (Privacidade e
+// mensagens do AdSense). Por isso nada de "ao continuar navegando você
+// concorda" nem de botão "aceitar". A CMP e o Consent Mode v2 no código são o
+// lote 2, que depende de aprovação.
+// _v2: quem fechou o aviso antigo (que presumia consentimento) vê o texto
+// corrigido uma vez.
+const STORAGE_KEY = "acerteamosca_cookie_notice_v2";
 
 export default function CookieConsent() {
+  const t = useTranslations("cookieConsent");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -14,8 +26,8 @@ export default function CookieConsent() {
     }
   }, []);
 
-  function accept() {
-    localStorage.setItem(STORAGE_KEY, "accepted");
+  function dismiss() {
+    localStorage.setItem(STORAGE_KEY, "dismissed");
     setVisible(false);
   }
 
@@ -23,6 +35,8 @@ export default function CookieConsent() {
 
   return (
     <div
+      role="region"
+      aria-label={t("label")}
       style={{
         position: "fixed",
         bottom: 0,
@@ -50,15 +64,15 @@ export default function CookieConsent() {
           fontFamily: "'Fira Code', monospace",
         }}
       >
-        Este site utiliza cookies e tecnologias semelhantes para melhorar sua
-        {" "}experiência, personalizar publicidade e analisar o tráfego, conforme a{" "}
-        <strong style={{ color: "#ccd6f6" }}>
-          Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018)
-        </strong>
-        . Ao continuar navegando, você concorda com o uso de cookies.
+        {t("text")}{" "}
+        <Link href="/politica-de-privacidade" style={{ color: "#ccd6f6", textDecoration: "underline" }}>
+          {t("policy")}
+        </Link>
+        .
       </p>
       <button
-        onClick={accept}
+        type="button"
+        onClick={dismiss}
         style={{
           background: "#00f0ff",
           color: "#050510",
@@ -72,7 +86,7 @@ export default function CookieConsent() {
           fontWeight: "bold",
         }}
       >
-        ACEITAR
+        {t("ok")}
       </button>
     </div>
   );

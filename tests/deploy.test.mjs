@@ -78,3 +78,18 @@ check("the build never needs a real database", () => {
   assert.match(pkg.scripts.build, /prisma generate/);
   assert.match(DOCKERFILE, /DATABASE_URL="postgresql:\/\/placeholder/);
 });
+
+check("every NEXT_PUBLIC_* of the ads and analytics is a build ARG/ENV in the Dockerfile", () => {
+  // NEXT_PUBLIC_* entram no bundle no build; no Railway as variáveis do
+  // serviço só chegam ao `next build` se o Dockerfile declarar ARG e ENV.
+  for (const v of [
+    "NEXT_PUBLIC_ADSENSE_ID",
+    "NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP",
+    "NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM",
+    "NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER",
+    "NEXT_PUBLIC_GA_ID",
+  ]) {
+    assert.ok(new RegExp(`^ARG ${v}(=""|$)`, "m").test(DOCKERFILE), `Dockerfile sem ARG ${v}`);
+    assert.ok(DOCKERFILE.includes(`${v}=$${v}`), `Dockerfile sem ENV ${v}`);
+  }
+});

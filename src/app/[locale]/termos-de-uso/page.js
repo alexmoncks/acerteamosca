@@ -1,20 +1,36 @@
 import { setRequestLocale } from "next-intl/server";
+import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
+import RichText from "@/components/RichText";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const isPt = locale === "pt";
+  const title = isPt ? "Termos de Uso | Acerte a Mosca" : "Terms of Use | Nailed The Fly";
+  const description = isPt
+    ? "Termos e condições para uso da plataforma de jogos Acerte a Mosca."
+    : "Terms and conditions for using the Nailed The Fly gaming platform.";
   return {
-    title: isPt ? "Termos de Uso | Acerte a Mosca" : "Terms of Use | Nailed The Fly",
-    description: isPt
-      ? "Termos e condições para uso da plataforma de jogos Acerte a Mosca."
-      : "Terms and conditions for using the Nailed The Fly gaming platform.",
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: pageAlternates(locale, "/termos-de-uso"),
+    openGraph: {
+      type: "website",
+      locale: isPt ? "pt_BR" : "en_US",
+      url: localeUrl(locale, "/termos-de-uso"),
+      siteName: siteName(locale),
+      title,
+      description,
+      // O openGraph da página substitui o do layout por inteiro; sem isto a
+      // página ficaria sem og:image.
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: siteName(locale) }],
+    },
   };
 }
 
 const contentPT = {
   title: "Termos de Uso",
-  lastUpdated: "Última atualização: 27 de abril de 2026",
+  lastUpdated: "Última atualização: 21 de novembro de 2026",
   intro:
     "Estes Termos de Uso regulam o acesso e a utilização do site Acerte a Mosca (acerteamosca.com.br). Ao usar o site, você concorda integralmente com estas condições. Se não concordar, por favor não utilize a plataforma.",
   sections: [
@@ -54,7 +70,7 @@ const contentPT = {
     {
       h: "6. Publicidade",
       p: [
-        "O site exibe anúncios de redes parceiras (Google AdSense, Adsterra) para sustentar a operação gratuita. Não nos responsabilizamos pelo conteúdo dos anúncios nem pelos sites de terceiros para os quais os anúncios redirecionam.",
+        "O site exibe anúncios do Google AdSense para sustentar a operação gratuita. Não nos responsabilizamos pelo conteúdo dos anúncios nem pelos sites de terceiros para os quais os anúncios redirecionam.",
       ],
     },
     {
@@ -92,7 +108,7 @@ const contentPT = {
 
 const contentEN = {
   title: "Terms of Use",
-  lastUpdated: "Last updated: April 27, 2026",
+  lastUpdated: "Last updated: November 21, 2026",
   intro:
     "These Terms of Use govern access to and use of Nailed The Fly (nailedthefly.com / acerteamosca.com.br). By using the site, you fully agree to these conditions. If you do not agree, please do not use the platform.",
   sections: [
@@ -132,7 +148,7 @@ const contentEN = {
     {
       h: "6. Advertising",
       p: [
-        "The site displays ads from partner networks (Google AdSense, Adsterra) to sustain free operation. We are not responsible for the content of the ads nor for the third-party sites to which the ads redirect.",
+        "The site displays ads from Google AdSense to sustain free operation. We are not responsible for the content of the ads nor for the third-party sites to which the ads redirect.",
       ],
     },
     {
@@ -177,13 +193,13 @@ export default async function TermsPage({ params }) {
     <article style={pageStyle}>
       <h1 style={titleStyle}>{c.title}</h1>
       <p style={metaStyle}>{c.lastUpdated}</p>
-      <p style={pStyle}>{c.intro}</p>
+      <p style={pStyle}><RichText text={c.intro} /></p>
       {c.sections.map((s, i) => (
         <section key={i} style={sectionStyle}>
           <h2 style={h2Style}>{s.h}</h2>
           {s.p.map((para, j) => (
             <p key={j} style={pStyle}>
-              {para}
+              <RichText text={para} />
             </p>
           ))}
         </section>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import AdBanner from "@/components/AdBanner";
 import RegisterModal from "@/components/RegisterModal";
 import { PongMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
@@ -309,7 +308,6 @@ function PongGameOver({ s1, s2, winner, playerNum, mode, onRestart, onMenu, remo
             {t("opponentWantsRematch")}
           </p>
         )}
-        <AdBanner slot="pong_between" style={{ marginTop: 12, maxWidth: 300 }} />
       </div>
     </div>
   );
@@ -892,10 +890,6 @@ export default function Pong() {
         }
       `}</style>
 
-      {/* Top ad - hidden during active play */}
-      {screen !== "playing" && (
-        <AdBanner slot="pong_top" style={{ marginBottom: 12, maxWidth: CANVAS_W }} />
-      )}
 
       {screen !== "menu" && screen !== "lobby" && (
         <>
@@ -1112,7 +1106,6 @@ export default function Pong() {
       {screen === "playing" && (
         <PongMobileControls keysRef={keysRef} mode={mode} playerNum={playerNum} />
       )}
-      <AdBanner slot="pong_bottom" style={{ marginTop: 16, maxWidth: CANVAS_W }} />
     </div>
   );
 }
