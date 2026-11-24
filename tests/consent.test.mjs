@@ -24,9 +24,16 @@ const todos = (v) => Object.fromEntries(SINAIS.map((s) => [s, v]));
 // currentScript (o nonce do script inline), createElement e head.appendChild
 // (as tags injetadas ficam em `tags`) e cookie (as atribuições ficam em
 // `cookiesGravados`).
-function navegador({ storage = {}, nonce = "n0nce", cookie = "", hostname = "acerteamosca.com.br" } = {}) {
+// O <html> (documentElement) guarda os atributos em `htmlAttrs`; `semHtml`
+// tira o documentElement (o atributo dos anúncios nunca pode impedir as
+// tags). Eventos (dispatchEvent/addEventListener) vão para um EventTarget do
+// Node; os disparados ficam em `eventos`.
+function navegador({ storage = {}, nonce = "n0nce", cookie = "", hostname = "acerteamosca.com.br", semHtml = false } = {}) {
   const tags = [];
   const cookiesGravados = [];
+  const htmlAttrs = {};
+  const eventos = [];
+  const alvo = new EventTarget();
   const guardado = storage === "erro" ? null : { ...storage };
   const ctx = vm.createContext({});
   vm.runInContext("var window = globalThis;", ctx);
@@ -41,8 +48,22 @@ function navegador({ storage = {}, nonce = "n0nce", cookie = "", hostname = "ace
     get cookie() { return cookie; },
     set cookie(v) { cookiesGravados.push(v); },
   };
+  if (!semHtml) {
+    ctx.document.documentElement = {
+      setAttribute: (k, v) => { htmlAttrs[k] = String(v); },
+      removeAttribute: (k) => { delete htmlAttrs[k]; },
+      getAttribute: (k) => (k in htmlAttrs ? htmlAttrs[k] : null),
+    };
+  }
+  ctx.Event = Event;
+  ctx.addEventListener = alvo.addEventListener.bind(alvo);
+  ctx.removeEventListener = alvo.removeEventListener.bind(alvo);
+  ctx.dispatchEvent = (e) => {
+    eventos.push(e.type);
+    return alvo.dispatchEvent(e);
+  };
   const dl = () => JSON.parse(vm.runInContext("JSON.stringify((window.dataLayer||[]).map(a => Array.from(a)))", ctx));
-  return { ctx, tags, guardado, cookiesGravados, dl };
+  return { ctx, tags, guardado, cookiesGravados, dl, htmlAttrs, eventos };
 }
 function rodarHead(opts = {}, scriptOpts = { adsClient: ADS, gaId: GA }) {
   const n = navegador(opts);
@@ -441,4 +462,84 @@ check("revocation link re-asks the CMP on click (CMP ready after the watcher gav
   assert.equal(cmp.pingGdprAppliesNow({ __tcfapi: () => { throw new Error("x"); } }), undefined);
   assert.equal(cmp.pingGdprAppliesNow({}), undefined);
   assert.match(source("src/components/PrivacyChoicesLink.jsx"), /gdprApplies === true \? true : pingGdprAppliesNow\(window\)/);
+});
+
+// ── Blocos de anúncio (24/11/2026): <html data-aam-ads="on"> ─────────────
+const A = consent.ADS_ATTR;
+
+check('ads attribute: the head marks <html data-aam-ads="on"> only with a stored "granted" (any region), in the loader\'s try', () => {
+  assert.equal(A, "data-aam-ads");
+  for (const regiao of [null, "fora", "eee"]) {
+    for (const storage of [{ [K]: "granted" }, { [K]: "granted", [G]: "1" }, { [K]: "granted", [G]: "0" }]) {
+      const n = rodarHead({ storage }, { adsClient: ADS, gaId: GA, regiao });
+      assert.equal(n.htmlAttrs[A], "on", `${regiao} ${JSON.stringify(storage)}: sem o atributo`);
+      assert.equal(n.tags.length, 2, "as tags continuam carregando");
+    }
+  }
+  // sem IDs: o atributo segue a escolha (a caixa de prévia também é oculta até o aceite)
+  assert.equal(rodarHead({ storage: { [K]: "granted" } }, {}).htmlAttrs[A], "on");
+  // no mesmo try do loader, logo depois dele
+  const script = consent.consentDefaultScript({ adsClient: ADS });
+  const trecho = script.slice(script.indexOf("try{"), script.indexOf("}catch(e){}"));
+  assert.ok(trecho.includes(`window.${consent.GOOGLE_TAGS_LOADER}();document.documentElement.setAttribute("${A}","on");`), trecho);
+});
+
+check("ads attribute: absent with 'denied', no choice, a garbage value or blocked storage; a missing <html> never blocks the tags", () => {
+  for (const storage of [{}, { [K]: "denied" }, { [K]: "denied", [G]: "0" }, { [K]: "sim" }, { [G]: "0" }, "erro"]) {
+    for (const regiao of [null, "fora", "eee"]) {
+      const n = rodarHead({ storage }, { adsClient: ADS, gaId: GA, regiao });
+      assert.ok(!(A in n.htmlAttrs), `${regiao} ${JSON.stringify(storage)}: atributo sem aceite`);
+      assert.equal(n.tags.length, 0);
+    }
+  }
+  const semHtml = rodarHead({ storage: { [K]: "granted" }, semHtml: true });
+  assert.equal(semHtml.tags.length, 2, "o atributo impediu as tags");
+});
+
+check("ads attribute: Accept marks it and fires the ads-on event (also with blocked storage); Decline removes it", () => {
+  assert.equal(consent.ADS_ON_EVENT, "acerteamosca:ads-on");
+  for (const storage of [{}, { [K]: "denied" }, "erro"]) {
+    const n = rodarHead({ storage });
+    assert.ok(!(A in n.htmlAttrs));
+    assert.equal(consent.adsConsented(n.ctx), false);
+    consent.acceptSiteChoice(n.ctx);
+    assert.equal(n.htmlAttrs[A], "on", JSON.stringify(storage));
+    assert.deepEqual(n.eventos, [consent.ADS_ON_EVENT], JSON.stringify(storage));
+    assert.equal(consent.adsConsented(n.ctx), true, "storage bloqueado: o aceite vale nesta página");
+    consent.declineSiteChoice(n.ctx);
+    assert.ok(!(A in n.htmlAttrs), `Recusar não tirou o atributo (${JSON.stringify(storage)})`);
+    assert.equal(consent.adsConsented(n.ctx), false);
+  }
+  // revogação pelo rodapé de quem aceitou numa visita anterior
+  const r = rodarHead({ storage: { [K]: "granted" } });
+  assert.equal(r.htmlAttrs[A], "on");
+  consent.declineSiteChoice(r.ctx);
+  assert.ok(!(A in r.htmlAttrs));
+  // janela sem Event/dispatchEvent: o Aceitar não quebra
+  const crua = { localStorage: { getItem: () => null, setItem() {} } };
+  assert.equal(consent.acceptSiteChoice(crua), false);
+});
+
+check("whenAdsAllowed: calls once, now (granted) or on the Accept event; never without Accept; cleanup stops waiting", () => {
+  const contar = () => { const c = { n: 0 }; c.f = () => { c.n++; }; return c; };
+  const ja = rodarHead({ storage: { [K]: "granted" } });
+  const c1 = contar();
+  consent.whenAdsAllowed(ja.ctx, c1.f);
+  ja.ctx.dispatchEvent(new Event(consent.ADS_ON_EVENT));
+  assert.equal(c1.n, 1);
+
+  const depois = rodarHead();
+  const c2 = contar();
+  consent.whenAdsAllowed(depois.ctx, c2.f);
+  depois.ctx.dispatchEvent(new Event(consent.ADS_ON_EVENT));
+  assert.equal(c2.n, 0, "evento sem Aceitar");
+  consent.acceptSiteChoice(depois.ctx);
+  consent.acceptSiteChoice(depois.ctx);
+  assert.equal(c2.n, 1, "um só pedido");
+
+  const parado = rodarHead();
+  const c3 = contar();
+  consent.whenAdsAllowed(parado.ctx, c3.f)();
+  consent.acceptSiteChoice(parado.ctx);
+  assert.equal(c3.n, 0, "depois do cleanup");
 });

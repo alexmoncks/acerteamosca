@@ -227,6 +227,34 @@ check("middleware: 301s (www, /en on a production domain) are untouched", () => 
   assert.equal(en.headers.get("location"), "https://nailedthefly.com/sobre");
 });
 
+check("ads.txt: served as a static file on both apex domains; www (Host or X-Forwarded-Host) 301s to the apex ads.txt", () => {
+  const { getPathMatch: casar } = require("next/dist/shared/lib/router/utils/path-match.js");
+  // apex: o matcher de páginas não pega /ads.txt; o Next serve public/ads.txt
+  // igual nos dois domínios (o arquivo é o mesmo)
+  const paginas = mwConfig.matcher.filter((m) => typeof m === "string").map((m) => casar(m));
+  assert.ok(paginas.every((c) => c("/ads.txt") === false), "/ads.txt passando pelo middleware no apex");
+  assert.ok(fs.existsSync(repoPath("public/ads.txt")));
+  // e, se chegar ao middleware (cabeçalho de CSP forjado), segue sem rewrite de idioma nem redirect
+  for (const host of ["acerteamosca.com.br", "nailedthefly.com"]) {
+    const res = pedir(`https://${host}/ads.txt`, { "x-nonce": FORJADO });
+    assert.equal(res.status, 200, host);
+    assert.equal(res.headers.get("location"), null, host);
+    assert.equal(res.headers.get("x-middleware-rewrite"), null, host);
+  }
+  // www: 301 para o apex, pelo Host e pelo X-Forwarded-Host (Railway atrás da Cloudflare)
+  for (const host of ["acerteamosca.com.br", "nailedthefly.com"]) {
+    const porHost = pedir(`https://www.${host}/ads.txt`);
+    assert.equal(porHost.status, 301, host);
+    assert.equal(porHost.headers.get("location"), `https://${host}/ads.txt`);
+    const porXfh = pedir("https://web-production-1.up.railway.app/ads.txt", { "x-forwarded-host": `www.${host}` });
+    assert.equal(porXfh.status, 301, `${host} (XFH)`);
+    assert.equal(porXfh.headers.get("location"), `https://${host}/ads.txt`);
+    // o matcher do www pega /ads.txt
+    const www = mwConfig.matcher.filter((m) => typeof m === "object" && m.has?.[0]?.type === "host");
+    assert.ok(www.some((m) => casar(m.source)("/ads.txt") !== false && new RegExp(`^${m.has[0].value}$`).test(`www.${host}`)), host);
+  }
+});
+
 // next.config.js carregado de verdade (o plugin do next-intl só embrulha a
 // config) e o casador de rotas do próprio Next (getPathMatch), o mesmo que
 // ele usa para "source" de headers e para o matcher do middleware.
