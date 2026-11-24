@@ -245,8 +245,6 @@ export default function HomeClient() {
         ))}
       </div>
 
-      <AdBanner placement="home_bottom" />
-
       {/* FAQ Section */}
       <section style={{ maxWidth: 900, width: "100%", marginTop: 40, padding: "0 16px" }}>
         <h2 style={{
@@ -269,7 +267,9 @@ export default function HomeClient() {
         ))}
       </section>
 
-
+      {/* Depois do FAQ, no fim da home: longe da grade de jogos (links) e
+          do destaque. */}
+      <AdBanner placement="home_bottom" />
     </div>
   );
 }

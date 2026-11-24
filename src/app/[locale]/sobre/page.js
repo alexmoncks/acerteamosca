@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { localeUrl, pageAlternates, siteName } from "@/lib/seo";
 import RichText from "@/components/RichText";
+import AdBanner from "@/components/AdBanner";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -114,20 +115,25 @@ export default async function AboutPage({ params }) {
   const c = locale === "en" ? contentEN : contentPT;
 
   return (
-    <article style={pageStyle}>
-      <h1 style={titleStyle}>{c.title}</h1>
-      <p style={pStyle}><RichText text={c.intro} /></p>
-      {c.sections.map((s, i) => (
-        <section key={i} style={sectionStyle}>
-          <h2 style={h2Style}>{s.h}</h2>
-          {s.p.map((para, j) => (
-            <p key={j} style={pStyle}>
-              <RichText text={para} />
-            </p>
-          ))}
-        </section>
-      ))}
-    </article>
+    <>
+      <article style={pageStyle}>
+        <h1 style={titleStyle}>{c.title}</h1>
+        <p style={pStyle}><RichText text={c.intro} /></p>
+        {c.sections.map((s, i) => (
+          <section key={i} style={sectionStyle}>
+            <h2 style={h2Style}>{s.h}</h2>
+            {s.p.map((para, j) => (
+              <p key={j} style={pStyle}>
+                <RichText text={para} />
+              </p>
+            ))}
+          </section>
+        ))}
+      </article>
+      {/* Página de conteúdo com texto próprio: um bloco no fim, depois do
+          texto (docs/adsense.md). Privacidade, termos e contato não têm. */}
+      <AdBanner placement="content_bottom" style={{ maxWidth: 800 }} />
+    </>
   );
 }
 
