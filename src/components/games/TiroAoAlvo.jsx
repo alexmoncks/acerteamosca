@@ -223,6 +223,28 @@ class SkeetAudio {
     }
   }
 
+
+  // Pausa o contexto ao ir para segundo plano (outra aba / app no fundo).
+  // suspend() pode rejeitar se o contexto já estiver fechado ou suspenso.
+  suspend() {
+    const ctx = this.ctx;
+    if (!ctx || typeof ctx.suspend !== "function") return;
+    try {
+      const ret = ctx.suspend();
+      if (ret && typeof ret.catch === "function") ret.catch(() => {});
+    } catch (e) {}
+  }
+
+  // Retoma só se não estiver no mudo. resume() também pode rejeitar.
+  resume() {
+    const ctx = this.ctx;
+    if (!ctx || this.muted || typeof ctx.resume !== "function") return;
+    try {
+      const ret = ctx.resume();
+      if (ret && typeof ret.catch === "function") ret.catch(() => {});
+    } catch (e) {}
+  }
+
   toggle() {
     this.muted = !this.muted;
     if (this.muted) this.stopMusic();
@@ -1545,6 +1567,20 @@ export default function TiroAoAlvo() {
       audioRef.current?.close();
     };
   }, []);
+
+  // Suspende o áudio ao trocar de aba ou mandar o app para o fundo.
+  // Ao voltar, retoma só se não estiver no mudo. O listener sai no cleanup.
+  useEffect(() => {
+    const onVisibility = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (document.hidden) audio.suspend();
+      else if (!audio.muted) audio.resume();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
 
   // ==================== HANDLE REGISTER ====================
   const handleRegister = useCallback(async (userData) => {
