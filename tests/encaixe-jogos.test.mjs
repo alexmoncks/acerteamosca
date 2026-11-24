@@ -124,6 +124,13 @@ check("useGameFit escuta resize, orientationchange, visualViewport e ResizeObser
   assert.match(src, /escalaDeEncaixe\(/);
 });
 
+check("useGameFit: fonts.ready não agenda depois do unmount (flag alive)", () => {
+  const src = source("src/hooks/useGameFit.js");
+  assert.match(src, /let alive = true/);
+  assert.match(src, /document\.fonts\?\.ready\?\.then\(\(\) => \{\s*if \(alive\) agendar\(\);?\s*\}\)/);
+  assert.match(src, /return \(\) => \{\s*alive = false;/);
+});
+
 check("GameFit expõe a área ([data-game-area], data-game-scale) com o tamanho escalado", () => {
   const src = source("src/components/GameFit.jsx");
   assert.match(src, /data-game-area=""/);

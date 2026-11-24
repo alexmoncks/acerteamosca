@@ -96,9 +96,13 @@ export default function useGameFit({
     window.addEventListener("orientationchange", agendar);
     window.visualViewport?.addEventListener("resize", agendar);
     // Fontes chegando mudam a altura do título e, com ela, o espaço do jogo.
-    document.fonts?.ready?.then(agendar).catch(() => {});
+    let alive = true;
+    document.fonts?.ready?.then(() => {
+      if (alive) agendar();
+    }).catch(() => {});
 
     return () => {
+      alive = false;
       cancelAnimationFrame(raf);
       ro?.disconnect();
       window.removeEventListener("resize", agendar);
