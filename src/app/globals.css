@@ -129,6 +129,18 @@ html[data-aam-ads="on"] .ad-slot {
 ins.adsbygoogle[data-ad-status="unfilled"] {
   display: none !important;
 }
-.ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+/* O :has() fica dentro do @supports de propósito: sem ele, o minificador do
+   Next junta esta regra com a do data-ad-vazio abaixo (mesma declaração)
+   num seletor só, e o navegador sem :has() descarta a regra inteira,
+   fallback junto (visto no CSS do build em 24/11/2026). */
+@supports selector(:has(*)) {
+  .ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+    display: none;
+  }
+}
+/* O mesmo, sem :has() (Firefox < 121): o AdBanner copia o data-ad-status
+   do <ins> para data-ad-vazio na caixa (MutationObserver, watchUnfilled em
+   src/lib/ads.js). Mais específica que html[data-aam-ads="on"] .ad-slot. */
+html[data-aam-ads="on"] .ad-slot[data-ad-vazio] {
   display: none;
 }

@@ -158,7 +158,9 @@ fs.writeFileSync(
 // componente) e useEffect que só guarda o efeito, para o teste rodar.
 fs.writeFileSync(
   path.join(pastaBanner, "react-falso.mjs"),
-  "export const efeitos = [];\nexport function useRef(v) { return { current: v }; }\nexport function useEffect(fn) { efeitos.push(fn); }\n",
+  "export const efeitos = [];\nexport const refs = [];\n" +
+    "export function useRef(v) { const r = { current: v }; refs.push(r); return r; }\n" +
+    "export function useEffect(fn) { efeitos.push(fn); }\n",
 );
 let variantes = 0;
 async function carregarBanner(env, { reactFalso = false } = {}) {
@@ -242,13 +244,21 @@ function janela(storage = {}) {
 // Monta o AdBanner (chama o componente) e roda o efeito que ele registrou.
 // A janela falsa fica como `window` global até o fim dos testes do efeito
 // (o push do AdBanner usa o window global, também quando vem do evento).
-function montar(mod, placement, win) {
+// Dois efeitos: o observer do data-ad-status (precisa da caixa: sem DOM, o
+// ref fica null e ele não faz nada, salvo com `caixa`) e o push.
+// `caixa`: elemento falso posto no ref da <aside> (o useRef(null)) antes de
+// rodar os efeitos, como o React faz depois de montar o DOM.
+function montar(mod, placement, win, { caixa = null } = {}) {
   reactFalso.efeitos.length = 0;
+  reactFalso.refs.length = 0;
   globalThis.window = win;
   mod.default({ placement });
-  assert.equal(reactFalso.efeitos.length, 1, "o AdBanner registra um efeito");
-  const limpar = reactFalso.efeitos[0]();
-  return typeof limpar === "function" ? limpar : () => {};
+  assert.equal(reactFalso.efeitos.length, 2, "o AdBanner registra dois efeitos (observer e push)");
+  const refCaixa = reactFalso.refs.find((r) => r.current === null);
+  assert.ok(refCaixa, "o AdBanner não tem o ref da caixa");
+  refCaixa.current = caixa;
+  const limpezas = reactFalso.efeitos.map((efeito) => efeito()).filter((f) => typeof f === "function");
+  return () => limpezas.forEach((f) => f());
 }
 const pushes = (win) => (Array.isArray(win.adsbygoogle) ? win.adsbygoogle.length : 0);
 const KC = consentDoBanner.CONSENT_STORAGE_KEY;
@@ -300,7 +310,128 @@ check("AdBanner: placeholders never push, not even after Accept", () => {
   consentDoBanner.acceptSiteChoice(w);
   assert.equal(pushes(w), 0);
 });
+
+// ── Bloco sem anúncio sem :has() (Firefox < 121) ────────────────────────
+// MutationObserver falso: guarda o callback e o que observa; disparar()
+// simula a mudança de atributo. Elementos falsos com atributos.
+class ObserverFalso {
+  static todos = [];
+  constructor(cb) {
+    this.cb = cb;
+    this.conectado = false;
+    ObserverFalso.todos.push(this);
+  }
+  observe(alvo, opcoes) {
+    this.alvo = alvo;
+    this.opcoes = opcoes;
+    this.conectado = true;
+  }
+  disconnect() {
+    this.conectado = false;
+  }
+  disparar() {
+    if (this.conectado) this.cb([{ type: "attributes", attributeName: "data-ad-status" }]);
+  }
+}
+function elemento(attrs = {}, filhos = {}) {
+  const a = { ...attrs };
+  return {
+    attrs: a,
+    getAttribute: (k) => (k in a ? a[k] : null),
+    setAttribute: (k, v) => { a[k] = String(v); },
+    removeAttribute: (k) => { delete a[k]; },
+    hasAttribute: (k) => k in a,
+    querySelector: (sel) => filhos[sel] ?? null,
+  };
+}
+
+check("watchUnfilled: marks the box on unfilled, unmarks when filled later, disconnects on cleanup", () => {
+  ObserverFalso.todos.length = 0;
+  const ins = elemento();
+  const caixa = elemento();
+  const parar = ads.watchUnfilled({ MutationObserver: ObserverFalso }, ins, caixa);
+  const [obs] = ObserverFalso.todos;
+  assert.equal(obs.alvo, ins, "observa o <ins>");
+  assert.deepEqual(obs.opcoes, { attributes: true, attributeFilter: ["data-ad-status"] });
+  assert.ok(!caixa.hasAttribute(ads.AD_EMPTY_ATTR), "marcou sem status");
+  ins.setAttribute("data-ad-status", "unfilled");
+  obs.disparar();
+  assert.ok(caixa.hasAttribute(ads.AD_EMPTY_ATTR), "não marcou com unfilled");
+  ins.setAttribute("data-ad-status", "filled");
+  obs.disparar();
+  assert.ok(!caixa.hasAttribute(ads.AD_EMPTY_ATTR), "não desmarcou com filled");
+  parar();
+  assert.equal(obs.conectado, false, "não desconectou");
+  ins.setAttribute("data-ad-status", "unfilled");
+  obs.disparar();
+  assert.ok(!caixa.hasAttribute(ads.AD_EMPTY_ATTR), "marcou depois de desconectado");
+});
+
+check("watchUnfilled: an <ins> already unfilled marks at once; no <ins>, box or MutationObserver is a no-op", () => {
+  ObserverFalso.todos.length = 0;
+  const caixa = elemento();
+  ads.watchUnfilled({ MutationObserver: ObserverFalso }, elemento({ "data-ad-status": "unfilled" }), caixa);
+  assert.ok(caixa.hasAttribute(ads.AD_EMPTY_ATTR));
+  for (const [win, ins, cx] of [
+    [{ MutationObserver: ObserverFalso }, null, elemento()],
+    [{ MutationObserver: ObserverFalso }, elemento(), null],
+    [{}, elemento({ "data-ad-status": "unfilled" }), elemento()],
+  ]) {
+    const antes = ObserverFalso.todos.length;
+    const parar = ads.watchUnfilled(win, ins, cx);
+    assert.equal(typeof parar, "function");
+    parar();
+    assert.equal(ObserverFalso.todos.length, antes, "criou observer sem precisar");
+    if (cx) assert.ok(!cx.hasAttribute(ads.AD_EMPTY_ATTR));
+  }
+});
+
+check("AdBanner: the observer watches its own <ins>, marks/unmarks the .ad-slot and disconnects on unmount", () => {
+  ObserverFalso.todos.length = 0;
+  const w = janela({ [KC]: "granted" });
+  w.MutationObserver = ObserverFalso;
+  const ins = elemento();
+  const caixa = elemento({}, { "ins.adsbygoogle": ins });
+  const desmontar = montar(efeitoProducao, "game_footer", w, { caixa });
+  assert.equal(pushes(w), 1, "o observer atrapalhou o push");
+  assert.equal(ObserverFalso.todos.length, 1, "um observer por bloco");
+  const [obs] = ObserverFalso.todos;
+  assert.equal(obs.alvo, ins);
+  ins.setAttribute("data-ad-status", "unfilled");
+  obs.disparar();
+  assert.ok(caixa.hasAttribute("data-ad-vazio"), "a caixa não foi marcada");
+  ins.setAttribute("data-ad-status", "filled");
+  obs.disparar();
+  assert.ok(!caixa.hasAttribute("data-ad-vazio"), "a caixa não foi desmarcada");
+  desmontar();
+  assert.equal(obs.conectado, false, "o observer continuou depois do unmount");
+});
+
+check("AdBanner: placeholders never start the observer", () => {
+  ObserverFalso.todos.length = 0;
+  const w = janela({ [KC]: "granted" });
+  w.MutationObserver = ObserverFalso;
+  montar(efeitoPlaceholder, "game_footer", w, { caixa: elemento({}, { "ins.adsbygoogle": elemento() }) });
+  assert.equal(ObserverFalso.todos.length, 0);
+});
 delete globalThis.window;
+
+check("CSS: the empty box hides by data-ad-vazio (beating the consent rule) and :has() stays as reinforcement", () => {
+  const css = source("src/app/globals.css");
+  assert.equal(ads.AD_EMPTY_ATTR, "data-ad-vazio");
+  const regra = css.match(/html\[data-aam-ads="on"\] \.ad-slot\[data-ad-vazio\]\s*\{([^}]*)\}/);
+  assert.ok(regra, "sem a regra do data-ad-vazio");
+  assert.match(regra[1], /display:\s*none/);
+  // a regra do aceite que ela precisa vencer (especificidade maior: 0,3,1 > 0,2,1)
+  assert.match(css, /html\[data-aam-ads="on"\] \.ad-slot\s*\{\s*display:\s*block/);
+  // o :has() fica isolado num @supports: sem isso o minificador junta as duas
+  // regras num seletor só e o navegador sem :has() perde o fallback junto
+  const sup = css.match(/@supports selector\(:has\(\*\)\)\s*\{\s*\.ad-slot:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\)\s*\{\s*display:\s*none;?\s*\}\s*\}/);
+  assert.ok(sup, "o .ad-slot:has(...) não está dentro do @supports selector(:has(*))");
+  const semComent = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.equal((semComent.match(/:has\(/g) || []).length, 2, ":has() fora do @supports"); // o do @supports e o da regra
+  assert.ok(!/:has\([^{]*data-ad-vazio|data-ad-vazio[^{]*:has\(/.test(semComent), ":has() e data-ad-vazio no mesmo seletor");
+});
 
 check('AdBanner: data-adtest="on" only with NEXT_PUBLIC_ADSENSE_ADTEST exactly "on"', () => {
   for (const [v, mod] of Object.entries(bannerAdtest)) {

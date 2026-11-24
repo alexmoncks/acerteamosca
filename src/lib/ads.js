@@ -96,3 +96,34 @@ export function adReserveStyle(placement) {
     "--aam-ad-min-desktop": `${p.minHeight.desktop}px`,
   };
 }
+
+/**
+ * Atributo que o AdBanner põe na caixa .ad-slot quando o Google marca o <ins>
+ * com data-ad-status="unfilled" (sem anúncio). globals.css esconde a caixa
+ * inteira (rótulo "Publicidade" e reserva) por ele. É o mesmo sinal do
+ * Google que a regra .ad-slot:has(...) usa; o atributo existe para os
+ * navegadores sem :has() (Firefox < 121) e para não depender só dele.
+ */
+export const AD_EMPTY_ATTR = "data-ad-vazio";
+
+/** Copia o estado "unfilled" do <ins> para a caixa. Devolve true se está vazio. */
+export function syncUnfilled(ins, caixa) {
+  const vazio = ins.getAttribute("data-ad-status") === "unfilled";
+  if (vazio) caixa.setAttribute(AD_EMPTY_ATTR, "");
+  else caixa.removeAttribute(AD_EMPTY_ATTR);
+  return vazio;
+}
+
+/**
+ * Observa o data-ad-status do <ins> e mantém AD_EMPTY_ATTR na caixa: marca
+ * com "unfilled", desmarca com qualquer outro valor (o Google pode preencher
+ * depois). Sem <ins>, sem caixa ou sem MutationObserver, não faz nada.
+ * Devolve a função que desconecta (cleanup do useEffect).
+ */
+export function watchUnfilled(win, ins, caixa) {
+  if (!ins || !caixa || typeof win.MutationObserver !== "function") return () => {};
+  syncUnfilled(ins, caixa);
+  const obs = new win.MutationObserver(() => syncUnfilled(ins, caixa));
+  obs.observe(ins, { attributes: true, attributeFilter: ["data-ad-status"] });
+  return () => obs.disconnect();
+}

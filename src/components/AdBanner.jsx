@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { AD_PLACEMENTS, adBlockMode, adReserveStyle, adTestValue, isValidAdSlot } from "@/lib/ads";
+import { AD_PLACEMENTS, adBlockMode, adReserveStyle, adTestValue, isValidAdSlot, watchUnfilled } from "@/lib/ads";
 import { whenAdsAllowed } from "@/lib/consent";
 
 // Bloco manual do AdSense (decisão de 24/11/2026, depois da aprovação do
@@ -48,12 +48,24 @@ export function adSlotFor(placement) {
 //   - o bloco não é escondido nem "colapsado" à mão (nada de opacity 0 ou
 //     max-height 0): bloco sem anúncio some pelo CSS suportado pelo Google,
 //     ins.adsbygoogle[data-ad-status="unfilled"], em globals.css. O display
-//     da caixa é só do CSS (oculta até o aceite), nunca do style daqui.
+//     da caixa é só do CSS (oculta até o aceite), nunca do style daqui;
+//   - a caixa inteira (rótulo e reserva) some com o mesmo sinal do Google:
+//     o .ad-slot:has(...) do CSS e, para navegador sem :has() (Firefox <
+//     121), o data-ad-vazio que o MutationObserver (watchUnfilled) copia do
+//     data-ad-status do <ins>. Os blocos ficam depois do conteúdo, então o
+//     colapso não move a área do jogo nem o texto acima (medido em
+//     24/11/2026, docs/adsense.md).
 export default function AdBanner({ placement, style }) {
   const t = useTranslations("common");
   const pushed = useRef(false);
+  const caixa = useRef(null);
   const slot = adSlotFor(placement);
   const mode = adBlockMode({ placement, client: CLIENT, slot, placeholders: PLACEHOLDERS });
+
+  useEffect(() => {
+    if (mode !== "ad" || !caixa.current) return undefined;
+    return watchUnfilled(window, caixa.current.querySelector("ins.adsbygoogle"), caixa.current);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== "ad" || pushed.current) return undefined;
@@ -71,6 +83,7 @@ export default function AdBanner({ placement, style }) {
 
   return (
     <aside
+      ref={caixa}
       className="ad-slot"
       aria-label={t("adLabel")}
       data-placement={placement}
