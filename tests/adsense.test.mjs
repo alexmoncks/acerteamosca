@@ -78,9 +78,15 @@ check("the ad block is never hidden by hand, and unfilled uses Google's CSS", ()
   assert.match(source("src/app/globals.css"), /ins\.adsbygoogle\[data-ad-status="unfilled"\]/);
 });
 
-check("the AdSense tag has no undocumented attributes", () => {
+check("the AdSense tag has no undocumented attributes, no ?client= and no enable_page_level_ads", () => {
   for (const f of arquivos(repoPath("src"))) {
-    assert.ok(!/data-overlays/.test(semComentarios(source(f))), `${f} usa data-overlays`);
+    const src = semComentarios(source(f));
+    // data-overlays LIGA âncoras mesmo desligadas no painel
+    assert.ok(!/data-overlays/.test(src), `${f} usa data-overlays`);
+    // enable_page_level_ads: false é ignorado e o push com google_ad_client
+    // liga o Auto ads (medido); dois na página dão TagError
+    assert.ok(!/enable_page_level_ads|google_ad_client/.test(src), `${f} faz push de configuração de página`);
+    assert.ok(!/adsbygoogle\.js\?client=/.test(src), `${f} carrega a tag com ?client=`);
   }
   const layout = semComentarios(source("src/app/[locale]/layout.js"));
   // desde o AJ2 a tag não está no HTML: o script consent-default a injeta
@@ -89,7 +95,10 @@ check("the AdSense tag has no undocumented attributes", () => {
   assert.ok(!/AdSenseScript|adsbygoogle\.js/.test(layout), "tag do AdSense de volta no HTML");
   assert.match(layout, /consentDefaultScript\(\{ adsClient: ADSENSE_ID, gaId: GA_ID, regiao \}\)/);
   const consent = semComentarios(source("src/lib/consent.js"));
-  assert.match(consent, /https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=\$\{ads\}",1\)/);
+  // sem ?client=: com ele a página sem bloco pede Anúncios Automáticos
+  // (docs/adsense.md, "Defesa no código contra Anúncios Automáticos")
+  assert.match(consent, /a\("https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js",1\)/);
+  assert.ok(!/adsbygoogle\.js\?/.test(consent), "a tag do AdSense voltou a ter query (?client=)");
   assert.match(consent, /s\.async=true;s\.src=u;if\(n\)s\.nonce=n;if\(c\)s\.crossOrigin="anonymous"/);
   assert.match(layout, /isValidAdClient\(process\.env\.NEXT_PUBLIC_ADSENSE_ID\)/);
   assert.match(layout, /<meta name="google-adsense-account" content=\{ADSENSE_PUBLISHER\} \/>/);

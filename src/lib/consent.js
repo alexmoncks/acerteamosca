@@ -283,9 +283,9 @@ export function declineSiteChoice(win) {
 /**
  * O <script> inline do <head>. Roda antes de qualquer tag do Google:
  *   1. define o `gtag` global e o default "denied" (o mundo todo);
- *   2. define window.__aamLoadGoogleTags, que injeta o adsbygoogle.js (como
- *      o painel entrega: async + crossorigin) e o gtag.js, com o nonce deste
- *      script (a CSP tem 'strict-dynamic');
+ *   2. define window.__aamLoadGoogleTags, que injeta o adsbygoogle.js (async
+ *      + crossorigin, como o painel entrega, mas sem ?client=: ver abaixo) e
+ *      o gtag.js, com o nonce deste script (a CSP tem 'strict-dynamic');
  *   3. se a pessoa já aceitou: repete o "granted" fora do EEE (região
  *      "fora", salvo se a CMP já disse que o GDPR se aplica, G=1; ou região
  *      desconhecida com G=0), carrega as tags e marca o <html> com
@@ -302,8 +302,20 @@ export function consentDefaultScript({ adsClient = null, gaId = null, regiao = n
   const update = consentUpdateCommand("granted").map((a) => JSON.stringify(a)).join(",");
   const ads = adsClient && /^ca-pub-\d{16}$/.test(adsClient) ? adsClient : null;
   const ga = isValidGaId(gaId) ? gaId.trim() : null;
+  // A tag vai SEM ?client=ca-pub-... (defesa no código contra Anúncios
+  // Automáticos, docs/adsense.md). Com o ?client= na URL (o "código do site"
+  // do painel), o adsbygoogle.js busca a configuração do Auto ads
+  // (pagead/managed/js/adsense) e pede anúncio automático mesmo numa página
+  // sem bloco nenhum. Sem ele, a página sem <ins> não pede anúncio nenhum
+  // (medido com tests/e2e/auto-ads.e2e.mjs em 24/11/2026); as unidades
+  // manuais continuam funcionando, porque cada <ins> leva data-ad-client.
+  // Não resolve tudo: numa página COM bloco manual, o data-ad-client do <ins>
+  // basta para o Auto ads ser consultado; quem desliga é o painel
+  // (obrigatório). Nada de push com enable_page_level_ads (false é ignorado
+  // e LIGA o Auto ads; dois na página dão TagError) nem de data-overlays.
+  // O publisher (ads) continua decidindo se a tag entra ou não.
   const injeta = [
-    ads ? `a("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ads}",1);` : "",
+    ads ? `a("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",1);` : "",
     ga ? `a("https://www.googletagmanager.com/gtag/js?id=${ga}");gtag("js",new Date());gtag("config",${JSON.stringify(ga)});` : "",
   ].join("");
   const carregador =

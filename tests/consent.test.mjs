@@ -93,7 +93,8 @@ check("AJ2: with a stored Accept the head injects adsbygoogle.js (async, crossor
   const n = rodarHead({ storage: { [K]: "granted" }, nonce: "abc123" });
   assert.equal(n.tags.length, 2);
   const [ads, ga] = n.tags;
-  assert.equal(ads.src, `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADS}`);
+  // sem ?client=: a página sem <ins> não pede Anúncios Automáticos
+  assert.equal(ads.src, "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js");
   assert.equal(ads.async, true);
   assert.equal(ads.crossOrigin, "anonymous");
   assert.equal(ads.nonce, "abc123");

@@ -154,7 +154,8 @@ export default async function LocaleLayout({ children, params }) {
         <link rel="preload" href="/fonts/fira-code-v27-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         {/* Modo de consentimento do Google e as tags do Google
             (src/lib/consent.js): default "denied" no mundo todo, sem região.
-            O adsbygoogle.js (como o painel entrega: async + crossorigin) e o
+            O adsbygoogle.js (async + crossorigin, sem ?client=: defesa
+            contra Anúncios Automáticos, docs/adsense.md) e o
             gtag.js só são injetados por este script, com o nonce dele,
             depois do Aceitar do aviso de cookies; quem já aceitou numa
             visita anterior recebe as tags já aqui. A tag do AdSense também
