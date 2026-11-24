@@ -116,7 +116,11 @@ check("CSS do slot: cresce com base 0 (não mede o próprio jogo) e centraliza a
   const css = source("src/app/globals.css");
   const bloco = css.match(/\.game-fit-slot\s*\{([\s\S]*?)\}/);
   assert.ok(bloco);
-  assert.match(bloco[1], /flex:\s*1 1 0;/);
+  // Longas, não o atalho: "flex: 1 1 0px" sai minificado como "1 1 0" (base
+  // 0%), que vira `content` numa raiz só com min-height.
+  assert.match(bloco[1], /flex-grow:\s*1;/);
+  assert.match(bloco[1], /flex-basis:\s*0px;/);
+  assert.ok(!/(^|[\s;])flex:/.test(bloco[1]), "atalho flex no .game-fit-slot");
   assert.match(bloco[1], /align-self:\s*stretch;/);
   assert.match(bloco[1], /min-width:\s*0;/);
 });

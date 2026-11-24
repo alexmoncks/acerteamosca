@@ -75,9 +75,14 @@ a {
 }
 /* O slot cresce até ocupar o que sobra depois do título e dos controles; a
    base 0 faz o tamanho dele não depender da caixa do jogo (senão o encaixe
-   mediria o próprio jogo). A caixa fica centralizada nele. */
+   mediria o próprio jogo). Em propriedades longas de propósito: no atalho,
+   "flex: 1 1 0px" sai do minificador como "1 1 0", que vira base 0%, e base
+   percentual numa raiz de altura indefinida (só min-height) conta como
+   `content` — o slot crescia até a altura do jogo. A caixa fica centralizada. */
 .game-fit-slot {
-  flex: 1 1 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0px;
   align-self: stretch;
   min-width: 0;
   display: flex;
