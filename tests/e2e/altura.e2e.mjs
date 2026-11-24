@@ -88,8 +88,8 @@ const INICIO = {
   // Depois do JOGAR vem a abertura (história); qualquer tecla ou toque pula.
   kungfucastle: [/JOGAR|PLAY|START|INICIAR/i, { pular: true }],
   memory: [/SOLO|1 JOGADOR|1 PLAYER|JOGAR|PLAY/i, /F[AÁ]CIL|EASY/i],
-  pong: [/CPU/i, /F[AÁ]CIL|EASY/i],
-  ships: [/CPU/i, /F[AÁ]CIL|EASY/i],
+  pong: [/COMPUTADOR|COMPUTER|CPU/i, /F[AÁ]CIL|EASY/i],
+  ships: [/COMPUTADOR|COMPUTER|CPU/i, /F[AÁ]CIL|EASY/i],
   tiroaoalvo: [/JOGAR|PLAY/i],
   wordle: [/^(JOGAR|PLAY)$/i],
 };
