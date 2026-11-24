@@ -47,7 +47,9 @@ check("no ad unit inside the games (end-of-game screens, canvas, touch controls)
 check("every AdBanner uses a known placement, never a slot name", () => {
   const banner = source("src/components/AdBanner.jsx");
   const conhecidos = [...banner.matchAll(/^\s{2}(\w+): process\.env\.NEXT_PUBLIC_ADSENSE_SLOT_\w+,/gm)].map((m) => m[1]);
-  assert.deepEqual(conhecidos.sort(), ["game_footer", "home_bottom", "home_top"]);
+  assert.deepEqual(conhecidos.sort(), ["content_bottom", "game_footer", "home_bottom", "home_top"]);
+  // o mapa de src/lib/ads.js e os slots do AdBanner são os mesmos placements
+  assert.deepEqual(Object.keys(ads.AD_PLACEMENTS).sort(), conhecidos);
   for (const f of arquivos(repoPath("src"))) {
     const src = semComentarios(source(f));
     assert.ok(!/<AdBanner[^>]*\bslot=/.test(src), `${f} passa slot por nome`);
