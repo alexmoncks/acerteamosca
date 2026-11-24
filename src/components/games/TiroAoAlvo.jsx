@@ -1761,7 +1761,10 @@ export default function TiroAoAlvo() {
           onClick={toggleMute}
           style={{
             position: "fixed",
-            top: 10,
+            // Logo abaixo da Navbar fixa (48px, --aam-topo). Com top: 10 o
+            // botão ficava atrás do link "EN" da Navbar (z-index 1000), e o
+            // clique/toque ia para o link.
+            top: "calc(var(--aam-topo, 48px) + 8px + env(safe-area-inset-top, 0px))",
             right: 10,
             zIndex: 300,
             background: "rgba(0,0,0,0.6)",

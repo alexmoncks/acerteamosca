@@ -99,6 +99,15 @@ check("Kung Fu Castle: canvas do PixiJS com buffer × dpr e tamanho CSS pela ár
   assert.match(source("src/components/games/KungFuCastle.jsx"), /position: "fixed", left: 0, right: 0, bottom: 16/);
 });
 
+check("Tiro ao Alvo: botão de som fixo abaixo da Navbar (não atrás dela)", () => {
+  const src = semComentarios(source("src/components/games/TiroAoAlvo.jsx"));
+  const m = src.match(/onClick=\{toggleMute\}\s*style=\{\{([\s\S]*?)\}\}/);
+  assert.ok(m, "botão de som não encontrado");
+  assert.match(m[1], /position: "fixed"/);
+  assert.match(m[1], /top: "calc\(var\(--aam-topo, 48px\) \+ 8px/);
+  assert.ok(!/top:\s*10\b/.test(m[1]), "top: 10 põe o botão atrás da Navbar");
+});
+
 check("Batalha Naval: altura automática e célula em unidades lógicas (sem laço com a escala)", () => {
   const src = semComentarios(source("src/components/games/BatalhaNaval.jsx"));
   assert.match(src, /useGameFit\(\{ largura: GAME_W, altura: 600, alturaAutomatica: true \}\)/);
