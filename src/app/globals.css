@@ -56,6 +56,43 @@ a {
   text-decoration: none;
 }
 
+/* Encaixe dos jogos na altura visível (src/lib/game-fit.js,
+   src/hooks/useGameFit.js, src/components/GameFit.jsx).
+   A raiz de cada jogo ocupa exatamente a altura visível menos a Navbar fixa
+   (e as margens seguras do iPhone, que o body aplica como padding). Ordem de
+   fallback, a última que o navegador entende vence (CSS_ALTURA_MINIMA em
+   game-fit.js, conferido no teste):
+   1. 100vh: qualquer navegador;
+   2. --aam-vh: navegador sem dvh, com 1% de innerHeight posto pelo hook;
+   3. 100dvh: acompanha a barra de endereço do celular aparecendo/sumindo. */
+:root {
+  --aam-topo: 48px;
+}
+.game-fit-root {
+  min-height: calc(100vh - var(--aam-topo) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  min-height: calc(var(--aam-vh, 1vh) * 100 - var(--aam-topo) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100dvh - var(--aam-topo) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+/* O slot cresce até ocupar o que sobra depois do título e dos controles; a
+   base 0 faz o tamanho dele não depender da caixa do jogo (senão o encaixe
+   mediria o próprio jogo). A caixa fica centralizada nele. */
+.game-fit-slot {
+  flex: 1 1 0;
+  align-self: stretch;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Celular deitado (~390px de altura): o título repetido acima do jogo (o
+   <h1> da página está no GameInfo, abaixo) sai de cena para o jogo ganhar a
+   altura dele. Só nessa situação; no desktop e em pé nada muda. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .game-fit-titulo {
+    display: none !important;
+  }
+}
+
 /* AdSense: os blocos (AdBanner.jsx) só aparecem para quem aceitou no aviso
    de cookies. O script do <head> marca html[data-aam-ads="on"] antes da
    primeira pintura quando a escolha gravada é "granted", e o Aceitar marca
