@@ -122,7 +122,6 @@ const depois = await page.evaluate(() => {
   };
 });
 console.log("depois", JSON.stringify(depois), "emulacao", JSON.stringify(encolheu));
-await browser.close();
 
 if (!(depois.escala > 0) || !(depois.escala < antes.escala - 0.01)) {
   throw new Error(
@@ -218,4 +217,6 @@ if (!(depoisP.escala > 0) || Math.abs(depoisP.escala - antesP.escala) > 0.02) {
   );
 }
 console.log("OK pinça: escala", antesP.escala, "→", depoisP.escala, "(deve permanecer)");
+await browser.close();
+
 
