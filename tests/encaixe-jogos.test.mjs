@@ -123,6 +123,7 @@ check("useGameFit escuta resize, orientationchange, visualViewport e ResizeObser
   assert.match(src, /removeEventListener\("orientationchange"/);
   assert.match(src, /escalaDeEncaixe\(/);
   assert.match(src, /alturaUtilDoSlot\(/);
+  assert.match(src, /scale: vv\.scale/);
 });
 
 check("useGameFit: fonts.ready não agenda depois do unmount (flag alive)", () => {

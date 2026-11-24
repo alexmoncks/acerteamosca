@@ -102,7 +102,7 @@ export default function useGameFit({
         alturaSlot: slot.clientHeight - padCima - padBaixo,
         slotTopo: r.top + padCima,
         slotBase: r.bottom - padBaixo,
-        visualViewport: vv ? { height: vv.height, offsetTop: vv.offsetTop } : null,
+        visualViewport: vv ? { height: vv.height, offsetTop: vv.offsetTop, scale: vv.scale } : null,
       });
       const conteudo = alturaAutomatica && area ? area.firstElementChild : null;
       const h = conteudo && conteudo.offsetHeight > 0 ? conteudo.offsetHeight : altura;

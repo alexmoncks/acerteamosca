@@ -94,14 +94,26 @@ export function alturaDisponivel({
 
 /**
  * Altura útil do slot para o encaixe. No celular, o teclado virtual encolhe
- * o visualViewport, mas o clientHeight do slot (layout) muitas vezes não
- * muda. Se a parte visível do slot — ou, sem retângulo, o
+ * o visualViewport (scale ≈ 1), mas o clientHeight do slot (layout) muitas
+ * vezes não muda. Se a parte visível do slot — ou, sem retângulo, o
  * visualViewport.height — for menor que o slot, essa altura vira o limite;
  * senão o jogo fica atrás do teclado.
+ *
+ * No zoom de pinça o visualViewport.scale sai de 1 e a altura CSS dele cai
+ * na mesma proporção; aí esta função devolve a altura do slot sem limita
+ * (|scale - 1| > 0,01), para a escala do jogo não desabar no gesto.
  */
 export function alturaUtilDoSlot({ alturaSlot, slotTopo, slotBase, visualViewport }) {
   const slot = finito(alturaSlot) && alturaSlot > 0 ? alturaSlot : 0;
   if (!visualViewport) return slot;
+  // Zoom de pinça: o visualViewport.height cai na proporção do scale, mas o
+  // layout (clientHeight do slot) não muda. Limitar pela altura do
+  // visualViewport faria a escala do jogo desabar (0,6 no 2×, 0,4 no 3× num
+  // slot de 500 px), anulando o maximumScale 5 e gerando reflow no gesto.
+  // Com zoom (|scale - 1| > 0,01), devolve a altura do slot sem limitar.
+  // O teclado virtual deixa scale ≈ 1 e continua limitando.
+  const escalaVv = finito(visualViewport.scale) ? visualViewport.scale : 1;
+  if (Math.abs(escalaVv - 1) > 0.01) return slot;
   const vvH = visualViewport.height;
   const offset = finito(visualViewport.offsetTop) ? visualViewport.offsetTop : 0;
   if (!(finito(vvH) && vvH > 0)) return slot;

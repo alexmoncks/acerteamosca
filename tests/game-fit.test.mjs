@@ -100,10 +100,25 @@ check("altura útil do slot: visualViewport menor que o slot limita (teclado vir
   assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 800, offsetTop: 0 } }), 500);
   // vv.height 360, offsetTop 0: a base visível é 360, o slot ia até 580 → 280 visíveis.
   assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 360, offsetTop: 0 } }), 280);
+  // scale 1 explícito (teclado): continua limitando
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 360, offsetTop: 0, scale: 1 } }), 280);
   // sem retângulo: o visualViewport.height é o limite, quando menor que o slot
   assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 320, offsetTop: 0 } }), 320);
+  assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 320, offsetTop: 0, scale: 1 } }), 320);
   assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 800, offsetTop: 0 } }), 500);
   assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 0, offsetTop: 0 } }), 500);
+});
+
+check("altura útil do slot: zoom de pinça (scale 2 e 3) não limita; devolve a altura do slot", () => {
+  // O visualViewport.height cai na proporção do scale (250 no 2×, ~167 no 3×),
+  // mas o layout do slot continua 500. Sem o guard do scale, a escala do jogo
+  // desabaria para 0,6 e 0,4.
+  const slot = { alturaSlot: 500, slotTopo: 80, slotBase: 580 };
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 250, offsetTop: 0, scale: 2 } }), 500);
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 167, offsetTop: 0, scale: 3 } }), 500);
+  assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 250, offsetTop: 0, scale: 2 } }), 500);
+  // scale muito perto de 1 ainda conta como teclado e limita
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 360, offsetTop: 0, scale: 1.005 } }), 280);
 });
 check("sem dvh: --aam-vh = 1% de innerHeight; com dvh: nenhuma variável", () => {
   assert.equal(variavelVh({ suportaDvh: true, alturaJanela: 700 }), null);

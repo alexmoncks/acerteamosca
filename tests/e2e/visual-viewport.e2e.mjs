@@ -132,4 +132,90 @@ if (!(depois.escala > 0) || !(depois.escala < antes.escala - 0.01)) {
 if (depois.areaH > 330) {
   throw new Error(`a área do jogo (${depois.areaH}px) ainda passa do visualViewport emulado (320)`);
 }
-console.log("OK: escala", antes.escala, "→", depois.escala, "areaH", depois.areaH);
+
+console.log("OK teclado: escala", antes.escala, "→", depois.escala, "areaH", depois.areaH);
+
+// Zoom de pinça: visualViewport.scale = 2 e height proporcionalmente menor.
+// A escala do jogo NÃO pode desabar (regressão do 520fc56).
+await ctx.close();
+const ctxPinch = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  deviceScaleFactor: 2,
+  isMobile: true,
+  hasTouch: true,
+  serviceWorkers: "block",
+});
+await ctxPinch.addInitScript(() => {
+  try { localStorage.setItem("acerteamosca_consent_v1", "denied"); } catch {}
+});
+await ctxPinch.route("**/*", (route) => {
+  const req = route.request();
+  let u;
+  try { u = new URL(req.url()); } catch { return route.abort(); }
+  if (u.protocol === "data:" || u.protocol === "blob:") return route.continue();
+  if (u.host !== host) return route.abort();
+  if (u.pathname === "/api/jogadores" && req.method() === "GET") {
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ jogador: JOGADOR_FALSO }) });
+  }
+  if (u.pathname.startsWith("/api/") && req.method() !== "GET") {
+    return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' });
+  }
+  return route.continue();
+});
+const pageP = await ctxPinch.newPage();
+await pageP.goto(base.replace(/\/$/, "") + "/jogos/wordle", { waitUntil: "load", timeout: 45000 });
+await pageP.getByRole("button", { name: /^(JOGAR|PLAY)$/i }).click({ timeout: 10000 });
+await pageP.waitForSelector("[data-game-area]", { timeout: 10000 });
+await pageP.waitForTimeout(400);
+const antesP = await pageP.evaluate(() => ({
+  escala: Number(document.querySelector("[data-game-area]")?.getAttribute("data-game-scale")),
+  areaH: document.querySelector("[data-game-area]")?.getBoundingClientRect().height ?? null,
+  vvH: window.visualViewport ? window.visualViewport.height : null,
+  vvScale: window.visualViewport ? window.visualViewport.scale : null,
+}));
+console.log("pinça antes", JSON.stringify(antesP));
+const emulouP = await pageP.evaluate(() => {
+  const vv = window.visualViewport;
+  if (!vv) return { ok: false, motivo: "sem visualViewport" };
+  const alvoH = 422;
+  const fake = {
+    get height() { return alvoH; },
+    get width() { return vv.width; },
+    get offsetTop() { return 0; },
+    get offsetLeft() { return vv.offsetLeft; },
+    get scale() { return 2; },
+    get pageTop() { return vv.pageTop; },
+    get pageLeft() { return vv.pageLeft; },
+    addEventListener: vv.addEventListener.bind(vv),
+    removeEventListener: vv.removeEventListener.bind(vv),
+    dispatchEvent: vv.dispatchEvent.bind(vv),
+  };
+  try {
+    Object.defineProperty(window, "visualViewport", { configurable: true, value: fake });
+  } catch (e) {
+    return { ok: false, motivo: String(e) };
+  }
+  vv.dispatchEvent(new Event("resize"));
+  window.dispatchEvent(new Event("resize"));
+  return { ok: true, alvoH, scale: 2 };
+});
+if (!emulouP.ok) {
+  await browser.close();
+  throw new Error("não deu para emular o zoom de pinça: " + emulouP.motivo);
+}
+await pageP.waitForTimeout(400);
+const depoisP = await pageP.evaluate(() => ({
+  escala: Number(document.querySelector("[data-game-area]")?.getAttribute("data-game-scale")),
+  areaH: document.querySelector("[data-game-area]")?.getBoundingClientRect().height ?? null,
+  vvH: window.visualViewport ? window.visualViewport.height : null,
+  vvScale: window.visualViewport ? window.visualViewport.scale : null,
+}));
+console.log("pinça depois", JSON.stringify(depoisP), "emulacao", JSON.stringify(emulouP));
+await ctxPinch.close();
+if (!(depoisP.escala > 0) || Math.abs(depoisP.escala - antesP.escala) > 0.02) {
+  throw new Error(
+    `zoom de pinça alterou a escala do jogo: ${antesP.escala} → ${depoisP.escala} (vv.scale=${depoisP.vvScale}, vvH=${depoisP.vvH})`,
+  );
+}
+console.log("OK pinça: escala", antesP.escala, "→", depoisP.escala, "(deve permanecer)");
+
