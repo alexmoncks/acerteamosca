@@ -1810,7 +1810,7 @@ export default function TiroAoAlvo() {
       {isPlaying && (
         <button
           onClick={toggleMute}
-          aria-label={muted ? t("unmuteLabel") : t("muteLabel")}
+          aria-label={t("muteLabel")}
           aria-pressed={muted}
           style={{
             position: "fixed",
