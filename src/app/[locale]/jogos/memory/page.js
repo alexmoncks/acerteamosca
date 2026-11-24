@@ -144,7 +144,7 @@ export default async function MemoryPage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="memory" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

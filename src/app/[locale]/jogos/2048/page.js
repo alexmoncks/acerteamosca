@@ -144,7 +144,7 @@ export default async function Game2048Page({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="2048" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

@@ -1841,7 +1841,7 @@ export default function JogoDoJacare() {
       padding: 12,
     }}>
 
-      <h1 style={{
+      <h2 style={{
         fontFamily: "'Press Start 2P', monospace",
         fontSize: 20,
         color: ACCENT,
@@ -1851,7 +1851,7 @@ export default function JogoDoJacare() {
         textAlign: "center",
       }}>
         {t("title")}
-      </h1>
+      </h2>
 
       {!isPlaying && (
         <p style={{

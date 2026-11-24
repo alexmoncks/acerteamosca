@@ -156,7 +156,7 @@ export default async function KungFuCastlePage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="kungfucastle" content={content} locale={locale} />
     </>
   );
 }

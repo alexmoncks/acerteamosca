@@ -144,7 +144,7 @@ export default async function WordlePage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="wordle" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

@@ -2250,7 +2250,7 @@ export default function BrickBreaker() {
 
       {screen !== "menu" && !selectWorld && !showHowTo && !showTutorial && (
         <>
-          <h1
+          <h2
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 16,
@@ -2262,7 +2262,7 @@ export default function BrickBreaker() {
             }}
           >
             BRICK BREAKER
-          </h1>
+          </h2>
           <p
             style={{
               color: "#4a5568",
@@ -2317,7 +2317,7 @@ export default function BrickBreaker() {
                 zIndex: 100,
               }}
             >
-              <h1
+              <h2
                 style={{
                   fontFamily: "'Press Start 2P', monospace",
                   fontSize: 20,
@@ -2331,7 +2331,7 @@ export default function BrickBreaker() {
                 BRICK
                 <br />
                 BREAKER
-              </h1>
+              </h2>
 
               {/* Decorative brick */}
               <div style={{ animation: "bbFloat 2s ease-in-out infinite", marginBottom: 20, marginTop: 8 }}>

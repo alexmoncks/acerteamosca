@@ -144,7 +144,7 @@ export default async function BatalhaNavalPage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="batalha-naval" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

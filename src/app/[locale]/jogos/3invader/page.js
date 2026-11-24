@@ -195,7 +195,7 @@ export default async function ThreeInvaderPage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="3invader" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

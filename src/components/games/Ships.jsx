@@ -260,7 +260,7 @@ function ShipsMenu({ onSelect, t }) {
     <div style={{ position: "absolute", inset: 0, background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 300 }}>
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
       <div style={{ fontSize: 50, marginBottom: 10 }}>🚀</div>
-      <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 28, color: "#39ff14", textShadow: "0 0 30px #39ff14", letterSpacing: 6, marginBottom: 6, position: "relative" }}>SHIPS</h1>
+      <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 28, color: "#39ff14", textShadow: "0 0 30px #39ff14", letterSpacing: 6, marginBottom: 6, position: "relative" }}>SHIPS</h2>
       <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: "#ff2d95", letterSpacing: 2, textShadow: "0 0 10px #ff2d95", marginBottom: 40 }}>{t("subtitle")}</p>
 
       <div style={{ width: 280, display: "flex", flexDirection: "column", gap: 12, position: "relative", zIndex: 1 }}>
@@ -889,7 +889,7 @@ export default function Ships() {
 
 
       {screen !== "menu" && screen !== "lobby" && <>
-        <h1 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h1>
+        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h2>
         <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 4, fontFamily: "'Press Start 2P', monospace" }}>
           {mode?.startsWith("cpu") ? `VS CPU (${mode.replace("cpu-", "").toUpperCase()})` : mode === "local" ? t("local2pMode") : mode?.startsWith("remote") ? `ONLINE - ${sessionId}` : ""}
         </p>

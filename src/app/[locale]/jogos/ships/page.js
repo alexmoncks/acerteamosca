@@ -144,7 +144,7 @@ export default async function ShipsPage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="ships" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

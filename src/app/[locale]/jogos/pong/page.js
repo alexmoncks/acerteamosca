@@ -142,7 +142,7 @@ export default async function PongPage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="pong" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

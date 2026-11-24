@@ -690,13 +690,13 @@ export default function WordleBR() {
 
       {/* Title above game area */}
       {hasStarted && (
-        <h1 style={{
+        <h2 style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: COLOR_CORRECT,
           textShadow: `0 0 20px ${COLOR_CORRECT}, 0 0 40px ${COLOR_CORRECT}30`,
           marginBottom: 8, letterSpacing: 3, textAlign: "center",
         }}>
           {t("gameTitle")}
-        </h1>
+        </h2>
       )}
       {hasStarted && (
         <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>

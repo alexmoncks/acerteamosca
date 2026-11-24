@@ -142,7 +142,7 @@ export default async function BrickBreakerPage({ params }) {
     <>
       <JsonLd data={jsonLd} />
       <GameClient />
-      <GameInfo content={content} locale={locale} />
+      <GameInfo slug="brickbreaker" content={content} locale={locale} />
       <AdBanner placement="game_footer" />
     </>
   );

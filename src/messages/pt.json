@@ -61,6 +61,22 @@
     "registering": "REGISTRANDO...",
     "play": "JOGAR!"
   },
+  "gameHeadings": {
+    "2048": "2048 Online — Jogue Grátis Multiplayer",
+    "3invader": "3INVADER — Jogo de Nave Shoot 'em Up Online Grátis",
+    "acerteamosca": "Acerte a Mosca — Jogue Grátis Online",
+    "batalha-naval": "Batalha Naval — Jogue Online Grátis",
+    "brickbreaker": "Brick Breaker — Jogo Arkanoid Online Grátis",
+    "bubbleshooter": "Bubble Shooter Online — Jogue Grátis",
+    "deepattack": "Deep Attack — Jogo de Nave Espacial Online Grátis",
+    "jacare": "Jogo do Jacaré Online — Frogger Grátis",
+    "kungfucastle": "Kung Fu Castle — Beat-em-up Online Grátis",
+    "memory": "Jogo da Memória Online — Jogue Grátis",
+    "pong": "Pong Online — Jogue Grátis Multiplayer",
+    "ships": "Ships — Batalha de Naves Online Grátis",
+    "tiroaoalvo": "Tiro ao Alvo Online — Jogue Grátis",
+    "wordle": "Wordle em Português — Jogue Grátis Online"
+  },
   "games": {
     "acerteamosca": {
       "title": "ACERTE A MOSCA",
