@@ -434,6 +434,16 @@ check("the layout HTML carries no Google tag (no adsbygoogle/googlesyndication/d
   assert.ok(!/googlesyndication|doubleclick|adsbygoogle|googletagmanager/.test(raiz), "tag do Google no layout raiz");
 });
 
+check("docs/adsense.md lists every ad unit (name and variable), Auto ads off and the exact ads.txt line", () => {
+  const doc = source("docs/adsense.md");
+  for (const [placement, cfg] of Object.entries(ads.AD_PLACEMENTS)) {
+    assert.ok(doc.includes(`\`${cfg.nome}\``), `docs/adsense.md sem a unidade ${cfg.nome}`);
+    assert.ok(doc.includes(`NEXT_PUBLIC_ADSENSE_SLOT_${placement.toUpperCase()}`), `docs/adsense.md sem a variável de ${placement}`);
+  }
+  assert.match(doc, /Anúncios Automáticos DESLIGADOS/);
+  assert.ok(doc.includes("google.com, pub-4148140889800778, DIRECT, f08c47fec0942fa0"));
+});
+
 check("ads.txt is exactly the Google line of the publisher", () => {
   const linhas = source("public/ads.txt").split(/\r?\n/).filter((l) => l !== "");
   assert.deepEqual(linhas, ["google.com, pub-4148140889800778, DIRECT, f08c47fec0942fa0"]);

@@ -17,7 +17,9 @@ import { consentDefaultScript, isValidGaId, regiaoConsentimento } from "@/lib/co
 // GA4 e AdSense só entram na página depois do Aceitar do aviso de cookies:
 // quem os injeta é o script consent-default (src/lib/consent.js).
 const GA_ID = isValidGaId(process.env.NEXT_PUBLIC_GA_ID) ? process.env.NEXT_PUBLIC_GA_ID.trim() : null;
-// Anúncios Automáticos: só o script do AdSense, com o publisher do ads.txt.
+// O script do AdSense, com o publisher do ads.txt (injetado depois do
+// Aceitar). Os anúncios saem dos blocos manuais (AdBanner); os Anúncios
+// Automáticos são desligados no painel, não aqui (docs/adsense.md).
 // ID fora do formato ca-pub-XXXXXXXXXXXXXXXX não liga nada.
 const ADSENSE_ID = isValidAdClient(process.env.NEXT_PUBLIC_ADSENSE_ID)
   ? process.env.NEXT_PUBLIC_ADSENSE_ID.trim()
