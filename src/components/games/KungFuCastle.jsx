@@ -8,6 +8,9 @@ import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.
 // PixiJS troca isso por funções prontas, sem eval.
 import "pixi.js/unsafe-eval";
 import dynamic from "next/dynamic";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
+import { bufferDoCanvas } from "@/lib/game-fit";
 import { loadAllAssets } from "./kungfu-assets";
 import { AnimController } from "./kungfu-anim";
 import { createBgm } from "./kungfu-bgm";
@@ -1630,6 +1633,11 @@ function TouchButton({ code, label, keysRef, size = 56, color = "#dc2626" }) {
 export default function KungFuCastle() {
   const t = useTranslations("games.kungfucastle");
   const containerRef = useRef(null);
+  // Encaixe comum na altura visível. A caixa lógica é CW × CH (480 × 320) e
+  // amplia até 2× (os 960px de largura máxima de antes). O canvas do PixiJS
+  // ocupa a área inteira: buffer = lógico × devicePixelRatio (resolution +
+  // autoDensity), só o tamanho CSS muda com a escala.
+  const fit = useGameFit({ largura: CW, altura: CH, maxima: 2 });
   const appRef = useRef(null);
   const gameRef = useRef(null);
   const keysRef = useRef(new Set());
@@ -1704,6 +1712,7 @@ export default function KungFuCastle() {
 
     let destroyed = false;
     const app = new Application();
+    const { dpr } = bufferDoCanvas(CW, CH, window.devicePixelRatio || 1);
 
     (async () => {
       await app.init({
@@ -1711,7 +1720,7 @@ export default function KungFuCastle() {
         height: CH,
         backgroundColor: 0x050510,
         antialias: false,
-        resolution: window.devicePixelRatio || 1,
+        resolution: dpr,
         autoDensity: true,
         preference: "webgl",
       });
@@ -1719,11 +1728,14 @@ export default function KungFuCastle() {
       if (destroyed) { app.destroy(); return; }
 
       containerRef.current?.appendChild(app.canvas);
+      app.canvas.dataset.dpr = String(dpr);
       app.canvas.style.imageRendering = "pixelated";
+      // A área do GameFit já tem a proporção da caixa (CW × CH × escala): o
+      // canvas a preenche. Antes era width 100% + maxHeight calc(100vh − 80px)
+      // + object-fit, que no monitor de 768px passava do fim da tela.
+      app.canvas.style.display = "block";
       app.canvas.style.width = "100%";
-      app.canvas.style.height = "auto";
-      app.canvas.style.maxHeight = "calc(100vh - 80px)";
-      app.canvas.style.objectFit = "contain";
+      app.canvas.style.height = "100%";
       app.canvas.style.borderRadius = "8px";
       app.canvas.style.border = "2px solid rgba(220,38,38,0.27)";
       appRef.current = app;
@@ -1872,8 +1884,8 @@ export default function KungFuCastle() {
   // ── Render ─────────────────────────────────────────────────────
   return (
     <div
+      className="game-fit-root"
       style={{
-        height: "100vh",
         overflow: "hidden",
         background: "#050510",
         display: "flex",
@@ -1882,7 +1894,6 @@ export default function KungFuCastle() {
         justifyContent: screen === "playing" ? "flex-start" : "center",
         fontFamily: "'Fira Code', monospace",
         padding: 12,
-        paddingTop: screen === "playing" ? 60 : 12,
       }}
     >
       {screen === "menu" && (
@@ -2006,18 +2017,17 @@ export default function KungFuCastle() {
         </div>
       )}
 
+      {/* A abertura traz o próprio GameFit (480 × 270): ela é filha direta
+          da raiz para o slot dela crescer na altura visível. */}
       {screen === "historia" && (
-        <div style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}>
-          <KungFuHistoria textos={historiaTextos} onFim={handleHistoriaFim} />
-        </div>
+        <KungFuHistoria textos={historiaTextos} onFim={handleHistoriaFim} />
       )}
 
       {screen === "playing" && (
         <>
-          <div
-            ref={containerRef}
-            style={{ width: "100%", maxWidth: 960, margin: "0 auto" }}
-          />
+          <GameFit fit={fit}>
+            <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+          </GameFit>
           {isTouch && (
             <div
               style={{

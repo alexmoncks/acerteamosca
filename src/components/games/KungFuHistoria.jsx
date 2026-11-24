@@ -17,6 +17,9 @@
 // mudar de idioma sem regerar arte.
 
 import { useEffect, useRef } from "react";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
+import { bufferDoCanvas } from "@/lib/game-fit";
 import { Application, Container, Graphics, Sprite, Assets, Text, TextStyle } from "pixi.js";
 // CSP sem 'unsafe-eval' (lote 2): o PixiJS v8 gera os shaders/uniforms com
 // new Function por padrão, e a CSP estrita bloqueia. Este módulo do próprio
@@ -40,10 +43,14 @@ export default function KungFuHistoria({ textos, onFim }) {
   const boxRef = useRef(null);
   const fimRef = useRef(onFim);
   fimRef.current = onFim;
+  // Mesmo encaixe do jogo (src/hooks/useGameFit.js): a moldura 480 × 270
+  // cabe na altura visível e amplia até 2×, como os 960px de antes.
+  const fit = useGameFit({ largura: LARGURA, altura: ALTURA, maxima: 2 });
 
   useEffect(() => {
     let morto = false;
     const app = new Application();
+    const { dpr } = bufferDoCanvas(LARGURA, ALTURA, window.devicePixelRatio || 1);
 
     (async () => {
       try {
@@ -51,18 +58,18 @@ export default function KungFuHistoria({ textos, onFim }) {
           width: LARGURA, height: ALTURA,
           backgroundColor: 0x000000,
           antialias: false,
-          resolution: window.devicePixelRatio || 1,
+          resolution: dpr,
           autoDensity: true,
           preference: "webgl",
         });
         if (morto) { app.destroy(); return; }
 
         boxRef.current?.appendChild(app.canvas);
+        app.canvas.dataset.dpr = String(dpr);
+        // A área do GameFit já tem a proporção da moldura: o canvas a preenche.
         Object.assign(app.canvas.style, {
           imageRendering: "pixelated",
-          width: "100%", height: "auto",
-          maxHeight: "calc(100vh - 80px)",
-          objectFit: "contain",
+          width: "100%", height: "100%",
           borderRadius: "8px",
           border: "2px solid rgba(220,38,38,0.27)",
           display: "block",
@@ -219,5 +226,9 @@ export default function KungFuHistoria({ textos, onFim }) {
     };
   }, []);
 
-  return <div ref={boxRef} style={{ width: "100%", display: "flex", justifyContent: "center" }} />;
+  return (
+    <GameFit fit={fit}>
+      <div ref={boxRef} style={{ width: "100%", height: "100%" }} />
+    </GameFit>
+  );
 }
