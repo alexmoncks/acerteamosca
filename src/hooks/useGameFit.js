@@ -29,11 +29,18 @@ import { ESCALA_MAXIMA, ESCALA_MINIMA, escalaDeEncaixe, variavelVh } from "@/lib
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 let vhInstalado = false;
+let removerVhSemDvh = null;
 
 /**
  * Navegador sem dvh: mantém --aam-vh (1% de innerHeight) no <html>, que o
  * CSS da raiz (.game-fit-root, globals.css) usa no lugar de 1vh. Com dvh,
  * não faz nada.
+ *
+ * É um singleton da página (todos os jogos compartilham a variável no
+ * <html>), por isso o hook NÃO desinstala no unmount — um jogo saindo
+ * não pode apagar o --aam-vh de outro que continua na tela. A função
+ * exportada desinstalarVhSemDvh() tira os listeners e a variável; serve
+ * para testes e para um teardown explícito.
  */
 function instalarVhSemDvh() {
   if (vhInstalado || typeof window === "undefined") return;
@@ -48,6 +55,19 @@ function instalarVhSemDvh() {
   window.addEventListener("resize", aplicar);
   window.addEventListener("orientationchange", aplicar);
   window.visualViewport?.addEventListener("resize", aplicar);
+  removerVhSemDvh = () => {
+    window.removeEventListener("resize", aplicar);
+    window.removeEventListener("orientationchange", aplicar);
+    window.visualViewport?.removeEventListener("resize", aplicar);
+    document.documentElement.style.removeProperty("--aam-vh");
+    removerVhSemDvh = null;
+    vhInstalado = false;
+  };
+}
+
+/** Tira os listeners e a variável --aam-vh do fallback sem dvh. Ver instalarVhSemDvh. */
+export function desinstalarVhSemDvh() {
+  if (typeof removerVhSemDvh === "function") removerVhSemDvh();
 }
 
 const px = (v) => Number.parseFloat(v) || 0;

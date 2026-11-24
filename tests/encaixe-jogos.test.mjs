@@ -131,6 +131,18 @@ check("useGameFit: fonts.ready não agenda depois do unmount (flag alive)", () =
   assert.match(src, /return \(\) => \{\s*alive = false;/);
 });
 
+check("useGameFit: desinstalarVhSemDvh remove os listeners do fallback sem dvh", () => {
+  const src = source("src/hooks/useGameFit.js");
+  assert.match(src, /export function desinstalarVhSemDvh/);
+  assert.match(src, /removeEventListener\("resize", aplicar\)/);
+  assert.match(src, /removeEventListener\("orientationchange", aplicar\)/);
+  assert.match(src, /visualViewport\?\.removeEventListener\("resize", aplicar\)/);
+  assert.match(src, /style\.removeProperty\("--aam-vh"\)/);
+  // não é chamado no unmount do hook: o fallback é da página, não do jogo
+  const unmount = src.split("return () => {")[1];
+  assert.ok(unmount && !/desinstalarVhSemDvh\(/.test(unmount.split("}, [")[0]), "desinstalação no unmount do hook");
+});
+
 check("GameFit expõe a área ([data-game-area], data-game-scale) com o tamanho escalado", () => {
   const src = source("src/components/GameFit.jsx");
   assert.match(src, /data-game-area=""/);
