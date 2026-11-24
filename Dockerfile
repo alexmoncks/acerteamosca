@@ -34,13 +34,18 @@ ARG NEXT_PUBLIC_WS_2048_URL
 ARG NEXT_PUBLIC_WS_BATALHA_URL
 ARG NEXT_PUBLIC_GA_ID
 ARG NEXT_PUBLIC_ADSENSE_ID
-# IDs numericos dos blocos manuais do AdSense. Vazios por padrao: sem eles o
-# AdBanner nao renderiza e ficam so os Anuncios Automaticos. Como todo
-# NEXT_PUBLIC_*, so valem se existirem no BUILD (no Railway, as variaveis do
-# servico chegam aqui como build args).
+# IDs numericos dos blocos manuais do AdSense (docs/adsense.md). Vazios por
+# padrao: sem eles o AdBanner nao renderiza. Como todo NEXT_PUBLIC_*, so valem
+# se existirem no BUILD (no Railway, as variaveis do servico chegam aqui como
+# build args).
 ARG NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP=""
 ARG NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM=""
 ARG NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER=""
+ARG NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM=""
+# Previa: ADTEST="on" (anuncio de teste) e PLACEHOLDERS="1" (caixas
+# tracejadas). Vazias por padrao; a producao nunca define.
+ARG NEXT_PUBLIC_ADSENSE_ADTEST=""
+ARG NEXT_PUBLIC_ADSENSE_PLACEHOLDERS=""
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL \
     NEXT_PUBLIC_WS_SHIPS_URL=$NEXT_PUBLIC_WS_SHIPS_URL \
     NEXT_PUBLIC_WS_MEMORY_URL=$NEXT_PUBLIC_WS_MEMORY_URL \
@@ -51,6 +56,9 @@ ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL \
     NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP=$NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP \
     NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM=$NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM \
     NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER=$NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER \
+    NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM=$NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM \
+    NEXT_PUBLIC_ADSENSE_ADTEST=$NEXT_PUBLIC_ADSENSE_ADTEST \
+    NEXT_PUBLIC_ADSENSE_PLACEHOLDERS=$NEXT_PUBLIC_ADSENSE_PLACEHOLDERS \
     NEXT_TELEMETRY_DISABLED=1
 
 # `npm run build` is `prisma generate && next build`. The build never connects to

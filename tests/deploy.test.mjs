@@ -87,6 +87,9 @@ check("every NEXT_PUBLIC_* of the ads and analytics is a build ARG/ENV in the Do
     "NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP",
     "NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM",
     "NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER",
+    "NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM",
+    "NEXT_PUBLIC_ADSENSE_ADTEST",
+    "NEXT_PUBLIC_ADSENSE_PLACEHOLDERS",
     "NEXT_PUBLIC_GA_ID",
   ]) {
     assert.ok(new RegExp(`^ARG ${v}(=""|$)`, "m").test(DOCKERFILE), `Dockerfile sem ARG ${v}`);

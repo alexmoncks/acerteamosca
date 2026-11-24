@@ -73,7 +73,8 @@ Para apagar os dados do banco de dev: `scripts/dev-homeserver.sh down --db && do
 - `.env.local` (modo 600, ignorado pelo git): portas (`AAM_DEV_HOST`, `AAM_APP_PORT`, `AAM_EN_PORT`, `AAM_WS_PORT`), as URLs `NEXT_PUBLIC_WS_*` (`ws://$AAM_DEV_HOST:$AAM_WS_PORT/...`) e o `NEXT_PUBLIC_ADSENSE_ID` público (o mesmo do `ads.txt`).
 - Ficam **vazias de propósito** no dev:
   - `NEXT_PUBLIC_GA_ID`, para não misturar com as métricas de produção;
-  - `NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP`, `NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM` e `NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER`, que só existem quando houver blocos criados no AdSense.
+  - `NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP`, `NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM`, `NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER` e `NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM`, que só existem quando houver blocos criados no AdSense (ver `docs/adsense.md`);
+  - `NEXT_PUBLIC_ADSENSE_ADTEST` e `NEXT_PUBLIC_ADSENSE_PLACEHOLDERS`, as chaves da prévia. Para ver o layout dos anúncios sem impressão real, ponha `NEXT_PUBLIC_ADSENSE_ADTEST="on"` (os blocos com ID viram anúncio de teste, `data-adtest="on"`) e `NEXT_PUBLIC_ADSENSE_PLACEHOLDERS="1"` (bloco sem ID vira uma caixa tracejada, sem pedir anúncio), rode `build` e `restart`. Os blocos só aparecem depois do **Aceitar** do aviso de cookies. Nunca defina essas duas na produção.
 - O projeto não usa NextAuth nem outra integração com segredo de servidor. Só o `DATABASE_URL` é segredo.
 - Nunca use banco ou credencial de produção aqui.
 

@@ -107,12 +107,17 @@ NEXT_PUBLIC_WS_MEMORY_URL="ws://${h}:${w}/memory"
 NEXT_PUBLIC_WS_2048_URL="ws://${h}:${w}/2048"
 NEXT_PUBLIC_WS_BATALHA_URL="ws://${h}:${w}/batalha-naval"
 
-# AdSense: só o ID público do publisher (Anúncios Automáticos). Sem IDs
-# numéricos de bloco, as unidades manuais não renderizam (igual à produção hoje).
+# AdSense: só o ID público do publisher. Sem IDs numéricos de bloco, os blocos
+# manuais não renderizam (docs/adsense.md). Prévia: ADTEST="on" marca os blocos
+# como anúncio de teste; PLACEHOLDERS="1" mostra caixas tracejadas no lugar dos
+# blocos sem ID. Vazios por padrão.
 NEXT_PUBLIC_ADSENSE_ID="${ADSENSE_PADRAO}"
 NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP=""
 NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM=""
 NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER=""
+NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM=""
+NEXT_PUBLIC_ADSENSE_ADTEST=""
+NEXT_PUBLIC_ADSENSE_PLACEHOLDERS=""
 
 # Google Analytics: desligado no dev (para não sujar as métricas de produção).
 NEXT_PUBLIC_GA_ID=""

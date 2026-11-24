@@ -93,3 +93,22 @@ check("dev-homeserver.sh and its doc keep the private IP and real ports out of t
     assert.match(sh, new RegExp(`${v}_PADRAO="\\$\\{${v}:-\\d+\\}"`), `${v} sem padrão vindo do ambiente`);
   }
 });
+
+check("the .env.local template and .env.example list every AdSense variable; the preview switches stay empty", () => {
+  const sh = source("scripts/dev-homeserver.sh");
+  const exemplo = source(".env.example");
+  for (const v of [
+    "NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP",
+    "NEXT_PUBLIC_ADSENSE_SLOT_HOME_BOTTOM",
+    "NEXT_PUBLIC_ADSENSE_SLOT_GAME_FOOTER",
+    "NEXT_PUBLIC_ADSENSE_SLOT_CONTENT_BOTTOM",
+    // prévia: vazias por padrão (data-adtest e as caixas tracejadas só quando
+    // alguém liga de propósito)
+    "NEXT_PUBLIC_ADSENSE_ADTEST",
+    "NEXT_PUBLIC_ADSENSE_PLACEHOLDERS",
+  ]) {
+    assert.match(sh, new RegExp(`^${v}=""$`, "m"), `modelo do .env.local sem ${v}=""`);
+    assert.match(exemplo, new RegExp(`^${v}=""$`, "m"), `.env.example sem ${v}=""`);
+    assert.ok(source("docs/dev-homeserver.md").includes(v), `docs/dev-homeserver.md sem ${v}`);
+  }
+});
