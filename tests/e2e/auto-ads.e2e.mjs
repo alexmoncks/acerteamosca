@@ -188,7 +188,7 @@ async function medir({ pagina, variante, vpNome }) {
     ins_auto: document.querySelectorAll("ins.adsbygoogle-noablate, .google-auto-placed, ins.adsbygoogle[data-anchor-status], ins.adsbygoogle[data-vignette-loaded]").length,
     status_falso: document.querySelector("ins[data-e2e-falso]")?.getAttribute("data-ad-status") ?? null,
     // os <ins> que não são do site nem do teste: os que o Auto ads põe
-    ins_attrs: [...document.querySelectorAll("ins.adsbygoogle:not([data-e2e-falso])")].map((el) =>
+    ins_attrs: [...document.querySelectorAll("ins.adsbygoogle:not([data-e2e-falso])")].filter((el) => !el.closest(".ad-slot")).map((el) =>
       [el.className, ...[...el.attributes].filter((a) => a.name.startsWith("data-")).map((a) => `${a.name}=${a.value}`)].join(" ").slice(0, 300)),
     ads_attr: document.documentElement.getAttribute("data-aam-ads"),
     tags: !!window.__aamGoogleTags,
