@@ -208,6 +208,21 @@ class SkeetAudio {
     }
   }
 
+  // Fecha o AudioContext com close() protegido: a música (e qualquer oscilado
+  // pendente) para ao sair da página. close() pode rejeitar se o contexto já
+  // estiver fechado; por isso o try/catch e o .catch na Promise.
+  close() {
+    this.stopMusic();
+    const ctx = this.ctx;
+    this.ctx = null;
+    if (ctx && typeof ctx.close === "function") {
+      try {
+        const ret = ctx.close();
+        if (ret && typeof ret.catch === "function") ret.catch(() => {});
+      } catch (e) {}
+    }
+  }
+
   toggle() {
     this.muted = !this.muted;
     if (this.muted) this.stopMusic();
@@ -1527,7 +1542,7 @@ export default function TiroAoAlvo() {
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      audioRef.current?.stopMusic();
+      audioRef.current?.close();
     };
   }, []);
 
