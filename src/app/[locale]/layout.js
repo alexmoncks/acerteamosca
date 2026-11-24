@@ -31,6 +31,23 @@ const ADSENSE_ID = isValidAdClient(process.env.NEXT_PUBLIC_ADSENSE_ID)
 // isso; o force-dynamic deixa explícito e vale para todas as páginas.
 export const dynamic = "force-dynamic";
 
+// Viewport única, pelo próprio Next. Com a <meta name="viewport"> escrita à
+// mão no <head>, o Next ainda emitia a dele (width=device-width,
+// initial-scale=1) e a página saía com DUAS metas viewport. Exportando aqui,
+// o Next emite uma só, com os valores do site:
+// - maximum-scale=5: o zoom com pinça continua liberado (acessibilidade);
+// - viewport-fit=cover: o conteúdo vai até as bordas do iPhone com entalhe,
+//   e o body compensa com env(safe-area-inset-*) (globals.css).
+// A theme-color continua na <meta> do <head>, como antes.
+// A meta sozinha não faz o jogo caber na altura: quem faz é o encaixe
+// (src/lib/game-fit.js e src/components/GameFit.jsx).
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -123,7 +140,6 @@ export default async function LocaleLayout({ children, params }) {
     // atributos do próprio <html>, não para os filhos.
     <html lang={locale === "pt" ? "pt-BR" : "en"} suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="google-adsense-account" content={ADSENSE_PUBLISHER} />
         <meta name="theme-color" content="#050510" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
