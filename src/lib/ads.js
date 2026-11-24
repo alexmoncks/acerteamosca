@@ -55,17 +55,17 @@ export const AD_PLACEMENTS = {
 };
 
 /**
- * NEXT_PUBLIC_ADSENSE_ADTEST: só o valor "on" marca o <ins> com
- * data-adtest="on" (prévia sem impressão real). Qualquer outro valor, vazio
- * incluído, deixa o atributo de fora.
+ * NEXT_PUBLIC_ADSENSE_ADTEST: só o valor exato "on" marca o <ins> com
+ * data-adtest="on" (prévia sem impressão real). Qualquer outro valor ("ON",
+ * " on", "1", vazio) deixa o atributo de fora.
  */
 export function adTestValue(value) {
-  return typeof value === "string" && value.trim() === "on" ? "on" : null;
+  return value === "on" ? "on" : null;
 }
 
-/** NEXT_PUBLIC_ADSENSE_PLACEHOLDERS: só "1" liga as caixas de prévia. */
+/** NEXT_PUBLIC_ADSENSE_PLACEHOLDERS: só o valor exato "1" liga as caixas de prévia. */
 export function placeholdersEnabled(value) {
-  return typeof value === "string" && value.trim() === "1";
+  return value === "1";
 }
 
 /**
