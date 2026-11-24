@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
+import { clienteParaLogico, deltaClienteParaLogico } from "@/lib/game-fit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 // ── Constants ──────────────────────────────────────────────────────────
@@ -586,7 +588,8 @@ function ballBrickSide(bx, by, br, rx, ry, rw, rh) {
 export default function BrickBreaker() {
   const t = useTranslations("games.brickbreaker");
   const { user, checkedCookie, registering, register } = useJogador("brickbreaker");
-  const gameScale = useGameScale(CW);
+  const fit = useGameFit({ largura: CW, altura: CH });
+  const gameScale = fit.escala;
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const audioRef = useRef(null);
@@ -1993,9 +1996,11 @@ export default function BrickBreaker() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Tela → lógico pela razão canvas.width / rect.width (o retângulo já
+    // inclui o transform: scale do encaixe), não por offsetX.
     const getCanvasX = (clientX) => {
       const rect = canvas.getBoundingClientRect();
-      return (clientX - rect.left) / gameScale;
+      return clienteParaLogico(clientX, 0, rect, CW, CH).x;
     };
 
     const onMouseMove = (e) => {
@@ -2032,7 +2037,7 @@ export default function BrickBreaker() {
       const touch = e.touches[0];
       const t = touchRef.current;
       if (!t.active) return;
-      const dx = (touch.clientX - t.startX) / gameScale;
+      const dx = deltaClienteParaLogico(touch.clientX - t.startX, 0, canvas.getBoundingClientRect(), CW, CH).x;
       const pw = g.bigPaddle ? 144 : PADDLE_W;
       g.paddle.x = Math.max(0, Math.min(CW - pw, t.paddleStart + dx));
     };
@@ -2204,8 +2209,8 @@ export default function BrickBreaker() {
 
   return (
     <div
+      className="game-fit-root"
       style={{
-        minHeight: "100vh",
         background: "#050510",
         display: "flex",
         flexDirection: "column",
@@ -2251,6 +2256,7 @@ export default function BrickBreaker() {
       {screen !== "menu" && !selectWorld && !showHowTo && !showTutorial && (
         <>
           <h2
+            className="game-fit-titulo"
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 16,
@@ -2264,6 +2270,7 @@ export default function BrickBreaker() {
             BRICK BREAKER
           </h2>
           <p
+            className="game-fit-titulo"
             style={{
               color: "#4a5568",
               fontSize: 8,
@@ -2276,13 +2283,7 @@ export default function BrickBreaker() {
         </>
       )}
 
-      <div
-        style={{
-          width: CW * gameScale,
-          height: CH * gameScale,
-          touchAction: isPlaying ? "none" : "auto",
-        }}
-      >
+      <GameFit fit={fit} style={{ touchAction: isPlaying ? "none" : "auto" }}>
         <div
           style={{
             width: CW,
@@ -3211,7 +3212,7 @@ export default function BrickBreaker() {
             </div>
           )}
         </div>
-      </div>
+      </GameFit>
 
       {user && isPlaying && (
         <div

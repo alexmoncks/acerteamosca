@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
+import { deltaClienteParaLogico } from "@/lib/game-fit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 // ── i18n ref (set inside component, used by canvas drawing functions) ──
@@ -1423,21 +1425,11 @@ export default function ThreeInvader() {
   });
 
   const { user, checkedCookie, registering, register } = useJogador("3invader");
-  // Custom scale that considers BOTH width and height (game is tall)
-  const [gameScale, setGameScale] = useState(1);
-  useEffect(() => {
-    function calc() {
-      const maxW = window.innerWidth - 24;
-      const maxH = window.innerHeight - 48 - 90; // navbar(48) + controls+padding(90)
-      const scaleW = maxW / CW;
-      const scaleH = maxH / CH;
-      // Scale up on PC (max 2x to avoid blurriness), scale down on mobile
-      setGameScale(Math.min(scaleW, scaleH, 2));
-    }
-    calc();
-    window.addEventListener("resize", calc);
-    return () => window.removeEventListener("resize", calc);
-  }, []);
+  // Encaixe comum (largura E altura). Antes havia um cálculo próprio com a
+  // reserva fixa de 90px para os controles; agora o slot do GameFit mede o
+  // que sobra de verdade. Amplia até 2× no PC, como antes.
+  const fit = useGameFit({ largura: CW, altura: CH, maxima: 2 });
+  const gameScale = fit.escala;
   const canvasRef = useRef(null);
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);
@@ -4176,9 +4168,8 @@ export default function ThreeInvader() {
   }, []);
 
   // ── Touch input ────────────────────────────────────────────────
-  // Store gameScale in ref for touch handlers
-  const gameScaleRef = useRef(gameScale);
-  useEffect(() => { gameScaleRef.current = gameScale; }, [gameScale]);
+  // O arrasto converte pela razão entre o tamanho lógico do canvas e o
+  // retângulo dele na tela (já com o transform: scale do encaixe).
 
   useEffect(() => {
     const onTouchStart = (e) => {
@@ -4200,9 +4191,8 @@ export default function ThreeInvader() {
       e.preventDefault();
       const t = e.touches[0];
       const ref = touchRef.current;
-      const scale = gameScaleRef.current || 1;
-      const dx = (t.clientX - ref.lastClientX) / scale;
-      const dy = (t.clientY - ref.lastClientY) / scale;
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const { x: dx, y: dy } = deltaClienteParaLogico(t.clientX - ref.lastClientX, t.clientY - ref.lastClientY, rect, CW, CH);
       ref.lastClientX = t.clientX;
       ref.lastClientY = t.clientY;
       const g = gameRef.current;
@@ -4408,8 +4398,8 @@ export default function ThreeInvader() {
 
   return (
     <div
+      className="game-fit-root"
       style={{
-        height: "calc(100vh - 48px)",
         background: "#020824",
         display: "flex",
         flexDirection: "column",
@@ -4456,6 +4446,7 @@ export default function ThreeInvader() {
       {!isPlaying && screen !== "menu" && screen !== "intro" && screen !== "gameover" && screen !== "victory" && screen !== "phaseselect" && screen !== "howtoplay" && screen !== "highscores" && screen !== "difficulty" && screen !== "sound" && screen !== "jukebox" && (
         <>
           <h2
+            className="game-fit-titulo"
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 18,
@@ -4469,6 +4460,7 @@ export default function ThreeInvader() {
             3INVADER
           </h2>
           <p
+            className="game-fit-titulo"
             style={{
               color: "#4a5568",
               fontSize: 9,
@@ -4481,13 +4473,7 @@ export default function ThreeInvader() {
         </>
       )}
 
-      <div
-        style={{
-          width: CW * gameScale,
-          height: CH * gameScale,
-          touchAction: isPlaying ? "none" : "auto",
-        }}
-      >
+      <GameFit fit={fit} style={{ touchAction: isPlaying ? "none" : "auto" }}>
         <div
           style={{
             width: CW,
@@ -5594,7 +5580,7 @@ export default function ThreeInvader() {
             </div>
           )}
         </div>
-      </div>
+      </GameFit>
 
       {/* Mobile controls */}
       {screen === "playing" && (

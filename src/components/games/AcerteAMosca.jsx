@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
+import { clienteParaLogico } from "@/lib/game-fit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const CANVAS_W = 480;
@@ -741,9 +743,10 @@ export default function AcerteAMosca() {
 
   const handleInteraction = (clientX, clientY, target) => {
     if (screen !== "playing") return;
+    // Pela razão entre o tamanho lógico e o retângulo na tela (que já inclui
+    // o transform: scale do encaixe), não por offsetX/offsetWidth.
     const rect = target.getBoundingClientRect();
-    const cx = (clientX - rect.left) / gameScale;
-    const cy = (clientY - rect.top) / gameScale;
+    const { x: cx, y: cy } = clienteParaLogico(clientX, clientY, rect, CANVAS_W, CANVAS_H);
     const dx = cx - flyX;
     const dy = cy - flyY;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -842,7 +845,8 @@ export default function AcerteAMosca() {
 
   useEffect(() => () => audioRef.current?.stop(), []);
 
-  const gameScale = useGameScale(CANVAS_W);
+  const fit = useGameFit({ largura: CANVAS_W, altura: CANVAS_H });
+  const gameScale = fit.escala;
   useLockScroll(screen === "playing");
   const timerPct = (timeLeft / GAME_DURATION) * 100;
   const timerColor = timeLeft > 10 ? "#39ff14" : timeLeft > 5 ? "#ffe600" : "#ff2d95";
@@ -850,7 +854,7 @@ export default function AcerteAMosca() {
   if (!checkedCookie) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
+    <div className="game-fit-root" style={{ background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
       <style>{`
         @keyframes particleBurst {
           0% { opacity: 1; transform: translate(0,0) scale(1); }
@@ -896,15 +900,15 @@ export default function AcerteAMosca() {
 
 
       {screen !== "splash" && <>
-        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: currentColorStr, textShadow: `0 0 20px ${currentColorStr}, 0 0 40px ${rgbaStr(currentColor, 0.3)}`, marginBottom: 8, letterSpacing: 3, textAlign: "center", transition: "color 1s, text-shadow 1s" }}>
+        <h2 className="game-fit-titulo" style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: currentColorStr, textShadow: `0 0 20px ${currentColorStr}, 0 0 40px ${rgbaStr(currentColor, 0.3)}`, marginBottom: 8, letterSpacing: 3, textAlign: "center", transition: "color 1s, text-shadow 1s" }}>
           {t("title")}
         </h2>
-        <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
+        <p className="game-fit-titulo" style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
           {audioStarted ? t("audio3dActive") : t("tagline")}
         </p>
       </>}
 
-      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale, touchAction: screen === "playing" ? "none" : "auto" }}>
+      <GameFit fit={fit} style={{ touchAction: screen === "playing" ? "none" : "auto" }}>
       <div
         style={{
           width: CANVAS_W, height: CANVAS_H, position: "relative",
@@ -1005,7 +1009,7 @@ export default function AcerteAMosca() {
         {screen === "gameover" && <GameOverScreen score={score} hits={hits} misses={misses} bestCombo={bestCombo} onRestart={restartGame} t={t} />}
         {screen === "winner" && <WinModal message={t("winMessage")} onClose={restartGame} t={t} />}
       </div>
-      </div>
+      </GameFit>
 
       {user && screen === "playing" && (
         <div style={{ width: CANVAS_W, display: "flex", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>
