@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_BATALHA_URL || "ws://localhost:3006";
@@ -1651,7 +1652,11 @@ export default function BatalhaNaval() {
   // ---- Hooks ----
   const t = useTranslations("games.batalhanaval");
   const { user, checkedCookie, registering, register } = useJogador("batalha-naval");
-  const gameScale = useGameScale(GAME_W);
+  // A caixa muda de altura conforme a tela (menu ~450px, batalha ~600px):
+  // o encaixe mede a altura natural dela (alturaAutomatica). 600 é só a
+  // estimativa até a primeira medição.
+  const fit = useGameFit({ largura: GAME_W, altura: 600, alturaAutomatica: true });
+  const gameScale = fit.escala;
   const [screen, setScreen] = useState("menu");
   // screens: menu, register, setup, battle, gameover, paused,
   //          online-lobby, online-setup, online-waiting, online-battle, online-gameover
@@ -1732,10 +1737,15 @@ export default function BatalhaNaval() {
   }, []);
 
   // ---- Cell sizes ----
+  // Tamanho da célula em unidades LÓGICAS da caixa (GAME_W). Antes ele
+  // também encolhia com a escala, e o transform: scale encolhia de novo (no
+  // celular a grade ficava escalada duas vezes). Com a escala vindo da
+  // altura da própria caixa, depender dela daria um laço: célula menor →
+  // caixa mais baixa → escala maior → célula maior...
   const mainCellSize = useMemo(() => {
-    const maxGrid = Math.min(GAME_W * gameScale - 40, 360);
+    const maxGrid = Math.min(GAME_W - 40, 360);
     return Math.floor(maxGrid / (GRID_SIZE + 1)); // +1 for labels
-  }, [gameScale]);
+  }, []);
 
   const miniCellSize = useMemo(() => Math.max(12, Math.floor(mainCellSize * 0.5)), [mainCellSize]);
 
@@ -2597,19 +2607,19 @@ export default function BatalhaNaval() {
   const isOnlineScreen = screen.startsWith("online");
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#050510",
+    <div className="game-fit-root" style={{
+      background: "#050510",
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center",
-      padding: "12px 0",
+      padding: "12px",
     }}>
 
       {/* Game container */}
+      <GameFit fit={fit}>
       <div style={{
         width: GAME_W,
-        maxWidth: "100vw",
         transform: `scale(${gameScale})`,
-        transformOrigin: "top center",
+        transformOrigin: "top left",
         position: "relative",
         border: "2px solid #3b82f633",
         borderRadius: 12,
@@ -3185,6 +3195,7 @@ export default function BatalhaNaval() {
           </>
         )}
       </div>
+      </GameFit>
 
     </div>
   );
