@@ -115,7 +115,11 @@ export default async function LocaleLayout({ children, params }) {
   const regiao = regiaoConsentimento(headers().get("cf-ipcountry"));
 
   return (
-    <html lang={locale === "pt" ? "pt-BR" : "en"}>
+    // suppressHydrationWarning: o script consent-default marca o <html> com
+    // data-aam-ads="on" (quem já aceitou) antes da hidratação; o atributo não
+    // vem do React e não pode virar aviso de divergência. Só vale para os
+    // atributos do próprio <html>, não para os filhos.
+    <html lang={locale === "pt" ? "pt-BR" : "en"} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="google-adsense-account" content={ADSENSE_PUBLISHER} />

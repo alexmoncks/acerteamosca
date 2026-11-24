@@ -41,6 +41,15 @@ export const GRANTED_FLAG = "__aamGranted";
 export const REGION_GLOBAL = "__aamRegiao";
 /** Marca do Aceitar feito nesta página (vale mesmo com o storage bloqueado). */
 const ACCEPTED_FLAG = "__aamAccepted";
+/**
+ * Atributo do <html> que mostra os blocos de anúncio: "on" só para quem
+ * aceitou. globals.css esconde .ad-slot sem ele, então quem não aceitou não
+ * vê nem a caixa; e, como o script do <head> o marca antes da primeira
+ * pintura, quem já aceitou tem o espaço reservado desde o HTML (sem CLS).
+ */
+export const ADS_ATTR = "data-aam-ads";
+/** Evento que o Aceitar dispara na janela: os blocos já montados pedem o anúncio. */
+export const ADS_ON_EVENT = "acerteamosca:ads-on";
 
 const SINAIS = ["ad_storage", "ad_user_data", "ad_personalization", "analytics_storage"];
 
@@ -149,11 +158,60 @@ export function loadGoogleTags(win) {
   return typeof win[GOOGLE_TAGS_LOADER] === "function" ? win[GOOGLE_TAGS_LOADER]() : false;
 }
 
-/** Aceitar no aviso do site: grava a escolha e carrega as tags. */
+// Liga/desliga o atributo dos anúncios no <html>.
+function marcarAnuncios(win, ligado) {
+  const html = win.document && win.document.documentElement;
+  if (!html) return;
+  if (ligado) html.setAttribute(ADS_ATTR, "on");
+  else html.removeAttribute(ADS_ATTR);
+}
+
+/**
+ * Os blocos de anúncio podem pedir anúncio: a escolha gravada é "granted",
+ * ou a pessoa aceitou nesta página (storage bloqueado).
+ */
+export function adsConsented(win) {
+  return win[ACCEPTED_FLAG] === true || readConsentChoice(win) === "granted";
+}
+
+/**
+ * Chama `pedir` uma vez, quando os anúncios forem permitidos: já, se a pessoa
+ * aceitou antes (adsConsented), ou no ADS_ON_EVENT do Aceitar. Sem aceite,
+ * nunca. Devolve a função que para de esperar (cleanup do useEffect).
+ */
+export function whenAdsAllowed(win, pedir) {
+  let feito = false;
+  const uma = () => {
+    if (feito) return;
+    feito = true;
+    pedir();
+  };
+  if (adsConsented(win)) {
+    uma();
+    return () => {};
+  }
+  const ouvir = () => {
+    if (adsConsented(win)) uma();
+  };
+  win.addEventListener(ADS_ON_EVENT, ouvir);
+  return () => win.removeEventListener(ADS_ON_EVENT, ouvir);
+}
+
+/**
+ * Aceitar no aviso do site: grava a escolha, mostra os blocos de anúncio
+ * (ADS_ATTR), carrega as tags e avisa os blocos já montados (ADS_ON_EVENT).
+ */
 export function acceptSiteChoice(win) {
   win[ACCEPTED_FLAG] = true;
   gravar(win, CONSENT_STORAGE_KEY, "granted");
-  return loadGoogleTags(win);
+  marcarAnuncios(win, true);
+  const carregou = loadGoogleTags(win);
+  try {
+    win.dispatchEvent(new win.Event(ADS_ON_EVENT));
+  } catch {
+    // janela sem Event/dispatchEvent: os blocos montados depois leem a escolha
+  }
+  return carregou;
 }
 
 /**
@@ -215,6 +273,8 @@ export function declineSiteChoice(win) {
   gravar(win, CONSENT_STORAGE_KEY, "denied");
   win[ACCEPTED_FLAG] = false;
   win[GRANTED_FLAG] = false;
+  // os blocos somem já (o recarregamento, se houver, vem depois)
+  marcarAnuncios(win, false);
   gtagDe(win)(...consentUpdateCommand("denied"));
   clearGoogleCookies(win);
   return !!win[GOOGLE_TAGS_FLAG];
@@ -228,8 +288,11 @@ export function declineSiteChoice(win) {
  *      script (a CSP tem 'strict-dynamic');
  *   3. se a pessoa já aceitou: repete o "granted" fora do EEE (região
  *      "fora", salvo se a CMP já disse que o GDPR se aplica, G=1; ou região
- *      desconhecida com G=0) e carrega as tags. No EEE, nunca concede.
- * Sem aceite gravado, nenhuma tag do Google entra na página.
+ *      desconhecida com G=0), carrega as tags e marca o <html> com
+ *      ADS_ATTR="on" (os blocos de anúncio aparecem já na primeira pintura,
+ *      com o espaço reservado). No EEE, nunca concede.
+ * Sem aceite gravado, nenhuma tag do Google entra na página e os blocos
+ * ficam ocultos.
  */
 export function consentDefaultScript({ adsClient = null, gaId = null, regiao = null } = {}) {
   const reg = regiao === "eee" || regiao === "fora" ? regiao : null;
@@ -252,7 +315,9 @@ export function consentDefaultScript({ adsClient = null, gaId = null, regiao = n
     `try{if(localStorage.getItem(${JSON.stringify(CONSENT_STORAGE_KEY)})==="granted"){` +
     `var g=localStorage.getItem(${JSON.stringify(GDPR_STORAGE_KEY)});` +
     `if((r==="fora"&&g!=="1")||(r===null&&g==="0")){window.${GRANTED_FLAG}=true;gtag(${update});}` +
-    `window.${GOOGLE_TAGS_LOADER}();}}catch(e){}`;
+    // o atributo vem depois do loader: nada nele pode impedir as tags
+    `window.${GOOGLE_TAGS_LOADER}();` +
+    `document.documentElement.setAttribute(${JSON.stringify(ADS_ATTR)},"on");}}catch(e){}`;
   const regiaoJs = `var r=${JSON.stringify(reg)};window.${REGION_GLOBAL}=r;`;
   return `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}${chamadas}(function(){${regiaoJs}${carregador}${lembrada}})();`;
 }

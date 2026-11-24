@@ -56,9 +56,34 @@ a {
   text-decoration: none;
 }
 
-/* AdSense: bloco sem anúncio some pelo método suportado pelo Google
+/* AdSense: os blocos (AdBanner.jsx) só aparecem para quem aceitou no aviso
+   de cookies. O script do <head> marca html[data-aam-ads="on"] antes da
+   primeira pintura quando a escolha gravada é "granted", e o Aceitar marca
+   na hora (src/lib/consent.js, ADS_ATTR). Sem aceite, nem a caixa aparece
+   (e nenhum anúncio é pedido). Com aceite, a caixa já ocupa o espaço
+   reservado desde o HTML (sem CLS). */
+.ad-slot {
+  display: none;
+}
+html[data-aam-ads="on"] .ad-slot {
+  display: block;
+}
+/* Reserva de altura de cada placement (AD_PLACEMENTS em src/lib/ads.js, que
+   o AdBanner passa nas variáveis); 768px = AD_DESKTOP_MIN_WIDTH. */
+.ad-slot .ad-reserva {
+  min-height: var(--aam-ad-min-mobile, 280px);
+}
+@media (min-width: 768px) {
+  .ad-slot .ad-reserva {
+    min-height: var(--aam-ad-min-desktop, 250px);
+  }
+}
+
+/* Bloco sem anúncio some pelo método suportado pelo Google
    (data-ad-status="unfilled"), junto com o rótulo "Publicidade". Nada de
-   esconder o bloco por opacity/altura antes de o anúncio carregar. */
+   esconder o bloco por opacity/altura antes de o anúncio carregar. A regra
+   do .ad-slot:has(...) é mais específica que a do html[data-aam-ads="on"]
+   acima, então o bloco vazio some mesmo depois do aceite. */
 ins.adsbygoogle[data-ad-status="unfilled"] {
   display: none !important;
 }
