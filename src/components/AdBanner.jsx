@@ -52,9 +52,11 @@ export function adSlotFor(placement) {
 //   - a caixa inteira (rótulo e reserva) some com o mesmo sinal do Google:
 //     o .ad-slot:has(...) do CSS e, para navegador sem :has() (Firefox <
 //     121), o data-ad-vazio que o MutationObserver (watchUnfilled) copia do
-//     data-ad-status do <ins>. Os blocos ficam depois do conteúdo, então o
-//     colapso não move a área do jogo nem o texto acima (medido em
-//     24/11/2026, docs/adsense.md).
+//     data-ad-status do <ins>. game_footer, home_bottom e content_bottom
+//     ficam no fim da página: o colapso não move a área do jogo nem o texto
+//     acima. O home_top fica no meio da home: o colapso sobe a grade de
+//     jogos (205px desktop / 215px celular). Medido em 24/11/2026,
+//     docs/adsense.md.
 export default function AdBanner({ placement, style }) {
   const t = useTranslations("common");
   const pushed = useRef(false);

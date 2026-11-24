@@ -6,7 +6,7 @@ O site foi aprovado no AdSense em 11/2026. Os anúncios saem de **blocos manuais
 
 ## Anúncios Automáticos: desligados no painel
 
-O código não liga nem desliga os Anúncios Automáticos. Isso é feito no painel (**Anúncios → Por site → acerteamosca.com.br / nailedthefly.com**). A recomendação é:
+Quem desliga os Anúncios Automáticos é o painel (**Anúncios → Por site → acerteamosca.com.br / nailedthefly.com**). O código tem uma defesa a mais (ver "Defesa no código contra Anúncios Automáticos", abaixo), mas ela **não substitui o painel**. A recomendação é:
 
 - **Anúncios Automáticos DESLIGADOS** nos dois sites. Ficam só os blocos manuais desta página.
 - Se for ligar por algum motivo, no mínimo:
@@ -15,6 +15,42 @@ O código não liga nem desliga os Anúncios Automáticos. Isso é feito no pain
   - desligue os anúncios dentro da página nas áreas de jogo e confira o resultado na prévia do painel.
 
 **Por quê:** o Auto ads decide sozinho onde pôr o anúncio. Ele pode cair dentro da área do jogo, entre o canvas e os botões de toque ou perto dos botões de fim de partida. A âncora fica fixa no rodapé da tela, onde estão os controles de toque (o Kung Fu Castle, por exemplo, tem botões `position: fixed` no rodapé). A vinheta interrompe a navegação entre os jogos. Tudo isso é clique acidental, que a política do AdSense proíbe e que pode suspender a conta. Os blocos manuais ficam onde o código e os testes garantem.
+
+## Defesa no código contra Anúncios Automáticos
+
+**O que mudou (24/11/2026):** o `adsbygoogle.js` entra **sem `?client=ca-pub-…`** na URL (`consentDefaultScript` em `src/lib/consent.js`). As unidades manuais continuam funcionando, porque cada `<ins>` leva o `data-ad-client`. A verificação do site continua pela meta `google-adsense-account` do layout, e o `ads.txt` não muda.
+
+**O que foi testado:** `tests/e2e/auto-ads.e2e.mjs` (Playwright, fora do `npm test`) contra um servidor local (`next start -H localhost -p 3193`), com um build com `NEXT_PUBLIC_ADSENSE_PLACEHOLDERS=1` (nenhum `<ins>` do site). A escolha "granted" fica gravada antes do carregamento, e o pedido leva `CF-IPCountry: BR` (o `<head>` manda o "granted", como para um visitante do Brasil que aceitou). Cada medição fica 10 s parada, em `/` e em `/jogos/wordle`, no desktop (1366x768) e no celular (390x844). As variantes entram pela reescrita do script inline no HTML (o nonce continua valendo). Os pedidos a `googleads.g.doubleclick.net/pagead/ads` são contados e **abortados**: nenhum anúncio é entregue e nenhuma impressão é contada.
+
+| Variante | `pagead/ads` | `managed/js/adsense` | `<ins>` do Auto ads | Erros de console |
+|---|---|---|---|---|
+| A: `adsbygoogle.js?client=…` (até o `c7377ae`) | 1 | 1 | 1 | 0 |
+| B: `adsbygoogle.js` sem `?client=` | **0** | **0** | **0** | 0 |
+| C: B + push único `{google_ad_client, enable_page_level_ads: false}` | 1 | 1 | 1 | 0 |
+| D: A + o push de C | 1 | 1 | 2 | 1: `TagError: Only one 'enable_page_level_ads' allowed per page.` |
+
+Os números são por medição, e saíram iguais nas quatro combinações de página e tela (`/` e `/jogos/wordle`, desktop e celular). O `<ins>` do Auto ads é um `ins.adsbygoogle.adsbygoogle-noablate` com `data-ad-hi`, e o pedido dele sai com `format=0x0`: é o pedido de página dos formatos sobrepostos (âncora/vinheta).
+
+**Unidade manual:** com um `<ins>` de slot numérico **falso** e `data-adtest="on"` (só no teste local, nunca commitado), A e B geram o pedido da unidade (`slotname=…`) do mesmo jeito, sem erro. Também foi conferido no build já com B, com os blocos do próprio site (slots falsos só por variável de ambiente, `--variantes=real`): cada bloco gera o seu pedido (`home_top`, `home_bottom`, `game_footer`), sem erro.
+
+**A escolha foi B**, porque é a única que zera os pedidos numa página sem `<ins>` sem erro de console. A variante C piora: o push com `google_ad_client` **liga** o Auto ads mesmo com `enable_page_level_ads: false`, sem aviso nenhum. A D lança o TagError. Os testes (`tests/adsense.test.mjs`, `tests/consent.test.mjs`) conferem a URL sem query e que nenhum arquivo de `src/` usa `enable_page_level_ads`, `google_ad_client` ou `data-overlays`.
+
+**O limite:** a defesa só vale para a página **sem bloco manual**. Com um `<ins>` na página (todas as páginas com bloco, quando os IDs estiverem no ar), o `data-ad-client` basta: com B, o `adsbygoogle.js` busca o `managed/js/adsense` e faz o pedido `format=0x0` do Auto ads, igual a A (medido com o slot falso). Quem decide se esse pedido traz âncora ou vinheta é a configuração do painel.
+
+**O que o Google ainda respeita:**
+
+- o painel: Auto ads ligado/desligado por site, as **Exclusões de página** e os formatos (âncora, vinheta, coluna lateral, anúncios dentro da página);
+- o `data-ad-client`/`data-ad-slot` de cada `<ins>` (as unidades manuais);
+- a meta `google-adsense-account` (verificação do site) e o `ads.txt`.
+
+**O que não usar:**
+
+- `data-overlays="bottom"` ou `"collapsed-bottom"` no script: segundo a ajuda do Google, ele **liga** âncoras mesmo com elas desligadas no painel;
+- `enable_page_level_ads: false`: não é documentado como forma de desligar, e o teste mostrou que o push com `google_ad_client` liga o Auto ads; dois na página dão TagError.
+
+**Consequência na mensagem do Google (EEE/UK/CH):** sem o `?client=`, o `adsbygoogle.js` só fica sabendo do publisher pelo `<ins>`. Espera-se, então, que a mensagem de consentimento do Google só apareça nas páginas com bloco manual. Nas páginas sem bloco, não há anúncio para consentir, e o `src/lib/cmp.js` segue a regra de sempre: no EEE nunca concede. Isso não pôde ser medido daqui, porque o teste sai de um IP do Brasil e em nenhuma variante houve pedido a `fundingchoicesmessages.google.com`. Confira na prévia, de uma conexão europeia, quando os IDs estiverem no ar.
+
+**O painel continua obrigatório:** Anúncios Automáticos **desligados** nos dois sites (`acerteamosca.com.br` e `nailedthefly.com`). Se por algum motivo ficarem ligados, no mínimo `/jogos/*` excluídas nos dois e âncora, vinheta e coluna lateral desligadas.
 
 ## Unidades a criar no painel
 
@@ -38,7 +74,17 @@ A caixa `.ad-slot` tem `min-height` por placement, com media query em 768px (`AD
 - `home_top` está perto da primeira dobra, acima da grade de jogos. Reserva a altura do maior tamanho horizontal de cada faixa (100 no celular, 90 no desktop), para a grade não pular.
 - `home_bottom`, `game_footer` e `content_bottom` ficam no fim da página. O `auto` no celular quase sempre entrega um retângulo (300x250, 336x280): reserva 280. No desktop (caixa de até 900px) pode vir 728x90 ou um retângulo de 250: reserva 250. Um anúncio de 90 deixa sobra em branco, mas não empurra nada. Reservar só 90 faria a página pular 160px quando viesse um retângulo.
 
-Bloco sem anúncio (`data-ad-status="unfilled"`) some inteiro, com o rótulo, pelo CSS que o Google suporta (`globals.css`).
+Bloco sem anúncio (`data-ad-status="unfilled"`) some inteiro, com o rótulo, pelo sinal que o Google põe no `<ins>` (`globals.css`). São dois caminhos para o mesmo sinal:
+
+- `.ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"])`, dentro de `@supports selector(:has(*))`. O `@supports` é necessário: sem ele, o minificador do Next junta essa regra com a de baixo num seletor só, e o navegador sem `:has()` descarta a regra inteira;
+- `html[data-aam-ads="on"] .ad-slot[data-ad-vazio]`: o AdBanner observa o `data-ad-status` do próprio `<ins>` (`watchUnfilled` em `src/lib/ads.js`, MutationObserver), marca a caixa com `data-ad-vazio`, desmarca se o anúncio vier depois e desconecta no unmount. É o caminho do Firefox < 121.
+
+**Pulo de layout (medido com `tests/e2e/bloco-vazio.e2e.mjs`, 24/11/2026):**
+
+- **Páginas de jogo** (`/jogos/wordle`, `/jogos/acerteamosca`, desktop e celular): quando o `game_footer` colapsa, a área do jogo e o h1 do GameInfo **não se movem** (0px). Só a página encolhe (−325px no desktop, −355px no celular).
+- **`home_bottom`:** o FAQ acima não se move.
+- **`home_top`:** fica entre o destaque e a grade, perto da primeira dobra. O colapso **sobe a grade** 205px no desktop e 215px no celular, ainda dentro da tela inicial. Já acontecia antes, só com o `:has()`, e continua igual com o observer. Se isso pesar no CLS da home, a saída é não colapsar o `home_top`: deixar a reserva com o rótulo quando não vier anúncio. É uma decisão de produto, não foi feita.
+- **Rolado até o fim:** quando a página encolhe, o navegador puxa a rolagem para cima, e na tela o texto desce o tamanho do bloco. A posição no documento não muda. Isso só acontece se o "unfilled" chegar com a pessoa já no fim da página, e o "unfilled" vem logo depois da resposta do pedido de anúncio.
 
 ## Posições e regras
 
