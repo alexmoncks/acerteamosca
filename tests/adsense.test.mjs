@@ -419,14 +419,14 @@ delete globalThis.window;
 check("CSS: the empty box hides by data-ad-vazio (beating the consent rule) and :has() stays as reinforcement", () => {
   const css = source("src/app/globals.css");
   assert.equal(ads.AD_EMPTY_ATTR, "data-ad-vazio");
-  const regra = css.match(/html\[data-aam-ads="on"\] \.ad-slot\[data-ad-vazio\]\s*\{([^}]*)\}/);
+  const regra = css.match(/html\[data-aam-ads="on"\] \.ad-slot\[data-ad-vazio\]:not\(\[data-placement="home_top"\]\)\s*\{([^}]*)\}/);
   assert.ok(regra, "sem a regra do data-ad-vazio");
   assert.match(regra[1], /display:\s*none/);
   // a regra do aceite que ela precisa vencer (especificidade maior: 0,3,1 > 0,2,1)
   assert.match(css, /html\[data-aam-ads="on"\] \.ad-slot\s*\{\s*display:\s*block/);
   // o :has() fica isolado num @supports: sem isso o minificador junta as duas
   // regras num seletor só e o navegador sem :has() perde o fallback junto
-  const sup = css.match(/@supports selector\(:has\(\*\)\)\s*\{\s*\.ad-slot:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\)\s*\{\s*display:\s*none;?\s*\}\s*\}/);
+  const sup = css.match(/@supports selector\(:has\(\*\)\)\s*\{\s*\.ad-slot:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\):not\(\[data-placement="home_top"\]\)\s*\{\s*display:\s*none;?\s*\}\s*\}/);
   assert.ok(sup, "o .ad-slot:has(...) não está dentro do @supports selector(:has(*))");
   const semComent = css.replace(/\/\*[\s\S]*?\*\//g, "");
   assert.equal((semComent.match(/:has\(/g) || []).length, 2, ":has() fora do @supports"); // o do @supports e o da regra
@@ -501,9 +501,16 @@ check('CSS: .ad-slot hidden until html[data-aam-ads="on"]; reserve by media quer
   assert.match(css, /\.ad-slot \.ad-reserva\s*\{\s*min-height:\s*var\(--aam-ad-min-mobile/);
   assert.match(css, new RegExp(`@media \\(min-width: ${ads.AD_DESKTOP_MIN_WIDTH}px\\)\\s*\\{\\s*\\.ad-slot \\.ad-reserva\\s*\\{\\s*min-height:\\s*var\\(--aam-ad-min-desktop`));
   assert.match(css, /ins\.adsbygoogle\[data-ad-status="unfilled"\]\s*\{\s*display:\s*none !important;?\s*\}/);
-  assert.match(css, /\.ad-slot:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\)\s*\{\s*display:\s*none;?\s*\}/);
+  assert.match(css, /\.ad-slot:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\):not\(\[data-placement="home_top"\]\)\s*\{\s*display:\s*none;?\s*\}/);
   // o nome do atributo é o de src/lib/consent.js
   assert.equal(consentDoBanner.ADS_ATTR, "data-aam-ads");
+});
+
+check("CSS: home_top keeps its reserve when unfilled; the other slots still collapse", () => {
+  const css = source("src/app/globals.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.match(css, /html\[data-aam-ads="on"\] \.ad-slot\[data-ad-vazio\]:not\(\[data-placement="home_top"\]\)/);
+  assert.match(css, /\.ad-slot:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\):not\(\[data-placement="home_top"\]\)/);
+  assert.ok(!/\.ad-slot\[data-placement="home_top"\][^\{]*display:\s*none/.test(css), "regra escondendo o home_top");
 });
 
 // ── Posições ────────────────────────────────────────────────────────────

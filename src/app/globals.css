@@ -134,13 +134,14 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
    num seletor só, e o navegador sem :has() descarta a regra inteira,
    fallback junto (visto no CSS do build em 24/11/2026). */
 @supports selector(:has(*)) {
-  .ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+  .ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]):not([data-placement="home_top"]) {
     display: none;
   }
 }
+/* home_top (meio da home, acima da grade) NÃO entra nessas regras: quando o anúncio vem vazio, a reserva e o rótulo ficam, para a grade não pular ~200 px (CLS). Decisão reversível, a confirmar com o Alexander. Os outros blocos (home_bottom, game_footer, content_bottom) continuam colapsando. */
 /* O mesmo, sem :has() (Firefox < 121): o AdBanner copia o data-ad-status
    do <ins> para data-ad-vazio na caixa (MutationObserver, watchUnfilled em
    src/lib/ads.js). Mais específica que html[data-aam-ads="on"] .ad-slot. */
-html[data-aam-ads="on"] .ad-slot[data-ad-vazio] {
+html[data-aam-ads="on"] .ad-slot[data-ad-vazio]:not([data-placement="home_top"]) {
   display: none;
 }

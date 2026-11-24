@@ -83,7 +83,7 @@ Bloco sem anúncio (`data-ad-status="unfilled"`) some inteiro, com o rótulo, pe
 
 - **Páginas de jogo** (`/jogos/wordle`, `/jogos/acerteamosca`, desktop e celular): quando o `game_footer` colapsa, a área do jogo e o h1 do GameInfo **não se movem** (0px). Só a página encolhe (−325px no desktop, −355px no celular).
 - **`home_bottom`:** o FAQ acima não se move.
-- **`home_top`:** fica entre o destaque e a grade, perto da primeira dobra. O colapso **sobe a grade** 205px no desktop e 215px no celular, ainda dentro da tela inicial. Já acontecia antes, só com o `:has()`, e continua igual com o observer. Se isso pesar no CLS da home, a saída é não colapsar o `home_top`: deixar a reserva com o rótulo quando não vier anúncio. É uma decisão de produto, não foi feita.
+- **`home_top`:** fica entre o destaque e a grade, perto da primeira dobra. **Não colapsa** quando o anúncio vem vazio: a reserva (100 px no celular, 90 px no desktop) e o rótulo "Publicidade" ficam, para a grade não pular (~205 px no desktop / ~215 px no celular, medido em 24/11/2026 antes desta mudança). O `<ins>` unfilled continua oculto; só a caixa reservada permanece. Os outros blocos (`home_bottom`, `game_footer`, `content_bottom`) seguem colapsando. É uma **decisão reversível**, que vai para o Alexander confirmar. Para voltar atrás, tire o `:not([data-placement="home_top"])` das duas regras em `globals.css`.
 - **Rolado até o fim:** quando a página encolhe, o navegador puxa a rolagem para cima, e na tela o texto desce o tamanho do bloco. A posição no documento não muda. Isso só acontece se o "unfilled" chegar com a pessoa já no fim da página, e o "unfilled" vem logo depois da resposta do pedido de anúncio.
 
 ## Posições e regras

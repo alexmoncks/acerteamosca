@@ -54,9 +54,9 @@ export function adSlotFor(placement) {
 //     121), o data-ad-vazio que o MutationObserver (watchUnfilled) copia do
 //     data-ad-status do <ins>. game_footer, home_bottom e content_bottom
 //     ficam no fim da página: o colapso não move a área do jogo nem o texto
-//     acima. O home_top fica no meio da home: o colapso sobe a grade de
-//     jogos (205px desktop / 215px celular). Medido em 24/11/2026,
-//     docs/adsense.md.
+//     acima. O home_top NÃO colapsa quando vem vazio: a reserva e o
+//     rótulo ficam, para a grade não pular (~205/215 px de CLS). É uma
+//     decisão reversível, a confirmar com o Alexander (docs/adsense.md).
 export default function AdBanner({ placement, style }) {
   const t = useTranslations("common");
   const pushed = useRef(false);
