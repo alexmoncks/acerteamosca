@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import { PongMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const CANVAS_W = 480;
@@ -862,15 +863,16 @@ export default function Pong() {
     return serving === 0 ? t("p1PressS") : t("p2PressUp");
   })();
 
-  const gameScale = useGameScale(CANVAS_W);
+  const fit = useGameFit({ largura: CANVAS_W, altura: CANVAS_H });
+  const gameScale = fit.escala;
   useLockScroll(screen === "playing");
 
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? t("you") : mode?.startsWith("remote") && playerNum === 2 ? t("rival") : t("p1");
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? t("you") : mode?.startsWith("remote") && playerNum === 1 ? t("rival") : mode?.startsWith("cpu") ? t("cpu") : t("p2");
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#050510",
+    <div className="game-fit-root" style={{
+      background: "#050510",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12,
     }}>
@@ -893,11 +895,11 @@ export default function Pong() {
 
       {screen !== "menu" && screen !== "lobby" && (
         <>
-          <h2 style={{
+          <h2 className="game-fit-titulo" style={{
             fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#00f0ff",
             textShadow: "0 0 20px #00f0ff", marginBottom: 8, letterSpacing: 3,
           }}>PONG</h2>
-          <p style={{
+          <p className="game-fit-titulo" style={{
             color: "#4a5568", fontSize: 10, marginBottom: 14,
             fontFamily: "'Press Start 2P', monospace",
           }}>
@@ -909,9 +911,7 @@ export default function Pong() {
       )}
 
       {/* Game container */}
-      <div style={{
-        width: CANVAS_W * gameScale, height: CANVAS_H * gameScale,
-      }}>
+      <GameFit fit={fit}>
       <div style={{
         width: CANVAS_W, height: CANVAS_H, position: "relative",
         background: "#0a0a1a",
@@ -1078,7 +1078,7 @@ export default function Pong() {
           />
         )}
       </div>
-      </div>
+      </GameFit>
 
       {/* Controls hint (desktop only) */}
       {screen === "playing" && !isMobile && !mode?.startsWith("remote") && (

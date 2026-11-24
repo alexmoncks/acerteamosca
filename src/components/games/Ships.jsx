@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import { ShipsMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const TILE = 40;
@@ -873,14 +874,15 @@ export default function Ships() {
     }
   }, [checkedCookie]);
 
-  const gameScale = useGameScale(CANVAS_W);
+  const fit = useGameFit({ largura: CANVAS_W, altura: CANVAS_H });
+  const gameScale = fit.escala;
   useLockScroll(screen === "playing");
 
   const p1Label = mode?.startsWith("remote") && playerNum === 1 ? t("you") : mode?.startsWith("remote") ? t("rival") : "P1";
   const p2Label = mode?.startsWith("remote") && playerNum === 2 ? t("you") : mode?.startsWith("remote") ? t("rival") : mode?.startsWith("cpu") ? "CPU" : "P2";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
+    <div className="game-fit-root" style={{ background: "#050510", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace", overflow: "hidden", padding: 12 }}>
       <style>{`
         @keyframes explodePart { 0% { opacity:1; transform:translate(0,0) scale(1); } 100% { opacity:0; transform:translate(var(--ex),var(--ey)) scale(0); } }
         @keyframes screenShake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,3px)} 50%{transform:translate(3px,-4px)} 75%{transform:translate(-3px,2px)} }
@@ -889,13 +891,13 @@ export default function Ships() {
 
 
       {screen !== "menu" && screen !== "lobby" && <>
-        <h2 style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h2>
-        <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 4, fontFamily: "'Press Start 2P', monospace" }}>
+        <h2 className="game-fit-titulo" style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 22, color: "#39ff14", textShadow: "0 0 20px #39ff14", marginBottom: 2, letterSpacing: 3 }}>SHIPS</h2>
+        <p className="game-fit-titulo" style={{ color: "#4a5568", fontSize: 10, marginBottom: 4, fontFamily: "'Press Start 2P', monospace" }}>
           {mode?.startsWith("cpu") ? `VS CPU (${mode.replace("cpu-", "").toUpperCase()})` : mode === "local" ? t("local2pMode") : mode?.startsWith("remote") ? `ONLINE - ${sessionId}` : ""}
         </p>
       </>}
 
-      <div style={{ width: CANVAS_W * gameScale, height: CANVAS_H * gameScale }}>
+      <GameFit fit={fit}>
       <div style={{
         width: CANVAS_W, height: CANVAS_H, position: "relative",
         background: "#080818", border: "2px solid rgba(57,255,20,0.2)",
@@ -993,7 +995,7 @@ export default function Ships() {
         {screen === "lobby" && <ShipsLobby sessionId={sessionId} status={lobbyStatus} onCancel={handleMenu} t={t} />}
         {screen === "gameover" && <ShipsGameOver s1={s1} s2={s2} winner={winner} playerNum={playerNum} mode={mode} onRestart={handleRestart} onMenu={handleMenu} remoteReq={remoteReq} t={t} />}
       </div>
-      </div>
+      </GameFit>
 
       {screen === "playing" && !isMobile && (
         <div style={{ width: CANVAS_W, display: "flex", justifyContent: "space-between", marginTop: 10, padding: "0 4px" }}>

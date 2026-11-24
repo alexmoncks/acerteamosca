@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const CANVAS_W = 400;
@@ -509,7 +510,8 @@ function drawFloatingText(ctx, texts) {
 export default function TiroAoAlvo() {
   const t = useTranslations("games.tiroaoalvo");
   const { user, checkedCookie, registering, register } = useJogador("tiroaoalvo");
-  const gameScale = useGameScale(CANVAS_W);
+  const fit = useGameFit({ largura: CANVAS_W, altura: CANVAS_H });
+  const gameScale = fit.escala;
   const [screen, setScreen] = useState("menu");
   const [score, setScore] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -1703,11 +1705,10 @@ export default function TiroAoAlvo() {
   const isPlaying = screen === "playing" || screen === "roundIntro" || screen === "roundEnd" || screen === "paused";
 
   return (
-    <div style={{
+    <div className="game-fit-root" style={{
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      minHeight: "100vh",
       background: "#050510",
       padding: "20px 12px",
       fontFamily: "'Fira Code', monospace",
@@ -1731,7 +1732,7 @@ export default function TiroAoAlvo() {
       {/* Title */}
       {screen !== "result" && (
         <>
-          <h2 style={{
+          <h2 className="game-fit-titulo" style={{
             fontFamily: "'Press Start 2P', monospace",
             fontSize: 20,
             color: ACCENT,
@@ -1742,7 +1743,7 @@ export default function TiroAoAlvo() {
           }}>
             {t("title")}
           </h2>
-          <p style={{
+          <p className="game-fit-titulo" style={{
             color: "#4a5568",
             fontSize: 9,
             marginBottom: 12,
@@ -1777,11 +1778,7 @@ export default function TiroAoAlvo() {
       )}
 
       {/* Canvas area */}
-      <div style={{
-        width: CANVAS_W * gameScale,
-        height: CANVAS_H * gameScale,
-        touchAction: isPlaying ? "none" : "auto",
-      }}>
+      <GameFit fit={fit} style={{ touchAction: isPlaying ? "none" : "auto" }}>
         <div style={{
           width: CANVAS_W,
           height: CANVAS_H,
@@ -2051,7 +2048,7 @@ export default function TiroAoAlvo() {
             </div>
           )}
         </div>
-      </div>
+      </GameFit>
 
       {/* Mobile controls */}
       {isMobile && isPlaying && screen !== "paused" && screen !== "result" && (

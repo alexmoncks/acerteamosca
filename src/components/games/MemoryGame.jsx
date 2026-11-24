@@ -4,12 +4,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_MEMORY_URL || "ws://localhost:3004";
 
 const GAME_W = 500;
+const GAME_H = 620;
 const COLOR_BG = "#050510";
 const ACCENT = "#34d399";
 const ACCENT2 = "#059669";
@@ -1348,7 +1350,8 @@ function OnlineFinishedScreen({ onlineScores, winner, playerNum, onPlayAgain, on
 export default function MemoryGame() {
   const t = useTranslations("games.memory");
   const { user, checkedCookie, registering, register } = useJogador("memory");
-  const gameScale = useGameScale(GAME_W);
+  const fit = useGameFit({ largura: GAME_W, altura: GAME_H });
+  const gameScale = fit.escala;
 
   // ---- Solo State ----
   const [screen, setScreen] = useState("menu");
@@ -1865,12 +1868,11 @@ export default function MemoryGame() {
   const gridGap = cols === 6 ? 6 : 8;
   const gridWidth = cols * cardWidth + (cols - 1) * gridGap;
   const containerWidth = Math.max(GAME_W, gridWidth + 24);
-  const GAME_H = 620;
 
   return (
     <div
+      className="game-fit-root"
       style={{
-        minHeight: "100vh",
         background: COLOR_BG,
         display: "flex",
         flexDirection: "column",
@@ -1930,6 +1932,7 @@ export default function MemoryGame() {
       {screen !== "menu" && (
         <>
           <h2
+            className="game-fit-titulo"
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 22,
@@ -1943,6 +1946,7 @@ export default function MemoryGame() {
             MEMORY GAME
           </h2>
           <p
+            className="game-fit-titulo"
             style={{
               color: "#4a5568",
               fontSize: 10,
@@ -1956,7 +1960,7 @@ export default function MemoryGame() {
       )}
 
       {/* Bordered container + scaling wrapper */}
-      <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
+      <GameFit fit={fit}>
         <div
           style={{
             width: GAME_W,
@@ -2160,7 +2164,7 @@ export default function MemoryGame() {
             />
           )}
         </div>
-      </div>
+      </GameFit>
 
     </div>
   );

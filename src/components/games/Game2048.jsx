@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_2048_URL || "ws://localhost:3005";
@@ -703,7 +704,8 @@ function ArrowPad({ onMove, accent }) {
 export default function Game2048() {
   const t = useTranslations("games.game2048");
   const { user, checkedCookie, registering, register } = useJogador("2048");
-  const gameScale = useGameScale(GAME_W);
+  const fit = useGameFit({ largura: GAME_W, altura: GAME_H });
+  const gameScale = fit.escala;
 
   // ---- Screen state ----
   const [screen, setScreen] = useState("menu");
@@ -1292,8 +1294,8 @@ export default function Game2048() {
 
   return (
     <div
+      className="game-fit-root"
       style={{
-        minHeight: "100vh",
         background: COLOR_BG,
         display: "flex",
         flexDirection: "column",
@@ -1345,7 +1347,7 @@ export default function Game2048() {
 
 
       {/* Game container */}
-      <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
+      <GameFit fit={fit}>
       <div
         style={{
           width: GAME_W,
@@ -2001,7 +2003,7 @@ export default function Game2048() {
           </div>
         )}
       </div>
-      </div>
+      </GameFit>
 
     </div>
   );

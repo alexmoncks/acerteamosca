@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import { DeepAttackMobileControls } from "@/components/MobileControls";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 // ── Constants ──────────────────────────────────────────────────────────
@@ -422,7 +423,8 @@ function drawHUD(ctx, score, energy, frame, labels) {
 export default function DeepAttack() {
   const t = useTranslations("games.deepattack");
   const { user, checkedCookie, registering, register } = useJogador("deepattack");
-  const gameScale = useGameScale(CANVAS_W);
+  const fit = useGameFit({ largura: CANVAS_W, altura: CANVAS_H });
+  const gameScale = fit.escala;
   const canvasRef = useRef(null);
   const keysRef = useRef(new Set());
   const rafRef = useRef(null);
@@ -1037,8 +1039,8 @@ export default function DeepAttack() {
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <div
+      className="game-fit-root"
       style={{
-        minHeight: "100vh",
         background: "#050510",
         display: "flex",
         flexDirection: "column",
@@ -1073,6 +1075,7 @@ export default function DeepAttack() {
       {screen !== "menu" && (
         <>
           <h2
+            className="game-fit-titulo"
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 18,
@@ -1086,6 +1089,7 @@ export default function DeepAttack() {
             DEEP ATTACK
           </h2>
           <p
+            className="game-fit-titulo"
             style={{
               color: "#4a5568",
               fontSize: 10,
@@ -1098,13 +1102,7 @@ export default function DeepAttack() {
         </>
       )}
 
-      <div
-        style={{
-          width: CANVAS_W * gameScale,
-          height: CANVAS_H * gameScale,
-          touchAction: screen === "playing" ? "none" : "auto",
-        }}
-      >
+      <GameFit fit={fit} style={{ touchAction: screen === "playing" ? "none" : "auto" }}>
         <div
           style={{
             width: CANVAS_W,
@@ -1301,7 +1299,7 @@ export default function DeepAttack() {
             </div>
           )}
         </div>
-      </div>
+      </GameFit>
 
       {/* Mobile controls */}
       {screen === "playing" && (

@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useMobile from "@/hooks/useMobile";
 import useLockScroll from "@/hooks/useLockScroll";
 
@@ -972,7 +973,8 @@ function drawTimerBar(ctx, x, y, w, h, pct, phase) {
 export default function JogoDoJacare() {
   const t = useTranslations("games.jacare");
   const { user, checkedCookie, registering, register } = useJogador("jacare");
-  const gameScale = useGameScale(CANVAS_W);
+  const fit = useGameFit({ largura: CANVAS_W, altura: CANVAS_H });
+  const gameScale = fit.escala;
   const mobile = useMobile();
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
@@ -1829,8 +1831,7 @@ export default function JogoDoJacare() {
   const isPlaying = screen === "playing" || screen === "paused";
 
   return (
-    <div style={{
-      minHeight: "100vh",
+    <div className="game-fit-root" style={{
       background: "#050510",
       display: "flex",
       flexDirection: "column",
@@ -1841,7 +1842,7 @@ export default function JogoDoJacare() {
       padding: 12,
     }}>
 
-      <h2 style={{
+      <h2 className="game-fit-titulo" style={{
         fontFamily: "'Press Start 2P', monospace",
         fontSize: 20,
         color: ACCENT,
@@ -1854,7 +1855,7 @@ export default function JogoDoJacare() {
       </h2>
 
       {!isPlaying && (
-        <p style={{
+        <p className="game-fit-titulo" style={{
           color: "#4a5568",
           fontSize: 9,
           marginBottom: 14,
@@ -1866,11 +1867,7 @@ export default function JogoDoJacare() {
       )}
 
       {/* Canvas container */}
-      <div style={{
-        width: CANVAS_W * gameScale,
-        height: CANVAS_H * gameScale,
-        touchAction: isPlaying ? "none" : "auto",
-      }}>
+      <GameFit fit={fit} style={{ touchAction: isPlaying ? "none" : "auto" }}>
         <div style={{
           width: CANVAS_W,
           height: CANVAS_H,
@@ -2137,7 +2134,7 @@ export default function JogoDoJacare() {
             </button>
           )}
         </div>
-      </div>
+      </GameFit>
 
       {/* Mobile joystick + pause button BELOW the canvas */}
       {mobile && isPlaying && (

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import RegisterModal from "@/components/RegisterModal";
 import useJogador from "@/hooks/useJogador";
-import useGameScale from "@/hooks/useGameScale";
+import useGameFit from "@/hooks/useGameFit";
+import GameFit from "@/components/GameFit";
 import useLockScroll from "@/hooks/useLockScroll";
 
 const GAME_W = 400;
@@ -335,7 +336,10 @@ export default function WordleBR() {
   const validGuesses = locale === "en" ? VALID_GUESSES_EN : VALID_GUESSES_PT;
 
   const { user, checkedCookie, registering, register } = useJogador("wordle");
-  const gameScale = useGameScale(GAME_W);
+  // Teclado virtual e grade ficam DENTRO da caixa: escalam juntos e ficam
+  // sempre na tela.
+  const fit = useGameFit({ largura: GAME_W, altura: GAME_H });
+  const gameScale = fit.escala;
 
   const [answer, setAnswer] = useState(() => pickWord(answers));
   const [guesses, setGuesses] = useState([]);
@@ -559,8 +563,8 @@ export default function WordleBR() {
 
   // ---- RENDER ----
   return (
-    <div style={{
-      minHeight: "100vh", background: COLOR_BG, display: "flex", flexDirection: "column",
+    <div className="game-fit-root" style={{
+      background: COLOR_BG, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", fontFamily: "'Fira Code', monospace",
       overflow: "hidden", padding: 12,
     }}>
@@ -690,7 +694,7 @@ export default function WordleBR() {
 
       {/* Title above game area */}
       {hasStarted && (
-        <h2 style={{
+        <h2 className="game-fit-titulo" style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: COLOR_CORRECT,
           textShadow: `0 0 20px ${COLOR_CORRECT}, 0 0 40px ${COLOR_CORRECT}30`,
           marginBottom: 8, letterSpacing: 3, textAlign: "center",
@@ -699,14 +703,14 @@ export default function WordleBR() {
         </h2>
       )}
       {hasStarted && (
-        <p style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
+        <p className="game-fit-titulo" style={{ color: "#4a5568", fontSize: 10, marginBottom: 14, fontFamily: "'Press Start 2P', monospace" }}>
           {t("gameSubtitle")}
         </p>
       )}
 
       {/* Game area in bordered container */}
       {hasStarted && (
-        <div style={{ width: GAME_W * gameScale, height: GAME_H * gameScale }}>
+        <GameFit fit={fit}>
         <div style={{
           width: GAME_W, height: GAME_H, position: "relative",
           background: "#0a0a1a",
@@ -877,7 +881,7 @@ export default function WordleBR() {
             </div>
           )}
         </div>
-        </div>
+        </GameFit>
       )}
 
     </div>
