@@ -255,7 +255,10 @@
       "maxStreak": "MAX STREAK",
       "bonus": "BONUS",
       "left": "LEFT",
-      "right": "RIGHT"
+      "right": "RIGHT",
+      "muteLabel": "Mute",
+      "unmuteLabel": "Unmute"
+
     },
     "bubbleshooter": {
       "next": "NEXT",

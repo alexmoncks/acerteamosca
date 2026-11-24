@@ -1774,6 +1774,8 @@ export default function TiroAoAlvo() {
       {isPlaying && (
         <button
           onClick={toggleMute}
+          aria-label={muted ? t("unmuteLabel") : t("muteLabel")}
+          aria-pressed={muted}
           style={{
             position: "fixed",
             // Logo abaixo da Navbar fixa (48px, --aam-topo). Com top: 10 o

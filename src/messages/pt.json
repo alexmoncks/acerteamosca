@@ -255,7 +255,10 @@
       "maxStreak": "MAX STREAK",
       "bonus": "BONUS",
       "left": "ESQUERDA",
-      "right": "DIREITA"
+      "right": "DIREITA",
+      "muteLabel": "Silenciar",
+      "unmuteLabel": "Ativar som"
+
     },
     "bubbleshooter": {
       "next": "PROX",

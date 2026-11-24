@@ -101,7 +101,7 @@ check("Kung Fu Castle: canvas do PixiJS com buffer × dpr e tamanho CSS pela ár
 
 check("Tiro ao Alvo: botão de som fixo abaixo da Navbar (não atrás dela)", () => {
   const src = semComentarios(source("src/components/games/TiroAoAlvo.jsx"));
-  const m = src.match(/onClick=\{toggleMute\}\s*style=\{\{([\s\S]*?)\}\}/);
+  const m = src.match(/onClick=\{toggleMute\}[\s\S]*?style=\{\{([\s\S]*?)\}\}/);
   assert.ok(m, "botão de som não encontrado");
   assert.match(m[1], /position: "fixed"/);
   assert.match(m[1], /top: "calc\(var\(--aam-topo, 48px\) \+ 8px/);
