@@ -91,6 +91,30 @@ export function alturaDisponivel({
  * endereço ESCONDIDA — maior que a área visível —, e o jogo cortaria embaixo
  * no celular; window.innerHeight acompanha a barra.
  */
+
+/**
+ * Altura útil do slot para o encaixe. No celular, o teclado virtual encolhe
+ * o visualViewport, mas o clientHeight do slot (layout) muitas vezes não
+ * muda. Se a parte visível do slot — ou, sem retângulo, o
+ * visualViewport.height — for menor que o slot, essa altura vira o limite;
+ * senão o jogo fica atrás do teclado.
+ */
+export function alturaUtilDoSlot({ alturaSlot, slotTopo, slotBase, visualViewport }) {
+  const slot = finito(alturaSlot) && alturaSlot > 0 ? alturaSlot : 0;
+  if (!visualViewport) return slot;
+  const vvH = visualViewport.height;
+  const offset = finito(visualViewport.offsetTop) ? visualViewport.offsetTop : 0;
+  if (!(finito(vvH) && vvH > 0)) return slot;
+  if (finito(slotTopo) && finito(slotBase)) {
+    const topo = Math.max(slotTopo, offset);
+    const base = Math.min(slotBase, offset + vvH);
+    const visivel = base - topo;
+    if (finito(visivel) && visivel > 0 && visivel < slot) return visivel;
+    return slot;
+  }
+  return vvH < slot ? vvH : slot;
+}
+
 export function variavelVh({ suportaDvh, alturaJanela }) {
   if (suportaDvh) return null;
   if (!(finito(alturaJanela) && alturaJanela > 0)) return null;

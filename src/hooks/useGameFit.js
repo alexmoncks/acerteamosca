@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useState } from "react";
-import { ESCALA_MAXIMA, ESCALA_MINIMA, escalaDeEncaixe, variavelVh } from "@/lib/game-fit";
+import { ESCALA_MAXIMA, ESCALA_MINIMA, alturaUtilDoSlot, escalaDeEncaixe, variavelVh } from "@/lib/game-fit";
 
 // Encaixe de um jogo na altura (e largura) visível. Substitui o useGameScale,
 // que só olhava a largura. Uso, junto com <GameFit> (src/components/GameFit.jsx):
@@ -93,8 +93,17 @@ export default function useGameFit({
     let raf = 0;
     const medir = () => {
       const cs = getComputedStyle(slot);
+      const padCima = px(cs.paddingTop);
+      const padBaixo = px(cs.paddingBottom);
       const larguraDisponivel = slot.clientWidth - px(cs.paddingLeft) - px(cs.paddingRight);
-      const alturaDisponivel = slot.clientHeight - px(cs.paddingTop) - px(cs.paddingBottom);
+      const r = slot.getBoundingClientRect();
+      const vv = window.visualViewport;
+      const alturaDisponivel = alturaUtilDoSlot({
+        alturaSlot: slot.clientHeight - padCima - padBaixo,
+        slotTopo: r.top + padCima,
+        slotBase: r.bottom - padBaixo,
+        visualViewport: vv ? { height: vv.height, offsetTop: vv.offsetTop } : null,
+      });
       const conteudo = alturaAutomatica && area ? area.firstElementChild : null;
       const h = conteudo && conteudo.offsetHeight > 0 ? conteudo.offsetHeight : altura;
       const escala = escalaDeEncaixe({ largura, altura: h, larguraDisponivel, alturaDisponivel, minima, maxima });

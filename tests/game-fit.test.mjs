@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { check, near, source, loadModule } from "./helpers.mjs";
 
 const gf = await loadModule("src/lib/game-fit.js");
-const { escalaDeEncaixe, tamanhoEncaixado, alturaDisponivel, variavelVh, clienteParaLogico, deltaClienteParaLogico, bufferDoCanvas } = gf;
+const { escalaDeEncaixe, tamanhoEncaixado, alturaDisponivel, alturaUtilDoSlot, variavelVh, clienteParaLogico, deltaClienteParaLogico, bufferDoCanvas } = gf;
 
 // ---------- escala ----------
 
@@ -92,6 +92,19 @@ check("altura disponível: janela − Navbar (48) − margens seguras − reserv
   assert.equal(alturaDisponivel({ alturaJanela: NaN }), 0);
 });
 
+
+check("altura útil do slot: visualViewport menor que o slot limita (teclado virtual)", () => {
+  // Slot de 500 px; teclado deixa o visualViewport com 320 px, cobrindo a base.
+  const slot = { alturaSlot: 500, slotTopo: 80, slotBase: 580 };
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: null }), 500);
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 800, offsetTop: 0 } }), 500);
+  // vv.height 360, offsetTop 0: a base visível é 360, o slot ia até 580 → 280 visíveis.
+  assert.equal(alturaUtilDoSlot({ ...slot, visualViewport: { height: 360, offsetTop: 0 } }), 280);
+  // sem retângulo: o visualViewport.height é o limite, quando menor que o slot
+  assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 320, offsetTop: 0 } }), 320);
+  assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 800, offsetTop: 0 } }), 500);
+  assert.equal(alturaUtilDoSlot({ alturaSlot: 500, visualViewport: { height: 0, offsetTop: 0 } }), 500);
+});
 check("sem dvh: --aam-vh = 1% de innerHeight; com dvh: nenhuma variável", () => {
   assert.equal(variavelVh({ suportaDvh: true, alturaJanela: 700 }), null);
   assert.equal(variavelVh({ suportaDvh: false, alturaJanela: 625 }), "6.25px");
